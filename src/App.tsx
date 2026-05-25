@@ -39,22 +39,6 @@ type Paciente = {
 
 function AdminApp() {
 
-  const [nombre,
-    setNombre] =
-    useState("");
-
-  const [telefono,
-    setTelefono] =
-    useState("");
-
-  const [edad,
-    setEdad] =
-    useState("");
-
-  const [sexo,
-    setSexo] =
-    useState("");
-
   const [busqueda,
     setBusqueda] =
     useState("");
@@ -104,57 +88,6 @@ function AdminApp() {
       setPacientes(data);
 
     }
-
-  }
-
-  async function guardarPaciente() {
-
-    if (
-      !nombre ||
-      !telefono
-    ) {
-
-      alert(
-        "Complete nombre y teléfono"
-      );
-
-      return;
-
-    }
-
-    const { error } =
-      await supabase
-
-        .from("pacientes")
-
-        .insert([{
-
-          nombre,
-
-          telefono,
-
-          edad,
-
-          sexo,
-
-        }]);
-
-    if (error) {
-
-      alert(
-        "Error guardando paciente"
-      );
-
-      return;
-
-    }
-
-    setNombre("");
-    setTelefono("");
-    setEdad("");
-    setSexo("");
-
-    cargarPacientes();
 
   }
 
