@@ -175,6 +175,8 @@ function AdminApp() {
 
     if (error) {
 
+      console.error(error);
+
       alert(
         "Error subiendo imagen"
       );
@@ -331,6 +333,8 @@ function AdminApp() {
           MintOS Dental
         </h1>
 
+        {/* QR */}
+
         <div className="mb-10">
 
           <QRCodePaciente />
@@ -465,6 +469,12 @@ function AdminApp() {
 
                       <p>
                         Teléfono: {p.telefono}
+                      </p>
+
+                      <p>
+                        Edad: {p.edad}
+                        {" | "}
+                        Sexo: {p.sexo}
                       </p>
 
                     </div>
