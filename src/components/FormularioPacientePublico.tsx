@@ -10,6 +10,9 @@ export default function FormularioPacientePublico() {
   const [telefono, setTelefono] =
     useState("");
 
+  const [correo, setCorreo] =
+    useState("");
+
   const [edad, setEdad] =
     useState("");
 
@@ -89,6 +92,8 @@ export default function FormularioPacientePublico() {
 
         telefono,
 
+        correo,
+
         edad,
 
         sexo,
@@ -126,6 +131,7 @@ export default function FormularioPacientePublico() {
 
     setNombre("");
     setTelefono("");
+    setCorreo("");
     setEdad("");
     setSexo("");
     setDireccion("");
@@ -175,6 +181,18 @@ export default function FormularioPacientePublico() {
               value={telefono}
               onChange={(e) =>
                 setTelefono(
+                  e.target.value
+                )
+              }
+              className="border rounded-xl p-3"
+            />
+
+            <input
+              type="email"
+              placeholder="Correo electrónico"
+              value={correo}
+              onChange={(e) =>
+                setCorreo(
                   e.target.value
                 )
               }
