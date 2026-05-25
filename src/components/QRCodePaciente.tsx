@@ -2,9 +2,6 @@ import QRCode from "react-qr-code";
 
 export default function QRCodePaciente() {
 
-  const urlFormulario =
-    "https://mintos-dental.vercel.app/#/formulario";
-
   return (
 
     <div
@@ -13,7 +10,6 @@ export default function QRCodePaciente() {
         rounded-3xl
         shadow-xl
         p-8
-        mb-10
         flex
         flex-col
         items-center
@@ -29,13 +25,11 @@ export default function QRCodePaciente() {
           text-center
         "
       >
-
         Escanee para llenar historial clínico
-
       </h2>
 
       <QRCode
-        value={urlFormulario}
+        value="https://mintos-dental.vercel.app/#/formulario"
         size={220}
       />
 
@@ -46,11 +40,9 @@ export default function QRCodePaciente() {
           text-center
         "
       >
-
         Escanee desde su celular
         <br />
         para llenar su historial clínico
-
       </p>
 
     </div>
