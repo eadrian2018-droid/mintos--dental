@@ -1,4 +1,118 @@
+import { useState } from "react";
+
+import { supabase } from "../lib/supabase";
+
 export default function FormularioPacientePublico() {
+
+  const [nombre, setNombre] =
+    useState("");
+
+  const [telefono, setTelefono] =
+    useState("");
+
+  const [edad, setEdad] =
+    useState("");
+
+  const [sexo, setSexo] =
+    useState("");
+
+  const [direccion, setDireccion] =
+    useState("");
+
+  const [observaciones, setObservaciones] =
+    useState("");
+
+  const [firma, setFirma] =
+    useState("");
+
+  const [consentimiento,
+    setConsentimiento] =
+
+    useState(false);
+
+  const [loading,
+    setLoading] =
+
+    useState(false);
+
+  async function enviarFormulario() {
+
+    if (!nombre) {
+
+      alert("Ingrese nombre");
+
+      return;
+
+    }
+
+    setLoading(true);
+
+    const historial = {
+
+      alergias:
+        observaciones,
+
+      observaciones,
+
+    };
+
+    const {
+      error
+    } = await supabase
+
+      .from("pacientes")
+
+      .insert([{
+
+        nombre,
+
+        telefono,
+
+        edad,
+
+        sexo,
+
+        direccion,
+
+        historial_clinico:
+          historial,
+
+        consentimiento_firmado:
+          consentimiento,
+
+        firma_paciente:
+          firma,
+
+      }]);
+
+    setLoading(false);
+
+    if (error) {
+
+      console.error(error);
+
+      alert(
+        "Error guardando formulario"
+      );
+
+      return;
+
+    }
+
+    alert(
+      "Formulario enviado correctamente"
+    );
+
+    setNombre("");
+    setTelefono("");
+    setEdad("");
+    setSexo("");
+    setDireccion("");
+    setObservaciones("");
+    setFirma("");
+    setConsentimiento(false);
+
+  }
 
   return (
 
@@ -9,8 +123,6 @@ export default function FormularioPacientePublico() {
         <h1 className="text-4xl font-bold text-teal-700 mb-10 text-center">
           Historial Clínico Dental
         </h1>
-
-        {/* DATOS PERSONALES */}
 
         <div className="mb-10">
 
@@ -23,35 +135,60 @@ export default function FormularioPacientePublico() {
             <input
               type="text"
               placeholder="Nombre completo"
+              value={nombre}
+              onChange={(e) =>
+                setNombre(
+                  e.target.value
+                )
+              }
               className="border rounded-xl p-3"
             />
 
             <input
               type="text"
               placeholder="Teléfono"
+              value={telefono}
+              onChange={(e) =>
+                setTelefono(
+                  e.target.value
+                )
+              }
               className="border rounded-xl p-3"
             />
 
             <input
               type="number"
               placeholder="Edad"
+              value={edad}
+              onChange={(e) =>
+                setEdad(
+                  e.target.value
+                )
+              }
               className="border rounded-xl p-3"
             />
 
             <input
               type="text"
               placeholder="Sexo"
-              className="border rounded-xl p-3"
-            />
-
-            <input
-              type="date"
+              value={sexo}
+              onChange={(e) =>
+                setSexo(
+                  e.target.value
+                )
+              }
               className="border rounded-xl p-3"
             />
 
             <input
               type="text"
               placeholder="Dirección"
+              value={direccion}
+              onChange={(e) =>
+                setDireccion(
+                  e.target.value
+                )
+              }
               className="border rounded-xl p-3"
             />
 
@@ -59,102 +196,33 @@ export default function FormularioPacientePublico() {
 
         </div>
 
-        {/* HISTORIAL MEDICO */}
-
         <div className="mb-10">
 
-          <h2 className="text-2xl font-bold mb-6">
-            Historial Médico
+          <h2 className="text-2xl font-bold mb-4">
+            Observaciones Médicas
           </h2>
 
-          <div className="space-y-5">
-
-            {[
-              "¿Es alérgico a algún medicamento?",
-              "¿Padece diabetes?",
-              "¿Tiene presión alta?",
-              "¿Tiene problemas cardíacos?",
-              "¿Toma medicamentos actualmente?",
-              "¿Ha sido hospitalizado recientemente?",
-              "¿Tiene hepatitis?",
-              "¿Tiene problemas de sangrado?",
-              "¿Está embarazada?",
-              "¿Ha tenido cirugías importantes?",
-              "¿Fuma?",
-              "¿Consume alcohol frecuentemente?"
-            ].map((pregunta, index) => (
-
-              <div
-                key={index}
-                className="
-                  border
-                  rounded-2xl
-                  p-4
-                  bg-gray-50
-                "
-              >
-
-                <p className="font-semibold mb-3">
-                  {pregunta}
-                </p>
-
-                <div className="flex gap-6">
-
-                  <label className="flex items-center gap-2">
-
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                    />
-
-                    Sí
-
-                  </label>
-
-                  <label className="flex items-center gap-2">
-
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                    />
-
-                    No
-
-                  </label>
-
-                </div>
-
-              </div>
-
-            ))}
-
-          </div>
-
-          <div className="mt-8">
-
-            <h3 className="text-xl font-bold mb-4">
-              Observaciones Médicas
-            </h3>
-
-            <textarea
-              placeholder="
+          <textarea
+            placeholder="
 Alergias, medicamentos, enfermedades,
 tratamientos médicos, observaciones...
-              "
-              className="
-                w-full
-                border
-                rounded-2xl
-                p-4
-                h-40
-              "
-            />
-
-          </div>
+            "
+            value={observaciones}
+            onChange={(e) =>
+              setObservaciones(
+                e.target.value
+              )
+            }
+            className="
+              w-full
+              border
+              rounded-2xl
+              p-4
+              h-40
+            "
+          />
 
         </div>
-
-        {/* CONSENTIMIENTO */}
 
         <div className="mb-10">
 
@@ -162,34 +230,23 @@ tratamientos médicos, observaciones...
             Consentimiento
           </h2>
 
-          <div className="
-            border
-            rounded-2xl
-            p-6
-            bg-gray-50
-          ">
+          <label className="flex items-center gap-3">
 
-            <p className="mb-6 text-gray-700 leading-relaxed">
+            <input
+              type="checkbox"
+              checked={consentimiento}
+              onChange={(e) =>
+                setConsentimiento(
+                  e.target.checked
+                )
+              }
+            />
 
-              Confirmo que toda la información proporcionada es correcta y autorizo
-              al consultorio dental a realizar tratamientos y procedimientos
-              necesarios conforme al diagnóstico profesional.
+            Acepto y autorizo el tratamiento dental.
 
-            </p>
-
-            <label className="flex items-center gap-3">
-
-              <input type="checkbox" />
-
-              Acepto y autorizo el tratamiento dental.
-
-            </label>
-
-          </div>
+          </label>
 
         </div>
-
-        {/* FIRMA */}
 
         <div className="mb-10">
 
@@ -200,6 +257,12 @@ tratamientos médicos, observaciones...
           <input
             type="text"
             placeholder="Escriba su nombre completo"
+            value={firma}
+            onChange={(e) =>
+              setFirma(
+                e.target.value
+              )
+            }
             className="
               w-full
               border
@@ -210,9 +273,14 @@ tratamientos médicos, observaciones...
 
         </div>
 
-        {/* BOTON */}
-
         <button
+
+          onClick={
+            enviarFormulario
+          }
+
+          disabled={loading}
+
           className="
             bg-teal-600
             hover:bg-teal-700
@@ -225,7 +293,11 @@ tratamientos médicos, observaciones...
             text-xl
           "
         >
-          Enviar Formulario
+
+          {loading
+            ? "Enviando..."
+            : "Enviar Formulario"}
+
         </button>
 
       </div>
