@@ -27,7 +27,7 @@ export default function QRCodePaciente() {
       </h2>
 
       <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://mintos-dental.vercel.app/#/formulario"
+        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://mintos-dental.vercel.app/%23/formulario"
         alt="QR Formulario"
         className="rounded-xl"
       />
