@@ -88,13 +88,36 @@ export default function Odontograma({
 
     setSeleccionado(numero);
 
+    const colorActual =
+      estadoDientes[numero];
+
+    const nuevoColor =
+      obtenerColor();
+
+    if (colorActual === nuevoColor) {
+
+      const nuevoEstado = {
+        ...estadoDientes
+      };
+
+      delete nuevoEstado[numero];
+
+      setEstadoDientes(
+        nuevoEstado
+      );
+
+      return;
+
+    }
+
     setEstadoDientes({
 
       ...estadoDientes,
 
-      [numero]: obtenerColor(),
+      [numero]: nuevoColor,
 
     });
+
   }
 
   function renderDiente(
@@ -231,8 +254,6 @@ export default function Odontograma({
 
       </h2>
 
-      {/* SELECT */}
-
       <div className="
         flex
         justify-center
@@ -279,8 +300,6 @@ export default function Odontograma({
 
       </div>
 
-      {/* SUPERIOR */}
-
       <div className="
         bg-white
         rounded-3xl
@@ -312,8 +331,6 @@ export default function Odontograma({
 
       </div>
 
-      {/* INFERIOR */}
-
       <div className="
         bg-white
         rounded-3xl
@@ -344,8 +361,6 @@ export default function Odontograma({
         </div>
 
       </div>
-
-      {/* OBSERVACIONES */}
 
       {seleccionado && (
 
