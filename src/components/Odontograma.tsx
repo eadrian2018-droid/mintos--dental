@@ -88,13 +88,7 @@ export default function Odontograma({
 
     setSeleccionado(numero);
 
-    const colorActual =
-      estadoDientes[numero];
-
-    const nuevoColor =
-      obtenerColor();
-
-    if (colorActual === nuevoColor) {
+    if (estadoDientes[numero]) {
 
       const nuevoEstado = {
         ...estadoDientes
@@ -114,7 +108,7 @@ export default function Odontograma({
 
       ...estadoDientes,
 
-      [numero]: nuevoColor,
+      [numero]: obtenerColor(),
 
     });
 
