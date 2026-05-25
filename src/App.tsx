@@ -257,13 +257,11 @@ function AdminApp() {
           MintOS Dental
         </h1>
 
-        {/* QR */}
+        {/* QR TEMPORALMENTE DESACTIVADO */}
 
-        <div className="mb-10">
+<div className="mb-10">
 
-          <QRCodePaciente />
-
-        </div>
+</div>
 
         {/* NUEVO PACIENTE */}
 
@@ -463,20 +461,9 @@ function AdminApp() {
 
               </div>
 
-              <Odontograma
-                observacionesDientes={
-                  observacionesDientes
-                }
-                setObservacionesDientes={
-                  setObservacionesDientes
-                }
-                estadoDientes={
-                  estadoDientes
-                }
-                setEstadoDientes={
-                  setEstadoDientes
-                }
-              />
+             <div>
+  Odontograma temporalmente desactivado
+</div>
 
               <button
                 onClick={
