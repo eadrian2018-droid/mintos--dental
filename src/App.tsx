@@ -6,50 +6,25 @@ function Dashboard() {
 
     <div className="min-h-screen bg-gray-100 p-10">
 
-      <div className="max-w-6xl mx-auto">
+      <h1 className="text-5xl font-bold text-teal-700">
+        Dashboard funcionando
+      </h1>
 
-        <h1 className="text-5xl font-bold text-teal-700 mb-10">
-          MintOS Dental
-        </h1>
-
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-10
-        ">
-
-          <h2 className="text-3xl font-bold mb-6">
-            Dashboard Administrativo
-          </h2>
-
-          <p className="text-gray-600 text-xl">
-            Sistema funcionando correctamente.
-          </p>
-
-          <div className="mt-10">
-
-            <a
-              href="#/formulario"
-              className="
-                bg-teal-600
-                hover:bg-teal-700
-                text-white
-                px-8
-                py-4
-                rounded-2xl
-                font-bold
-                inline-block
-              "
-            >
-              Abrir Formulario Público
-            </a>
-
-          </div>
-
-        </div>
-
-      </div>
+      <a
+        href="#/formulario"
+        className="
+          mt-10
+          inline-block
+          bg-teal-600
+          text-white
+          px-8
+          py-4
+          rounded-2xl
+          font-bold
+        "
+      >
+        Abrir Formulario
+      </a>
 
     </div>
 
@@ -81,81 +56,6 @@ function FormularioPacientePublico() {
         ">
           Historial Clínico Dental
         </h1>
-
-        <div className="space-y-6">
-
-          <input
-            type="text"
-            placeholder="Nombre completo"
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
-          />
-
-          <input
-            type="text"
-            placeholder="Teléfono"
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
-          />
-
-          <input
-            type="number"
-            placeholder="Edad"
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
-          />
-
-          <textarea
-            placeholder="Observaciones médicas..."
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-              h-40
-            "
-          />
-
-          <label className="
-            flex
-            items-center
-            gap-3
-          ">
-
-            <input type="checkbox" />
-
-            Confirmo que la información es correcta.
-
-          </label>
-
-          <button
-            className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-8
-              py-4
-              rounded-2xl
-              font-bold
-              w-full
-            "
-          >
-            Enviar Formulario
-          </button>
-
-        </div>
 
       </div>
 
