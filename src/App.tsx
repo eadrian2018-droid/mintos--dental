@@ -67,6 +67,10 @@ function AdminApp() {
     setEstadoDientes] =
     useState<Record<string, string>>({});
 
+  const [imagenPreview,
+    setImagenPreview] =
+    useState("");
+
   useEffect(() => {
 
     cargarPacientes();
@@ -146,6 +150,63 @@ function AdminApp() {
 
   }
 
+  async function subirRadiografia(
+    archivo: File
+  ) {
+
+    const nombreArchivo =
+
+      `${Date.now()}-${archivo.name}`;
+
+    const { error } =
+      await supabase
+
+        .storage
+
+        .from("radiografias")
+
+        .upload(
+
+          nombreArchivo,
+
+          archivo
+
+        );
+
+    if (error) {
+
+      alert(
+        "Error subiendo imagen"
+      );
+
+      return;
+
+    }
+
+    const { data } =
+      supabase
+
+        .storage
+
+        .from("radiografias")
+
+        .getPublicUrl(
+          nombreArchivo
+        );
+
+    const imagenUrl =
+      data.publicUrl;
+
+    setImagenPreview(
+      imagenUrl
+    );
+
+    alert(
+      "Radiografía subida correctamente"
+    );
+
+  }
+
   async function guardarExpediente() {
 
     if (!pacienteAbierto?.id) {
@@ -168,6 +229,9 @@ function AdminApp() {
 
             estados:
               estadoDientes,
+
+            imagen:
+              imagenPreview,
 
           },
 
@@ -222,6 +286,14 @@ function AdminApp() {
 
       );
 
+      setImagenPreview(
+
+        paciente
+          .observaciones
+          .imagen || ""
+
+      );
+
     } else {
 
       setObservacionesDientes(
@@ -231,6 +303,8 @@ function AdminApp() {
       setEstadoDientes(
         {}
       );
+
+      setImagenPreview("");
 
     }
 
@@ -256,8 +330,6 @@ function AdminApp() {
         <h1 className="text-5xl font-bold text-teal-700 mb-10">
           MintOS Dental
         </h1>
-
-        {/* QR */}
 
         <div className="mb-10">
 
@@ -395,12 +467,6 @@ function AdminApp() {
                         Teléfono: {p.telefono}
                       </p>
 
-                      <p>
-                        Edad: {p.edad}
-                        {" | "}
-                        Sexo: {p.sexo}
-                      </p>
-
                     </div>
 
                     <button
@@ -477,6 +543,52 @@ function AdminApp() {
                   setEstadoDientes
                 }
               />
+
+              {/* RADIOGRAFIAS */}
+
+              <div className="mt-10">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-4
+                ">
+                  Radiografías / Fotos
+                </h3>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+
+                    const archivo =
+                      e.target.files?.[0];
+
+                    if (!archivo)
+                      return;
+
+                    subirRadiografia(
+                      archivo
+                    );
+
+                  }}
+                />
+
+                {imagenPreview && (
+
+                  <img
+                    src={imagenPreview}
+                    alt="Radiografía"
+                    className="
+                      mt-6
+                      rounded-2xl
+                      max-h-96
+                    "
+                  />
+
+                )}
+
+              </div>
 
               <button
                 onClick={
