@@ -35,6 +35,16 @@ export default function FormularioPacientePublico() {
 
     useState(false);
 
+  const [imagen,
+    setImagen] =
+
+    useState<File | null>(null);
+
+  const [preview,
+    setPreview] =
+
+    useState("");
+
   const [preguntas,
     setPreguntas] =
 
@@ -57,6 +67,55 @@ export default function FormularioPacientePublico() {
 
   ];
 
+  async function subirImagen() {
+
+    if (!imagen)
+      return "";
+
+    const nombreArchivo =
+
+      `${Date.now()}-${imagen.name}`;
+
+    const {
+      error
+    } = await supabase
+
+      .storage
+
+      .from("radiografias")
+
+      .upload(
+
+        nombreArchivo,
+
+        imagen
+
+      );
+
+    if (error) {
+
+      console.error(error);
+
+      return "";
+
+    }
+
+    const {
+      data
+    } = supabase
+
+      .storage
+
+      .from("radiografias")
+
+      .getPublicUrl(
+        nombreArchivo
+      );
+
+    return data.publicUrl;
+
+  }
+
   async function enviarFormulario() {
 
     if (!nombre) {
@@ -69,11 +128,16 @@ export default function FormularioPacientePublico() {
 
     setLoading(true);
 
+    const imagenUrl =
+      await subirImagen();
+
     const historial = {
 
       preguntas,
 
       observaciones,
+
+      imagenUrl,
 
     };
 
@@ -135,6 +199,10 @@ export default function FormularioPacientePublico() {
 
     setPreguntas({});
 
+    setImagen(null);
+
+    setPreview("");
+
   }
 
   return (
@@ -147,199 +215,223 @@ export default function FormularioPacientePublico() {
           Historial Clínico Dental
         </h1>
 
-        {/* DATOS PERSONALES */}
+        {/* DATOS */}
 
-        <div className="mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
 
-          <h2 className="text-2xl font-bold mb-6">
-            Datos Personales
-          </h2>
+          <input
+            type="text"
+            placeholder="Nombre completo"
+            value={nombre}
+            onChange={(e) =>
+              setNombre(
+                e.target.value
+              )
+            }
+            className="border rounded-xl p-3"
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <input
+            type="text"
+            placeholder="Teléfono"
+            value={telefono}
+            onChange={(e) =>
+              setTelefono(
+                e.target.value
+              )
+            }
+            className="border rounded-xl p-3"
+          />
 
-            <input
-              type="text"
-              placeholder="Nombre completo"
-              value={nombre}
-              onChange={(e) =>
-                setNombre(
-                  e.target.value
-                )
-              }
-              className="border rounded-xl p-3"
-            />
+          <input
+            type="number"
+            placeholder="Edad"
+            value={edad}
+            onChange={(e) =>
+              setEdad(
+                e.target.value
+              )
+            }
+            className="border rounded-xl p-3"
+          />
 
-            <input
-              type="text"
-              placeholder="Teléfono"
-              value={telefono}
-              onChange={(e) =>
-                setTelefono(
-                  e.target.value
-                )
-              }
-              className="border rounded-xl p-3"
-            />
+          <input
+            type="text"
+            placeholder="Sexo"
+            value={sexo}
+            onChange={(e) =>
+              setSexo(
+                e.target.value
+              )
+            }
+            className="border rounded-xl p-3"
+          />
 
-            <input
-              type="number"
-              placeholder="Edad"
-              value={edad}
-              onChange={(e) =>
-                setEdad(
-                  e.target.value
-                )
-              }
-              className="border rounded-xl p-3"
-            />
-
-            <input
-              type="text"
-              placeholder="Sexo"
-              value={sexo}
-              onChange={(e) =>
-                setSexo(
-                  e.target.value
-                )
-              }
-              className="border rounded-xl p-3"
-            />
-
-            <input
-              type="text"
-              placeholder="Dirección"
-              value={direccion}
-              onChange={(e) =>
-                setDireccion(
-                  e.target.value
-                )
-              }
-              className="border rounded-xl p-3"
-            />
-
-          </div>
+          <input
+            type="text"
+            placeholder="Dirección"
+            value={direccion}
+            onChange={(e) =>
+              setDireccion(
+                e.target.value
+              )
+            }
+            className="border rounded-xl p-3"
+          />
 
         </div>
 
-        {/* HISTORIAL MEDICO */}
+        {/* HISTORIAL */}
 
-        <div className="mb-10">
+        <div className="space-y-5 mb-10">
 
-          <h2 className="text-2xl font-bold mb-6">
-            Historial Médico
-          </h2>
+          {preguntasLista.map((pregunta, index) => (
 
-          <div className="space-y-5">
+            <div
+              key={index}
+              className="
+                border
+                rounded-2xl
+                p-4
+                bg-gray-50
+              "
+            >
 
-            {preguntasLista.map((pregunta, index) => (
+              <p className="font-semibold mb-3">
+                {pregunta}
+              </p>
 
-              <div
-                key={index}
-                className="
-                  border
-                  rounded-2xl
-                  p-4
-                  bg-gray-50
-                "
-              >
+              <div className="flex gap-6">
 
-                <p className="font-semibold mb-3">
-                  {pregunta}
-                </p>
+                <label className="flex items-center gap-2">
 
-                <div className="flex gap-6">
+                  <input
+                    type="radio"
+                    name={`pregunta-${index}`}
+                    checked={
+                      preguntas[pregunta]
+                      === "Sí"
+                    }
+                    onChange={() =>
 
-                  <label className="flex items-center gap-2">
+                      setPreguntas({
 
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                      checked={
-                        preguntas[pregunta]
-                        === "Sí"
-                      }
-                      onChange={() =>
+                        ...preguntas,
 
-                        setPreguntas({
+                        [pregunta]:
+                          "Sí",
 
-                          ...preguntas,
+                      })
 
-                          [pregunta]:
-                            "Sí",
+                    }
+                  />
 
-                        })
+                  Sí
 
-                      }
-                    />
+                </label>
 
-                    Sí
+                <label className="flex items-center gap-2">
 
-                  </label>
+                  <input
+                    type="radio"
+                    name={`pregunta-${index}`}
+                    checked={
+                      preguntas[pregunta]
+                      === "No"
+                    }
+                    onChange={() =>
 
-                  <label className="flex items-center gap-2">
+                      setPreguntas({
 
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                      checked={
-                        preguntas[pregunta]
-                        === "No"
-                      }
-                      onChange={() =>
+                        ...preguntas,
 
-                        setPreguntas({
+                        [pregunta]:
+                          "No",
 
-                          ...preguntas,
+                      })
 
-                          [pregunta]:
-                            "No",
+                    }
+                  />
 
-                        })
+                  No
 
-                      }
-                    />
-
-                    No
-
-                  </label>
-
-                </div>
+                </label>
 
               </div>
 
-            ))}
+            </div>
 
-          </div>
+          ))}
 
         </div>
 
         {/* OBSERVACIONES */}
 
+        <textarea
+          placeholder="Observaciones médicas..."
+          value={observaciones}
+          onChange={(e) =>
+            setObservaciones(
+              e.target.value
+            )
+          }
+          className="
+            w-full
+            border
+            rounded-2xl
+            p-4
+            h-40
+            mb-10
+          "
+        />
+
+        {/* IMAGEN */}
+
         <div className="mb-10">
 
-          <h2 className="text-2xl font-bold mb-4">
-            Observaciones Médicas
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-4
+          ">
+            Radiografía / Foto
           </h2>
 
-          <textarea
-            placeholder="
-Alergias, medicamentos, enfermedades,
-tratamientos médicos, observaciones...
-            "
-            value={observaciones}
-            onChange={(e) =>
-              setObservaciones(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              border
-              rounded-2xl
-              p-4
-              h-40
-            "
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+
+              const file =
+                e.target.files?.[0];
+
+              if (!file)
+                return;
+
+              setImagen(file);
+
+              setPreview(
+                URL.createObjectURL(
+                  file
+                )
+              );
+
+            }}
           />
+
+          {preview && (
+
+            <img
+              src={preview}
+              alt="preview"
+              className="
+                mt-6
+                rounded-2xl
+                max-h-96
+              "
+            />
+
+          )}
 
         </div>
 
@@ -347,11 +439,11 @@ tratamientos médicos, observaciones...
 
         <div className="mb-10">
 
-          <h2 className="text-2xl font-bold mb-4">
-            Consentimiento
-          </h2>
-
-          <label className="flex items-center gap-3">
+          <label className="
+            flex
+            items-center
+            gap-3
+          ">
 
             <input
               type="checkbox"
@@ -371,30 +463,23 @@ tratamientos médicos, observaciones...
 
         {/* FIRMA */}
 
-        <div className="mb-10">
-
-          <h2 className="text-2xl font-bold mb-4">
-            Firma del Paciente
-          </h2>
-
-          <input
-            type="text"
-            placeholder="Escriba su nombre completo"
-            value={firma}
-            onChange={(e) =>
-              setFirma(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              border
-              rounded-2xl
-              p-4
-            "
-          />
-
-        </div>
+        <input
+          type="text"
+          placeholder="Firma del paciente"
+          value={firma}
+          onChange={(e) =>
+            setFirma(
+              e.target.value
+            )
+          }
+          className="
+            w-full
+            border
+            rounded-2xl
+            p-4
+            mb-10
+          "
+        />
 
         {/* BOTON */}
 
