@@ -35,6 +35,28 @@ export default function FormularioPacientePublico() {
 
     useState(false);
 
+  const [preguntas,
+    setPreguntas] =
+
+    useState<Record<string, string>>({});
+
+  const preguntasLista = [
+
+    "¿Es alérgico a algún medicamento?",
+    "¿Padece diabetes?",
+    "¿Tiene presión alta?",
+    "¿Tiene problemas cardíacos?",
+    "¿Toma medicamentos actualmente?",
+    "¿Ha sido hospitalizado recientemente?",
+    "¿Tiene hepatitis?",
+    "¿Tiene problemas de sangrado?",
+    "¿Está embarazada?",
+    "¿Ha tenido cirugías importantes?",
+    "¿Fuma?",
+    "¿Consume alcohol frecuentemente?"
+
+  ];
+
   async function enviarFormulario() {
 
     if (!nombre) {
@@ -49,8 +71,7 @@ export default function FormularioPacientePublico() {
 
     const historial = {
 
-      alergias:
-        observaciones,
+      preguntas,
 
       observaciones,
 
@@ -112,6 +133,8 @@ export default function FormularioPacientePublico() {
     setFirma("");
     setConsentimiento(false);
 
+    setPreguntas({});
+
   }
 
   return (
@@ -123,6 +146,8 @@ export default function FormularioPacientePublico() {
         <h1 className="text-4xl font-bold text-teal-700 mb-10 text-center">
           Historial Clínico Dental
         </h1>
+
+        {/* DATOS PERSONALES */}
 
         <div className="mb-10">
 
@@ -196,6 +221,100 @@ export default function FormularioPacientePublico() {
 
         </div>
 
+        {/* HISTORIAL MEDICO */}
+
+        <div className="mb-10">
+
+          <h2 className="text-2xl font-bold mb-6">
+            Historial Médico
+          </h2>
+
+          <div className="space-y-5">
+
+            {preguntasLista.map((pregunta, index) => (
+
+              <div
+                key={index}
+                className="
+                  border
+                  rounded-2xl
+                  p-4
+                  bg-gray-50
+                "
+              >
+
+                <p className="font-semibold mb-3">
+                  {pregunta}
+                </p>
+
+                <div className="flex gap-6">
+
+                  <label className="flex items-center gap-2">
+
+                    <input
+                      type="radio"
+                      name={`pregunta-${index}`}
+                      checked={
+                        preguntas[pregunta]
+                        === "Sí"
+                      }
+                      onChange={() =>
+
+                        setPreguntas({
+
+                          ...preguntas,
+
+                          [pregunta]:
+                            "Sí",
+
+                        })
+
+                      }
+                    />
+
+                    Sí
+
+                  </label>
+
+                  <label className="flex items-center gap-2">
+
+                    <input
+                      type="radio"
+                      name={`pregunta-${index}`}
+                      checked={
+                        preguntas[pregunta]
+                        === "No"
+                      }
+                      onChange={() =>
+
+                        setPreguntas({
+
+                          ...preguntas,
+
+                          [pregunta]:
+                            "No",
+
+                        })
+
+                      }
+                    />
+
+                    No
+
+                  </label>
+
+                </div>
+
+              </div>
+
+            ))}
+
+          </div>
+
+        </div>
+
+        {/* OBSERVACIONES */}
+
         <div className="mb-10">
 
           <h2 className="text-2xl font-bold mb-4">
@@ -224,6 +343,8 @@ tratamientos médicos, observaciones...
 
         </div>
 
+        {/* CONSENTIMIENTO */}
+
         <div className="mb-10">
 
           <h2 className="text-2xl font-bold mb-4">
@@ -247,6 +368,8 @@ tratamientos médicos, observaciones...
           </label>
 
         </div>
+
+        {/* FIRMA */}
 
         <div className="mb-10">
 
@@ -272,6 +395,8 @@ tratamientos médicos, observaciones...
           />
 
         </div>
+
+        {/* BOTON */}
 
         <button
 
