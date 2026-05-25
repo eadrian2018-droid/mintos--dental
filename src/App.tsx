@@ -25,6 +25,14 @@ type Paciente = {
 
   sexo: string;
 
+  direccion?: string;
+
+  historial_clinico?: any;
+
+  consentimiento_firmado?: boolean;
+
+  firma_paciente?: string;
+
   observaciones?: any;
 
 };
@@ -175,8 +183,6 @@ function AdminApp() {
 
     if (error) {
 
-      console.error(error);
-
       alert(
         "Error subiendo imagen"
       );
@@ -196,26 +202,20 @@ function AdminApp() {
           nombreArchivo
         );
 
-    const imagenUrl =
-      data.publicUrl;
-
     setImagenPreview(
-      imagenUrl
+      data.publicUrl
     );
 
     alert(
-      "Radiografía subida correctamente"
+      "Radiografía subida"
     );
 
   }
 
   async function guardarExpediente() {
 
-    if (!pacienteAbierto?.id) {
-
+    if (!pacienteAbierto?.id)
       return;
-
-    }
 
     const { error } =
       await supabase
@@ -333,87 +333,9 @@ function AdminApp() {
           MintOS Dental
         </h1>
 
-        {/* QR */}
-
         <div className="mb-10">
 
           <QRCodePaciente />
-
-        </div>
-
-        {/* NUEVO PACIENTE */}
-
-        <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
-
-          <h2 className="text-3xl font-bold mb-8">
-            Nuevo Paciente
-          </h2>
-
-          <div className="grid md:grid-cols-2 gap-4">
-
-            <input
-              value={nombre}
-              onChange={(e)=>
-                setNombre(
-                  e.target.value
-                )
-              }
-              placeholder="Nombre"
-              className="border rounded-xl p-4"
-            />
-
-            <input
-              value={telefono}
-              onChange={(e)=>
-                setTelefono(
-                  e.target.value
-                )
-              }
-              placeholder="Teléfono"
-              className="border rounded-xl p-4"
-            />
-
-            <input
-              value={edad}
-              onChange={(e)=>
-                setEdad(
-                  e.target.value
-                )
-              }
-              placeholder="Edad"
-              className="border rounded-xl p-4"
-            />
-
-            <input
-              value={sexo}
-              onChange={(e)=>
-                setSexo(
-                  e.target.value
-                )
-              }
-              placeholder="Sexo"
-              className="border rounded-xl p-4"
-            />
-
-          </div>
-
-          <button
-            onClick={
-              guardarPaciente
-            }
-            className="
-              mt-6
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-8
-              py-4
-              rounded-2xl
-              font-bold
-            "
-          >
-            Guardar Paciente
-          </button>
 
         </div>
 
@@ -471,12 +393,6 @@ function AdminApp() {
                         Teléfono: {p.telefono}
                       </p>
 
-                      <p>
-                        Edad: {p.edad}
-                        {" | "}
-                        Sexo: {p.sexo}
-                      </p>
-
                     </div>
 
                     <button
@@ -513,7 +429,7 @@ function AdminApp() {
 
             <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
 
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-8">
 
                 <h2 className="text-4xl font-bold text-teal-700">
                   Expediente Clínico
@@ -538,6 +454,199 @@ function AdminApp() {
                 </button>
 
               </div>
+
+              {/* DATOS */}
+
+              <div className="
+                bg-gray-50
+                rounded-2xl
+                p-6
+                mb-10
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-6
+                ">
+                  Información Paciente
+                </h3>
+
+                <div className="
+                  grid
+                  md:grid-cols-2
+                  gap-4
+                ">
+
+                  <p>
+                    <strong>Nombre:</strong>
+                    {" "}
+                    {pacienteAbierto.nombre}
+                  </p>
+
+                  <p>
+                    <strong>Teléfono:</strong>
+                    {" "}
+                    {pacienteAbierto.telefono}
+                  </p>
+
+                  <p>
+                    <strong>Edad:</strong>
+                    {" "}
+                    {pacienteAbierto.edad}
+                  </p>
+
+                  <p>
+                    <strong>Sexo:</strong>
+                    {" "}
+                    {pacienteAbierto.sexo}
+                  </p>
+
+                  <p>
+                    <strong>Dirección:</strong>
+                    {" "}
+                    {pacienteAbierto.direccion}
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* HISTORIAL */}
+
+              <div className="
+                bg-gray-50
+                rounded-2xl
+                p-6
+                mb-10
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-6
+                ">
+                  Historial Médico
+                </h3>
+
+                {
+
+                  pacienteAbierto
+                    .historial_clinico
+                    ?.preguntas &&
+
+                  Object.entries(
+
+                    pacienteAbierto
+                      .historial_clinico
+                      .preguntas
+
+                  ).map(([pregunta, respuesta]) => (
+
+                    <div
+                      key={pregunta}
+                      className="
+                        border-b
+                        py-3
+                      "
+                    >
+
+                      <p className="font-semibold">
+                        {pregunta}
+                      </p>
+
+                      <p>
+                        Respuesta:
+                        {" "}
+                        {String(respuesta)}
+                      </p>
+
+                    </div>
+
+                  ))
+
+                }
+
+                <div className="mt-6">
+
+                  <h4 className="
+                    text-xl
+                    font-bold
+                    mb-2
+                  ">
+                    Observaciones
+                  </h4>
+
+                  <p>
+
+                    {
+
+                      pacienteAbierto
+                        .historial_clinico
+                        ?.observaciones
+
+                    }
+
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* CONSENTIMIENTO */}
+
+              <div className="
+                bg-gray-50
+                rounded-2xl
+                p-6
+                mb-10
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-4
+                ">
+                  Consentimiento
+                </h3>
+
+                <p>
+
+                  {
+
+                    pacienteAbierto
+                      .consentimiento_firmado
+
+                      ? "Aceptado"
+
+                      : "No aceptado"
+
+                  }
+
+                </p>
+
+                <div className="mt-6">
+
+                  <h4 className="
+                    text-xl
+                    font-bold
+                    mb-2
+                  ">
+                    Firma Paciente
+                  </h4>
+
+                  <p>
+                    {
+                      pacienteAbierto
+                        .firma_paciente
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* ODONTOGRAMA */}
 
               <Odontograma
                 observacionesDientes={
