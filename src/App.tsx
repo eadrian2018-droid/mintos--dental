@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   Routes,
@@ -16,6 +16,8 @@ import Odontograma from "./components/Odontograma";
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
 import QRCodePaciente from "./components/QRCodePaciente";
+
+import Login from "./components/Login";
 
 type Paciente = {
 
@@ -45,8 +47,9 @@ type Paciente = {
 
 function AdminApp() {
 
-  const expedienteRef =
-    useRef<HTMLDivElement>(null);
+  const [usuario,
+    setUsuario] =
+    useState<any>(null);
 
   const [busqueda,
     setBusqueda] =
@@ -74,9 +77,33 @@ function AdminApp() {
 
   useEffect(() => {
 
+    verificarSesion();
+
     cargarPacientes();
 
   }, []);
+
+  async function verificarSesion() {
+
+    const {
+
+      data: { session },
+
+    } = await supabase.auth.getSession();
+
+    setUsuario(
+      session?.user || null
+    );
+
+  }
+
+  async function cerrarSesion() {
+
+    await supabase.auth.signOut();
+
+    window.location.reload();
+
+  }
 
   async function cargarPacientes() {
 
@@ -204,7 +231,13 @@ function AdminApp() {
 
   async function generarPDF() {
 
-    if (!expedienteRef.current)
+    const elemento =
+
+      document.getElementById(
+        "pdf-area"
+      );
+
+    if (!elemento)
       return;
 
     try {
@@ -213,7 +246,7 @@ function AdminApp() {
 
         await htmlToImage.toPng(
 
-          expedienteRef.current,
+          elemento,
 
           {
 
@@ -345,15 +378,51 @@ function AdminApp() {
 
     );
 
+  if (!usuario) {
+
+    return <Login />;
+
+  }
+
   return (
 
     <div className="min-h-screen bg-gray-100 p-6">
 
       <div className="max-w-7xl mx-auto">
 
-        <h1 className="text-5xl font-bold text-teal-700 mb-10">
-          MintOS Dental
-        </h1>
+        <div className="
+          flex
+          justify-between
+          items-center
+          mb-10
+        ">
+
+          <h1 className="
+            text-5xl
+            font-bold
+            text-teal-700
+          ">
+            MintOS Dental
+          </h1>
+
+          <button
+            onClick={
+              cerrarSesion
+            }
+            className="
+              bg-red-500
+              hover:bg-red-600
+              text-white
+              px-6
+              py-3
+              rounded-2xl
+              font-bold
+            "
+          >
+            Cerrar Sesión
+          </button>
+
+        </div>
 
         <div className="mb-10">
 
@@ -363,9 +432,19 @@ function AdminApp() {
 
         {/* LISTA */}
 
-        <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
+        <div className="
+          bg-white
+          rounded-3xl
+          shadow-xl
+          p-8
+          mb-10
+        ">
 
-          <h2 className="text-3xl font-bold mb-8">
+          <h2 className="
+            text-3xl
+            font-bold
+            mb-8
+          ">
             Lista de Pacientes
           </h2>
 
@@ -407,12 +486,15 @@ function AdminApp() {
 
                     <div>
 
-                      <h3 className="text-xl font-bold">
+                      <h3 className="
+                        text-xl
+                        font-bold
+                      ">
                         {p.nombre}
                       </h3>
 
                       <p>
-                        Teléfono: {p.telefono}
+                        {p.telefono}
                       </p>
 
                     </div>
@@ -448,7 +530,7 @@ function AdminApp() {
           pacienteAbierto && (
 
             <div
-              ref={expedienteRef}
+              id="pdf-area"
               className="
                 bg-white
                 rounded-3xl
@@ -467,126 +549,6 @@ function AdminApp() {
                 Expediente Clínico
               </h2>
 
-              {/* INFO */}
-
-              <div className="
-                bg-gray-50
-                rounded-2xl
-                p-6
-                mb-10
-              ">
-
-                <h3 className="
-                  text-2xl
-                  font-bold
-                  mb-6
-                ">
-                  Información Paciente
-                </h3>
-
-                <div className="
-                  grid
-                  md:grid-cols-2
-                  gap-4
-                ">
-
-                  <p>
-                    <strong>Nombre:</strong>
-                    {" "}
-                    {pacienteAbierto.nombre}
-                  </p>
-
-                  <p>
-                    <strong>Teléfono:</strong>
-                    {" "}
-                    {pacienteAbierto.telefono}
-                  </p>
-
-                  <p>
-                    <strong>Correo:</strong>
-                    {" "}
-                    {pacienteAbierto.correo}
-                  </p>
-
-                  <p>
-                    <strong>Edad:</strong>
-                    {" "}
-                    {pacienteAbierto.edad}
-                  </p>
-
-                  <p>
-                    <strong>Sexo:</strong>
-                    {" "}
-                    {pacienteAbierto.sexo}
-                  </p>
-
-                  <p>
-                    <strong>Dirección:</strong>
-                    {" "}
-                    {pacienteAbierto.direccion}
-                  </p>
-
-                </div>
-
-              </div>
-
-              {/* HISTORIAL */}
-
-              <div className="
-                bg-gray-50
-                rounded-2xl
-                p-6
-                mb-10
-              ">
-
-                <h3 className="
-                  text-2xl
-                  font-bold
-                  mb-6
-                ">
-                  Historial Médico
-                </h3>
-
-                {
-
-                  pacienteAbierto
-                    .historial_clinico
-                    ?.preguntas &&
-
-                  Object.entries(
-
-                    pacienteAbierto
-                      .historial_clinico
-                      .preguntas
-
-                  ).map(([pregunta, respuesta]) => (
-
-                    <div
-                      key={pregunta}
-                      className="
-                        border-b
-                        py-3
-                      "
-                    >
-
-                      <p className="font-semibold">
-                        {pregunta}
-                      </p>
-
-                      <p>
-                        {String(respuesta)}
-                      </p>
-
-                    </div>
-
-                  ))
-
-                }
-
-              </div>
-
-              {/* ODONTOGRAMA */}
-
               <Odontograma
                 observacionesDientes={
                   observacionesDientes
@@ -601,8 +563,6 @@ function AdminApp() {
                   setEstadoDientes
                 }
               />
-
-              {/* RADIOGRAFIAS */}
 
               <div className="mt-10">
 
@@ -648,9 +608,11 @@ function AdminApp() {
 
               </div>
 
-              {/* BOTONES */}
-
-              <div className="flex gap-4 mt-10">
+              <div className="
+                flex
+                gap-4
+                mt-10
+              ">
 
                 <button
                   onClick={
