@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import {
 
   LayoutDashboard,
@@ -6,19 +8,11 @@ import {
 
   Calendar,
 
-  FileText,
-
-  Image,
-
-  Settings,
-
-  LogOut,
-
 } from "lucide-react";
 
 type Props = {
 
-  children: React.ReactNode;
+  children: ReactNode;
 
   setPagina: (
     pagina: string
@@ -42,6 +36,8 @@ export default function Layout({
       bg-gray-100
     ">
 
+      {/* SIDEBAR */}
+
       <div className="
         w-72
         bg-white
@@ -58,7 +54,7 @@ export default function Layout({
           MintOS
         </h1>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
 
           <button
             onClick={()=>
@@ -132,6 +128,8 @@ export default function Layout({
         </div>
 
       </div>
+
+      {/* CONTENIDO */}
 
       <div className="
         flex-1
