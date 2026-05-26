@@ -204,55 +204,72 @@ function AdminApp() {
 
   async function generarPDF() {
 
-    if (!expedienteRef.current)
+    alert("Generando PDF...");
+
+    if (!expedienteRef.current) {
+
+      alert("No se encontró expediente");
+
       return;
 
-    const canvas =
-      await html2canvas(
-        expedienteRef.current
+    }
+
+    try {
+
+      const canvas =
+        await html2canvas(
+          expedienteRef.current
+        );
+
+      const imgData =
+        canvas.toDataURL(
+          "image/png"
+        );
+
+      const pdf =
+        new jsPDF(
+          "p",
+          "mm",
+          "a4"
+        );
+
+      const width =
+        pdf.internal.pageSize.getWidth();
+
+      const height =
+        (
+          canvas.height * width
+        ) / canvas.width;
+
+      pdf.addImage(
+
+        imgData,
+
+        "PNG",
+
+        0,
+
+        0,
+
+        width,
+
+        height
+
       );
 
-    const imgData =
-      canvas.toDataURL(
-        "image/png"
+      pdf.save(
+        "expediente.pdf"
       );
 
-    const pdf =
-      new jsPDF(
-        "p",
-        "mm",
-        "a4"
+    } catch (error) {
+
+      console.error(error);
+
+      alert(
+        "Error generando PDF"
       );
 
-    const width =
-      pdf.internal.pageSize.getWidth();
-
-    const height =
-      (
-        canvas.height * width
-      ) / canvas.width;
-
-    pdf.addImage(
-
-      imgData,
-
-      "PNG",
-
-      0,
-
-      0,
-
-      width,
-
-      height
-
-    );
-
-    pdf.save(
-
-      `expediente-${pacienteAbierto?.nombre}.pdf`
-
-    );
+    }
 
   }
 
@@ -459,6 +476,8 @@ function AdminApp() {
                 </button>
 
               </div>
+
+              {/* DATOS */}
 
               <div className="
                 bg-gray-50
