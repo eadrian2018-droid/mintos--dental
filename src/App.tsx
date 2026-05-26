@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Routes,
@@ -6,6 +6,8 @@ import {
 } from "react-router-dom";
 
 import jsPDF from "jspdf";
+
+import * as htmlToImage from "html-to-image";
 
 import { supabase } from "./lib/supabase";
 
@@ -43,6 +45,9 @@ type Paciente = {
 
 function AdminApp() {
 
+  const expedienteRef =
+    useRef<HTMLDivElement>(null);
+
   const [busqueda,
     setBusqueda] =
     useState("");
@@ -75,7 +80,7 @@ function AdminApp() {
 
   async function cargarPacientes() {
 
-    const { data, error } =
+    const { data } =
       await supabase
 
         .from("pacientes")
@@ -87,7 +92,7 @@ function AdminApp() {
           { ascending: false }
         );
 
-    if (!error && data) {
+    if (data) {
 
       setPacientes(data);
 
@@ -183,8 +188,6 @@ function AdminApp() {
 
     if (error) {
 
-      console.error(error);
-
       alert(
         "Error guardando expediente"
       );
@@ -199,171 +202,83 @@ function AdminApp() {
 
   }
 
-  function generarPDF() {
+  async function generarPDF() {
 
-    if (!pacienteAbierto)
+    if (!expedienteRef.current)
       return;
 
-    const pdf =
-      new jsPDF();
+    try {
 
-    let y = 20;
+      const dataUrl =
 
-    pdf.setFontSize(22);
+        await htmlToImage.toPng(
 
-    pdf.text(
-      "Expediente Clínico Dental",
-      20,
-      y
-    );
+          expedienteRef.current,
 
-    y += 20;
+          {
 
-    pdf.setFontSize(14);
+            cacheBust: true,
 
-    pdf.text(
-      `Nombre: ${pacienteAbierto.nombre}`,
-      20,
-      y
-    );
+            pixelRatio: 2,
 
-    y += 10;
-
-    pdf.text(
-      `Teléfono: ${pacienteAbierto.telefono}`,
-      20,
-      y
-    );
-
-    y += 10;
-
-    pdf.text(
-      `Correo: ${pacienteAbierto.correo || ""}`,
-      20,
-      y
-    );
-
-    y += 10;
-
-    pdf.text(
-      `Edad: ${pacienteAbierto.edad}`,
-      20,
-      y
-    );
-
-    y += 10;
-
-    pdf.text(
-      `Sexo: ${pacienteAbierto.sexo}`,
-      20,
-      y
-    );
-
-    y += 20;
-
-    pdf.setFontSize(18);
-
-    pdf.text(
-      "Historial Médico",
-      20,
-      y
-    );
-
-    y += 15;
-
-    const preguntas =
-
-      pacienteAbierto
-        .historial_clinico
-        ?.preguntas || {};
-
-    Object.entries(
-      preguntas
-    ).forEach(
-
-      ([pregunta, respuesta]) => {
-
-        pdf.setFontSize(11);
-
-        pdf.text(
-
-          `${pregunta}: ${respuesta}`,
-
-          20,
-
-          y
+          }
 
         );
 
-        y += 8;
+      const pdf =
+        new jsPDF(
+          "p",
+          "mm",
+          "a4"
+        );
 
-      }
+      const imgProps =
 
-    );
+        pdf.getImageProperties(
+          dataUrl
+        );
 
-    y += 10;
+      const pdfWidth =
+        pdf.internal.pageSize.getWidth();
 
-    pdf.setFontSize(14);
+      const pdfHeight =
 
-    pdf.text(
-      "Observaciones:",
-      20,
-      y
-    );
+        (
+          imgProps.height *
+          pdfWidth
+        ) / imgProps.width;
 
-    y += 10;
+      pdf.addImage(
 
-    const observaciones =
+        dataUrl,
 
-      pacienteAbierto
-        .historial_clinico
-        ?.observaciones || "";
+        "PNG",
 
-    pdf.text(
-      observaciones,
-      20,
-      y
-    );
+        0,
 
-    y += 20;
+        0,
 
-    pdf.text(
+        pdfWidth,
 
-      `Consentimiento: ${
-        pacienteAbierto
-          .consentimiento_firmado
+        pdfHeight
 
-          ? "Aceptado"
+      );
 
-          : "No aceptado"
-      }`,
+      pdf.save(
 
-      20,
+        `expediente-${pacienteAbierto?.nombre}.pdf`
 
-      y
+      );
 
-    );
+    } catch (error) {
 
-    y += 10;
+      console.error(error);
 
-    pdf.text(
+      alert(
+        "Error generando PDF"
+      );
 
-      `Firma: ${
-        pacienteAbierto
-          .firma_paciente || ""
-      }`,
-
-      20,
-
-      y
-
-    );
-
-    pdf.save(
-
-      `expediente-${pacienteAbierto.nombre}.pdf`
-
-    );
+    }
 
   }
 
@@ -445,6 +360,8 @@ function AdminApp() {
           <QRCodePaciente />
 
         </div>
+
+        {/* LISTA */}
 
         <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
 
@@ -530,13 +447,16 @@ function AdminApp() {
 
           pacienteAbierto && (
 
-            <div className="
-              bg-white
-              rounded-3xl
-              shadow-xl
-              p-8
-              mb-10
-            ">
+            <div
+              ref={expedienteRef}
+              className="
+                bg-white
+                rounded-3xl
+                shadow-xl
+                p-8
+                mb-10
+              "
+            >
 
               <h2 className="
                 text-4xl
@@ -546,6 +466,126 @@ function AdminApp() {
               ">
                 Expediente Clínico
               </h2>
+
+              {/* INFO */}
+
+              <div className="
+                bg-gray-50
+                rounded-2xl
+                p-6
+                mb-10
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-6
+                ">
+                  Información Paciente
+                </h3>
+
+                <div className="
+                  grid
+                  md:grid-cols-2
+                  gap-4
+                ">
+
+                  <p>
+                    <strong>Nombre:</strong>
+                    {" "}
+                    {pacienteAbierto.nombre}
+                  </p>
+
+                  <p>
+                    <strong>Teléfono:</strong>
+                    {" "}
+                    {pacienteAbierto.telefono}
+                  </p>
+
+                  <p>
+                    <strong>Correo:</strong>
+                    {" "}
+                    {pacienteAbierto.correo}
+                  </p>
+
+                  <p>
+                    <strong>Edad:</strong>
+                    {" "}
+                    {pacienteAbierto.edad}
+                  </p>
+
+                  <p>
+                    <strong>Sexo:</strong>
+                    {" "}
+                    {pacienteAbierto.sexo}
+                  </p>
+
+                  <p>
+                    <strong>Dirección:</strong>
+                    {" "}
+                    {pacienteAbierto.direccion}
+                  </p>
+
+                </div>
+
+              </div>
+
+              {/* HISTORIAL */}
+
+              <div className="
+                bg-gray-50
+                rounded-2xl
+                p-6
+                mb-10
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-6
+                ">
+                  Historial Médico
+                </h3>
+
+                {
+
+                  pacienteAbierto
+                    .historial_clinico
+                    ?.preguntas &&
+
+                  Object.entries(
+
+                    pacienteAbierto
+                      .historial_clinico
+                      .preguntas
+
+                  ).map(([pregunta, respuesta]) => (
+
+                    <div
+                      key={pregunta}
+                      className="
+                        border-b
+                        py-3
+                      "
+                    >
+
+                      <p className="font-semibold">
+                        {pregunta}
+                      </p>
+
+                      <p>
+                        {String(respuesta)}
+                      </p>
+
+                    </div>
+
+                  ))
+
+                }
+
+              </div>
+
+              {/* ODONTOGRAMA */}
 
               <Odontograma
                 observacionesDientes={
@@ -561,6 +601,8 @@ function AdminApp() {
                   setEstadoDientes
                 }
               />
+
+              {/* RADIOGRAFIAS */}
 
               <div className="mt-10">
 
@@ -606,6 +648,8 @@ function AdminApp() {
 
               </div>
 
+              {/* BOTONES */}
+
               <div className="flex gap-4 mt-10">
 
                 <button
@@ -639,7 +683,7 @@ function AdminApp() {
                     font-bold
                   "
                 >
-                  Generar PDF
+                  Generar PDF Visual
                 </button>
 
               </div>
