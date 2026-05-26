@@ -42,8 +42,6 @@ export default function Layout({
       bg-gray-100
     ">
 
-      {/* SIDEBAR */}
-
       <div className="
         w-72
         bg-white
@@ -76,7 +74,6 @@ export default function Layout({
               p-4
               rounded-2xl
               hover:bg-teal-100
-              text-left
             "
           >
 
@@ -100,7 +97,6 @@ export default function Layout({
               p-4
               rounded-2xl
               hover:bg-teal-100
-              text-left
             "
           >
 
@@ -124,7 +120,6 @@ export default function Layout({
               p-4
               rounded-2xl
               hover:bg-teal-100
-              text-left
             "
           >
 
@@ -134,88 +129,9 @@ export default function Layout({
 
           </button>
 
-          <button
-            className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
-              text-left
-            "
-          >
-
-            <FileText />
-
-            Tratamientos
-
-          </button>
-
-          <button
-            className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
-              text-left
-            "
-          >
-
-            <Image />
-
-            Radiografías
-
-          </button>
-
-          <button
-            className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
-              text-left
-            "
-          >
-
-            <Settings />
-
-            Configuración
-
-          </button>
-
-        </div>
-
-        <div className="mt-20">
-
-          <button
-            className="
-              flex
-              items-center
-              gap-4
-              text-red-500
-              hover:text-red-700
-            "
-          >
-
-            <LogOut />
-
-            Cerrar Sesión
-
-          </button>
-
         </div>
 
       </div>
-
-      {/* CONTENT */}
 
       <div className="
         flex-1
