@@ -37,7 +37,7 @@ type Paciente = {
 
   firma_paciente?: string;
 
-  observaciones?: any;
+  observaciones_dientes?: any;
 
 };
 
@@ -161,7 +161,7 @@ function AdminApp() {
 
         .update({
 
-          observaciones: {
+          observaciones_dientes: {
 
             dientes:
               observacionesDientes,
@@ -182,6 +182,8 @@ function AdminApp() {
         );
 
     if (error) {
+
+      console.error(error);
 
       alert(
         "Error guardando expediente"
@@ -374,13 +376,13 @@ function AdminApp() {
     );
 
     if (
-      paciente.observaciones
+      paciente.observaciones_dientes
     ) {
 
       setObservacionesDientes(
 
         paciente
-          .observaciones
+          .observaciones_dientes
           .dientes || {}
 
       );
@@ -388,7 +390,7 @@ function AdminApp() {
       setEstadoDientes(
 
         paciente
-          .observaciones
+          .observaciones_dientes
           .estados || {}
 
       );
@@ -396,7 +398,7 @@ function AdminApp() {
       setImagenPreview(
 
         paciente
-          .observaciones
+          .observaciones_dientes
           .imagen || ""
 
       );
