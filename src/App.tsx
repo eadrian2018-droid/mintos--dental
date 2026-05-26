@@ -1,9 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   Routes,
   Route,
 } from "react-router-dom";
+
+import jsPDF from "jspdf";
+
+import html2canvas from "html2canvas";
 
 import { supabase } from "./lib/supabase";
 
@@ -20,6 +24,8 @@ type Paciente = {
   nombre: string;
 
   telefono: string;
+
+  correo?: string;
 
   edad: string;
 
@@ -38,6 +44,9 @@ type Paciente = {
 };
 
 function AdminApp() {
+
+  const expedienteRef =
+    useRef<HTMLDivElement>(null);
 
   const [busqueda,
     setBusqueda] =
@@ -189,6 +198,60 @@ function AdminApp() {
 
     alert(
       "Expediente guardado"
+    );
+
+  }
+
+  async function generarPDF() {
+
+    if (!expedienteRef.current)
+      return;
+
+    const canvas =
+      await html2canvas(
+        expedienteRef.current
+      );
+
+    const imgData =
+      canvas.toDataURL(
+        "image/png"
+      );
+
+    const pdf =
+      new jsPDF(
+        "p",
+        "mm",
+        "a4"
+      );
+
+    const width =
+      pdf.internal.pageSize.getWidth();
+
+    const height =
+      (
+        canvas.height * width
+      ) / canvas.width;
+
+    pdf.addImage(
+
+      imgData,
+
+      "PNG",
+
+      0,
+
+      0,
+
+      width,
+
+      height
+
+    );
+
+    pdf.save(
+
+      `expediente-${pacienteAbierto?.nombre}.pdf`
+
     );
 
   }
@@ -360,7 +423,16 @@ function AdminApp() {
 
           pacienteAbierto && (
 
-            <div className="bg-white rounded-3xl shadow-xl p-8 mb-10">
+            <div
+              ref={expedienteRef}
+              className="
+                bg-white
+                rounded-3xl
+                shadow-xl
+                p-8
+                mb-10
+              "
+            >
 
               <div className="flex justify-between items-center mb-8">
 
@@ -387,8 +459,6 @@ function AdminApp() {
                 </button>
 
               </div>
-
-              {/* DATOS */}
 
               <div className="
                 bg-gray-50
@@ -421,6 +491,12 @@ function AdminApp() {
                     <strong>Teléfono:</strong>
                     {" "}
                     {pacienteAbierto.telefono}
+                  </p>
+
+                  <p>
+                    <strong>Correo:</strong>
+                    {" "}
+                    {pacienteAbierto.correo}
                   </p>
 
                   <p>
@@ -642,23 +718,43 @@ function AdminApp() {
 
               </div>
 
-              <button
-                onClick={
-                  guardarExpediente
-                }
-                className="
-                  mt-8
-                  bg-teal-600
-                  hover:bg-teal-700
-                  text-white
-                  px-8
-                  py-4
-                  rounded-2xl
-                  font-bold
-                "
-              >
-                Guardar Expediente
-              </button>
+              <div className="flex gap-4 mt-10">
+
+                <button
+                  onClick={
+                    guardarExpediente
+                  }
+                  className="
+                    bg-teal-600
+                    hover:bg-teal-700
+                    text-white
+                    px-8
+                    py-4
+                    rounded-2xl
+                    font-bold
+                  "
+                >
+                  Guardar Expediente
+                </button>
+
+                <button
+                  onClick={
+                    generarPDF
+                  }
+                  className="
+                    bg-blue-600
+                    hover:bg-blue-700
+                    text-white
+                    px-8
+                    py-4
+                    rounded-2xl
+                    font-bold
+                  "
+                >
+                  Generar PDF
+                </button>
+
+              </div>
 
             </div>
 
