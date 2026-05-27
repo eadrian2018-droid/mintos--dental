@@ -261,6 +261,14 @@ export default function AgendaCalendar() {
 
           snapDuration="00:15:00"
 
+          slotLabelInterval="01:00"
+
+          slotLabelFormat={{
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+          }}
+
           allDaySlot={false}
 
         />
