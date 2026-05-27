@@ -132,8 +132,6 @@ export default function AgendaCalendar() {
 
     if (error) {
 
-      console.log(error);
-
       alert(
         "Error creando cita"
       );
@@ -146,29 +144,198 @@ export default function AgendaCalendar() {
 
   }
 
-  async function borrarEvento(
+  async function editarCita(
     evento: Evento
   ) {
 
-    const confirmar =
+    const accion =
 
-      confirm(
-        `¿Eliminar cita de ${evento.title}?`
+      prompt(
+
+`Editar cita:
+
+1 = Cambiar nombre
+2 = Cambiar duración
+3 = Mover +1 hora
+4 = Mover -1 hora
+5 = Eliminar`
+
       );
 
-    if (!confirmar)
-      return;
+    if (accion === "1") {
 
-    await supabase
+      const nuevoNombre =
 
-      .from("citas")
+        prompt(
+          "Nuevo nombre",
+          evento.title
+        );
 
-      .delete()
+      if (!nuevoNombre)
+        return;
 
-      .eq(
-        "id",
-        evento.id
-      );
+      await supabase
+
+        .from("citas")
+
+        .update({
+
+          paciente:
+            nuevoNombre,
+
+        })
+
+        .eq(
+          "id",
+          evento.id
+        );
+
+    }
+
+    if (accion === "2") {
+
+      const horas =
+
+        prompt(
+          "Duración en horas"
+        );
+
+      const duracion =
+
+        Number(horas || 1);
+
+      const nuevoFin =
+
+        new Date(
+          evento.start.getTime() +
+          duracion *
+          60 *
+          60 *
+          1000
+        );
+
+      await supabase
+
+        .from("citas")
+
+        .update({
+
+          fin: nuevoFin,
+
+        })
+
+        .eq(
+          "id",
+          evento.id
+        );
+
+    }
+
+    if (accion === "3") {
+
+      const nuevoInicio =
+
+        new Date(
+          evento.start.getTime() +
+          60 *
+          60 *
+          1000
+        );
+
+      const nuevoFin =
+
+        new Date(
+          evento.end.getTime() +
+          60 *
+          60 *
+          1000
+        );
+
+      await supabase
+
+        .from("citas")
+
+        .update({
+
+          inicio:
+            nuevoInicio,
+
+          fin:
+            nuevoFin,
+
+        })
+
+        .eq(
+          "id",
+          evento.id
+        );
+
+    }
+
+    if (accion === "4") {
+
+      const nuevoInicio =
+
+        new Date(
+          evento.start.getTime() -
+          60 *
+          60 *
+          1000
+        );
+
+      const nuevoFin =
+
+        new Date(
+          evento.end.getTime() -
+          60 *
+          60 *
+          1000
+        );
+
+      await supabase
+
+        .from("citas")
+
+        .update({
+
+          inicio:
+            nuevoInicio,
+
+          fin:
+            nuevoFin,
+
+        })
+
+        .eq(
+          "id",
+          evento.id
+        );
+
+    }
+
+    if (accion === "5") {
+
+      const confirmar =
+
+        confirm(
+          `¿Eliminar cita de ${evento.title}?`
+        );
+
+      if (!confirmar)
+        return;
+
+      await supabase
+
+        .from("citas")
+
+        .delete()
+
+        .eq(
+          "id",
+          evento.id
+        );
+
+    }
 
     cargarCitas();
 
@@ -259,8 +426,8 @@ export default function AgendaCalendar() {
               crearCita
             }
 
-            onDoubleClickEvent={
-              borrarEvento
+            onSelectEvent={
+              editarCita
             }
 
           />
