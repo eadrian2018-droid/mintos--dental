@@ -13,11 +13,11 @@ import Layout from "./components/Layout";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/dashboardNEW";
 
-import Pacientes from "./pages/pacientes";
+import Pacientes from "./pages/pacientesNEW";
 
-import Agenda from "./pages/agenda";
+import Agenda from "./pages/agendaNEW";
 
 function AdminApp() {
 
