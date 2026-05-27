@@ -1,49 +1,194 @@
 interface Props {
-  color?: string;
+
+  colores?: {
+
+    oclusal?: string;
+
+    vestibular?: string;
+
+    distal?: string;
+
+    mesial?: string;
+
+  };
+
   invertido?: boolean;
+
+  onZonaClick?: (
+    zona: string
+  ) => void;
+
 }
 
 export default function Incisor({
-  color = "white",
+
+  colores = {},
+
   invertido = false,
+
+  onZonaClick,
+
 }: Props) {
 
   return (
 
     <svg
-      width="58"
-      height="145"
-      viewBox="0 0 58 145"
+
+      width="60"
+
+      height="155"
+
+      viewBox="0 0 60 155"
 
       style={{
+
         transform:
+
           invertido
+
             ? "rotate(180deg)"
-            : "none"
+
+            : "none",
+
+        cursor: "pointer",
+
       }}
     >
 
+      {/* OCLUSAL */}
+
       <path
+
         d="
-          M16 18
-          Q29 0 42 18
-          Q44 38 40 72
-          Q38 92 34 110
-          Q31 128 29 142
-          Q27 128 24 110
-          Q20 92 18 72
-          Q14 38 16 18
+
+          M16 12
+
+          L30 12
+
+          L30 76
+
+          L12 76
+
           Z
+
         "
 
-        fill={color}
+        fill={
+          colores.oclusal ||
+          "white"
+        }
 
         stroke="#94a3b8"
 
-        strokeWidth="2.5"
+        strokeWidth="2"
+
+        onClick={() =>
+          onZonaClick?.(
+            "oclusal"
+          )
+        }
+      />
+
+      {/* VESTIBULAR */}
+
+      <path
+
+        d="
+
+          M30 12
+
+          L44 12
+
+          L48 76
+
+          L30 76
+
+          Z
+
+        "
+
+        fill={
+          colores.vestibular ||
+          "white"
+        }
+
+        stroke="#94a3b8"
+
+        strokeWidth="2"
+
+        onClick={() =>
+          onZonaClick?.(
+            "vestibular"
+          )
+        }
+      />
+
+      {/* DISTAL */}
+
+      <path
+
+        d="
+
+          M12 76
+
+          L30 76
+
+          L26 154
+
+          Z
+
+        "
+
+        fill={
+          colores.distal ||
+          "white"
+        }
+
+        stroke="#94a3b8"
+
+        strokeWidth="2"
+
+        onClick={() =>
+          onZonaClick?.(
+            "distal"
+          )
+        }
+      />
+
+      {/* MESIAL */}
+
+      <path
+
+        d="
+
+          M30 76
+
+          L48 76
+
+          L34 154
+
+          Z
+
+        "
+
+        fill={
+          colores.mesial ||
+          "white"
+        }
+
+        stroke="#94a3b8"
+
+        strokeWidth="2"
+
+        onClick={() =>
+          onZonaClick?.(
+            "mesial"
+          )
+        }
       />
 
     </svg>
 
   );
+
 }
