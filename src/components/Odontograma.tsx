@@ -634,74 +634,80 @@ Observaciones clínicas...
 
                 Object.entries(
                   zonasSeleccionadas
-                ).map(([zona, tratamientos])=>(
+                ).map(([zona, tratamientos]) => {
 
-                  <div
+                  const lista =
+                    (tratamientos || []) as string[];
 
-                    key={zona}
+                  return (
 
-                    className="
-                      border
-                      rounded-2xl
-                      p-4
-                    "
-                  >
+                    <div
 
-                    <h4 className="
-                      font-bold
-                      mb-3
-                      capitalize
-                    ">
+                      key={zona}
 
-                      {zona}
+                      className="
+                        border
+                        rounded-2xl
+                        p-4
+                      "
+                    >
 
-                    </h4>
+                      <h4 className="
+                        font-bold
+                        mb-3
+                        capitalize
+                      ">
 
-                    <div className="
-                      flex
-                      flex-wrap
-                      gap-2
-                    ">
+                        {zona}
 
-                      {
+                      </h4>
 
-                        (tratamientos || [])
-                        .map((t)=>(
+                      <div className="
+                        flex
+                        flex-wrap
+                        gap-2
+                      ">
 
-                          <div
+                        {
 
-                            key={t}
+                          lista.map((t)=>(
 
-                            className="
-                              px-3
-                              py-1
-                              rounded-full
-                              text-white
-                              text-sm
-                              font-semibold
-                            "
+                            <div
 
-                            style={{
+                              key={t}
 
-                              backgroundColor:
-                                coloresTratamientos[t]
+                              className="
+                                px-3
+                                py-1
+                                rounded-full
+                                text-white
+                                text-sm
+                                font-semibold
+                              "
 
-                            }}
-                          >
+                              style={{
 
-                            {t}
+                                backgroundColor:
+                                  coloresTratamientos[t]
 
-                          </div>
+                              }}
+                            >
 
-                        ))
+                              {t}
 
-                      }
+                            </div>
+
+                          ))
+
+                        }
+
+                      </div>
 
                     </div>
 
-                  </div>
+                  );
 
-                ))
+                })
 
               }
 
