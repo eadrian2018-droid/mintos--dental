@@ -12,11 +12,21 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 const localizer =
   momentLocalizer(moment);
 
+type Evento = {
+
+  title: string;
+
+  start: Date;
+
+  end: Date;
+
+};
+
 export default function AgendaCalendar() {
 
   const [eventos,
     setEventos] =
-    useState<any[]>([
+    useState<Evento[]>([
 
       {
 
@@ -36,7 +46,10 @@ export default function AgendaCalendar() {
   function crearCita({
     start,
     end,
-  }: any) {
+  }: {
+    start: Date;
+    end: Date;
+  }) {
 
     const nombre =
 
@@ -85,9 +98,11 @@ export default function AgendaCalendar() {
         p-6
       ">
 
-        <div style={{
-          height: "75vh",
-        }}>
+        <div
+          style={{
+            height: "75vh",
+          }}
+        >
 
           <Calendar
 
