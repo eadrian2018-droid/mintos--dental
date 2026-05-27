@@ -4,15 +4,30 @@ import {
   Navigate,
 } from "react-router-dom";
 
+import { useState } from "react";
+
 import Layout from "./components/Layout";
+
+import Login from "./components/Login";
+
+import Dashboard from "./pages/dashboardNEW";
 
 import Pacientes from "./pages/pacientesNEW";
 
 import AgendaCalendar from "./pages/agendaCalendar";
 
-import PacienteDetalle from "./pages/pacientedetalle";
+import PacienteDetalle from "./pages/pacientedetalle.tsx";
 
 export default function App() {
+
+  const [usuario] =
+    useState(true);
+
+  if (!usuario) {
+
+    return <Login />;
+
+  }
 
   return (
 
@@ -26,8 +41,13 @@ export default function App() {
         <Route
           index
           element={
-            <Navigate to="/agenda" />
+            <Navigate to="/dashboard" />
           }
+        />
+
+        <Route
+          path="/dashboard"
+          element={<Dashboard />}
         />
 
         <Route
