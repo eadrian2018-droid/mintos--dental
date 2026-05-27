@@ -88,7 +88,6 @@ export default function AgendaCalendar() {
 
   async function crearCita({
     start,
-    end,
   }: any) {
 
     const nombre =
