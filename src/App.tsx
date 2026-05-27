@@ -11,7 +11,7 @@ import Pacientes from "./pages/pacientesNEW";
 
 import AgendaCalendar from "./pages/agendaCalendar";
 
-import PacienteDetalle from "./pages/pacienteDetalle";
+import PacienteDetalle from "./pages/pacientedetalle";
 
 export default function App() {
 
