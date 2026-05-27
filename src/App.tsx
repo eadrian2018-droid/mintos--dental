@@ -17,7 +17,7 @@ import Dashboard from "./pages/dashboardNEW";
 
 import Pacientes from "./pages/pacientesNEW";
 
-import Agenda from "./pages/agendaNEW";
+import Agenda from "./pages/agendaCalendar";
 
 function AdminApp() {
 
