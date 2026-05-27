@@ -10,6 +10,8 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import Modal from "react-modal";
 
+import Select from "react-select";
+
 import { supabase } from "../lib/supabase";
 
 type Evento = {
@@ -419,6 +421,16 @@ export default function AgendaCalendar() {
 
   }
 
+  const opcionesPacientes =
+
+    pacientes.map((p)=>({
+
+      value: p.id,
+
+      label: p.nombre,
+
+    }));
+
   return (
 
     <div>
@@ -565,59 +577,59 @@ export default function AgendaCalendar() {
 
         <div className="space-y-5">
 
-          <select
+          <div>
 
-            value={pacienteId || ""}
+            <label className="
+              block
+              mb-2
+              font-semibold
+            ">
+              Paciente
+            </label>
 
-            onChange={(e)=>{
+            <Select
 
-              const id =
-                Number(
-                  e.target.value
+              options={
+                opcionesPacientes
+              }
+
+              placeholder="
+                Buscar o escribir paciente...
+              "
+
+              isClearable
+
+              onChange={(option:any)=>{
+
+                if (!option) {
+
+                  setPacienteId(null);
+
+                  setNombre("");
+
+                  return;
+
+                }
+
+                setPacienteId(
+                  option.value
                 );
 
-              const paciente =
-                pacientes.find(
-                  (p)=>
-                    p.id === id
+                setNombre(
+                  option.label
                 );
 
-              setPacienteId(id);
+              }}
 
-              setNombre(
-                paciente?.nombre || ""
-              );
+              onInputChange={(value)=>{
 
-            }}
+                setNombre(value);
 
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
-          >
+              }}
 
-            <option value="">
-              Seleccionar paciente
-            </option>
+            />
 
-            {
-
-              pacientes.map((p)=>(
-
-                <option
-                  key={p.id}
-                  value={p.id}
-                >
-                  {p.nombre}
-                </option>
-
-              ))
-
-            }
-
-          </select>
+          </div>
 
           <select
 
