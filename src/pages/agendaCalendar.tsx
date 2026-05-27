@@ -18,7 +18,7 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 const localizer =
   momentLocalizer(moment);
 
-const DnDCalendar =
+const DnDCalendar: any =
   withDragAndDrop(Calendar);
 
 type Evento = {
@@ -42,10 +42,7 @@ export default function AgendaCalendar() {
   function crearCita({
     start,
     end,
-  }: {
-    start: Date;
-    end: Date;
-  }) {
+  }: any) {
 
     const nombre =
 
