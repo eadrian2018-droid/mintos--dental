@@ -20,6 +20,10 @@ type Evento = {
 
   end: string;
 
+  backgroundColor?: string;
+
+  borderColor?: string;
+
 };
 
 export default function AgendaCalendar() {
@@ -33,6 +37,23 @@ export default function AgendaCalendar() {
     cargarCitas();
 
   }, []);
+
+  function colorEstado(
+    estado: string
+  ) {
+
+    if (estado === "confirmada")
+      return "#16a34a";
+
+    if (estado === "cancelada")
+      return "#dc2626";
+
+    if (estado === "tratamiento")
+      return "#2563eb";
+
+    return "#eab308";
+
+  }
 
   async function cargarCitas() {
 
@@ -69,6 +90,16 @@ export default function AgendaCalendar() {
 
         end:
           cita.fin,
+
+        backgroundColor:
+          colorEstado(
+            cita.estado
+          ),
+
+        borderColor:
+          colorEstado(
+            cita.estado
+          ),
 
       }));
 
@@ -120,6 +151,9 @@ export default function AgendaCalendar() {
 
             fin,
 
+            estado:
+              "pendiente",
+
           },
 
         ]);
@@ -165,24 +199,35 @@ export default function AgendaCalendar() {
 
   }
 
-  async function borrarCita(
+  async function editarEstado(
     info: any
   ) {
 
-    const confirmar =
+    const estado =
 
-      confirm(
-        `¿Eliminar cita de ${info.event.title}?`
+      prompt(
+
+`Estado:
+
+pendiente
+confirmada
+tratamiento
+cancelada`
+
       );
 
-    if (!confirmar)
+    if (!estado)
       return;
 
     await supabase
 
       .from("citas")
 
-      .delete()
+      .update({
+
+        estado,
+
+      })
 
       .eq(
         "id",
@@ -248,7 +293,7 @@ export default function AgendaCalendar() {
           }
 
           eventClick={
-            borrarCita
+            editarEstado
           }
 
           height="80vh"
