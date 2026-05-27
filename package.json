@@ -27,6 +27,7 @@
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dom": "^19.2.6",
+    "react-modal": "^3.16.3",
     "react-qr-code": "^2.0.21",
     "react-router-dom": "^7.15.1"
   },

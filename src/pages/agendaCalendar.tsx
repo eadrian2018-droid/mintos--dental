@@ -8,6 +8,8 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 
 import interactionPlugin from "@fullcalendar/interaction";
 
+import Modal from "react-modal";
+
 import { supabase } from "../lib/supabase";
 
 type Evento = {
@@ -24,13 +26,37 @@ type Evento = {
 
   borderColor?: string;
 
+  extendedProps?: {
+
+    estado?: string;
+
+  };
+
 };
+
+Modal.setAppElement("#root");
 
 export default function AgendaCalendar() {
 
   const [eventos,
     setEventos] =
     useState<Evento[]>([]);
+
+  const [modalOpen,
+    setModalOpen] =
+    useState(false);
+
+  const [eventoSeleccionado,
+    setEventoSeleccionado] =
+    useState<any>(null);
+
+  const [nombre,
+    setNombre] =
+    useState("");
+
+  const [estado,
+    setEstado] =
+    useState("pendiente");
 
   useEffect(() => {
 
@@ -101,6 +127,13 @@ export default function AgendaCalendar() {
             cita.estado
           ),
 
+        extendedProps: {
+
+          estado:
+            cita.estado,
+
+        },
+
       }));
 
     setEventos(
@@ -113,13 +146,13 @@ export default function AgendaCalendar() {
     info: any
   ) {
 
-    const nombre =
+    const nombrePaciente =
 
       prompt(
         "Nombre del paciente"
       );
 
-    if (!nombre)
+    if (!nombrePaciente)
       return;
 
     const inicio =
@@ -134,39 +167,27 @@ export default function AgendaCalendar() {
         1000
       );
 
-    const { error } =
+    await supabase
 
-      await supabase
+      .from("citas")
 
-        .from("citas")
+      .insert([
 
-        .insert([
+        {
 
-          {
+          paciente:
+            nombrePaciente,
 
-            paciente:
-              nombre,
+          inicio,
 
-            inicio,
+          fin,
 
-            fin,
+          estado:
+            "pendiente",
 
-            estado:
-              "pendiente",
+        },
 
-          },
-
-        ]);
-
-    if (error) {
-
-      alert(
-        "Error creando cita"
-      );
-
-      return;
-
-    }
+      ]);
 
     cargarCitas();
 
@@ -199,24 +220,34 @@ export default function AgendaCalendar() {
 
   }
 
-  async function editarEstado(
+  function abrirModal(
     info: any
   ) {
 
-    const estado =
+    setEventoSeleccionado(
+      info.event
+    );
 
-      prompt(
+    setNombre(
+      info.event.title
+    );
 
-`Estado:
+    setEstado(
 
-pendiente
-confirmada
-tratamiento
-cancelada`
+      info.event.extendedProps
+        ?.estado ||
 
-      );
+      "pendiente"
 
-    if (!estado)
+    );
+
+    setModalOpen(true);
+
+  }
+
+  async function guardarCambios() {
+
+    if (!eventoSeleccionado)
       return;
 
     await supabase
@@ -225,14 +256,50 @@ cancelada`
 
       .update({
 
+        paciente:
+          nombre,
+
         estado,
 
       })
 
       .eq(
         "id",
-        info.event.id
+        eventoSeleccionado.id
       );
+
+    setModalOpen(false);
+
+    cargarCitas();
+
+  }
+
+  async function eliminarCita() {
+
+    if (!eventoSeleccionado)
+      return;
+
+    const confirmar =
+
+      confirm(
+        "¿Eliminar cita?"
+      );
+
+    if (!confirmar)
+      return;
+
+    await supabase
+
+      .from("citas")
+
+      .delete()
+
+      .eq(
+        "id",
+        eventoSeleccionado.id
+      );
+
+    setModalOpen(false);
 
     cargarCitas();
 
@@ -293,7 +360,7 @@ cancelada`
           }
 
           eventClick={
-            editarEstado
+            abrirModal
           }
 
           height="80vh"
@@ -319,6 +386,148 @@ cancelada`
         />
 
       </div>
+
+      <Modal
+
+        isOpen={modalOpen}
+
+        onRequestClose={()=>
+          setModalOpen(false)
+        }
+
+        className="
+          bg-white
+          p-10
+          rounded-3xl
+          max-w-xl
+          mx-auto
+          mt-40
+          shadow-2xl
+        "
+
+        overlayClassName="
+          fixed
+          inset-0
+          bg-black/40
+        "
+      >
+
+        <h2 className="
+          text-3xl
+          font-bold
+          mb-6
+        ">
+          Editar Cita
+        </h2>
+
+        <div className="space-y-5">
+
+          <input
+
+            value={nombre}
+
+            onChange={(e)=>
+              setNombre(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              rounded-xl
+              p-4
+            "
+
+            placeholder="Nombre paciente"
+
+          />
+
+          <select
+
+            value={estado}
+
+            onChange={(e)=>
+              setEstado(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              rounded-xl
+              p-4
+            "
+          >
+
+            <option value="pendiente">
+              Pendiente
+            </option>
+
+            <option value="confirmada">
+              Confirmada
+            </option>
+
+            <option value="tratamiento">
+              Tratamiento
+            </option>
+
+            <option value="cancelada">
+              Cancelada
+            </option>
+
+          </select>
+
+          <div className="
+            flex
+            gap-4
+            pt-4
+          ">
+
+            <button
+
+              onClick={
+                guardarCambios
+              }
+
+              className="
+                bg-teal-600
+                hover:bg-teal-700
+                text-white
+                px-6
+                py-3
+                rounded-xl
+                font-bold
+              "
+            >
+              Guardar
+            </button>
+
+            <button
+
+              onClick={
+                eliminarCita
+              }
+
+              className="
+                bg-red-600
+                hover:bg-red-700
+                text-white
+                px-6
+                py-3
+                rounded-xl
+                font-bold
+              "
+            >
+              Eliminar
+            </button>
+
+          </div>
+
+        </div>
+
+      </Modal>
 
     </div>
 
