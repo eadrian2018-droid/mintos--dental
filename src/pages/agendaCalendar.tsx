@@ -395,21 +395,42 @@ export default function AgendaCalendar() {
           setModalOpen(false)
         }
 
-        className="
-          bg-white
-          p-10
-          rounded-3xl
-          max-w-xl
-          mx-auto
-          mt-40
-          shadow-2xl
-        "
+        style={{
 
-        overlayClassName="
-          fixed
-          inset-0
-          bg-black/40
-        "
+          overlay: {
+
+            backgroundColor:
+              "rgba(0,0,0,0.5)",
+
+            zIndex: 9999,
+
+            display: "flex",
+
+            alignItems: "center",
+
+            justifyContent: "center",
+
+          },
+
+          content: {
+
+            position: "relative",
+
+            inset: "unset",
+
+            width: "500px",
+
+            borderRadius: "24px",
+
+            padding: "40px",
+
+            border: "none",
+
+            overflow: "hidden",
+
+          },
+
+        }}
       >
 
         <h2 className="
