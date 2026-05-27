@@ -1,29 +1,28 @@
 import { useEffect, useState } from "react";
 
-import {
-  Calendar,
-  momentLocalizer,
-  Views,
-} from "react-big-calendar";
+import FullCalendar from "@fullcalendar/react";
 
-import moment from "moment";
+import dayGridPlugin from "@fullcalendar/daygrid";
 
-import "react-big-calendar/lib/css/react-big-calendar.css";
+import timeGridPlugin from "@fullcalendar/timegrid";
+
+import interactionPlugin from "@fullcalendar/interaction";
 
 import { supabase } from "../lib/supabase";
 
-const localizer =
-  momentLocalizer(moment);
+import "@fullcalendar/daygrid/index.css";
+
+import "@fullcalendar/timegrid/index.css";
 
 type Evento = {
 
-  id: number;
+  id: string;
 
   title: string;
 
-  start: Date;
+  start: string;
 
-  end: Date;
+  end: string;
 
 };
 
@@ -63,20 +62,17 @@ export default function AgendaCalendar() {
 
       data.map((cita)=>({
 
-        id: cita.id,
+        id:
+          String(cita.id),
 
         title:
           cita.paciente,
 
         start:
-          new Date(
-            cita.inicio
-          ),
+          cita.inicio,
 
         end:
-          new Date(
-            cita.fin
-          ),
+          cita.fin,
 
       }));
 
@@ -86,9 +82,9 @@ export default function AgendaCalendar() {
 
   }
 
-  async function crearCita({
-    start,
-  }: any) {
+  async function crearCita(
+    info: any
+  ) {
 
     const nombre =
 
@@ -99,10 +95,13 @@ export default function AgendaCalendar() {
     if (!nombre)
       return;
 
+    const inicio =
+      info.start;
+
     const fin =
 
       new Date(
-        start.getTime() +
+        inicio.getTime() +
         60 *
         60 *
         1000
@@ -121,8 +120,7 @@ export default function AgendaCalendar() {
             paciente:
               nombre,
 
-            inicio:
-              start,
+            inicio,
 
             fin,
 
@@ -144,198 +142,56 @@ export default function AgendaCalendar() {
 
   }
 
-  async function editarCita(
-    evento: Evento
+  async function moverCita(
+    info: any
   ) {
 
-    const accion =
+    await supabase
 
-      prompt(
+      .from("citas")
 
-`Editar cita:
+      .update({
 
-1 = Cambiar nombre
-2 = Cambiar duración
-3 = Mover +1 hora
-4 = Mover -1 hora
-5 = Eliminar`
+        inicio:
+          info.event.start,
 
+        fin:
+          info.event.end,
+
+      })
+
+      .eq(
+        "id",
+        info.event.id
       );
 
-    if (accion === "1") {
+    cargarCitas();
 
-      const nuevoNombre =
+  }
 
-        prompt(
-          "Nuevo nombre",
-          evento.title
-        );
+  async function borrarCita(
+    info: any
+  ) {
 
-      if (!nuevoNombre)
-        return;
+    const confirmar =
 
-      await supabase
+      confirm(
+        `¿Eliminar cita de ${info.event.title}?`
+      );
 
-        .from("citas")
+    if (!confirmar)
+      return;
 
-        .update({
+    await supabase
 
-          paciente:
-            nuevoNombre,
+      .from("citas")
 
-        })
+      .delete()
 
-        .eq(
-          "id",
-          evento.id
-        );
-
-    }
-
-    if (accion === "2") {
-
-      const horas =
-
-        prompt(
-          "Duración en horas"
-        );
-
-      const duracion =
-
-        Number(horas || 1);
-
-      const nuevoFin =
-
-        new Date(
-          evento.start.getTime() +
-          duracion *
-          60 *
-          60 *
-          1000
-        );
-
-      await supabase
-
-        .from("citas")
-
-        .update({
-
-          fin: nuevoFin,
-
-        })
-
-        .eq(
-          "id",
-          evento.id
-        );
-
-    }
-
-    if (accion === "3") {
-
-      const nuevoInicio =
-
-        new Date(
-          evento.start.getTime() +
-          60 *
-          60 *
-          1000
-        );
-
-      const nuevoFin =
-
-        new Date(
-          evento.end.getTime() +
-          60 *
-          60 *
-          1000
-        );
-
-      await supabase
-
-        .from("citas")
-
-        .update({
-
-          inicio:
-            nuevoInicio,
-
-          fin:
-            nuevoFin,
-
-        })
-
-        .eq(
-          "id",
-          evento.id
-        );
-
-    }
-
-    if (accion === "4") {
-
-      const nuevoInicio =
-
-        new Date(
-          evento.start.getTime() -
-          60 *
-          60 *
-          1000
-        );
-
-      const nuevoFin =
-
-        new Date(
-          evento.end.getTime() -
-          60 *
-          60 *
-          1000
-        );
-
-      await supabase
-
-        .from("citas")
-
-        .update({
-
-          inicio:
-            nuevoInicio,
-
-          fin:
-            nuevoFin,
-
-        })
-
-        .eq(
-          "id",
-          evento.id
-        );
-
-    }
-
-    if (accion === "5") {
-
-      const confirmar =
-
-        confirm(
-          `¿Eliminar cita de ${evento.title}?`
-        );
-
-      if (!confirmar)
-        return;
-
-      await supabase
-
-        .from("citas")
-
-        .delete()
-
-        .eq(
-          "id",
-          evento.id
-        );
-
-    }
+      .eq(
+        "id",
+        info.event.id
+      );
 
     cargarCitas();
 
@@ -361,78 +217,53 @@ export default function AgendaCalendar() {
         p-6
       ">
 
-        <div
-          style={{
-            height: "80vh",
-          }}
-        >
+        <FullCalendar
 
-          <Calendar
+          plugins={[
 
-            localizer={
-              localizer
-            }
+            dayGridPlugin,
 
-            events={
-              eventos
-            }
+            timeGridPlugin,
 
-            startAccessor="start"
+            interactionPlugin,
 
-            endAccessor="end"
+          ]}
 
-            selectable
+          initialView="timeGridWeek"
 
-            popup
+          selectable
 
-            step={30}
+          editable
 
-            timeslots={2}
+          events={
+            eventos
+          }
 
-            defaultView={
-              Views.WEEK
-            }
+          select={
+            crearCita
+          }
 
-            views={[
-              Views.MONTH,
-              Views.WEEK,
-              Views.DAY,
-              Views.AGENDA,
-            ]}
+          eventDrop={
+            moverCita
+          }
 
-            min={
-              new Date(
-                0,
-                0,
-                0,
-                8,
-                0,
-                0
-              )
-            }
+          eventResize={
+            moverCita
+          }
 
-            max={
-              new Date(
-                0,
-                0,
-                0,
-                20,
-                0,
-                0
-              )
-            }
+          eventClick={
+            borrarCita
+          }
 
-            onSelectSlot={
-              crearCita
-            }
+          height="80vh"
 
-            onSelectEvent={
-              editarCita
-            }
+          slotMinTime="08:00:00"
 
-          />
+          slotMaxTime="20:00:00"
 
-        </div>
+          allDaySlot={false}
+
+        />
 
       </div>
 
