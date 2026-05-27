@@ -50,11 +50,6 @@ export default function Odontograma({
 
 }: Props) {
 
-  const [seleccionado,
-    setSeleccionado] =
-
-    useState<number | null>(null);
-
   const [tratamiento,
     setTratamiento] =
 
@@ -141,8 +136,6 @@ export default function Odontograma({
     zona: keyof ZonaDiente
 
   ) {
-
-    setSeleccionado(numero);
 
     const actuales =
 
@@ -381,16 +374,6 @@ export default function Odontograma({
     );
   }
 
-  const zonasSeleccionadas =
-
-    seleccionado
-
-    ? estadoDientes[
-        seleccionado
-      ] || {}
-
-    : {};
-
   return (
 
     <div className="
@@ -585,164 +568,268 @@ export default function Odontograma({
 
       </div>
 
-      {
+      <div className="
+        bg-white
+        rounded-3xl
+        shadow-xl
+        p-8
+      ">
 
-        seleccionado && (
+        <h3 className="
+          text-2xl
+          font-bold
+          text-teal-700
+          mb-8
+        ">
 
-          <div className="
-            bg-white
-            rounded-3xl
-            shadow-xl
-            p-8
-          ">
+          Tratamientos Activos
 
-            <h3 className="
-              text-2xl
-              font-bold
-              text-teal-700
-              mb-6
-            ">
+        </h3>
 
-              Diente {seleccionado}
+        <div className="
+          space-y-6
+        ">
 
-            </h3>
+          {
 
-            <textarea
+            Object.entries(
+              estadoDientes
+            ).map(([numero, zonas]) => {
 
-              value={
+              const numeroDiente =
+                Number(numero);
 
-                observacionesDientes[
-                  seleccionado
-                ] || ""
+              return (
 
-              }
+                <div
 
-              onChange={(e)=>
+                  key={numero}
 
-                setObservacionesDientes({
+                  className="
+                    border
+                    border-slate-200
+                    rounded-3xl
+                    p-6
+                    shadow-sm
+                  "
+                >
 
-                  ...observacionesDientes,
+                  <div className="
+                    flex
+                    items-center
+                    justify-between
+                    mb-5
+                  ">
 
-                  [seleccionado]:
-                    e.target.value,
+                    <h4 className="
+                      text-xl
+                      font-bold
+                      text-slate-800
+                    ">
 
-                })
+                      Diente {numero}
 
-              }
+                    </h4>
 
-              className="
-                border
-                border-slate-300
-                rounded-2xl
-                p-4
-                w-full
-                h-32
-                mb-8
-              "
+                  </div>
 
-              placeholder="
-Observaciones clínicas...
-              "
+                  <textarea
 
-            />
+                    value={
+                      observacionesDientes[
+                        numeroDiente
+                      ] || ""
+                    }
 
-            <div className="
-              grid
-              grid-cols-2
-              gap-4
-            ">
+                    onChange={(e)=>
 
-              {
+                      setObservacionesDientes({
 
-                Object.entries(
-                  zonasSeleccionadas
-                ).map(([zona, tratamientos]) => {
+                        ...observacionesDientes,
 
-                  const lista =
-                    (tratamientos || []) as string[];
+                        [numeroDiente]:
+                          e.target.value,
 
-                  return (
+                      })
 
-                    <div
+                    }
 
-                      key={zona}
+                    className="
+                      border
+                      border-slate-300
+                      rounded-2xl
+                      p-4
+                      w-full
+                      h-28
+                      mb-6
+                    "
 
-                      className="
-                        border
-                        border-slate-200
-                        rounded-2xl
-                        p-4
-                        shadow-sm
-                      "
-                    >
+                    placeholder="
+Observaciones clínicas del diente...
+                    "
 
-                      <h4 className="
-                        font-bold
-                        mb-3
-                        capitalize
-                        text-slate-700
-                      ">
+                  />
 
-                        {zona}
+                  <div className="
+                    grid
+                    grid-cols-2
+                    gap-4
+                  ">
 
-                      </h4>
+                    {
 
-                      <div className="
-                        flex
-                        flex-wrap
-                        gap-2
-                      ">
+                      Object.entries(
+                        zonas
+                      ).map(([zona, tratamientos]) => {
 
-                        {
+                        const lista =
+                          (tratamientos || []) as string[];
 
-                          lista.map((t)=>(
+                        if (
+                          lista.length === 0
+                        ) {
 
-                            <div
-
-                              key={t}
-
-                              className="
-                                px-3
-                                py-1
-                                rounded-full
-                                text-white
-                                text-sm
-                                font-semibold
-                              "
-
-                              style={{
-
-                                backgroundColor:
-                                  coloresTratamientos[t]
-
-                              }}
-                            >
-
-                              {t}
-
-                            </div>
-
-                          ))
+                          return null;
 
                         }
 
-                      </div>
+                        return (
 
-                    </div>
+                          <div
 
-                  );
+                            key={zona}
 
-                })
+                            className="
+                              border
+                              border-slate-200
+                              rounded-2xl
+                              p-4
+                              bg-slate-50
+                            "
+                          >
 
-              }
+                            <h5 className="
+                              font-bold
+                              capitalize
+                              text-slate-700
+                              mb-3
+                            ">
 
-            </div>
+                              {zona}
 
-          </div>
+                            </h5>
 
-        )
+                            <div className="
+                              flex
+                              flex-wrap
+                              gap-2
+                            ">
 
-      }
+                              {
+
+                                lista.map((t)=>(
+
+                                  <div
+
+                                    key={t}
+
+                                    className="
+                                      flex
+                                      items-center
+                                      gap-2
+                                      px-3
+                                      py-2
+                                      rounded-full
+                                      text-white
+                                      text-sm
+                                      font-semibold
+                                    "
+
+                                    style={{
+
+                                      backgroundColor:
+                                        coloresTratamientos[t]
+
+                                    }}
+                                  >
+
+                                    <span>
+
+                                      {t}
+
+                                    </span>
+
+                                    <button
+
+                                      onClick={() => {
+
+                                        const nuevos =
+                                          lista.filter(
+
+                                            (x)=>
+                                              x !== t
+
+                                          );
+
+                                        setEstadoDientes({
+
+                                          ...estadoDientes,
+
+                                          [numeroDiente]: {
+
+                                            ...estadoDientes[
+                                              numeroDiente
+                                            ],
+
+                                            [zona]: nuevos,
+
+                                          },
+
+                                        });
+
+                                      }}
+
+                                      className="
+                                        bg-white/20
+                                        hover:bg-white/30
+                                        rounded-full
+                                        px-2
+                                      "
+                                    >
+
+                                      ✕
+
+                                    </button>
+
+                                  </div>
+
+                                ))
+
+                              }
+
+                            </div>
+
+                          </div>
+
+                        );
+
+                      })
+
+                    }
+
+                  </div>
+
+                </div>
+
+              );
+
+            })
+
+          }
+
+        </div>
+
+      </div>
 
     </div>
 
