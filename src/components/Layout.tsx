@@ -1,32 +1,6 @@
-import type { ReactNode } from "react";
+import { Link, Outlet } from "react-router-dom";
 
-import {
-
-  LayoutDashboard,
-
-  Users,
-
-  Calendar,
-
-} from "lucide-react";
-
-type Props = {
-
-  children: ReactNode;
-
-  setPagina: (
-    pagina: string
-  ) => void;
-
-};
-
-export default function Layout({
-
-  children,
-
-  setPagina,
-
-}: Props) {
+export default function Layout() {
 
   return (
 
@@ -36,109 +10,64 @@ export default function Layout({
       bg-gray-100
     ">
 
-      {/* SIDEBAR */}
-
-      <div className="
-        w-72
+      <aside className="
+        w-64
         bg-white
-        shadow-2xl
+        shadow-lg
         p-6
       ">
 
         <h1 className="
           text-4xl
           font-bold
-          text-teal-700
+          text-teal-600
           mb-10
         ">
           MintOS
         </h1>
 
-        <div className="space-y-4">
+        <nav className="
+          flex
+          flex-col
+          gap-4
+        ">
 
-          <button
-            onClick={()=>
-              setPagina(
-                "dashboard"
-              )
-            }
+          <Link
+            to="/agenda"
             className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
+              p-3
+              rounded-xl
+              hover:bg-gray-100
+              font-semibold
             "
           >
-
-            <LayoutDashboard />
-
-            Dashboard
-
-          </button>
-
-          <button
-            onClick={()=>
-              setPagina(
-                "pacientes"
-              )
-            }
-            className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
-            "
-          >
-
-            <Users />
-
-            Pacientes
-
-          </button>
-
-          <button
-            onClick={()=>
-              setPagina(
-                "agenda"
-              )
-            }
-            className="
-              flex
-              items-center
-              gap-4
-              w-full
-              p-4
-              rounded-2xl
-              hover:bg-teal-100
-            "
-          >
-
-            <Calendar />
-
             Agenda
+          </Link>
 
-          </button>
+          <Link
+            to="/pacientes"
+            className="
+              p-3
+              rounded-xl
+              hover:bg-gray-100
+              font-semibold
+            "
+          >
+            Pacientes
+          </Link>
 
-        </div>
+        </nav>
 
-      </div>
+      </aside>
 
-      {/* CONTENIDO */}
-
-      <div className="
+      <main className="
         flex-1
-        p-10
+        p-8
       ">
 
-        {children}
+        <Outlet />
 
-      </div>
+      </main>
 
     </div>
 
