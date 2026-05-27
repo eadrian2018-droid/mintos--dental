@@ -348,22 +348,28 @@ export default function Odontograma({
           flex-col
           items-center
           hover:scale-105
-          transition
+          transition-all
+          duration-200
         "
 
         style={{
-          width: "5.5%",
-          minWidth: "42px",
-          maxWidth: "58px",
+
+          minWidth: "72px",
+
+          marginLeft: "2px",
+
+          marginRight: "2px",
+
         }}
       >
 
         {componente}
 
         <span className="
-          text-[10px]
+          text-[11px]
           font-bold
-          mt-1
+          mt-2
+          text-slate-700
         ">
 
           {numero}
@@ -391,117 +397,6 @@ export default function Odontograma({
       space-y-10
     ">
 
-      <h2 className="
-        text-3xl
-        font-bold
-        text-center
-        text-teal-700
-      ">
-
-        Odontograma Clínico
-
-      </h2>
-
-      <div className="
-        flex
-        justify-center
-      ">
-
-        <select
-
-          value={tratamiento}
-
-          onChange={(e)=>
-            setTratamiento(
-              e.target.value
-            )
-          }
-
-          className="
-            border
-            rounded-xl
-            p-3
-            text-lg
-            shadow-md
-          "
-        >
-
-          <option value="caries">
-            Caries
-          </option>
-
-          <option value="resina">
-            Resina
-          </option>
-
-          <option value="extraccion">
-            Extracción
-          </option>
-
-          <option value="corona">
-            Corona
-          </option>
-
-          <option value="implante">
-            Implante
-          </option>
-
-          <option value="endodoncia">
-            Endodoncia
-          </option>
-
-          <option value="carillas">
-            Carillas
-          </option>
-
-          <option value="puente">
-            Puente
-          </option>
-
-          <option value="protesis">
-            Prótesis
-          </option>
-
-          <option value="sellador">
-            Sellador
-          </option>
-
-          <option value="limpieza">
-            Limpieza
-          </option>
-
-          <option value="blanqueamiento">
-            Blanqueamiento
-          </option>
-
-          <option value="brackets">
-            Brackets
-          </option>
-
-          <option value="incrustacion">
-            Incrustación
-          </option>
-
-          <option value="amalgama">
-            Amalgama
-          </option>
-
-          <option value="fractura">
-            Fractura
-          </option>
-
-          <option value="movilidad">
-            Movilidad
-          </option>
-
-          <option value="ausente">
-            Ausente
-          </option>
-
-        </select>
-
-      </div>
-
       <div className="
         bg-white
         rounded-3xl
@@ -509,12 +404,136 @@ export default function Odontograma({
         p-6
       ">
 
+        <h2 className="
+          text-3xl
+          font-bold
+          text-center
+          text-teal-700
+          mb-6
+        ">
+
+          Odontograma Clínico
+
+        </h2>
+
+        <div className="
+          flex
+          justify-center
+        ">
+
+          <select
+
+            value={tratamiento}
+
+            onChange={(e)=>
+              setTratamiento(
+                e.target.value
+              )
+            }
+
+            className="
+              border
+              border-slate-300
+              rounded-2xl
+              p-4
+              text-lg
+              shadow-md
+              bg-white
+              min-w-[320px]
+            "
+          >
+
+            <option value="caries">
+              Caries
+            </option>
+
+            <option value="resina">
+              Resina
+            </option>
+
+            <option value="extraccion">
+              Extracción
+            </option>
+
+            <option value="corona">
+              Corona
+            </option>
+
+            <option value="implante">
+              Implante
+            </option>
+
+            <option value="endodoncia">
+              Endodoncia
+            </option>
+
+            <option value="carillas">
+              Carillas
+            </option>
+
+            <option value="puente">
+              Puente
+            </option>
+
+            <option value="protesis">
+              Prótesis
+            </option>
+
+            <option value="sellador">
+              Sellador
+            </option>
+
+            <option value="limpieza">
+              Limpieza
+            </option>
+
+            <option value="blanqueamiento">
+              Blanqueamiento
+            </option>
+
+            <option value="brackets">
+              Brackets
+            </option>
+
+            <option value="incrustacion">
+              Incrustación
+            </option>
+
+            <option value="amalgama">
+              Amalgama
+            </option>
+
+            <option value="fractura">
+              Fractura
+            </option>
+
+            <option value="movilidad">
+              Movilidad
+            </option>
+
+            <option value="ausente">
+              Ausente
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+      <div className="
+        bg-white
+        rounded-3xl
+        shadow-xl
+        p-8
+      ">
+
         <h3 className="
           text-center
           text-2xl
           font-bold
           text-teal-700
-          mb-6
+          mb-8
         ">
 
           MAXILAR SUPERIOR
@@ -524,7 +543,8 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[4px]
+          flex-wrap
+          gap-[10px]
         ">
 
           {superiores.map(renderDiente)}
@@ -537,7 +557,7 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-6
+        p-8
       ">
 
         <h3 className="
@@ -545,7 +565,7 @@ export default function Odontograma({
           text-2xl
           font-bold
           text-teal-700
-          mb-6
+          mb-8
         ">
 
           MAXILAR INFERIOR
@@ -555,7 +575,8 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[4px]
+          flex-wrap
+          gap-[10px]
         ">
 
           {inferiores.map(renderDiente)}
@@ -611,6 +632,7 @@ export default function Odontograma({
 
               className="
                 border
+                border-slate-300
                 rounded-2xl
                 p-4
                 w-full
@@ -647,8 +669,10 @@ Observaciones clínicas...
 
                       className="
                         border
+                        border-slate-200
                         rounded-2xl
                         p-4
+                        shadow-sm
                       "
                     >
 
@@ -656,6 +680,7 @@ Observaciones clínicas...
                         font-bold
                         mb-3
                         capitalize
+                        text-slate-700
                       ">
 
                         {zona}
