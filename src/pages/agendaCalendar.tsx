@@ -10,10 +10,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 
 import { supabase } from "../lib/supabase";
 
-import "@fullcalendar/daygrid/index.css";
-
-import "@fullcalendar/timegrid/index.css";
-
 type Evento = {
 
   id: string;
