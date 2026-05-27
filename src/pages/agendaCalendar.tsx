@@ -6,20 +6,12 @@ import {
   Views,
 } from "react-big-calendar";
 
-import withDragAndDrop from
-"react-big-calendar/lib/addons/dragAndDrop";
-
-import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
-
 import moment from "moment";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
 
 const localizer =
   momentLocalizer(moment);
-
-const DnDCalendar: any =
-  withDragAndDrop(Calendar);
 
 type Evento = {
 
@@ -53,6 +45,26 @@ export default function AgendaCalendar() {
     if (!nombre)
       return;
 
+    const horas =
+
+      prompt(
+        "Duración en horas"
+      );
+
+    const duracion =
+
+      Number(horas || 1);
+
+    const nuevoFin =
+
+      new Date(
+        start.getTime() +
+        duracion *
+        60 *
+        60 *
+        1000
+      );
+
     const nuevoEvento = {
 
       id: Date.now(),
@@ -61,7 +73,7 @@ export default function AgendaCalendar() {
 
       start,
 
-      end,
+      end: nuevoFin,
 
     };
 
@@ -72,58 +84,6 @@ export default function AgendaCalendar() {
       nuevoEvento,
 
     ]);
-
-  }
-
-  function moverEvento({
-    event,
-    start,
-    end,
-  }: any) {
-
-    const actualizados =
-
-      eventos.map((e)=>
-
-        e.id === event.id
-
-          ? {
-              ...e,
-              start,
-              end,
-            }
-
-          : e
-
-      );
-
-    setEventos(actualizados);
-
-  }
-
-  function cambiarDuracion({
-    event,
-    start,
-    end,
-  }: any) {
-
-    const actualizados =
-
-      eventos.map((e)=>
-
-        e.id === event.id
-
-          ? {
-              ...e,
-              start,
-              end,
-            }
-
-          : e
-
-      );
-
-    setEventos(actualizados);
 
   }
 
@@ -177,7 +137,7 @@ export default function AgendaCalendar() {
           }}
         >
 
-          <DnDCalendar
+          <Calendar
 
             localizer={
               localizer
@@ -192,8 +152,6 @@ export default function AgendaCalendar() {
             endAccessor="end"
 
             selectable
-
-            resizable
 
             popup
 
@@ -236,14 +194,6 @@ export default function AgendaCalendar() {
 
             onSelectSlot={
               crearCita
-            }
-
-            onEventDrop={
-              moverEvento
-            }
-
-            onEventResize={
-              cambiarDuracion
             }
 
             onDoubleClickEvent={
