@@ -98,7 +98,7 @@ export default function AgendaCalendar() {
 
       new Date(
         inicio.getTime() +
-        60 *
+        15 *
         60 *
         1000
       );
@@ -256,6 +256,10 @@ export default function AgendaCalendar() {
           slotMinTime="08:00:00"
 
           slotMaxTime="20:00:00"
+
+          slotDuration="00:15:00"
+
+          snapDuration="00:15:00"
 
           allDaySlot={false}
 
