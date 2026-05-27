@@ -76,12 +76,8 @@ export default function AgendaCalendar() {
     setPacienteId] =
     useState<number | null>(null);
 
-  const [nombre,
-    setNombre] =
-    useState("");
-
-  const [inputPaciente,
-    setInputPaciente] =
+  const [nombreManual,
+    setNombreManual] =
     useState("");
 
   const [estado,
@@ -188,12 +184,12 @@ export default function AgendaCalendar() {
 
         backgroundColor:
           colorEstado(
-            cita.estado
+            cita.estado || "pendiente"
           ),
 
         borderColor:
           colorEstado(
-            cita.estado
+            cita.estado || "pendiente"
           ),
 
         extendedProps: {
@@ -231,11 +227,9 @@ export default function AgendaCalendar() {
       info.end
     );
 
-    setNombre("");
-
-    setInputPaciente("");
-
     setPacienteId(null);
+
+    setNombreManual("");
 
     setDoctor(
       "Dr. Edgar"
@@ -251,7 +245,22 @@ export default function AgendaCalendar() {
 
   async function guardarNuevaCita() {
 
-    if (!nombre)
+    let nombreFinal =
+      nombreManual;
+
+    if (pacienteId) {
+
+      const paciente =
+        pacientes.find(
+          (p)=>
+            p.id === pacienteId
+        );
+
+      nombreFinal =
+        paciente?.nombre || "";
+    }
+
+    if (!nombreFinal)
       return;
 
     await supabase
@@ -263,7 +272,7 @@ export default function AgendaCalendar() {
         {
 
           paciente:
-            nombre,
+            nombreFinal,
 
           paciente_id:
             pacienteId,
@@ -330,11 +339,7 @@ export default function AgendaCalendar() {
       info.event.title
         .split(" - ")[0];
 
-    setNombre(
-      nombrePaciente
-    );
-
-    setInputPaciente(
+    setNombreManual(
       nombrePaciente
     );
 
@@ -381,7 +386,7 @@ export default function AgendaCalendar() {
       .update({
 
         paciente:
-          nombre,
+          nombreManual,
 
         paciente_id:
           pacienteId,
@@ -461,14 +466,6 @@ export default function AgendaCalendar() {
         ">
           Agenda y Citas
         </h1>
-
-        <p className="
-          text-gray-500
-          mt-2
-          text-lg
-        ">
-          Administración de citas del consultorio
-        </p>
 
       </div>
 
@@ -612,7 +609,7 @@ export default function AgendaCalendar() {
               mb-2
               font-semibold
             ">
-              Paciente
+              Buscar Paciente Existente
             </label>
 
             <Select
@@ -621,35 +618,17 @@ export default function AgendaCalendar() {
                 opcionesPacientes
               }
 
-              inputValue={
-                inputPaciente
-              }
-
               placeholder="
-Buscar o escribir paciente...
+Buscar paciente...
               "
 
               isClearable
-
-              onInputChange={(value)=>{
-
-                setInputPaciente(
-                  value
-                );
-
-                setNombre(value);
-
-              }}
 
               onChange={(option:any)=>{
 
                 if (!option) {
 
                   setPacienteId(null);
-
-                  setNombre("");
-
-                  setInputPaciente("");
 
                   return;
 
@@ -659,15 +638,52 @@ Buscar o escribir paciente...
                   option.value
                 );
 
-                setNombre(
-                  option.label
-                );
+                const paciente =
+                  pacientes.find(
+                    (p)=>
+                      p.id === option.value
+                  );
 
-                setInputPaciente(
-                  option.label
+                setNombreManual(
+                  paciente?.nombre || ""
                 );
 
               }}
+
+            />
+
+          </div>
+
+          <div>
+
+            <label className="
+              block
+              mb-2
+              font-semibold
+            ">
+              O escribir nuevo paciente
+            </label>
+
+            <input
+
+              value={nombreManual}
+
+              onChange={(e)=>
+                setNombreManual(
+                  e.target.value
+                )
+              }
+
+              className="
+                w-full
+                border
+                rounded-xl
+                p-4
+              "
+
+              placeholder="
+Nombre nuevo paciente
+              "
 
             />
 
