@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Calendar,
   momentLocalizer,
+  Views,
 } from "react-big-calendar";
 
 import moment from "moment";
@@ -26,22 +27,7 @@ export default function AgendaCalendar() {
 
   const [eventos,
     setEventos] =
-    useState<Evento[]>([
-
-      {
-
-        title:
-          "Paciente Demo",
-
-        start:
-          new Date(),
-
-        end:
-          new Date(),
-
-      },
-
-    ]);
+    useState<Evento[]>([]);
 
   function crearCita({
     start,
@@ -100,7 +86,7 @@ export default function AgendaCalendar() {
 
         <div
           style={{
-            height: "75vh",
+            height: "80vh",
           }}
         >
 
@@ -119,6 +105,45 @@ export default function AgendaCalendar() {
             endAccessor="end"
 
             selectable
+
+            popup
+
+            step={30}
+
+            timeslots={2}
+
+            defaultView={
+              Views.WEEK
+            }
+
+            views={[
+              Views.MONTH,
+              Views.WEEK,
+              Views.DAY,
+              Views.AGENDA,
+            ]}
+
+            min={
+              new Date(
+                0,
+                0,
+                0,
+                8,
+                0,
+                0
+              )
+            }
+
+            max={
+              new Date(
+                0,
+                0,
+                0,
+                20,
+                0,
+                0
+              )
+            }
 
             onSelectSlot={
               crearCita
