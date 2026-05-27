@@ -13,11 +13,11 @@ import Layout from "./components/Layout";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
-import Dashboard from "./pages/Dashboard";
+import Dashboard from "./pages/dashboard";
 
-import Pacientes from "./pages/Pacientes";
+import Pacientes from "./pages/pacientes";
 
-import Agenda from "./pages/Agenda";
+import Agenda from "./pages/agenda";
 
 function AdminApp() {
 
@@ -46,14 +46,6 @@ function AdminApp() {
     setUsuario(
       session?.user || null
     );
-
-  }
-
-  async function cerrarSesion() {
-
-    await supabase.auth.signOut();
-
-    window.location.reload();
 
   }
 
