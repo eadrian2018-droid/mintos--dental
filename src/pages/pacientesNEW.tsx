@@ -50,11 +50,11 @@ export default function Pacientes() {
 
   const [observacionesDientes,
     setObservacionesDientes] =
-    useState<Record<string, string>>({});
+    useState<Record<number, string>>({});
 
   const [estadoDientes,
     setEstadoDientes] =
-    useState<Record<string, string>>({});
+    useState<Record<number, string[]>>({});
 
   const [imagenPreview,
     setImagenPreview] =
@@ -300,6 +300,8 @@ export default function Pacientes() {
           .observaciones_dientes
           .estados || {}
 
+        as Record<number, string[]>
+
       );
 
       setImagenPreview(
@@ -309,6 +311,16 @@ export default function Pacientes() {
           .imagen || ""
 
       );
+
+    }
+
+    else {
+
+      setObservacionesDientes({});
+
+      setEstadoDientes({});
+
+      setImagenPreview("");
 
     }
 
