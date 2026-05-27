@@ -6,6 +6,11 @@ import {
   Views,
 } from "react-big-calendar";
 
+import withDragAndDrop from
+"react-big-calendar/lib/addons/dragAndDrop";
+
+import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+
 import moment from "moment";
 
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -13,7 +18,12 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 const localizer =
   momentLocalizer(moment);
 
+const DnDCalendar =
+  withDragAndDrop(Calendar);
+
 type Evento = {
+
+  id: number;
 
   title: string;
 
@@ -46,21 +56,101 @@ export default function AgendaCalendar() {
     if (!nombre)
       return;
 
+    const nuevoEvento = {
+
+      id: Date.now(),
+
+      title: nombre,
+
+      start,
+
+      end,
+
+    };
+
     setEventos([
 
       ...eventos,
 
-      {
-
-        title: nombre,
-
-        start,
-
-        end,
-
-      },
+      nuevoEvento,
 
     ]);
+
+  }
+
+  function moverEvento({
+    event,
+    start,
+    end,
+  }: any) {
+
+    const actualizados =
+
+      eventos.map((e)=>
+
+        e.id === event.id
+
+          ? {
+              ...e,
+              start,
+              end,
+            }
+
+          : e
+
+      );
+
+    setEventos(actualizados);
+
+  }
+
+  function cambiarDuracion({
+    event,
+    start,
+    end,
+  }: any) {
+
+    const actualizados =
+
+      eventos.map((e)=>
+
+        e.id === event.id
+
+          ? {
+              ...e,
+              start,
+              end,
+            }
+
+          : e
+
+      );
+
+    setEventos(actualizados);
+
+  }
+
+  function borrarEvento(
+    evento: Evento
+  ) {
+
+    const confirmar =
+
+      confirm(
+        `¿Eliminar cita de ${evento.title}?`
+      );
+
+    if (!confirmar)
+      return;
+
+    setEventos(
+
+      eventos.filter(
+        (e)=>
+          e.id !== evento.id
+      )
+
+    );
 
   }
 
@@ -90,7 +180,7 @@ export default function AgendaCalendar() {
           }}
         >
 
-          <Calendar
+          <DnDCalendar
 
             localizer={
               localizer
@@ -105,6 +195,8 @@ export default function AgendaCalendar() {
             endAccessor="end"
 
             selectable
+
+            resizable
 
             popup
 
@@ -147,6 +239,18 @@ export default function AgendaCalendar() {
 
             onSelectSlot={
               crearCita
+            }
+
+            onEventDrop={
+              moverEvento
+            }
+
+            onEventResize={
+              cambiarDuracion
+            }
+
+            onDoubleClickEvent={
+              borrarEvento
             }
 
           />
