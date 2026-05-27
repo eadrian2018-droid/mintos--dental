@@ -1,6 +1,38 @@
-import { Link, Outlet } from "react-router-dom";
+import {
+  Link,
+  Outlet,
+  useLocation,
+} from "react-router-dom";
 
 export default function Layout() {
+
+  const location =
+    useLocation();
+
+  function linkClasses(
+    path: string
+  ) {
+
+    return `
+
+      p-3
+      rounded-xl
+      font-semibold
+      transition
+
+      ${
+
+        location.pathname === path
+
+        ? "bg-teal-600 text-white"
+
+        : "hover:bg-gray-100 text-gray-700"
+
+      }
+
+    `;
+
+  }
 
   return (
 
@@ -11,10 +43,12 @@ export default function Layout() {
     ">
 
       <aside className="
-        w-64
+        w-72
         bg-white
         shadow-xl
         p-6
+        flex
+        flex-col
       ">
 
         <h1 className="
@@ -33,30 +67,48 @@ export default function Layout() {
         ">
 
           <Link
+            to="/dashboard"
+            className={
+              linkClasses(
+                "/dashboard"
+              )
+            }
+          >
+            Dashboard
+          </Link>
+
+          <Link
             to="/agenda"
-            className="
-              p-3
-              rounded-xl
-              hover:bg-gray-100
-              font-semibold
-            "
+            className={
+              linkClasses(
+                "/agenda"
+              )
+            }
           >
             Agenda
           </Link>
 
           <Link
             to="/pacientes"
-            className="
-              p-3
-              rounded-xl
-              hover:bg-gray-100
-              font-semibold
-            "
+            className={
+              linkClasses(
+                "/pacientes"
+              )
+            }
           >
             Pacientes
           </Link>
 
         </nav>
+
+        <div className="
+          mt-auto
+          pt-10
+          text-sm
+          text-gray-400
+        ">
+          MintOS Dental System
+        </div>
 
       </aside>
 
