@@ -1,5 +1,4 @@
 import {
-  BrowserRouter,
   Routes,
   Route,
   Navigate,
@@ -17,42 +16,38 @@ export default function App() {
 
   return (
 
-    <BrowserRouter>
+    <Routes>
 
-      <Routes>
+      <Route
+        path="/"
+        element={<Layout />}
+      >
 
         <Route
-          path="/"
-          element={<Layout />}
-        >
+          index
+          element={
+            <Navigate to="/agenda" />
+          }
+        />
 
-          <Route
-            index
-            element={
-              <Navigate to="/agenda" />
-            }
-          />
+        <Route
+          path="/agenda"
+          element={<AgendaCalendar />}
+        />
 
-          <Route
-            path="/agenda"
-            element={<AgendaCalendar />}
-          />
+        <Route
+          path="/pacientes"
+          element={<Pacientes />}
+        />
 
-          <Route
-            path="/pacientes"
-            element={<Pacientes />}
-          />
+        <Route
+          path="/paciente/:id"
+          element={<PacienteDetalle />}
+        />
 
-          <Route
-            path="/paciente/:id"
-            element={<PacienteDetalle />}
-          />
+      </Route>
 
-        </Route>
-
-      </Routes>
-
-    </BrowserRouter>
+    </Routes>
 
   );
 
