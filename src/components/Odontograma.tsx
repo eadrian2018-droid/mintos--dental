@@ -5,6 +5,18 @@ import Canino from "./teeth/Canino";
 import Premolar from "./teeth/Premolar";
 import Molar from "./teeth/Molar";
 
+interface ZonaDiente {
+
+  oclusal?: string[];
+
+  vestibular?: string[];
+
+  distal?: string[];
+
+  mesial?: string[];
+
+}
+
 interface Props {
 
   observacionesDientes:
@@ -18,12 +30,12 @@ interface Props {
     >;
 
   estadoDientes:
-    Record<number, string[]>;
+    Record<number, ZonaDiente>;
 
   setEstadoDientes:
     React.Dispatch<
       React.SetStateAction<
-        Record<number, string[]>
+        Record<number, ZonaDiente>
       >
     >;
 }
@@ -104,23 +116,40 @@ export default function Odontograma({
   };
 
   function obtenerColor(
-    tratamiento: string
+    tratamientos?: string[]
   ) {
 
+    if (
+      !tratamientos ||
+      tratamientos.length === 0
+    ) {
+
+      return "white";
+
+    }
+
     return coloresTratamientos[
-      tratamiento
-    ] || "#ffffff";
+      tratamientos[0]
+    ] || "white";
 
   }
 
-  function clickDiente(
-    numero: number
+  function clickZona(
+
+    numero: number,
+
+    zona: keyof ZonaDiente
+
   ) {
 
     setSeleccionado(numero);
 
     const actuales =
-      estadoDientes[numero] || [];
+
+      estadoDientes[numero]
+        ?.[
+          zona
+        ] || [];
 
     if (
       actuales.includes(
@@ -139,7 +168,15 @@ export default function Odontograma({
 
         ...estadoDientes,
 
-        [numero]: nuevos,
+        [numero]: {
+
+          ...estadoDientes[
+            numero
+          ],
+
+          [zona]: nuevos,
+
+        },
 
       });
 
@@ -152,7 +189,7 @@ export default function Odontograma({
     ) {
 
       alert(
-        "Máximo 4 tratamientos por diente"
+        "Máximo 4 tratamientos por zona"
       );
 
       return;
@@ -163,13 +200,21 @@ export default function Odontograma({
 
       ...estadoDientes,
 
-      [numero]: [
+      [numero]: {
 
-        ...actuales,
+        ...estadoDientes[
+          numero
+        ],
 
-        tratamiento,
+        [zona]: [
 
-      ],
+          ...actuales,
+
+          tratamiento,
+
+        ],
+
+      },
 
     });
 
@@ -179,35 +224,67 @@ export default function Odontograma({
     numero: number
   ) {
 
-    const tratamientos =
+    const zonas =
+
       estadoDientes[numero]
-      || [];
+      || {};
 
-    const colorPrincipal =
+    const colores = {
 
-      tratamientos.length > 0
+      oclusal:
+        obtenerColor(
+          zonas.oclusal
+        ),
 
-      ? obtenerColor(
-          tratamientos[0]
-        )
+      vestibular:
+        obtenerColor(
+          zonas.vestibular
+        ),
 
-      : "white";
+      distal:
+        obtenerColor(
+          zonas.distal
+        ),
+
+      mesial:
+        obtenerColor(
+          zonas.mesial
+        ),
+
+    };
 
     const invertido =
       superiores.includes(numero);
 
     let componente;
 
+    const propsDiente = {
+
+      colores,
+
+      invertido,
+
+      onZonaClick:
+        (zona:string)=>
+
+          clickZona(
+            numero,
+            zona as keyof ZonaDiente
+          ),
+
+    };
+
     if (
+
       [11,12,21,22,31,32,41,42]
       .includes(numero)
+
     ) {
 
       componente = (
 
         <Incisor
-          color={colorPrincipal}
-          invertido={invertido}
+          {...propsDiente}
         />
 
       );
@@ -215,15 +292,16 @@ export default function Odontograma({
     }
 
     else if (
+
       [13,23,33,43]
       .includes(numero)
+
     ) {
 
       componente = (
 
         <Canino
-          color={colorPrincipal}
-          invertido={invertido}
+          {...propsDiente}
         />
 
       );
@@ -231,15 +309,16 @@ export default function Odontograma({
     }
 
     else if (
+
       [14,15,24,25,34,35,44,45]
       .includes(numero)
+
     ) {
 
       componente = (
 
         <Premolar
-          color={colorPrincipal}
-          invertido={invertido}
+          {...propsDiente}
         />
 
       );
@@ -251,8 +330,7 @@ export default function Odontograma({
       componente = (
 
         <Molar
-          color={colorPrincipal}
-          invertido={invertido}
+          {...propsDiente}
         />
 
       );
@@ -265,12 +343,7 @@ export default function Odontograma({
 
         key={numero}
 
-        onClick={() =>
-          clickDiente(numero)
-        }
-
         className="
-          cursor-pointer
           flex
           flex-col
           items-center
@@ -297,44 +370,20 @@ export default function Odontograma({
 
         </span>
 
-        <div className="
-          flex
-          flex-wrap
-          justify-center
-          gap-1
-          mt-1
-        ">
-
-          {
-
-            tratamientos.map((t)=>(
-
-              <div
-
-                key={t}
-
-                className="
-                  w-2
-                  h-2
-                  rounded-full
-                "
-
-                style={{
-                  backgroundColor:
-                    obtenerColor(t)
-                }}
-              />
-
-            ))
-
-          }
-
-        </div>
-
       </div>
 
     );
   }
+
+  const zonasSeleccionadas =
+
+    seleccionado
+
+    ? estadoDientes[
+        seleccionado
+      ] || {}
+
+    : {};
 
   return (
 
@@ -362,7 +411,7 @@ export default function Odontograma({
 
           value={tratamiento}
 
-          onChange={(e) =>
+          onChange={(e)=>
             setTratamiento(
               e.target.value
             )
@@ -373,6 +422,7 @@ export default function Odontograma({
             rounded-xl
             p-3
             text-lg
+            shadow-md
           "
         >
 
@@ -456,7 +506,7 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-4
+        p-6
       ">
 
         <h3 className="
@@ -474,7 +524,7 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[2px]
+          gap-[4px]
         ">
 
           {superiores.map(renderDiente)}
@@ -487,7 +537,7 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-4
+        p-6
       ">
 
         <h3 className="
@@ -505,7 +555,7 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[2px]
+          gap-[4px]
         ">
 
           {inferiores.map(renderDiente)}
@@ -514,107 +564,140 @@ export default function Odontograma({
 
       </div>
 
-      {seleccionado && (
+      {
 
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-6
-        ">
-
-          <h3 className="
-            text-xl
-            font-bold
-            text-teal-700
-            mb-4
-          ">
-
-            Observaciones diente {seleccionado}
-
-          </h3>
-
-          <textarea
-
-            value={
-              observacionesDientes[
-                seleccionado
-              ] || ""
-            }
-
-            onChange={(e) =>
-
-              setObservacionesDientes({
-
-                ...observacionesDientes,
-
-                [seleccionado]:
-                  e.target.value,
-
-              })
-
-            }
-
-            className="
-              border
-              rounded-2xl
-              p-4
-              w-full
-              h-32
-            "
-
-            placeholder="
-Observaciones clínicas...
-            "
-
-          />
+        seleccionado && (
 
           <div className="
-            mt-6
+            bg-white
+            rounded-3xl
+            shadow-xl
+            p-8
           ">
 
-            <h4 className="
+            <h3 className="
+              text-2xl
               font-bold
-              mb-3
-              text-lg
+              text-teal-700
+              mb-6
             ">
 
-              Tratamientos del diente
+              Diente {seleccionado}
 
-            </h4>
+            </h3>
+
+            <textarea
+
+              value={
+
+                observacionesDientes[
+                  seleccionado
+                ] || ""
+
+              }
+
+              onChange={(e)=>
+
+                setObservacionesDientes({
+
+                  ...observacionesDientes,
+
+                  [seleccionado]:
+                    e.target.value,
+
+                })
+
+              }
+
+              className="
+                border
+                rounded-2xl
+                p-4
+                w-full
+                h-32
+                mb-8
+              "
+
+              placeholder="
+Observaciones clínicas...
+              "
+
+            />
 
             <div className="
-              flex
-              flex-wrap
-              gap-2
+              grid
+              grid-cols-2
+              gap-4
             ">
 
               {
 
-                (estadoDientes[
-                  seleccionado
-                ] || []).map((t)=>(
+                Object.entries(
+                  zonasSeleccionadas
+                ).map(([zona, tratamientos])=>(
 
                   <div
 
-                    key={t}
+                    key={zona}
 
                     className="
-                      px-3
-                      py-1
-                      rounded-full
-                      text-white
-                      text-sm
-                      font-semibold
+                      border
+                      rounded-2xl
+                      p-4
                     "
-
-                    style={{
-                      backgroundColor:
-                        obtenerColor(t)
-                    }}
                   >
 
-                    {t}
+                    <h4 className="
+                      font-bold
+                      mb-3
+                      capitalize
+                    ">
+
+                      {zona}
+
+                    </h4>
+
+                    <div className="
+                      flex
+                      flex-wrap
+                      gap-2
+                    ">
+
+                      {
+
+                        (tratamientos || [])
+                        .map((t)=>(
+
+                          <div
+
+                            key={t}
+
+                            className="
+                              px-3
+                              py-1
+                              rounded-full
+                              text-white
+                              text-sm
+                              font-semibold
+                            "
+
+                            style={{
+
+                              backgroundColor:
+                                coloresTratamientos[t]
+
+                            }}
+                          >
+
+                            {t}
+
+                          </div>
+
+                        ))
+
+                      }
+
+                    </div>
 
                   </div>
 
@@ -626,9 +709,9 @@ Observaciones clínicas...
 
           </div>
 
-        </div>
+        )
 
-      )}
+      }
 
     </div>
 
