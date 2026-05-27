@@ -32,6 +32,8 @@ type Evento = {
 
     doctor?: string;
 
+    paciente_id?: number;
+
   };
 
 };
@@ -67,6 +69,10 @@ export default function AgendaCalendar() {
   const [eventoSeleccionado,
     setEventoSeleccionado] =
     useState<any>(null);
+
+  const [pacienteId,
+    setPacienteId] =
+    useState<number | null>(null);
 
   const [nombre,
     setNombre] =
@@ -192,6 +198,9 @@ export default function AgendaCalendar() {
           doctor:
             cita.doctor,
 
+          paciente_id:
+            cita.paciente_id,
+
         },
 
       }));
@@ -218,6 +227,8 @@ export default function AgendaCalendar() {
 
     setNombre("");
 
+    setPacienteId(null);
+
     setDoctor(
       "Dr. Edgar"
     );
@@ -242,6 +253,9 @@ export default function AgendaCalendar() {
 
           paciente:
             nombre,
+
+          paciente_id:
+            pacienteId,
 
           inicio:
             inicioNuevo,
@@ -325,6 +339,15 @@ export default function AgendaCalendar() {
 
     );
 
+    setPacienteId(
+
+      info.event.extendedProps
+        ?.paciente_id ||
+
+      null
+
+    );
+
     setModalOpen(true);
 
   }
@@ -342,6 +365,9 @@ export default function AgendaCalendar() {
 
         paciente:
           nombre,
+
+        paciente_id:
+          pacienteId,
 
         estado,
 
@@ -365,15 +391,6 @@ export default function AgendaCalendar() {
     if (!eventoSeleccionado)
       return;
 
-    const confirmar =
-
-      confirm(
-        "¿Eliminar cita?"
-      );
-
-    if (!confirmar)
-      return;
-
     await supabase
 
       .from("citas")
@@ -388,6 +405,17 @@ export default function AgendaCalendar() {
     setModalOpen(false);
 
     cargarCitas();
+
+  }
+
+  function abrirExpediente() {
+
+    if (!pacienteId)
+      return;
+
+    window.location.href =
+
+      `/paciente/${pacienteId}`;
 
   }
 
@@ -539,13 +567,28 @@ export default function AgendaCalendar() {
 
           <select
 
-            value={nombre}
+            value={pacienteId || ""}
 
-            onChange={(e)=>
+            onChange={(e)=>{
+
+              const id =
+                Number(
+                  e.target.value
+                );
+
+              const paciente =
+                pacientes.find(
+                  (p)=>
+                    p.id === id
+                );
+
+              setPacienteId(id);
+
               setNombre(
-                e.target.value
-              )
-            }
+                paciente?.nombre || ""
+              );
+
+            }}
 
             className="
               w-full
@@ -565,7 +608,7 @@ export default function AgendaCalendar() {
 
                 <option
                   key={p.id}
-                  value={p.nombre}
+                  value={p.id}
                 >
                   {p.nombre}
                 </option>
@@ -646,6 +689,7 @@ export default function AgendaCalendar() {
 
           <div className="
             flex
+            flex-wrap
             gap-4
             pt-4
           ">
@@ -698,6 +742,25 @@ export default function AgendaCalendar() {
                     "
                   >
                     Guardar
+                  </button>
+
+                  <button
+
+                    onClick={
+                      abrirExpediente
+                    }
+
+                    className="
+                      bg-blue-600
+                      hover:bg-blue-700
+                      text-white
+                      px-6
+                      py-3
+                      rounded-xl
+                      font-bold
+                    "
+                  >
+                    Abrir Expediente
                   </button>
 
                   <button
