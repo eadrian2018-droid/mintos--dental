@@ -6,15 +6,34 @@ import { supabase } from "../lib/supabase";
 
 export default function PacienteDetalle() {
 
-  const { id } = useParams();
+  const { id } =
+    useParams();
 
   const [paciente,
     setPaciente] =
     useState<any>(null);
 
+  const [tratamientos,
+    setTratamientos] =
+    useState<any[]>([]);
+
+  const [tratamiento,
+    setTratamiento] =
+    useState("");
+
+  const [total,
+    setTotal] =
+    useState("");
+
+  const [pago,
+    setPago] =
+    useState("");
+
   useEffect(() => {
 
     cargarPaciente();
+
+    cargarTratamientos();
 
   }, []);
 
@@ -35,23 +54,132 @@ export default function PacienteDetalle() {
 
         .single();
 
-    if (data) {
-
-      setPaciente(data);
-
-    }
+    setPaciente(data);
 
   }
+
+  async function cargarTratamientos() {
+
+    const { data } =
+
+      await supabase
+
+        .from("tratamientos")
+
+        .select("*")
+
+        .eq(
+          "paciente_id",
+          id
+        )
+
+        .order(
+          "fecha",
+          {
+            ascending: false,
+          }
+        );
+
+    setTratamientos(
+      data || []
+    );
+
+  }
+
+  async function agregarTratamiento() {
+
+    const totalNumero =
+      Number(total);
+
+    const pagoNumero =
+      Number(pago);
+
+    const resta =
+      totalNumero - pagoNumero;
+
+    await supabase
+
+      .from("tratamientos")
+
+      .insert([
+
+        {
+
+          paciente_id:
+            id,
+
+          tratamiento,
+
+          total:
+            totalNumero,
+
+          pago:
+            pagoNumero,
+
+          resta,
+
+          pendiente:
+            resta > 0,
+
+        },
+
+      ]);
+
+    setTratamiento("");
+
+    setTotal("");
+
+    setPago("");
+
+    cargarTratamientos();
+
+  }
+
+  const totalGeneral =
+
+    tratamientos.reduce(
+
+      (acc, t)=>
+
+        acc + Number(t.total),
+
+      0
+
+    );
+
+  const totalPagado =
+
+    tratamientos.reduce(
+
+      (acc, t)=>
+
+        acc + Number(t.pago),
+
+      0
+
+    );
+
+  const pendienteTotal =
+
+    tratamientos.reduce(
+
+      (acc, t)=>
+
+        acc + Number(t.resta),
+
+      0
+
+    );
 
   if (!paciente) {
 
     return (
 
       <div className="
-        p-10
         text-2xl
+        font-bold
       ">
-        Cargando expediente...
+        Cargando...
       </div>
 
     );
@@ -61,11 +189,15 @@ export default function PacienteDetalle() {
   return (
 
     <div className="
-      p-10
       space-y-8
     ">
 
-      <div>
+      <div className="
+        bg-white
+        rounded-3xl
+        shadow-xl
+        p-8
+      ">
 
         <h1 className="
           text-5xl
@@ -75,92 +207,39 @@ export default function PacienteDetalle() {
           {paciente.nombre}
         </h1>
 
-        <p className="
-          text-gray-500
-          mt-2
+        <div className="
+          grid
+          grid-cols-2
+          gap-6
+          mt-6
           text-lg
         ">
-          Expediente del paciente
-        </p>
 
-      </div>
+          <div>
 
-      <div className="
-        grid
-        grid-cols-1
-        md:grid-cols-2
-        gap-6
-      ">
+            <span className="
+              font-bold
+            ">
+              Teléfono:
+            </span>
 
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-6
-        ">
+            {" "}
 
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-          ">
-            Información General
-          </h2>
-
-          <div className="
-            space-y-3
-            text-lg
-          ">
-
-            <p>
-              <strong>Nombre:</strong>{" "}
-              {paciente.nombre}
-            </p>
-
-            <p>
-              <strong>Teléfono:</strong>{" "}
-              {paciente.telefono || "-"}
-            </p>
-
-            <p>
-              <strong>Email:</strong>{" "}
-              {paciente.email || "-"}
-            </p>
-
-            <p>
-              <strong>Alergias:</strong>{" "}
-              {paciente.alergias || "-"}
-            </p>
+            {paciente.telefono}
 
           </div>
 
-        </div>
+          <div>
 
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-6
-        ">
+            <span className="
+              font-bold
+            ">
+              Email:
+            </span>
 
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-          ">
-            Observaciones
-          </h2>
+            {" "}
 
-          <div className="
-            min-h-[200px]
-            border
-            rounded-2xl
-            p-4
-            text-gray-700
-          ">
-
-            {paciente.observaciones ||
-              "Sin observaciones"}
+            {paciente.email}
 
           </div>
 
@@ -172,62 +251,309 @@ export default function PacienteDetalle() {
         bg-white
         rounded-3xl
         shadow-xl
-        p-6
+        p-8
       ">
 
-        <h2 className="
-          text-2xl
-          font-bold
-          mb-6
+        <div className="
+          flex
+          items-center
+          justify-between
+          mb-8
         ">
-          Próximamente
-        </h2>
+
+          <h2 className="
+            text-4xl
+            font-bold
+          ">
+            Tratamientos
+          </h2>
+
+        </div>
 
         <div className="
           grid
-          grid-cols-2
+          grid-cols-1
           md:grid-cols-4
           gap-4
+          mb-8
         ">
 
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
+          <input
+
+            value={tratamiento}
+
+            onChange={(e)=>
+              setTratamiento(
+                e.target.value
+              )
+            }
+
+            placeholder="
+Tratamiento
+            "
+
+            className="
+              border
+              rounded-xl
+              p-4
+            "
+
+          />
+
+          <input
+
+            value={total}
+
+            onChange={(e)=>
+              setTotal(
+                e.target.value
+              )
+            }
+
+            placeholder="
+Total
+            "
+
+            type="number"
+
+            className="
+              border
+              rounded-xl
+              p-4
+            "
+
+          />
+
+          <input
+
+            value={pago}
+
+            onChange={(e)=>
+              setPago(
+                e.target.value
+              )
+            }
+
+            placeholder="
+Pago
+            "
+
+            type="number"
+
+            className="
+              border
+              rounded-xl
+              p-4
+            "
+
+          />
+
+          <button
+
+            onClick={
+              agregarTratamiento
+            }
+
+            className="
+              bg-teal-600
+              hover:bg-teal-700
+              text-white
+              rounded-xl
+              font-bold
+              p-4
+            "
+          >
+            Agregar
+          </button>
+
+        </div>
+
+        <div className="
+          overflow-auto
+        ">
+
+          <table className="
+            w-full
+            border-collapse
           ">
-            Odontograma
+
+            <thead>
+
+              <tr className="
+                bg-gray-100
+              ">
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Fecha
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Tratamiento
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Total
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Pago
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Resta
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                ">
+                  Pendiente
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {
+
+                tratamientos.map((t)=>(
+
+                  <tr
+
+                    key={t.id}
+
+                    className="
+                      border-b
+                    "
+                  >
+
+                    <td className="
+                      p-4
+                    ">
+
+                      {
+
+                        new Date(
+                          t.fecha
+                        ).toLocaleDateString()
+
+                      }
+
+                    </td>
+
+                    <td className="
+                      p-4
+                    ">
+                      {t.tratamiento}
+                    </td>
+
+                    <td className="
+                      p-4
+                    ">
+                      ${t.total}
+                    </td>
+
+                    <td className="
+                      p-4
+                    ">
+                      ${t.pago}
+                    </td>
+
+                    <td className="
+                      p-4
+                    ">
+                      ${t.resta}
+                    </td>
+
+                    <td className="
+                      p-4
+                      font-bold
+                    ">
+
+                      {
+
+                        t.pendiente
+
+                        ? (
+
+                          <span className="
+                            text-red-600
+                          ">
+                            Sí
+                          </span>
+
+                        )
+
+                        : (
+
+                          <span className="
+                            text-green-600
+                          ">
+                            No
+                          </span>
+
+                        )
+
+                      }
+
+                    </td>
+
+                  </tr>
+
+                ))
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+        <div className="
+          flex
+          flex-wrap
+          gap-8
+          mt-8
+          text-xl
+          font-bold
+        ">
+
+          <div>
+            Total:
+            {" "}
+            ${totalGeneral}
+          </div>
+
+          <div>
+            Pagado:
+            {" "}
+            ${totalPagado}
           </div>
 
           <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
+            text-red-600
           ">
-            Radiografías
-          </div>
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Tratamientos
-          </div>
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Pagos
+            Pendiente:
+            {" "}
+            ${pendienteTotal}
           </div>
 
         </div>
