@@ -1,7 +1,11 @@
 import {
+
   Link,
+
   Outlet,
+
   useLocation,
+
 } from "react-router-dom";
 
 export default function Layout() {
@@ -67,34 +71,49 @@ export default function Layout() {
         ">
 
           <Link
+
             to="/dashboard"
+
             className={
+
               linkClasses(
                 "/dashboard"
               )
+
             }
+
           >
             Dashboard
           </Link>
 
           <Link
+
             to="/agenda"
+
             className={
+
               linkClasses(
                 "/agenda"
               )
+
             }
+
           >
             Agenda
           </Link>
 
           <Link
+
             to="/pacientes"
+
             className={
+
               linkClasses(
                 "/pacientes"
               )
+
             }
+
           >
             Pacientes
           </Link>
@@ -103,7 +122,6 @@ export default function Layout() {
 
         <div className="
           mt-auto
-          pt-10
           text-sm
           text-gray-400
         ">
