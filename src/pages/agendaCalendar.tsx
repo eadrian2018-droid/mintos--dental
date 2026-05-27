@@ -80,6 +80,10 @@ export default function AgendaCalendar() {
     setNombre] =
     useState("");
 
+  const [inputPaciente,
+    setInputPaciente] =
+    useState("");
+
   const [estado,
     setEstado] =
     useState("pendiente");
@@ -229,6 +233,8 @@ export default function AgendaCalendar() {
 
     setNombre("");
 
+    setInputPaciente("");
+
     setPacienteId(null);
 
     setDoctor(
@@ -244,6 +250,9 @@ export default function AgendaCalendar() {
   }
 
   async function guardarNuevaCita() {
+
+    if (!nombre)
+      return;
 
     await supabase
 
@@ -316,11 +325,17 @@ export default function AgendaCalendar() {
       info.event
     );
 
-    setNombre(
+    const nombrePaciente =
 
       info.event.title
-        .split(" - ")[0]
+        .split(" - ")[0];
 
+    setNombre(
+      nombrePaciente
+    );
+
+    setInputPaciente(
+      nombrePaciente
     );
 
     setEstado(
@@ -593,11 +608,25 @@ export default function AgendaCalendar() {
                 opcionesPacientes
               }
 
+              inputValue={
+                inputPaciente
+              }
+
               placeholder="
-                Buscar o escribir paciente...
+Buscar o escribir paciente...
               "
 
               isClearable
+
+              onInputChange={(value)=>{
+
+                setInputPaciente(
+                  value
+                );
+
+                setNombre(value);
+
+              }}
 
               onChange={(option:any)=>{
 
@@ -606,6 +635,8 @@ export default function AgendaCalendar() {
                   setPacienteId(null);
 
                   setNombre("");
+
+                  setInputPaciente("");
 
                   return;
 
@@ -619,11 +650,9 @@ export default function AgendaCalendar() {
                   option.label
                 );
 
-              }}
-
-              onInputChange={(value)=>{
-
-                setNombre(value);
+                setInputPaciente(
+                  option.label
+                );
 
               }}
 
