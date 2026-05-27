@@ -8,6 +8,18 @@ import { supabase } from "../lib/supabase";
 
 import Odontograma from "../components/Odontograma";
 
+interface ZonaDiente {
+
+  oclusal?: string[];
+
+  vestibular?: string[];
+
+  distal?: string[];
+
+  mesial?: string[];
+
+}
+
 type Paciente = {
 
   id?: number;
@@ -54,7 +66,9 @@ export default function Pacientes() {
 
   const [estadoDientes,
     setEstadoDientes] =
-    useState<Record<number, string[]>>({});
+    useState<
+      Record<number, ZonaDiente>
+    >({});
 
   const [imagenPreview,
     setImagenPreview] =
