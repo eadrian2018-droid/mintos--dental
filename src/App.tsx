@@ -1,240 +1,58 @@
-import { useEffect, useState } from "react";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
-import { useParams } from "react-router-dom";
+import Layout from "./components/Layout";
 
-import { supabase } from "../lib/supabase";
+import Pacientes from "./pages/pacientesNEW";
 
-export default function PacienteDetalle() {
+import AgendaCalendar from "./pages/agendaCalendar";
 
-  const { id } = useParams();
+import PacienteDetalle from "./pages/pacienteDetalle";
 
-  const [paciente,
-    setPaciente] =
-    useState<any>(null);
-
-  useEffect(() => {
-
-    cargarPaciente();
-
-  }, []);
-
-  async function cargarPaciente() {
-
-    const { data } =
-
-      await supabase
-
-        .from("pacientes")
-
-        .select("*")
-
-        .eq(
-          "id",
-          id
-        )
-
-        .single();
-
-    if (data) {
-
-      setPaciente(data);
-
-    }
-
-  }
-
-  if (!paciente) {
-
-    return (
-
-      <div className="
-        p-10
-        text-2xl
-      ">
-        Cargando expediente...
-      </div>
-
-    );
-
-  }
+export default function App() {
 
   return (
 
-    <div className="
-      p-10
-      space-y-8
-    ">
+    <BrowserRouter>
 
-      <div>
+      <Routes>
 
-        <h1 className="
-          text-5xl
-          font-bold
-          text-gray-800
-        ">
-          {paciente.nombre}
-        </h1>
+        <Route
+          path="/"
+          element={<Layout />}
+        >
 
-        <p className="
-          text-gray-500
-          mt-2
-          text-lg
-        ">
-          Expediente del paciente
-        </p>
+          <Route
+            index
+            element={
+              <Navigate to="/agenda" />
+            }
+          />
 
-      </div>
+          <Route
+            path="/pacientes"
+            element={<Pacientes />}
+          />
 
-      <div className="
-        grid
-        grid-cols-1
-        md:grid-cols-2
-        gap-6
-      ">
+          <Route
+            path="/agenda"
+            element={<AgendaCalendar />}
+          />
 
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-6
-        ">
+          <Route
+            path="/paciente/:id"
+            element={<PacienteDetalle />}
+          />
 
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-          ">
-            Información General
-          </h2>
+        </Route>
 
-          <div className="
-            space-y-3
-            text-lg
-          ">
+      </Routes>
 
-            <p>
-              <strong>Nombre:</strong>{" "}
-              {paciente.nombre}
-            </p>
-
-            <p>
-              <strong>Teléfono:</strong>{" "}
-              {paciente.telefono || "-"}
-            </p>
-
-            <p>
-              <strong>Email:</strong>{" "}
-              {paciente.email || "-"}
-            </p>
-
-            <p>
-              <strong>Alergias:</strong>{" "}
-              {paciente.alergias || "-"}
-            </p>
-
-          </div>
-
-        </div>
-
-        <div className="
-          bg-white
-          rounded-3xl
-          shadow-xl
-          p-6
-        ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-          ">
-            Observaciones
-          </h2>
-
-          <div className="
-            min-h-[200px]
-            border
-            rounded-2xl
-            p-4
-            text-gray-700
-          ">
-
-            {paciente.observaciones ||
-              "Sin observaciones"}
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div className="
-        bg-white
-        rounded-3xl
-        shadow-xl
-        p-6
-      ">
-
-        <h2 className="
-          text-2xl
-          font-bold
-          mb-6
-        ">
-          Próximamente
-        </h2>
-
-        <div className="
-          grid
-          grid-cols-2
-          md:grid-cols-4
-          gap-4
-        ">
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Odontograma
-          </div>
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Radiografías
-          </div>
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Tratamientos
-          </div>
-
-          <div className="
-            bg-gray-100
-            rounded-2xl
-            p-6
-            text-center
-            font-semibold
-          ">
-            Pagos
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
+    </BrowserRouter>
 
   );
 
