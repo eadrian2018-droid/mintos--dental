@@ -148,8 +148,7 @@ export default function AgendaCalendar() {
 
   async function cargarCitas() {
 
-    const { data,
-      error } =
+    const { data } =
 
       await supabase
 
@@ -163,16 +162,6 @@ export default function AgendaCalendar() {
             ascending: true,
           }
         );
-
-    console.log(
-      "CITAS:",
-      data
-    );
-
-    console.log(
-      "ERROR:",
-      error
-    );
 
     if (!data)
       return;
@@ -221,11 +210,6 @@ export default function AgendaCalendar() {
         },
 
       }));
-
-    console.log(
-      "EVENTOS:",
-      eventosFormateados
-    );
 
     setEventos(
       eventosFormateados
@@ -283,44 +267,37 @@ export default function AgendaCalendar() {
     if (!nombreFinal)
       return;
 
-    const { error } =
+    await supabase
 
-      await supabase
+      .from("citas")
 
-        .from("citas")
+      .insert([
 
-        .insert([
+        {
 
-          {
+          paciente:
+            nombreFinal,
 
-            paciente:
-              nombreFinal,
+          paciente_id:
+            pacienteId,
 
-            paciente_id:
-              pacienteId,
+          inicio:
+            new Date(
+              inicioNuevo
+            ).toISOString(),
 
-            inicio:
-              new Date(
-                inicioNuevo
-              ).toISOString(),
+          fin:
+            new Date(
+              finNuevo
+            ).toISOString(),
 
-            fin:
-              new Date(
-                finNuevo
-              ).toISOString(),
+          estado,
 
-            estado,
+          doctor,
 
-            doctor,
+        },
 
-          },
-
-        ]);
-
-    console.log(
-      "ERROR INSERT:",
-      error
-    );
+      ]);
 
     setModalOpen(false);
 
@@ -467,12 +444,23 @@ export default function AgendaCalendar() {
 
   function abrirExpediente() {
 
-    if (!pacienteId)
+    if (!pacienteId) {
+
+      alert(
+        "Esta cita no está conectada a un paciente existente."
+      );
+
       return;
 
-    window.location.href =
+    }
 
-      `/paciente/${pacienteId}`;
+    window.open(
+
+      `/paciente/${pacienteId}`,
+
+      "_blank"
+
+    );
 
   }
 
@@ -568,6 +556,22 @@ export default function AgendaCalendar() {
           }}
 
           allDaySlot={false}
+
+          dayHeaderClassNames={() => [
+            "bg-gray-100",
+            "text-gray-700",
+            "font-bold",
+          ]}
+
+          slotLaneClassNames={() => [
+            "bg-blue-50/30",
+            "border-gray-200",
+          ]}
+
+          slotLabelClassNames={() => [
+            "text-gray-500",
+            "font-semibold",
+          ]}
 
         />
 
