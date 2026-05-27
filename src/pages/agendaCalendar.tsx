@@ -148,7 +148,8 @@ export default function AgendaCalendar() {
 
   async function cargarCitas() {
 
-    const { data } =
+    const { data,
+      error } =
 
       await supabase
 
@@ -162,6 +163,16 @@ export default function AgendaCalendar() {
             ascending: true,
           }
         );
+
+    console.log(
+      "CITAS:",
+      data
+    );
+
+    console.log(
+      "ERROR:",
+      error
+    );
 
     if (!data)
       return;
@@ -177,10 +188,14 @@ export default function AgendaCalendar() {
           `${cita.paciente || "Paciente"} - ${cita.doctor || "Doctor"}`,
 
         start:
-          cita.inicio,
+          new Date(
+            cita.inicio
+          ).toISOString(),
 
         end:
-          cita.fin,
+          new Date(
+            cita.fin
+          ).toISOString(),
 
         backgroundColor:
           colorEstado(
@@ -206,6 +221,11 @@ export default function AgendaCalendar() {
         },
 
       }));
+
+    console.log(
+      "EVENTOS:",
+      eventosFormateados
+    );
 
     setEventos(
       eventosFormateados
@@ -263,33 +283,44 @@ export default function AgendaCalendar() {
     if (!nombreFinal)
       return;
 
-    await supabase
+    const { error } =
 
-      .from("citas")
+      await supabase
 
-      .insert([
+        .from("citas")
 
-        {
+        .insert([
 
-          paciente:
-            nombreFinal,
+          {
 
-          paciente_id:
-            pacienteId,
+            paciente:
+              nombreFinal,
 
-          inicio:
-            inicioNuevo,
+            paciente_id:
+              pacienteId,
 
-          fin:
-            finNuevo,
+            inicio:
+              new Date(
+                inicioNuevo
+              ).toISOString(),
 
-          estado,
+            fin:
+              new Date(
+                finNuevo
+              ).toISOString(),
 
-          doctor,
+            estado,
 
-        },
+            doctor,
 
-      ]);
+          },
+
+        ]);
+
+    console.log(
+      "ERROR INSERT:",
+      error
+    );
 
     setModalOpen(false);
 
@@ -308,10 +339,14 @@ export default function AgendaCalendar() {
       .update({
 
         inicio:
-          info.event.start,
+          new Date(
+            info.event.start
+          ).toISOString(),
 
         fin:
-          info.event.end,
+          new Date(
+            info.event.end
+          ).toISOString(),
 
       })
 
