@@ -30,6 +30,8 @@ type Evento = {
 
     estado?: string;
 
+    doctor?: string;
+
   };
 
 };
@@ -57,6 +59,10 @@ export default function AgendaCalendar() {
   const [estado,
     setEstado] =
     useState("pendiente");
+
+  const [doctor,
+    setDoctor] =
+    useState("Dr. Edgar");
 
   useEffect(() => {
 
@@ -109,7 +115,7 @@ export default function AgendaCalendar() {
           String(cita.id),
 
         title:
-          cita.paciente,
+          `${cita.paciente} - ${cita.doctor}`,
 
         start:
           cita.inicio,
@@ -131,6 +137,9 @@ export default function AgendaCalendar() {
 
           estado:
             cita.estado,
+
+          doctor:
+            cita.doctor,
 
         },
 
@@ -185,6 +194,9 @@ export default function AgendaCalendar() {
           estado:
             "pendiente",
 
+          doctor:
+            "Dr. Edgar",
+
         },
 
       ]);
@@ -229,7 +241,10 @@ export default function AgendaCalendar() {
     );
 
     setNombre(
+
       info.event.title
+        .split(" - ")[0]
+
     );
 
     setEstado(
@@ -238,6 +253,15 @@ export default function AgendaCalendar() {
         ?.estado ||
 
       "pendiente"
+
+    );
+
+    setDoctor(
+
+      info.event.extendedProps
+        ?.doctor ||
+
+      "Dr. Edgar"
 
     );
 
@@ -260,6 +284,8 @@ export default function AgendaCalendar() {
           nombre,
 
         estado,
+
+        doctor,
 
       })
 
@@ -463,6 +489,38 @@ export default function AgendaCalendar() {
             placeholder="Nombre paciente"
 
           />
+
+          <select
+
+            value={doctor}
+
+            onChange={(e)=>
+              setDoctor(
+                e.target.value
+              )
+            }
+
+            className="
+              w-full
+              border
+              rounded-xl
+              p-4
+            "
+          >
+
+            <option>
+              Dr. Edgar
+            </option>
+
+            <option>
+              Dra. Maria
+            </option>
+
+            <option>
+              Dr. Juan
+            </option>
+
+          </select>
 
           <select
 
