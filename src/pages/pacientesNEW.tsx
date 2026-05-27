@@ -300,8 +300,6 @@ export default function Pacientes() {
           .observaciones_dientes
           .estados || {}
 
-        as Record<number, string[]>
-
       );
 
       setImagenPreview(
