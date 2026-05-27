@@ -48,6 +48,10 @@ export default function AgendaCalendar() {
     setModalOpen] =
     useState(false);
 
+  const [modoCrear,
+    setModoCrear] =
+    useState(false);
+
   const [eventoSeleccionado,
     setEventoSeleccionado] =
     useState<any>(null);
@@ -63,6 +67,14 @@ export default function AgendaCalendar() {
   const [doctor,
     setDoctor] =
     useState("Dr. Edgar");
+
+  const [inicioNuevo,
+    setInicioNuevo] =
+    useState<any>(null);
+
+  const [finNuevo,
+    setFinNuevo] =
+    useState<any>(null);
 
   useEffect(() => {
 
@@ -151,30 +163,35 @@ export default function AgendaCalendar() {
 
   }
 
-  async function crearCita(
+  function abrirCrearCita(
     info: any
   ) {
 
-    const nombrePaciente =
+    setModoCrear(true);
 
-      prompt(
-        "Nombre del paciente"
-      );
+    setInicioNuevo(
+      info.start
+    );
 
-    if (!nombrePaciente)
-      return;
+    setFinNuevo(
+      info.end
+    );
 
-    const inicio =
-      info.start;
+    setNombre("");
 
-    const fin =
+    setDoctor(
+      "Dr. Edgar"
+    );
 
-      new Date(
-        inicio.getTime() +
-        15 *
-        60 *
-        1000
-      );
+    setEstado(
+      "pendiente"
+    );
+
+    setModalOpen(true);
+
+  }
+
+  async function guardarNuevaCita() {
 
     await supabase
 
@@ -185,21 +202,23 @@ export default function AgendaCalendar() {
         {
 
           paciente:
-            nombrePaciente,
+            nombre,
 
-          inicio,
+          inicio:
+            inicioNuevo,
 
-          fin,
+          fin:
+            finNuevo,
 
-          estado:
-            "pendiente",
+          estado,
 
-          doctor:
-            "Dr. Edgar",
+          doctor,
 
         },
 
       ]);
+
+    setModalOpen(false);
 
     cargarCitas();
 
@@ -235,6 +254,8 @@ export default function AgendaCalendar() {
   function abrirModal(
     info: any
   ) {
+
+    setModoCrear(false);
 
     setEventoSeleccionado(
       info.event
@@ -305,15 +326,6 @@ export default function AgendaCalendar() {
     if (!eventoSeleccionado)
       return;
 
-    const confirmar =
-
-      confirm(
-        "¿Eliminar cita?"
-      );
-
-    if (!confirmar)
-      return;
-
     await supabase
 
       .from("citas")
@@ -374,7 +386,7 @@ export default function AgendaCalendar() {
           }
 
           select={
-            crearCita
+            abrirCrearCita
           }
 
           eventDrop={
@@ -452,8 +464,6 @@ export default function AgendaCalendar() {
 
             border: "none",
 
-            overflow: "hidden",
-
           },
 
         }}
@@ -464,7 +474,17 @@ export default function AgendaCalendar() {
           font-bold
           mb-6
         ">
-          Editar Cita
+
+          {
+
+            modoCrear
+
+            ? "Nueva Cita"
+
+            : "Editar Cita"
+
+          }
+
         </h2>
 
         <div className="space-y-5">
@@ -564,43 +584,80 @@ export default function AgendaCalendar() {
             pt-4
           ">
 
-            <button
+            {
 
-              onClick={
-                guardarCambios
-              }
+              modoCrear
 
-              className="
-                bg-teal-600
-                hover:bg-teal-700
-                text-white
-                px-6
-                py-3
-                rounded-xl
-                font-bold
-              "
-            >
-              Guardar
-            </button>
+              ? (
 
-            <button
+                <button
 
-              onClick={
-                eliminarCita
-              }
+                  onClick={
+                    guardarNuevaCita
+                  }
 
-              className="
-                bg-red-600
-                hover:bg-red-700
-                text-white
-                px-6
-                py-3
-                rounded-xl
-                font-bold
-              "
-            >
-              Eliminar
-            </button>
+                  className="
+                    bg-teal-600
+                    hover:bg-teal-700
+                    text-white
+                    px-6
+                    py-3
+                    rounded-xl
+                    font-bold
+                  "
+                >
+                  Crear Cita
+                </button>
+
+              )
+
+              : (
+
+                <>
+
+                  <button
+
+                    onClick={
+                      guardarCambios
+                    }
+
+                    className="
+                      bg-teal-600
+                      hover:bg-teal-700
+                      text-white
+                      px-6
+                      py-3
+                      rounded-xl
+                      font-bold
+                    "
+                  >
+                    Guardar
+                  </button>
+
+                  <button
+
+                    onClick={
+                      eliminarCita
+                    }
+
+                    className="
+                      bg-red-600
+                      hover:bg-red-700
+                      text-white
+                      px-6
+                      py-3
+                      rounded-xl
+                      font-bold
+                    "
+                  >
+                    Eliminar
+                  </button>
+
+                </>
+
+              )
+
+            }
 
           </div>
 
