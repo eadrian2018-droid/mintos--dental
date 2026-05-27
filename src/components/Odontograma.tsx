@@ -579,7 +579,7 @@ export default function Odontograma({
           text-2xl
           font-bold
           text-teal-700
-          mb-8
+          mb-6
         ">
 
           Tratamientos Activos
@@ -587,245 +587,261 @@ export default function Odontograma({
         </h3>
 
         <div className="
-          space-y-6
+          overflow-x-auto
         ">
 
-          {
+          <table className="
+            w-full
+            border-separate
+            border-spacing-y-3
+          ">
 
-            Object.entries(
-              estadoDientes
-            ).map(([numero, zonas]) => {
+            <thead>
 
-              const numeroDiente =
-                Number(numero);
+              <tr className="
+                text-left
+                text-slate-700
+              ">
 
-              return (
+                <th className="
+                  px-4
+                  py-3
+                  font-bold
+                ">
+                  Diente
+                </th>
 
-                <div
+                <th className="
+                  px-4
+                  py-3
+                  font-bold
+                ">
+                  Zona
+                </th>
 
-                  key={numero}
+                <th className="
+                  px-4
+                  py-3
+                  font-bold
+                ">
+                  Tratamiento
+                </th>
 
-                  className="
-                    border
-                    border-slate-200
-                    rounded-3xl
-                    p-6
-                    shadow-sm
-                  "
-                >
+                <th className="
+                  px-4
+                  py-3
+                  font-bold
+                ">
+                  Observación
+                </th>
 
-                  <div className="
-                    flex
-                    items-center
-                    justify-between
-                    mb-5
-                  ">
+                <th className="
+                  px-4
+                  py-3
+                  font-bold
+                ">
+                  Acción
+                </th>
 
-                    <h4 className="
-                      text-xl
-                      font-bold
-                      text-slate-800
-                    ">
+              </tr>
 
-                      Diente {numero}
+            </thead>
 
-                    </h4>
+            <tbody>
 
-                  </div>
+              {
 
-                  <textarea
+                Object.entries(
+                  estadoDientes
+                ).flatMap(([numero, zonas]) => {
 
-                    value={
-                      observacionesDientes[
-                        numeroDiente
-                      ] || ""
-                    }
+                  const numeroDiente =
+                    Number(numero);
 
-                    onChange={(e)=>
+                  return Object.entries(
+                    zonas
+                  ).flatMap(([zona, tratamientos]) => {
 
-                      setObservacionesDientes({
+                    const lista =
+                      (tratamientos || []) as string[];
 
-                        ...observacionesDientes,
+                    return lista.map((t)=>(
 
-                        [numeroDiente]:
-                          e.target.value,
+                      <tr
 
-                      })
-
-                    }
-
-                    className="
-                      border
-                      border-slate-300
-                      rounded-2xl
-                      p-4
-                      w-full
-                      h-28
-                      mb-6
-                    "
-
-                    placeholder="
-Observaciones clínicas del diente...
-                    "
-
-                  />
-
-                  <div className="
-                    grid
-                    grid-cols-2
-                    gap-4
-                  ">
-
-                    {
-
-                      Object.entries(
-                        zonas
-                      ).map(([zona, tratamientos]) => {
-
-                        const lista =
-                          (tratamientos || []) as string[];
-
-                        if (
-                          lista.length === 0
-                        ) {
-
-                          return null;
-
+                        key={
+                          `${numero}-${zona}-${t}`
                         }
 
-                        return (
+                        className="
+                          bg-slate-50
+                          shadow-sm
+                        "
+                      >
 
-                          <div
+                        <td className="
+                          px-4
+                          py-4
+                          rounded-l-2xl
+                          font-bold
+                          text-slate-800
+                        ">
 
-                            key={zona}
+                          {numero}
+
+                        </td>
+
+                        <td className="
+                          px-4
+                          py-4
+                          capitalize
+                        ">
+
+                          {zona}
+
+                        </td>
+
+                        <td className="
+                          px-4
+                          py-4
+                        ">
+
+                          <span
+
+                            className="
+                              px-3
+                              py-2
+                              rounded-full
+                              text-white
+                              text-sm
+                              font-semibold
+                            "
+
+                            style={{
+
+                              backgroundColor:
+                                coloresTratamientos[t]
+
+                            }}
+                          >
+
+                            {t}
+
+                          </span>
+
+                        </td>
+
+                        <td className="
+                          px-4
+                          py-4
+                          min-w-[280px]
+                        ">
+
+                          <textarea
+
+                            value={
+                              observacionesDientes[
+                                numeroDiente
+                              ] || ""
+                            }
+
+                            onChange={(e)=>
+
+                              setObservacionesDientes({
+
+                                ...observacionesDientes,
+
+                                [numeroDiente]:
+                                  e.target.value,
+
+                              })
+
+                            }
 
                             className="
                               border
-                              border-slate-200
-                              rounded-2xl
-                              p-4
-                              bg-slate-50
+                              border-slate-300
+                              rounded-xl
+                              p-3
+                              w-full
+                              min-h-[90px]
+                              resize-none
+                            "
+
+                            placeholder="
+Observación clínica...
+                            "
+
+                          />
+
+                        </td>
+
+                        <td className="
+                          px-4
+                          py-4
+                          rounded-r-2xl
+                        ">
+
+                          <button
+
+                            onClick={() => {
+
+                              const nuevos =
+                                lista.filter(
+
+                                  (x)=>
+                                    x !== t
+
+                                );
+
+                              setEstadoDientes({
+
+                                ...estadoDientes,
+
+                                [numeroDiente]: {
+
+                                  ...estadoDientes[
+                                    numeroDiente
+                                  ],
+
+                                  [zona]: nuevos,
+
+                                },
+
+                              });
+
+                            }}
+
+                            className="
+                              bg-red-500
+                              hover:bg-red-600
+                              text-white
+                              px-4
+                              py-2
+                              rounded-xl
+                              font-bold
                             "
                           >
 
-                            <h5 className="
-                              font-bold
-                              capitalize
-                              text-slate-700
-                              mb-3
-                            ">
+                            Eliminar
 
-                              {zona}
+                          </button>
 
-                            </h5>
+                        </td>
 
-                            <div className="
-                              flex
-                              flex-wrap
-                              gap-2
-                            ">
+                      </tr>
 
-                              {
+                    ));
 
-                                lista.map((t)=>(
+                  });
 
-                                  <div
+                })
 
-                                    key={t}
+              }
 
-                                    className="
-                                      flex
-                                      items-center
-                                      gap-2
-                                      px-3
-                                      py-2
-                                      rounded-full
-                                      text-white
-                                      text-sm
-                                      font-semibold
-                                    "
+            </tbody>
 
-                                    style={{
-
-                                      backgroundColor:
-                                        coloresTratamientos[t]
-
-                                    }}
-                                  >
-
-                                    <span>
-
-                                      {t}
-
-                                    </span>
-
-                                    <button
-
-                                      onClick={() => {
-
-                                        const nuevos =
-                                          lista.filter(
-
-                                            (x)=>
-                                              x !== t
-
-                                          );
-
-                                        setEstadoDientes({
-
-                                          ...estadoDientes,
-
-                                          [numeroDiente]: {
-
-                                            ...estadoDientes[
-                                              numeroDiente
-                                            ],
-
-                                            [zona]: nuevos,
-
-                                          },
-
-                                        });
-
-                                      }}
-
-                                      className="
-                                        bg-white/20
-                                        hover:bg-white/30
-                                        rounded-full
-                                        px-2
-                                      "
-                                    >
-
-                                      ✕
-
-                                    </button>
-
-                                  </div>
-
-                                ))
-
-                              }
-
-                            </div>
-
-                          </div>
-
-                        );
-
-                      })
-
-                    }
-
-                  </div>
-
-                </div>
-
-              );
-
-            })
-
-          }
+          </table>
 
         </div>
 
