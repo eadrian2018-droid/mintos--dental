@@ -109,13 +109,15 @@ export default function App() {
     <Routes>
 
       <Route
-        index
+        path="/"
         element={<AdminApp />}
       />
 
       <Route
         path="/formulario"
-        element={<FormularioPacientePublico />}
+        element={
+          <FormularioPacientePublico />
+        }
       />
 
     </Routes>
