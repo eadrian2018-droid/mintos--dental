@@ -99,21 +99,10 @@ export default function AgendaCalendar() {
     if (!nombre)
       return;
 
-    const horas =
-
-      prompt(
-        "Duración en horas"
-      );
-
-    const duracion =
-
-      Number(horas || 1);
-
-    const nuevoFin =
+    const fin =
 
       new Date(
         start.getTime() +
-        duracion *
         60 *
         60 *
         1000
@@ -135,14 +124,15 @@ export default function AgendaCalendar() {
             inicio:
               start,
 
-            fin:
-              nuevoFin,
+            fin,
 
           },
 
         ]);
 
     if (error) {
+
+      console.log(error);
 
       alert(
         "Error creando cita"
