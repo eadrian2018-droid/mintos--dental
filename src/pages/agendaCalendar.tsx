@@ -36,6 +36,14 @@ type Evento = {
 
 };
 
+type Paciente = {
+
+  id: number;
+
+  nombre: string;
+
+};
+
 Modal.setAppElement("#root");
 
 export default function AgendaCalendar() {
@@ -43,6 +51,10 @@ export default function AgendaCalendar() {
   const [eventos,
     setEventos] =
     useState<Evento[]>([]);
+
+  const [pacientes,
+    setPacientes] =
+    useState<Paciente[]>([]);
 
   const [modalOpen,
     setModalOpen] =
@@ -80,6 +92,8 @@ export default function AgendaCalendar() {
 
     cargarCitas();
 
+    cargarPacientes();
+
   }, []);
 
   function colorEstado(
@@ -96,6 +110,31 @@ export default function AgendaCalendar() {
       return "#2563eb";
 
     return "#eab308";
+
+  }
+
+  async function cargarPacientes() {
+
+    const { data } =
+
+      await supabase
+
+        .from("pacientes")
+
+        .select("id, nombre")
+
+        .order(
+          "nombre",
+          {
+            ascending: true,
+          }
+        );
+
+    if (data) {
+
+      setPacientes(data);
+
+    }
 
   }
 
@@ -326,6 +365,15 @@ export default function AgendaCalendar() {
     if (!eventoSeleccionado)
       return;
 
+    const confirmar =
+
+      confirm(
+        "¿Eliminar cita?"
+      );
+
+    if (!confirmar)
+      return;
+
     await supabase
 
       .from("citas")
@@ -489,7 +537,7 @@ export default function AgendaCalendar() {
 
         <div className="space-y-5">
 
-          <input
+          <select
 
             value={nombre}
 
@@ -505,10 +553,28 @@ export default function AgendaCalendar() {
               rounded-xl
               p-4
             "
+          >
 
-            placeholder="Nombre paciente"
+            <option value="">
+              Seleccionar paciente
+            </option>
 
-          />
+            {
+
+              pacientes.map((p)=>(
+
+                <option
+                  key={p.id}
+                  value={p.nombre}
+                >
+                  {p.nombre}
+                </option>
+
+              ))
+
+            }
+
+          </select>
 
           <select
 
