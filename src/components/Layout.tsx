@@ -13,7 +13,7 @@ export default function Layout() {
       <aside className="
         w-64
         bg-white
-        shadow-lg
+        shadow-xl
         p-6
       ">
 

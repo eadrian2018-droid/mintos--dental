@@ -34,13 +34,13 @@ export default function App() {
           />
 
           <Route
-            path="/pacientes"
-            element={<Pacientes />}
+            path="/agenda"
+            element={<AgendaCalendar />}
           />
 
           <Route
-            path="/agenda"
-            element={<AgendaCalendar />}
+            path="/pacientes"
+            element={<Pacientes />}
           />
 
           <Route
