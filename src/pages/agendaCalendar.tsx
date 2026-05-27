@@ -178,7 +178,7 @@ export default function AgendaCalendar() {
           String(cita.id),
 
         title:
-          `${cita.paciente} - ${cita.doctor}`,
+          `${cita.paciente || "Paciente"} - ${cita.doctor || "Doctor"}`,
 
         start:
           cita.inicio,
@@ -448,16 +448,29 @@ export default function AgendaCalendar() {
 
   return (
 
-    <div>
+    <div className="
+      space-y-6
+    ">
 
-      <h1 className="
-        text-5xl
-        font-bold
-        text-gray-800
-        mb-10
-      ">
-        Agenda y Citas
-      </h1>
+      <div>
+
+        <h1 className="
+          text-5xl
+          font-bold
+          text-gray-800
+        ">
+          Agenda y Citas
+        </h1>
+
+        <p className="
+          text-gray-500
+          mt-2
+          text-lg
+        ">
+          Administración de citas del consultorio
+        </p>
+
+      </div>
 
       <div className="
         bg-white
