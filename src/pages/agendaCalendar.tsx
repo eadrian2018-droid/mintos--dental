@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import FullCalendar from "@fullcalendar/react";
 
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -51,6 +53,9 @@ type Paciente = {
 Modal.setAppElement("#root");
 
 export default function AgendaCalendar() {
+
+  const navigate =
+    useNavigate();
 
   const [eventos,
     setEventos] =
@@ -454,12 +459,10 @@ export default function AgendaCalendar() {
 
     }
 
-    window.open(
+    setModalOpen(false);
 
-      `/paciente/${pacienteId}`,
-
-      "_blank"
-
+    navigate(
+      `/paciente/${pacienteId}`
     );
 
   }
@@ -564,13 +567,16 @@ export default function AgendaCalendar() {
           ]}
 
           slotLaneClassNames={() => [
-            "bg-blue-50/30",
+            "bg-blue-50/40",
             "border-gray-200",
           ]}
 
           slotLabelClassNames={() => [
-            "text-gray-500",
-            "font-semibold",
+            "bg-gray-100",
+            "text-gray-700",
+            "font-bold",
+            "border-r",
+            "border-gray-300",
           ]}
 
         />
