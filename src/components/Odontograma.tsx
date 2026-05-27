@@ -18,12 +18,12 @@ interface Props {
     >;
 
   estadoDientes:
-    Record<number, string>;
+    Record<number, string[]>;
 
   setEstadoDientes:
     React.Dispatch<
       React.SetStateAction<
-        Record<number, string>
+        Record<number, string[]>
       >
     >;
 }
@@ -62,24 +62,55 @@ export default function Odontograma({
 
   ];
 
-  function obtenerColor() {
+  const coloresTratamientos:
+    Record<string, string> = {
 
-    if (tratamiento === "caries")
-      return "#ef4444";
+    caries: "#ef4444",
 
-    if (tratamiento === "resina")
-      return "#3b82f6";
+    resina: "#3b82f6",
 
-    if (tratamiento === "extraccion")
-      return "#111827";
+    extraccion: "#111827",
 
-    if (tratamiento === "corona")
-      return "#22c55e";
+    corona: "#22c55e",
 
-    if (tratamiento === "implante")
-      return "#fbbf24";
+    implante: "#fbbf24",
 
-    return "#ffffff";
+    endodoncia: "#9333ea",
+
+    carillas: "#06b6d4",
+
+    puente: "#f97316",
+
+    protesis: "#64748b",
+
+    sellador: "#14b8a6",
+
+    limpieza: "#84cc16",
+
+    blanqueamiento: "#e5e7eb",
+
+    brackets: "#ec4899",
+
+    incrustacion: "#a855f7",
+
+    amalgama: "#6b7280",
+
+    fractura: "#dc2626",
+
+    movilidad: "#f59e0b",
+
+    ausente: "#000000",
+
+  };
+
+  function obtenerColor(
+    tratamiento: string
+  ) {
+
+    return coloresTratamientos[
+      tratamiento
+    ] || "#ffffff";
+
   }
 
   function clickDiente(
@@ -88,16 +119,40 @@ export default function Odontograma({
 
     setSeleccionado(numero);
 
-    if (estadoDientes[numero]) {
+    const actuales =
+      estadoDientes[numero] || [];
 
-      const nuevoEstado = {
-        ...estadoDientes
-      };
+    if (
+      actuales.includes(
+        tratamiento
+      )
+    ) {
 
-      delete nuevoEstado[numero];
+      const nuevos = actuales.filter(
 
-      setEstadoDientes(
-        nuevoEstado
+        (t)=>
+          t !== tratamiento
+
+      );
+
+      setEstadoDientes({
+
+        ...estadoDientes,
+
+        [numero]: nuevos,
+
+      });
+
+      return;
+
+    }
+
+    if (
+      actuales.length >= 4
+    ) {
+
+      alert(
+        "Máximo 4 tratamientos por diente"
       );
 
       return;
@@ -108,7 +163,13 @@ export default function Odontograma({
 
       ...estadoDientes,
 
-      [numero]: obtenerColor(),
+      [numero]: [
+
+        ...actuales,
+
+        tratamiento,
+
+      ],
 
     });
 
@@ -118,9 +179,19 @@ export default function Odontograma({
     numero: number
   ) {
 
-    const color =
+    const tratamientos =
       estadoDientes[numero]
-      || "white";
+      || [];
+
+    const colorPrincipal =
+
+      tratamientos.length > 0
+
+      ? obtenerColor(
+          tratamientos[0]
+        )
+
+      : "white";
 
     const invertido =
       superiores.includes(numero);
@@ -135,7 +206,7 @@ export default function Odontograma({
       componente = (
 
         <Incisor
-          color={color}
+          color={colorPrincipal}
           invertido={invertido}
         />
 
@@ -151,7 +222,7 @@ export default function Odontograma({
       componente = (
 
         <Canino
-          color={color}
+          color={colorPrincipal}
           invertido={invertido}
         />
 
@@ -167,7 +238,7 @@ export default function Odontograma({
       componente = (
 
         <Premolar
-          color={color}
+          color={colorPrincipal}
           invertido={invertido}
         />
 
@@ -180,7 +251,7 @@ export default function Odontograma({
       componente = (
 
         <Molar
-          color={color}
+          color={colorPrincipal}
           invertido={invertido}
         />
 
@@ -226,6 +297,40 @@ export default function Odontograma({
 
         </span>
 
+        <div className="
+          flex
+          flex-wrap
+          justify-center
+          gap-1
+          mt-1
+        ">
+
+          {
+
+            tratamientos.map((t)=>(
+
+              <div
+
+                key={t}
+
+                className="
+                  w-2
+                  h-2
+                  rounded-full
+                "
+
+                style={{
+                  backgroundColor:
+                    obtenerColor(t)
+                }}
+              />
+
+            ))
+
+          }
+
+        </div>
+
       </div>
 
     );
@@ -267,6 +372,7 @@ export default function Odontograma({
             border
             rounded-xl
             p-3
+            text-lg
           "
         >
 
@@ -288,6 +394,58 @@ export default function Odontograma({
 
           <option value="implante">
             Implante
+          </option>
+
+          <option value="endodoncia">
+            Endodoncia
+          </option>
+
+          <option value="carillas">
+            Carillas
+          </option>
+
+          <option value="puente">
+            Puente
+          </option>
+
+          <option value="protesis">
+            Prótesis
+          </option>
+
+          <option value="sellador">
+            Sellador
+          </option>
+
+          <option value="limpieza">
+            Limpieza
+          </option>
+
+          <option value="blanqueamiento">
+            Blanqueamiento
+          </option>
+
+          <option value="brackets">
+            Brackets
+          </option>
+
+          <option value="incrustacion">
+            Incrustación
+          </option>
+
+          <option value="amalgama">
+            Amalgama
+          </option>
+
+          <option value="fractura">
+            Fractura
+          </option>
+
+          <option value="movilidad">
+            Movilidad
+          </option>
+
+          <option value="ausente">
+            Ausente
           </option>
 
         </select>
@@ -406,10 +564,67 @@ export default function Odontograma({
             "
 
             placeholder="
-              Observaciones clínicas...
+Observaciones clínicas...
             "
 
           />
+
+          <div className="
+            mt-6
+          ">
+
+            <h4 className="
+              font-bold
+              mb-3
+              text-lg
+            ">
+
+              Tratamientos del diente
+
+            </h4>
+
+            <div className="
+              flex
+              flex-wrap
+              gap-2
+            ">
+
+              {
+
+                (estadoDientes[
+                  seleccionado
+                ] || []).map((t)=>(
+
+                  <div
+
+                    key={t}
+
+                    className="
+                      px-3
+                      py-1
+                      rounded-full
+                      text-white
+                      text-sm
+                      font-semibold
+                    "
+
+                    style={{
+                      backgroundColor:
+                        obtenerColor(t)
+                    }}
+                  >
+
+                    {t}
+
+                  </div>
+
+                ))
+
+              }
+
+            </div>
+
+          </div>
 
         </div>
 
@@ -418,4 +633,5 @@ export default function Odontograma({
     </div>
 
   );
+
 }
