@@ -12,8 +12,6 @@ import Odontograma from "../components/Odontograma";
 
 import QRCodePaciente from "../components/QRCodePaciente";
 
-import FormularioPacientePublico from "../components/FormularioPacientePublico";
-
 interface ZonaDiente {
 
   oclusal?: string[];
@@ -681,7 +679,9 @@ export default function Pacientes() {
 
             <div className="
               h-full
-              overflow-y-auto
+              flex
+              items-center
+              justify-center
               bg-white
               rounded-3xl
               shadow-xl
@@ -689,16 +689,42 @@ export default function Pacientes() {
             ">
 
               <div className="
-                grid
-                grid-cols-1
-                xl:grid-cols-2
-                gap-6
-                items-start
+                max-w-md
+                w-full
               ">
 
                 <QRCodePaciente compacto />
 
-                <FormularioPacientePublico />
+                <button
+
+                  onClick={() => {
+
+                    window.open(
+
+                      "/registro-paciente",
+
+                      "_blank"
+
+                    );
+
+                  }}
+
+                  className="
+                    mt-6
+                    w-full
+                    bg-teal-600
+                    hover:bg-teal-700
+                    text-white
+                    py-4
+                    rounded-2xl
+                    font-bold
+                    text-lg
+                  "
+                >
+
+                  Abrir Formulario
+
+                </button>
 
               </div>
 
