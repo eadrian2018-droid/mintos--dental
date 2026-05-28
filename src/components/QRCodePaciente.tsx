@@ -79,10 +79,26 @@ export default function QRCodePaciente() {
         >
 
           <img
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${urlFormulario}`}
+            src={`https://quickchart.io/qr?text=${encodeURIComponent(urlFormulario)}&size=320`}
             alt="QR Formulario"
             className="rounded-2xl"
           />
+
+        </div>
+
+        <div className="
+          mt-6
+          bg-slate-100
+          p-3
+          rounded-2xl
+          text-sm
+          break-all
+          text-center
+          text-slate-600
+          w-full
+        ">
+
+          {urlFormulario}
 
         </div>
 
@@ -101,7 +117,7 @@ export default function QRCodePaciente() {
           }}
 
           className="
-            mt-8
+            mt-6
             bg-teal-600
             hover:bg-teal-700
             text-white
@@ -116,17 +132,6 @@ export default function QRCodePaciente() {
           Copiar Link
 
         </button>
-
-        <p
-          className="
-            mt-6
-            text-sm
-            text-gray-400
-            text-center
-          "
-        >
-          Compatible con iPhone y Android
-        </p>
 
       </div>
 
