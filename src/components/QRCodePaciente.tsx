@@ -1,48 +1,134 @@
 export default function QRCodePaciente() {
 
+  const urlFormulario =
+
+    "https://mintos-dental.vercel.app/registro-paciente";
+
   return (
 
     <div
       className="
-        bg-white
-        rounded-3xl
-        shadow-xl
-        p-8
+        min-h-[80vh]
         flex
-        flex-col
         items-center
+        justify-center
       "
     >
 
-      <h2
+      <div
         className="
-          text-2xl
-          font-bold
-          text-teal-700
-          mb-6
-          text-center
+          bg-white
+          rounded-3xl
+          shadow-2xl
+          p-10
+          flex
+          flex-col
+          items-center
+          max-w-xl
+          w-full
         "
       >
-        Escanee para llenar historial clínico
-      </h2>
 
-      <img
-        src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=https://mintos-dental.vercel.app/%23/formulario"
-        alt="QR Formulario"
-        className="rounded-xl"
-      />
-
-      <p
-        className="
-          mt-6
-          text-gray-600
+        <div className="
           text-center
-        "
-      >
-        Escanee desde su celular
-        <br />
-        para llenar su historial clínico
-      </p>
+          mb-8
+        ">
+
+          <h1
+            className="
+              text-4xl
+              font-bold
+              text-teal-600
+              mb-3
+            "
+          >
+            MintOS
+          </h1>
+
+          <h2
+            className="
+              text-2xl
+              font-bold
+              text-gray-800
+              mb-3
+            "
+          >
+            Historial Clínico Digital
+          </h2>
+
+          <p
+            className="
+              text-gray-500
+              leading-relaxed
+            "
+          >
+            Escanee el código QR desde su celular
+            para llenar el historial clínico
+            antes de su consulta.
+          </p>
+
+        </div>
+
+        <div
+          className="
+            bg-gray-50
+            p-6
+            rounded-3xl
+            shadow-inner
+          "
+        >
+
+          <img
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${urlFormulario}`}
+            alt="QR Formulario"
+            className="rounded-2xl"
+          />
+
+        </div>
+
+        <button
+
+          onClick={() => {
+
+            navigator.clipboard.writeText(
+              urlFormulario
+            );
+
+            alert(
+              "Link copiado"
+            );
+
+          }}
+
+          className="
+            mt-8
+            bg-teal-600
+            hover:bg-teal-700
+            text-white
+            px-6
+            py-3
+            rounded-2xl
+            font-bold
+            transition-all
+          "
+        >
+
+          Copiar Link
+
+        </button>
+
+        <p
+          className="
+            mt-6
+            text-sm
+            text-gray-400
+            text-center
+          "
+        >
+          Compatible con iPhone y Android
+        </p>
+
+      </div>
 
     </div>
 

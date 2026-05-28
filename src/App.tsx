@@ -24,82 +24,111 @@ import PacienteDetalle from "./pages/pacientedetalle";
 
 import QRCodePaciente from "./components/QRCodePaciente";
 
+import FormularioPacientePublico from "./components/FormularioPacientePublico";
+
 export default function App() {
 
   const [usuario] =
     useState(true);
 
-  if (!usuario) {
-
-    return <Login />;
-
-  }
-
   return (
 
     <Routes>
 
+      {/* FORMULARIO PUBLICO */}
+
       <Route
 
-        path="/"
+        path="/registro-paciente"
 
-        element={<Layout />}
+        element={
+          <FormularioPacientePublico />
+        }
 
-      >
+      />
 
-        <Route
+      {/* LOGIN */}
 
-          index
+      {
 
-          element={
+        !usuario
 
-            <Navigate to="/dashboard" />
+        ? (
 
-          }
+          <Route
+            path="*"
+            element={<Login />}
+          />
 
-        />
+        )
 
-        <Route
+        : (
 
-          path="/dashboard"
+          <Route
 
-          element={<Dashboard />}
+            path="/"
 
-        />
+            element={<Layout />}
 
-        <Route
+          >
 
-          path="/agenda"
+            <Route
 
-          element={<AgendaCalendar />}
+              index
 
-        />
+              element={
 
-        <Route
+                <Navigate to="/dashboard" />
 
-          path="/pacientes"
+              }
 
-          element={<Pacientes />}
+            />
 
-        />
+            <Route
 
-        <Route
+              path="/dashboard"
 
-          path="/paciente/:id"
+              element={<Dashboard />}
 
-          element={<PacienteDetalle />}
+            />
 
-        />
+            <Route
 
-        <Route
+              path="/agenda"
 
-          path="/qr-pacientes"
+              element={<AgendaCalendar />}
 
-          element={<QRCodePaciente />}
+            />
 
-        />
+            <Route
 
-      </Route>
+              path="/pacientes"
+
+              element={<Pacientes />}
+
+            />
+
+            <Route
+
+              path="/paciente/:id"
+
+              element={<PacienteDetalle />}
+
+            />
+
+            <Route
+
+              path="/qr-pacientes"
+
+              element={<QRCodePaciente />}
+
+            />
+
+          </Route>
+
+        )
+
+      }
 
     </Routes>
 

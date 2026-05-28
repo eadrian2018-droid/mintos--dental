@@ -64,7 +64,19 @@ export default function FormularioPacientePublico() {
 
     if (!nombre) {
 
-      alert("Ingrese nombre");
+      alert(
+        "Ingrese nombre"
+      );
+
+      return;
+
+    }
+
+    if (!consentimiento) {
+
+      alert(
+        "Debe aceptar el consentimiento"
+      );
 
       return;
 
@@ -129,214 +141,325 @@ export default function FormularioPacientePublico() {
       "Formulario enviado correctamente"
     );
 
-    setNombre("");
-    setTelefono("");
-    setCorreo("");
-    setEdad("");
-    setSexo("");
-    setDireccion("");
-    setObservaciones("");
-    setFirma("");
-    setConsentimiento(false);
-
-    setPreguntas({});
+    window.location.reload();
 
   }
 
   return (
 
-    <div className="min-h-screen bg-gray-100 p-6">
+    <div className="
+      min-h-screen
+      bg-gray-100
+      p-4
+    ">
 
-      <div className="max-w-4xl mx-auto bg-white rounded-3xl shadow-xl p-8">
+      <div className="
+        max-w-5xl
+        mx-auto
+        bg-white
+        rounded-3xl
+        shadow-2xl
+        p-6
+        md:p-10
+      ">
 
-        <h1 className="text-4xl font-bold text-teal-700 mb-10 text-center">
-          Historial Clínico Dental
-        </h1>
+        <div className="
+          text-center
+          mb-10
+        ">
 
-        {/* DATOS PERSONALES */}
+          <h1 className="
+            text-5xl
+            font-bold
+            text-teal-600
+            mb-3
+          ">
 
-        <div className="mb-10">
+            MintOS
 
-          <h2 className="text-2xl font-bold mb-6">
-            Datos Personales
+          </h1>
+
+          <h2 className="
+            text-3xl
+            font-bold
+            text-gray-800
+            mb-4
+          ">
+
+            Historial Clínico Dental
+
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <p className="
+            text-gray-500
+            max-w-2xl
+            mx-auto
+          ">
+
+            Complete el siguiente formulario antes de su consulta dental.
+
+          </p>
+
+        </div>
+
+        <div className="
+          mb-10
+        ">
+
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-6
+            text-teal-700
+          ">
+
+            Datos Personales
+
+          </h2>
+
+          <div className="
+            grid
+            grid-cols-1
+            md:grid-cols-2
+            gap-4
+          ">
 
             <input
               type="text"
               placeholder="Nombre completo"
               value={nombre}
-              onChange={(e) =>
+              onChange={(e)=>
                 setNombre(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
             <input
               type="text"
               placeholder="Teléfono"
               value={telefono}
-              onChange={(e) =>
+              onChange={(e)=>
                 setTelefono(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
             <input
               type="email"
               placeholder="Correo electrónico"
               value={correo}
-              onChange={(e) =>
+              onChange={(e)=>
                 setCorreo(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
             <input
               type="number"
               placeholder="Edad"
               value={edad}
-              onChange={(e) =>
+              onChange={(e)=>
                 setEdad(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
             <input
               type="text"
               placeholder="Sexo"
               value={sexo}
-              onChange={(e) =>
+              onChange={(e)=>
                 setSexo(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
             <input
               type="text"
               placeholder="Dirección"
               value={direccion}
-              onChange={(e) =>
+              onChange={(e)=>
                 setDireccion(
                   e.target.value
                 )
               }
-              className="border rounded-xl p-3"
+              className="
+                border
+                rounded-2xl
+                p-4
+              "
             />
 
           </div>
 
         </div>
 
-        {/* HISTORIAL MEDICO */}
+        <div className="
+          mb-10
+        ">
 
-        <div className="mb-10">
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-6
+            text-teal-700
+          ">
 
-          <h2 className="text-2xl font-bold mb-6">
             Historial Médico
+
           </h2>
 
-          <div className="space-y-5">
+          <div className="
+            space-y-4
+          ">
 
-            {preguntasLista.map((pregunta, index) => (
+            {
 
-              <div
-                key={index}
-                className="
-                  border
-                  rounded-2xl
-                  p-4
-                  bg-gray-50
-                "
-              >
+              preguntasLista.map((pregunta, index)=>(
 
-                <p className="font-semibold mb-3">
-                  {pregunta}
-                </p>
+                <div
 
-                <div className="flex gap-6">
+                  key={index}
 
-                  <label className="flex items-center gap-2">
+                  className="
+                    border
+                    rounded-2xl
+                    p-5
+                    bg-gray-50
+                  "
+                >
 
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                      checked={
-                        preguntas[pregunta]
-                        === "Sí"
-                      }
-                      onChange={() =>
+                  <p className="
+                    font-semibold
+                    mb-4
+                  ">
 
-                        setPreguntas({
+                    {pregunta}
 
-                          ...preguntas,
+                  </p>
 
-                          [pregunta]:
-                            "Sí",
+                  <div className="
+                    flex
+                    gap-8
+                  ">
 
-                        })
+                    <label className="
+                      flex
+                      items-center
+                      gap-2
+                    ">
 
-                      }
-                    />
+                      <input
+                        type="radio"
+                        name={`pregunta-${index}`}
+                        checked={
+                          preguntas[pregunta]
+                          === "Sí"
+                        }
+                        onChange={()=>
 
-                    Sí
+                          setPreguntas({
 
-                  </label>
+                            ...preguntas,
 
-                  <label className="flex items-center gap-2">
+                            [pregunta]:
+                              "Sí",
 
-                    <input
-                      type="radio"
-                      name={`pregunta-${index}`}
-                      checked={
-                        preguntas[pregunta]
-                        === "No"
-                      }
-                      onChange={() =>
+                          })
 
-                        setPreguntas({
+                        }
+                      />
 
-                          ...preguntas,
+                      Sí
 
-                          [pregunta]:
-                            "No",
+                    </label>
 
-                        })
+                    <label className="
+                      flex
+                      items-center
+                      gap-2
+                    ">
 
-                      }
-                    />
+                      <input
+                        type="radio"
+                        name={`pregunta-${index}`}
+                        checked={
+                          preguntas[pregunta]
+                          === "No"
+                        }
+                        onChange={()=>
 
-                    No
+                          setPreguntas({
 
-                  </label>
+                            ...preguntas,
+
+                            [pregunta]:
+                              "No",
+
+                          })
+
+                        }
+                      />
+
+                      No
+
+                    </label>
+
+                  </div>
 
                 </div>
 
-              </div>
+              ))
 
-            ))}
+            }
 
           </div>
 
         </div>
 
-        {/* OBSERVACIONES */}
+        <div className="
+          mb-10
+        ">
 
-        <div className="mb-10">
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-4
+            text-teal-700
+          ">
 
-          <h2 className="text-2xl font-bold mb-4">
             Observaciones Médicas
+
           </h2>
 
           <textarea
@@ -345,7 +468,7 @@ Alergias, medicamentos, enfermedades,
 tratamientos médicos, observaciones...
             "
             value={observaciones}
-            onChange={(e) =>
+            onChange={(e)=>
               setObservaciones(
                 e.target.value
               )
@@ -361,20 +484,31 @@ tratamientos médicos, observaciones...
 
         </div>
 
-        {/* CONSENTIMIENTO */}
+        <div className="
+          mb-10
+        ">
 
-        <div className="mb-10">
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-4
+            text-teal-700
+          ">
 
-          <h2 className="text-2xl font-bold mb-4">
             Consentimiento
+
           </h2>
 
-          <label className="flex items-center gap-3">
+          <label className="
+            flex
+            items-center
+            gap-3
+          ">
 
             <input
               type="checkbox"
               checked={consentimiento}
-              onChange={(e) =>
+              onChange={(e)=>
                 setConsentimiento(
                   e.target.checked
                 )
@@ -387,19 +521,26 @@ tratamientos médicos, observaciones...
 
         </div>
 
-        {/* FIRMA */}
+        <div className="
+          mb-10
+        ">
 
-        <div className="mb-10">
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-4
+            text-teal-700
+          ">
 
-          <h2 className="text-2xl font-bold mb-4">
             Firma del Paciente
+
           </h2>
 
           <input
             type="text"
             placeholder="Escriba su nombre completo"
             value={firma}
-            onChange={(e) =>
+            onChange={(e)=>
               setFirma(
                 e.target.value
               )
@@ -413,8 +554,6 @@ tratamientos médicos, observaciones...
           />
 
         </div>
-
-        {/* BOTON */}
 
         <button
 
@@ -434,12 +573,19 @@ tratamientos médicos, observaciones...
             font-bold
             w-full
             text-xl
+            transition-all
           "
         >
 
-          {loading
+          {
+
+            loading
+
             ? "Enviando..."
-            : "Enviar Formulario"}
+
+            : "Enviar Formulario"
+
+          }
 
         </button>
 
