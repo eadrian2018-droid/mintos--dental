@@ -347,11 +347,11 @@ export default function Odontograma({
 
         style={{
 
-          minWidth: "54px",
+          minWidth: "46px",
 
-          marginLeft: "1px",
+          marginLeft: "0px",
 
-          marginRight: "1px",
+          marginRight: "0px",
 
         }}
       >
@@ -359,7 +359,7 @@ export default function Odontograma({
         {componente}
 
         <span className="
-          text-[10px]
+          text-[9px]
           font-bold
           mt-1
           text-slate-700
@@ -377,22 +377,22 @@ export default function Odontograma({
   return (
 
     <div className="
-      space-y-6
+      space-y-5
     ">
 
       <div className="
         bg-white
         rounded-3xl
         shadow-xl
-        p-4
+        p-3
       ">
 
         <h2 className="
-          text-xl
+          text-lg
           font-bold
           text-center
           text-teal-700
-          mb-4
+          mb-3
         ">
 
           Odontograma Clínico
@@ -417,12 +417,12 @@ export default function Odontograma({
             className="
               border
               border-slate-300
-              rounded-2xl
-              p-3
-              text-sm
+              rounded-xl
+              p-2
+              text-xs
               shadow-md
               bg-white
-              min-w-[240px]
+              min-w-[220px]
             "
           >
 
@@ -455,15 +455,15 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-5
+        p-3
       ">
 
         <h3 className="
           text-center
-          text-lg
+          text-base
           font-bold
           text-teal-700
-          mb-5
+          mb-4
         ">
 
           MAXILAR SUPERIOR
@@ -473,7 +473,7 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[4px]
+          gap-[2px]
           flex-wrap
         ">
 
@@ -487,15 +487,15 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-5
+        p-3
       ">
 
         <h3 className="
           text-center
-          text-lg
+          text-base
           font-bold
           text-teal-700
-          mb-5
+          mb-4
         ">
 
           MAXILAR INFERIOR
@@ -505,7 +505,7 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          gap-[4px]
+          gap-[2px]
           flex-wrap
         ">
 
@@ -519,14 +519,14 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-5
+        p-3
       ">
 
         <h3 className="
-          text-lg
+          text-base
           font-bold
           text-teal-700
-          mb-5
+          mb-4
         ">
 
           Tratamientos Activos
@@ -540,7 +540,7 @@ export default function Odontograma({
           <table className="
             w-full
             border-separate
-            border-spacing-y-3
+            border-spacing-y-2
           ">
 
             <thead>
@@ -548,35 +548,36 @@ export default function Odontograma({
               <tr className="
                 text-left
                 text-slate-700
+                text-xs
               ">
 
                 <th className="
-                  px-3
-                  py-3
+                  px-2
+                  py-2
                   font-bold
                 ">
                   Diente
                 </th>
 
                 <th className="
-                  px-3
-                  py-3
+                  px-2
+                  py-2
                   font-bold
                 ">
                   Tratamientos
                 </th>
 
                 <th className="
-                  px-3
-                  py-3
+                  px-2
+                  py-2
                   font-bold
                 ">
                   Observación
                 </th>
 
                 <th className="
-                  px-3
-                  py-3
+                  px-2
+                  py-2
                   font-bold
                 ">
                   Acción
@@ -610,12 +611,13 @@ export default function Odontograma({
                     >
 
                       <td className="
-                        px-3
-                        py-4
-                        rounded-l-2xl
+                        px-2
+                        py-3
+                        rounded-l-xl
                         font-bold
                         text-slate-800
                         align-top
+                        text-xs
                       ">
 
                         {numero}
@@ -623,14 +625,14 @@ export default function Odontograma({
                       </td>
 
                       <td className="
-                        px-3
-                        py-4
+                        px-2
+                        py-3
                       ">
 
                         <div className="
                           flex
                           flex-wrap
-                          gap-2
+                          gap-1
                         ">
 
                           {
@@ -660,7 +662,7 @@ export default function Odontograma({
                                       py-1
                                       rounded-full
                                       text-white
-                                      text-xs
+                                      text-[10px]
                                       font-semibold
                                     "
 
@@ -707,9 +709,9 @@ export default function Odontograma({
                       </td>
 
                       <td className="
-                        px-3
-                        py-4
-                        min-w-[240px]
+                        px-2
+                        py-3
+                        min-w-[180px]
                       ">
 
                         <textarea
@@ -736,12 +738,12 @@ export default function Odontograma({
                           className="
                             border
                             border-slate-300
-                            rounded-xl
-                            p-3
+                            rounded-lg
+                            p-2
                             w-full
-                            min-h-[80px]
+                            min-h-[65px]
                             resize-none
-                            text-sm
+                            text-xs
                           "
 
                           placeholder="
@@ -753,9 +755,9 @@ Observación clínica...
                       </td>
 
                       <td className="
-                        px-3
-                        py-4
-                        rounded-r-2xl
+                        px-2
+                        py-3
+                        rounded-r-xl
                         align-top
                       ">
 
@@ -781,11 +783,11 @@ Observación clínica...
                             bg-red-500
                             hover:bg-red-600
                             text-white
-                            px-3
-                            py-2
-                            rounded-xl
+                            px-2
+                            py-1
+                            rounded-lg
                             font-bold
-                            text-sm
+                            text-xs
                           "
                         >
 
