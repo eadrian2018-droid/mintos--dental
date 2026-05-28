@@ -693,7 +693,7 @@ export default function Pacientes() {
                 w-full
               ">
 
-                <QRCodePaciente compacto />
+              <QRCodePaciente />
 
                 <button
 

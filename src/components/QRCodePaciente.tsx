@@ -1,10 +1,10 @@
 import QRCode from "react-qr-code";
 
-interface Props {
+type Props = {
 
   compacto?: boolean;
 
-}
+};
 
 export default function QRCodePaciente({
 
@@ -40,7 +40,6 @@ export default function QRCodePaciente({
 
       <div
         className="
-
           bg-white
           rounded-3xl
           shadow-xl
@@ -49,8 +48,6 @@ export default function QRCodePaciente({
           flex-col
           items-center
           w-full
-          max-w-md
-
         "
       >
 
@@ -87,8 +84,7 @@ export default function QRCodePaciente({
           "
         >
           Escanee el código QR desde su celular
-          para llenar el historial clínico
-          antes de la consulta.
+          para llenar el historial clínico.
         </p>
 
         <div
@@ -135,6 +131,7 @@ export default function QRCodePaciente({
             font-bold
             transition-all
             text-sm
+            w-full
           "
         >
 
