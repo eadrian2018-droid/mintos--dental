@@ -22,7 +22,7 @@ import Pacientes from "./pages/pacientesNEW";
 
 import PacienteDetalle from "./pages/pacientedetalle.tsx";
 
-import QrcodePacientes from "./pages/Qrcodepacientes";
+import QRCodePaciente from "./components/QRCodePaciente";
 
 export default function App() {
 
@@ -95,7 +95,7 @@ export default function App() {
 
           path="/qr-pacientes"
 
-          element={<QrcodePacientes />}
+          element={<QrcodePaciente />}
 
         />
 
