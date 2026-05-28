@@ -354,16 +354,16 @@ export default function Pacientes() {
     <div className="
       h-[calc(100vh-90px)]
       flex
-      gap-6
+      gap-4
     ">
 
       <div className="
-        w-[360px]
-        min-w-[360px]
+        w-[290px]
+        min-w-[290px]
         bg-white
         rounded-3xl
         shadow-xl
-        p-6
+        p-5
         overflow-y-auto
       ">
 
@@ -371,11 +371,11 @@ export default function Pacientes() {
           flex
           items-center
           justify-between
-          mb-6
+          mb-5
         ">
 
           <h1 className="
-            text-3xl
+            text-2xl
             font-bold
             text-gray-800
           ">
@@ -418,14 +418,14 @@ export default function Pacientes() {
             border
             border-slate-300
             rounded-xl
-            p-4
+            p-3
             w-full
-            mb-6
+            mb-5
           "
         />
 
         <div className="
-          space-y-4
+          space-y-3
         ">
 
           {
@@ -446,7 +446,7 @@ export default function Pacientes() {
                     text-left
                     border
                     rounded-2xl
-                    p-5
+                    p-4
                     transition-all
                     hover:shadow-lg
 
@@ -461,7 +461,7 @@ export default function Pacientes() {
                 >
 
                   <h3 className="
-                    text-lg
+                    text-base
                     font-bold
                     text-slate-800
                   ">
@@ -473,6 +473,7 @@ export default function Pacientes() {
                   <p className="
                     text-slate-500
                     mt-1
+                    text-sm
                   ">
 
                     {p.telefono}
@@ -491,6 +492,7 @@ export default function Pacientes() {
 
       <div className="
         flex-1
+        overflow-x-auto
         overflow-y-auto
       ">
 
@@ -504,7 +506,8 @@ export default function Pacientes() {
                 bg-white
                 rounded-3xl
                 shadow-xl
-                p-8
+                p-6
+                min-w-[1200px]
               "
             >
 
@@ -518,7 +521,7 @@ export default function Pacientes() {
                 <div>
 
                   <h2 className="
-                    text-4xl
+                    text-3xl
                     font-bold
                     text-teal-700
                   ">
@@ -551,7 +554,7 @@ export default function Pacientes() {
                       bg-teal-600
                       hover:bg-teal-700
                       text-white
-                      px-6
+                      px-5
                       py-3
                       rounded-2xl
                       font-bold
@@ -570,7 +573,7 @@ export default function Pacientes() {
                       bg-blue-600
                       hover:bg-blue-700
                       text-white
-                      px-6
+                      px-5
                       py-3
                       rounded-2xl
                       font-bold

@@ -347,11 +347,11 @@ export default function Odontograma({
 
         style={{
 
-          minWidth: "72px",
+          minWidth: "62px",
 
-          marginLeft: "2px",
+          marginLeft: "1px",
 
-          marginRight: "2px",
+          marginRight: "1px",
 
         }}
       >
@@ -377,22 +377,22 @@ export default function Odontograma({
   return (
 
     <div className="
-      space-y-10
+      space-y-8
     ">
 
       <div className="
         bg-white
         rounded-3xl
         shadow-xl
-        p-6
+        p-5
       ">
 
         <h2 className="
-          text-3xl
+          text-2xl
           font-bold
           text-center
           text-teal-700
-          mb-6
+          mb-5
         ">
 
           Odontograma Clínico
@@ -418,11 +418,11 @@ export default function Odontograma({
               border
               border-slate-300
               rounded-2xl
-              p-4
-              text-lg
+              p-3
+              text-base
               shadow-md
               bg-white
-              min-w-[320px]
+              min-w-[280px]
             "
           >
 
@@ -455,15 +455,16 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-8
+        p-6
+        overflow-x-auto
       ">
 
         <h3 className="
           text-center
-          text-2xl
+          text-xl
           font-bold
           text-teal-700
-          mb-8
+          mb-6
         ">
 
           MAXILAR SUPERIOR
@@ -473,8 +474,8 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          flex-wrap
-          gap-[10px]
+          gap-[6px]
+          min-w-max
         ">
 
           {superiores.map(renderDiente)}
@@ -487,15 +488,16 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-8
+        p-6
+        overflow-x-auto
       ">
 
         <h3 className="
           text-center
-          text-2xl
+          text-xl
           font-bold
           text-teal-700
-          mb-8
+          mb-6
         ">
 
           MAXILAR INFERIOR
@@ -505,8 +507,8 @@ export default function Odontograma({
         <div className="
           flex
           justify-center
-          flex-wrap
-          gap-[10px]
+          gap-[6px]
+          min-w-max
         ">
 
           {inferiores.map(renderDiente)}
@@ -519,14 +521,14 @@ export default function Odontograma({
         bg-white
         rounded-3xl
         shadow-xl
-        p-8
+        p-6
       ">
 
         <h3 className="
-          text-2xl
+          text-xl
           font-bold
           text-teal-700
-          mb-6
+          mb-5
         ">
 
           Tratamientos Activos
