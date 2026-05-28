@@ -1,3 +1,5 @@
+import QRCode from "react-qr-code";
+
 export default function QRCodePaciente() {
 
   const urlFormulario =
@@ -71,17 +73,19 @@ export default function QRCodePaciente() {
 
         <div
           className="
-            bg-gray-50
+            bg-white
             p-6
             rounded-3xl
             shadow-inner
           "
         >
 
-          <img
-            src={`https://quickchart.io/qr?text=${encodeURIComponent(urlFormulario)}&size=320`}
-            alt="QR Formulario"
-            className="rounded-2xl"
+          <QRCode
+
+            value={urlFormulario}
+
+            size={300}
+
           />
 
         </div>
