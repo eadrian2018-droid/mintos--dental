@@ -1,5 +1,3 @@
-import QRCode from "react-qr-code";
-
 export default function QRCodePaciente() {
 
   const urlFormulario =
@@ -74,12 +72,15 @@ export default function QRCodePaciente() {
           "
         >
 
-          <QRCode
+          <img
 
-            value={urlFormulario}
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(urlFormulario)}`}
 
-            size={220}
+            alt="QR"
 
+            className="
+              rounded-2xl
+            "
           />
 
         </div>
