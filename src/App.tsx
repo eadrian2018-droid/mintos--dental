@@ -20,7 +20,7 @@ import AgendaCalendar from "./pages/agendaCalendar";
 
 import Pacientes from "./pages/pacientesNEW";
 
-import PacienteDetalle from "./pages/pacientedetalle.tsx";
+import PacienteDetalle from "./pages/pacientedetalle";
 
 import QRCodePaciente from "./components/QRCodePaciente";
 
@@ -95,7 +95,7 @@ export default function App() {
 
           path="/qr-pacientes"
 
-          element={<QrcodePaciente />}
+          element={<QRCodePaciente />}
 
         />
 
