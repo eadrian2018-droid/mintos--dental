@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-import { Link } from "react-router-dom";
-
 import jsPDF from "jspdf";
 
 import * as htmlToImage from "html-to-image";
@@ -388,9 +386,9 @@ export default function Pacientes() {
 
           </h1>
 
-          <Link
+          <a
 
-            to="/qr-pacientes"
+            href="/qr-pacientes"
 
             className="
               bg-teal-600
@@ -406,7 +404,7 @@ export default function Pacientes() {
 
             QR
 
-          </Link>
+          </a>
 
         </div>
 
@@ -693,23 +691,18 @@ export default function Pacientes() {
                 w-full
               ">
 
-              <QRCodePaciente />
+                <QRCodePaciente />
 
-                <button
+                <a
 
-                  onClick={() => {
+                  href="/registro-paciente"
 
-                    window.open(
+                  target="_blank"
 
-                      "/registro-paciente",
-
-                      "_blank"
-
-                    );
-
-                  }}
+                  rel="noopener noreferrer"
 
                   className="
+                    block
                     mt-6
                     w-full
                     bg-teal-600
@@ -719,12 +712,13 @@ export default function Pacientes() {
                     rounded-2xl
                     font-bold
                     text-lg
+                    text-center
                   "
                 >
 
                   Abrir Formulario
 
-                </button>
+                </a>
 
               </div>
 
