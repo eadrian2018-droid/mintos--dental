@@ -58,7 +58,7 @@ export default function Layout() {
         <h1 className="
           text-4xl
           font-bold
-          text-teal-600
+          text-teal-700
           mb-10
         ">
           MintOS
