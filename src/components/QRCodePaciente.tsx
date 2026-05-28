@@ -1,6 +1,16 @@
 import QRCode from "react-qr-code";
 
-export default function QRCodePaciente() {
+interface Props {
+
+  compacto?: boolean;
+
+}
+
+export default function QRCodePaciente({
+
+  compacto = false,
+
+}: Props) {
 
   const urlFormulario =
 
@@ -9,72 +19,82 @@ export default function QRCodePaciente() {
   return (
 
     <div
-      className="
-        min-h-[80vh]
+      className={`
+
         flex
         items-center
         justify-center
-      "
+
+        ${
+
+          compacto
+
+          ? ""
+
+          : "min-h-[80vh]"
+
+        }
+
+      `}
     >
 
       <div
         className="
+
           bg-white
           rounded-3xl
-          shadow-2xl
-          p-10
+          shadow-xl
+          p-6
           flex
           flex-col
           items-center
-          max-w-xl
           w-full
+          max-w-md
+
         "
       >
 
-        <div className="
-          text-center
-          mb-8
-        ">
+        <h1
+          className="
+            text-3xl
+            font-bold
+            text-teal-600
+            mb-2
+          "
+        >
+          MintOS
+        </h1>
 
-          <h1
-            className="
-              text-4xl
-              font-bold
-              text-teal-600
-              mb-3
-            "
-          >
-            MintOS
-          </h1>
+        <h2
+          className="
+            text-xl
+            font-bold
+            text-gray-800
+            mb-3
+            text-center
+          "
+        >
+          Historial Clínico Digital
+        </h2>
 
-          <h2
-            className="
-              text-2xl
-              font-bold
-              text-gray-800
-              mb-3
-            "
-          >
-            Historial Clínico Digital
-          </h2>
-
-          <p
-            className="
-              text-gray-500
-              leading-relaxed
-            "
-          >
-            Escanee el código QR desde su celular
-            para llenar el historial clínico
-            antes de su consulta.
-          </p>
-
-        </div>
+        <p
+          className="
+            text-gray-500
+            text-center
+            text-sm
+            leading-relaxed
+            mb-6
+          "
+        >
+          Escanee el código QR desde su celular
+          para llenar el historial clínico
+          antes de la consulta.
+        </p>
 
         <div
           className="
             bg-white
-            p-6
+            p-4
             rounded-3xl
             shadow-inner
           "
@@ -84,25 +104,9 @@ export default function QRCodePaciente() {
 
             value={urlFormulario}
 
-            size={300}
+            size={220}
 
           />
-
-        </div>
-
-        <div className="
-          mt-6
-          bg-slate-100
-          p-3
-          rounded-2xl
-          text-sm
-          break-all
-          text-center
-          text-slate-600
-          w-full
-        ">
-
-          {urlFormulario}
 
         </div>
 
@@ -125,11 +129,12 @@ export default function QRCodePaciente() {
             bg-teal-600
             hover:bg-teal-700
             text-white
-            px-6
+            px-5
             py-3
             rounded-2xl
             font-bold
             transition-all
+            text-sm
           "
         >
 

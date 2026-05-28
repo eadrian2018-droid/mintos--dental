@@ -10,6 +10,10 @@ import { supabase } from "../lib/supabase";
 
 import Odontograma from "../components/Odontograma";
 
+import QRCodePaciente from "../components/QRCodePaciente";
+
+import FormularioPacientePublico from "../components/FormularioPacientePublico";
+
 interface ZonaDiente {
 
   oclusal?: string[];
@@ -677,37 +681,24 @@ export default function Pacientes() {
 
             <div className="
               h-full
-              flex
-              items-center
-              justify-center
+              overflow-y-auto
               bg-white
               rounded-3xl
               shadow-xl
+              p-6
             ">
 
               <div className="
-                text-center
+                grid
+                grid-cols-1
+                xl:grid-cols-2
+                gap-6
+                items-start
               ">
 
-                <h2 className="
-                  text-2xl
-                  font-bold
-                  text-slate-700
-                  mb-3
-                ">
+                <QRCodePaciente compacto />
 
-                  Selecciona un paciente
-
-                </h2>
-
-                <p className="
-                  text-slate-500
-                  text-sm
-                ">
-
-                  El expediente clínico aparecerá aquí.
-
-                </p>
+                <FormularioPacientePublico />
 
               </div>
 
