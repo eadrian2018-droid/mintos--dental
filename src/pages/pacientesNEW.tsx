@@ -30,9 +30,9 @@ type Paciente = {
 
   correo?: string;
 
-  edad: string;
+  edad?: string;
 
-  sexo: string;
+  sexo?: string;
 
   direccion?: string;
 
@@ -354,16 +354,16 @@ export default function Pacientes() {
     <div className="
       h-[calc(100vh-90px)]
       flex
-      gap-4
+      gap-3
     ">
 
       <div className="
-        w-[220px]
-        min-w-[220px]
+        w-[155px]
+        min-w-[155px]
         bg-white
-        rounded-3xl
-        shadow-xl
-        p-4
+        rounded-2xl
+        shadow-lg
+        p-2
         overflow-y-auto
       ">
 
@@ -371,11 +371,11 @@ export default function Pacientes() {
           flex
           items-center
           justify-between
-          mb-5
+          mb-3
         ">
 
           <h1 className="
-            text-xl
+            text-sm
             font-bold
             text-gray-800
           ">
@@ -392,11 +392,11 @@ export default function Pacientes() {
               bg-teal-600
               hover:bg-teal-700
               text-white
-              px-3
-              py-2
-              rounded-xl
+              px-2
+              py-1
+              rounded-lg
               font-semibold
-              text-xs
+              text-[10px]
             "
           >
 
@@ -417,16 +417,16 @@ export default function Pacientes() {
           className="
             border
             border-slate-300
-            rounded-xl
-            p-3
+            rounded-lg
+            p-2
             w-full
-            mb-4
-            text-sm
+            mb-3
+            text-xs
           "
         />
 
         <div className="
-          space-y-3
+          space-y-2
         ">
 
           {
@@ -446,10 +446,10 @@ export default function Pacientes() {
                     w-full
                     text-left
                     border
-                    rounded-2xl
-                    p-3
+                    rounded-xl
+                    p-2
                     transition-all
-                    hover:shadow-lg
+                    hover:shadow-md
 
                     ${
                       pacienteAbierto?.id === p.id
@@ -462,7 +462,7 @@ export default function Pacientes() {
                 >
 
                   <h3 className="
-                    text-sm
+                    text-xs
                     font-bold
                     text-slate-800
                     truncate
@@ -475,7 +475,8 @@ export default function Pacientes() {
                   <p className="
                     text-slate-500
                     mt-1
-                    text-xs
+                    text-[10px]
+                    truncate
                   ">
 
                     {p.telefono}
@@ -507,7 +508,7 @@ export default function Pacientes() {
                 bg-white
                 rounded-3xl
                 shadow-xl
-                p-5
+                p-4
               "
             >
 
@@ -515,13 +516,13 @@ export default function Pacientes() {
                 flex
                 items-center
                 justify-between
-                mb-6
+                mb-5
               ">
 
                 <div>
 
                   <h2 className="
-                    text-3xl
+                    text-2xl
                     font-bold
                     text-teal-700
                   ">
@@ -532,7 +533,8 @@ export default function Pacientes() {
 
                   <p className="
                     text-slate-500
-                    mt-2
+                    mt-1
+                    text-sm
                   ">
 
                     {pacienteAbierto.nombre}
@@ -543,7 +545,7 @@ export default function Pacientes() {
 
                 <div className="
                   flex
-                  gap-3
+                  gap-2
                 ">
 
                   <button
@@ -554,10 +556,11 @@ export default function Pacientes() {
                       bg-teal-600
                       hover:bg-teal-700
                       text-white
-                      px-5
-                      py-3
-                      rounded-2xl
+                      px-4
+                      py-2
+                      rounded-xl
                       font-bold
+                      text-sm
                     "
                   >
 
@@ -573,10 +576,11 @@ export default function Pacientes() {
                       bg-blue-600
                       hover:bg-blue-700
                       text-white
-                      px-5
-                      py-3
-                      rounded-2xl
+                      px-4
+                      py-2
+                      rounded-xl
                       font-bold
+                      text-sm
                     "
                   >
 
@@ -604,16 +608,16 @@ export default function Pacientes() {
               />
 
               <div className="
-                mt-10
+                mt-8
                 bg-slate-50
                 rounded-3xl
-                p-5
+                p-4
               ">
 
                 <h3 className="
-                  text-xl
+                  text-lg
                   font-bold
-                  mb-5
+                  mb-4
                   text-slate-800
                 ">
 
@@ -647,7 +651,7 @@ export default function Pacientes() {
                       src={imagenPreview}
                       alt="Radiografía"
                       className="
-                        mt-6
+                        mt-5
                         rounded-2xl
                         max-h-[500px]
                         border
@@ -684,10 +688,10 @@ export default function Pacientes() {
               ">
 
                 <h2 className="
-                  text-3xl
+                  text-2xl
                   font-bold
                   text-slate-700
-                  mb-4
+                  mb-3
                 ">
 
                   Selecciona un paciente
@@ -696,6 +700,7 @@ export default function Pacientes() {
 
                 <p className="
                   text-slate-500
+                  text-sm
                 ">
 
                   El expediente clínico aparecerá aquí.
