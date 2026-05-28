@@ -1,16 +1,6 @@
 import QRCode from "react-qr-code";
 
-type Props = {
-
-  compacto?: boolean;
-
-};
-
-export default function QRCodePaciente({
-
-  compacto = false,
-
-}: Props) {
+export default function QRCodePaciente() {
 
   const urlFormulario =
 
@@ -19,23 +9,11 @@ export default function QRCodePaciente({
   return (
 
     <div
-      className={`
-
+      className="
         flex
         items-center
         justify-center
-
-        ${
-
-          compacto
-
-          ? ""
-
-          : "min-h-[80vh]"
-
-        }
-
-      `}
+      "
     >
 
       <div
