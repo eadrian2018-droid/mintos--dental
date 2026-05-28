@@ -358,12 +358,12 @@ export default function Pacientes() {
     ">
 
       <div className="
-        w-[290px]
-        min-w-[290px]
+        w-[220px]
+        min-w-[220px]
         bg-white
         rounded-3xl
         shadow-xl
-        p-5
+        p-4
         overflow-y-auto
       ">
 
@@ -375,7 +375,7 @@ export default function Pacientes() {
         ">
 
           <h1 className="
-            text-2xl
+            text-xl
             font-bold
             text-gray-800
           ">
@@ -392,11 +392,11 @@ export default function Pacientes() {
               bg-teal-600
               hover:bg-teal-700
               text-white
-              px-4
+              px-3
               py-2
               rounded-xl
               font-semibold
-              text-sm
+              text-xs
             "
           >
 
@@ -413,14 +413,15 @@ export default function Pacientes() {
               e.target.value
             )
           }
-          placeholder="Buscar paciente..."
+          placeholder="Buscar..."
           className="
             border
             border-slate-300
             rounded-xl
             p-3
             w-full
-            mb-5
+            mb-4
+            text-sm
           "
         />
 
@@ -446,7 +447,7 @@ export default function Pacientes() {
                     text-left
                     border
                     rounded-2xl
-                    p-4
+                    p-3
                     transition-all
                     hover:shadow-lg
 
@@ -461,9 +462,10 @@ export default function Pacientes() {
                 >
 
                   <h3 className="
-                    text-base
+                    text-sm
                     font-bold
                     text-slate-800
+                    truncate
                   ">
 
                     {p.nombre}
@@ -473,7 +475,7 @@ export default function Pacientes() {
                   <p className="
                     text-slate-500
                     mt-1
-                    text-sm
+                    text-xs
                   ">
 
                     {p.telefono}
@@ -492,7 +494,6 @@ export default function Pacientes() {
 
       <div className="
         flex-1
-        overflow-x-auto
         overflow-y-auto
       ">
 
@@ -506,8 +507,7 @@ export default function Pacientes() {
                 bg-white
                 rounded-3xl
                 shadow-xl
-                p-6
-                min-w-[1200px]
+                p-5
               "
             >
 
@@ -515,7 +515,7 @@ export default function Pacientes() {
                 flex
                 items-center
                 justify-between
-                mb-8
+                mb-6
               ">
 
                 <div>
@@ -543,7 +543,7 @@ export default function Pacientes() {
 
                 <div className="
                   flex
-                  gap-4
+                  gap-3
                 ">
 
                   <button
@@ -607,11 +607,11 @@ export default function Pacientes() {
                 mt-10
                 bg-slate-50
                 rounded-3xl
-                p-6
+                p-5
               ">
 
                 <h3 className="
-                  text-2xl
+                  text-xl
                   font-bold
                   mb-5
                   text-slate-800
