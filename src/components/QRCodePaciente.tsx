@@ -2,7 +2,7 @@ export default function QRCodePaciente() {
 
   const urlFormulario =
 
-    "https://mintos-dental.vercel.app/registro-paciente";
+    "https://mintos-dental.vercel.app/#/registro-paciente";
 
   return (
 

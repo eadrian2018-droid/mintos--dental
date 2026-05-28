@@ -695,7 +695,7 @@ export default function Pacientes() {
 
                 <a
 
-                  href="/registro-paciente"
+                  href="/#/registro-paciente"
 
                   target="_blank"
 
