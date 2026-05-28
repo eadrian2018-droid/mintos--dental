@@ -351,24 +351,60 @@ export default function Pacientes() {
 
   return (
 
-    <div>
-
-      <h1 className="
-        text-5xl
-        font-bold
-        text-gray-800
-        mb-10
-      ">
-        Pacientes
-      </h1>
+    <div className="
+      h-[calc(100vh-90px)]
+      flex
+      gap-6
+    ">
 
       <div className="
+        w-[360px]
+        min-w-[360px]
         bg-white
         rounded-3xl
         shadow-xl
-        p-8
-        mb-10
+        p-6
+        overflow-y-auto
       ">
+
+        <div className="
+          flex
+          items-center
+          justify-between
+          mb-6
+        ">
+
+          <h1 className="
+            text-3xl
+            font-bold
+            text-gray-800
+          ">
+
+            Pacientes
+
+          </h1>
+
+          <a
+
+            href="/qr-pacientes"
+
+            className="
+              bg-teal-600
+              hover:bg-teal-700
+              text-white
+              px-4
+              py-2
+              rounded-xl
+              font-semibold
+              text-sm
+            "
+          >
+
+            QR
+
+          </a>
+
+        </div>
 
         <input
           value={busqueda}
@@ -380,6 +416,7 @@ export default function Pacientes() {
           placeholder="Buscar paciente..."
           className="
             border
+            border-slate-300
             rounded-xl
             p-4
             w-full
@@ -387,57 +424,62 @@ export default function Pacientes() {
           "
         />
 
-        <div className="space-y-4">
+        <div className="
+          space-y-4
+        ">
 
           {
 
             pacientesFiltrados
               .map((p)=>(
 
-                <div
+                <button
+
                   key={p.id}
-                  className="
+
+                  onClick={()=>
+                    abrirPaciente(p)
+                  }
+
+                  className={`
+                    w-full
+                    text-left
                     border
                     rounded-2xl
                     p-5
-                    flex
-                    justify-between
-                    items-center
-                  "
+                    transition-all
+                    hover:shadow-lg
+
+                    ${
+                      pacienteAbierto?.id === p.id
+
+                      ? "border-teal-500 bg-teal-50"
+
+                      : "border-slate-200 bg-white"
+                    }
+                  `}
                 >
 
-                  <div>
+                  <h3 className="
+                    text-lg
+                    font-bold
+                    text-slate-800
+                  ">
 
-                    <h3 className="
-                      text-xl
-                      font-bold
-                    ">
-                      {p.nombre}
-                    </h3>
+                    {p.nombre}
 
-                    <p>
-                      {p.telefono}
-                    </p>
+                  </h3>
 
-                  </div>
+                  <p className="
+                    text-slate-500
+                    mt-1
+                  ">
 
-                  <button
-                    onClick={()=>
-                      abrirPaciente(p)
-                    }
-                    className="
-                      bg-teal-600
-                      hover:bg-teal-700
-                      text-white
-                      px-6
-                      py-3
-                      rounded-xl
-                    "
-                  >
-                    Abrir
-                  </button>
+                    {p.telefono}
 
-                </div>
+                  </p>
+
+                </button>
 
               ))
 
@@ -447,135 +489,225 @@ export default function Pacientes() {
 
       </div>
 
-      {
+      <div className="
+        flex-1
+        overflow-y-auto
+      ">
 
-        pacienteAbierto && (
+        {
 
-          <div
-            id="pdf-area"
-            className="
+          pacienteAbierto ? (
+
+            <div
+              id="pdf-area"
+              className="
+                bg-white
+                rounded-3xl
+                shadow-xl
+                p-8
+              "
+            >
+
+              <div className="
+                flex
+                items-center
+                justify-between
+                mb-8
+              ">
+
+                <div>
+
+                  <h2 className="
+                    text-4xl
+                    font-bold
+                    text-teal-700
+                  ">
+
+                    Expediente Clínico
+
+                  </h2>
+
+                  <p className="
+                    text-slate-500
+                    mt-2
+                  ">
+
+                    {pacienteAbierto.nombre}
+
+                  </p>
+
+                </div>
+
+                <div className="
+                  flex
+                  gap-4
+                ">
+
+                  <button
+                    onClick={
+                      guardarExpediente
+                    }
+                    className="
+                      bg-teal-600
+                      hover:bg-teal-700
+                      text-white
+                      px-6
+                      py-3
+                      rounded-2xl
+                      font-bold
+                    "
+                  >
+
+                    Guardar
+
+                  </button>
+
+                  <button
+                    onClick={
+                      generarPDF
+                    }
+                    className="
+                      bg-blue-600
+                      hover:bg-blue-700
+                      text-white
+                      px-6
+                      py-3
+                      rounded-2xl
+                      font-bold
+                    "
+                  >
+
+                    PDF
+
+                  </button>
+
+                </div>
+
+              </div>
+
+              <Odontograma
+                observacionesDientes={
+                  observacionesDientes
+                }
+                setObservacionesDientes={
+                  setObservacionesDientes
+                }
+                estadoDientes={
+                  estadoDientes
+                }
+                setEstadoDientes={
+                  setEstadoDientes
+                }
+              />
+
+              <div className="
+                mt-10
+                bg-slate-50
+                rounded-3xl
+                p-6
+              ">
+
+                <h3 className="
+                  text-2xl
+                  font-bold
+                  mb-5
+                  text-slate-800
+                ">
+
+                  Radiografías / Fotos
+
+                </h3>
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+
+                    const archivo =
+                      e.target.files?.[0];
+
+                    if (!archivo)
+                      return;
+
+                    subirRadiografia(
+                      archivo
+                    );
+
+                  }}
+                />
+
+                {
+
+                  imagenPreview && (
+
+                    <img
+                      src={imagenPreview}
+                      alt="Radiografía"
+                      className="
+                        mt-6
+                        rounded-2xl
+                        max-h-[500px]
+                        border
+                        border-slate-200
+                      "
+                    />
+
+                  )
+
+                }
+
+              </div>
+
+            </div>
+
+          )
+
+          :
+
+          (
+
+            <div className="
+              h-full
+              flex
+              items-center
+              justify-center
               bg-white
               rounded-3xl
               shadow-xl
-              p-8
-            "
-          >
-
-            <h2 className="
-              text-4xl
-              font-bold
-              text-teal-700
-              mb-8
             ">
-              Expediente Clínico
-            </h2>
 
-            <Odontograma
-              observacionesDientes={
-                observacionesDientes
-              }
-              setObservacionesDientes={
-                setObservacionesDientes
-              }
-              estadoDientes={
-                estadoDientes
-              }
-              setEstadoDientes={
-                setEstadoDientes
-              }
-            />
-
-            <div className="mt-10">
-
-              <h3 className="
-                text-2xl
-                font-bold
-                mb-4
+              <div className="
+                text-center
               ">
-                Radiografías / Fotos
-              </h3>
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
+                <h2 className="
+                  text-3xl
+                  font-bold
+                  text-slate-700
+                  mb-4
+                ">
 
-                  const archivo =
-                    e.target.files?.[0];
+                  Selecciona un paciente
 
-                  if (!archivo)
-                    return;
+                </h2>
 
-                  subirRadiografia(
-                    archivo
-                  );
+                <p className="
+                  text-slate-500
+                ">
 
-                }}
-              />
+                  El expediente clínico aparecerá aquí.
 
-              {imagenPreview && (
+                </p>
 
-                <img
-                  src={imagenPreview}
-                  alt="Radiografía"
-                  className="
-                    mt-6
-                    rounded-2xl
-                    max-h-96
-                  "
-                />
-
-              )}
+              </div>
 
             </div>
 
-            <div className="
-              flex
-              gap-4
-              mt-10
-            ">
+          )
 
-              <button
-                onClick={
-                  guardarExpediente
-                }
-                className="
-                  bg-teal-600
-                  hover:bg-teal-700
-                  text-white
-                  px-8
-                  py-4
-                  rounded-2xl
-                  font-bold
-                "
-              >
-                Guardar Expediente
-              </button>
+        }
 
-              <button
-                onClick={
-                  generarPDF
-                }
-                className="
-                  bg-blue-600
-                  hover:bg-blue-700
-                  text-white
-                  px-8
-                  py-4
-                  rounded-2xl
-                  font-bold
-                "
-              >
-                Generar PDF
-              </button>
-
-            </div>
-
-          </div>
-
-        )
-
-      }
+      </div>
 
     </div>
 
