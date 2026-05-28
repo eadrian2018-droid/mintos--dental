@@ -694,6 +694,61 @@ export default function Odontograma({
 
                                     </span>
 
+                                    <button
+
+                                      onClick={() => {
+
+                                        const nuevosTratamientos =
+                                          (
+                                            zonas[
+                                              zona as keyof ZonaDiente
+                                            ] || []
+                                          ).filter(
+
+                                            (tratamientoActual)=>
+
+                                              tratamientoActual !== t
+
+                                          );
+
+                                        setEstadoDientes({
+
+                                          ...estadoDientes,
+
+                                          [numeroDiente]: {
+
+                                            ...estadoDientes[
+                                              numeroDiente
+                                            ],
+
+                                            [zona]:
+                                              nuevosTratamientos,
+
+                                          },
+
+                                        });
+
+                                      }}
+
+                                      className="
+                                        ml-1
+                                        bg-white/20
+                                        hover:bg-white/40
+                                        rounded-full
+                                        w-4
+                                        h-4
+                                        flex
+                                        items-center
+                                        justify-center
+                                        text-[9px]
+                                        font-bold
+                                      "
+                                    >
+
+                                      ×
+
+                                    </button>
+
                                   </div>
 
                                 ));
