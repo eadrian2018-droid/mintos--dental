@@ -35,7 +35,7 @@ export default function App() {
 
     <Routes>
 
-      {/* FORMULARIO PUBLICO */}
+      {/* RUTA PUBLICA */}
 
       <Route
 
@@ -47,22 +47,11 @@ export default function App() {
 
       />
 
-      {/* LOGIN */}
-
       {
 
-        !usuario
+        usuario
 
         ? (
-
-          <Route
-            path="*"
-            element={<Login />}
-          />
-
-        )
-
-        : (
 
           <Route
 
@@ -77,9 +66,7 @@ export default function App() {
               index
 
               element={
-
                 <Navigate to="/dashboard" />
-
               }
 
             />
@@ -125,6 +112,18 @@ export default function App() {
             />
 
           </Route>
+
+        )
+
+        : (
+
+          <Route
+
+            path="*"
+
+            element={<Login />}
+
+          />
 
         )
 
