@@ -22,6 +22,8 @@ import Pacientes from "./pages/pacientesNEW";
 
 import PacienteDetalle from "./pages/pacientedetalle.tsx";
 
+import QrcodePacientes from "./pages/Qrcodepacientes";
+
 export default function App() {
 
   const [usuario] =
@@ -86,6 +88,14 @@ export default function App() {
           path="/paciente/:id"
 
           element={<PacienteDetalle />}
+
+        />
+
+        <Route
+
+          path="/qr-pacientes"
+
+          element={<QrcodePacientes />}
 
         />
 
