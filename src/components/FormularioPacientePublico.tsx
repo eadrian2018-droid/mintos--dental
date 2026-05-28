@@ -1,8 +1,21 @@
-import { useState } from "react";
+import {
+
+  useRef,
+
+  useState,
+
+} from "react";
+
+import SignatureCanvas from "react-signature-canvas";
 
 import { supabase } from "../lib/supabase";
 
 export default function FormularioPacientePublico() {
+
+  const firmaRef =
+    useRef<SignatureCanvas | null>(
+      null
+    );
 
   const [nombre, setNombre] =
     useState("");
@@ -22,10 +35,9 @@ export default function FormularioPacientePublico() {
   const [direccion, setDireccion] =
     useState("");
 
-  const [observaciones, setObservaciones] =
-    useState("");
+  const [observaciones,
+    setObservaciones] =
 
-  const [firma, setFirma] =
     useState("");
 
   const [consentimiento,
@@ -75,12 +87,17 @@ export default function FormularioPacientePublico() {
     if (!consentimiento) {
 
       alert(
-        "Debe aceptar el consentimiento"
+        "Debe aceptar consentimiento"
       );
 
       return;
 
     }
+
+    const firmaBase64 =
+
+      firmaRef.current
+        ?.toDataURL() || "";
 
     setLoading(true);
 
@@ -119,7 +136,7 @@ export default function FormularioPacientePublico() {
           consentimiento,
 
         firma_paciente:
-          firma,
+          firmaBase64,
 
       }]);
 
@@ -190,368 +207,324 @@ export default function FormularioPacientePublico() {
 
           </h2>
 
-          <p className="
-            text-gray-500
-            max-w-2xl
-            mx-auto
-          ">
-
-            Complete el siguiente formulario antes de su consulta dental.
-
-          </p>
-
         </div>
 
         <div className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          gap-4
           mb-10
         ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-6
-            text-teal-700
-          ">
-
-            Datos Personales
-
-          </h2>
-
-          <div className="
-            grid
-            grid-cols-1
-            md:grid-cols-2
-            gap-4
-          ">
-
-            <input
-              type="text"
-              placeholder="Nombre completo"
-              value={nombre}
-              onChange={(e)=>
-                setNombre(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Teléfono"
-              value={telefono}
-              onChange={(e)=>
-                setTelefono(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-            <input
-              type="email"
-              placeholder="Correo electrónico"
-              value={correo}
-              onChange={(e)=>
-                setCorreo(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-            <input
-              type="number"
-              placeholder="Edad"
-              value={edad}
-              onChange={(e)=>
-                setEdad(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Sexo"
-              value={sexo}
-              onChange={(e)=>
-                setSexo(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-            <input
-              type="text"
-              placeholder="Dirección"
-              value={direccion}
-              onChange={(e)=>
-                setDireccion(
-                  e.target.value
-                )
-              }
-              className="
-                border
-                rounded-2xl
-                p-4
-              "
-            />
-
-          </div>
-
-        </div>
-
-        <div className="
-          mb-10
-        ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-6
-            text-teal-700
-          ">
-
-            Historial Médico
-
-          </h2>
-
-          <div className="
-            space-y-4
-          ">
-
-            {
-
-              preguntasLista.map((pregunta, index)=>(
-
-                <div
-
-                  key={index}
-
-                  className="
-                    border
-                    rounded-2xl
-                    p-5
-                    bg-gray-50
-                  "
-                >
-
-                  <p className="
-                    font-semibold
-                    mb-4
-                  ">
-
-                    {pregunta}
-
-                  </p>
-
-                  <div className="
-                    flex
-                    gap-8
-                  ">
-
-                    <label className="
-                      flex
-                      items-center
-                      gap-2
-                    ">
-
-                      <input
-                        type="radio"
-                        name={`pregunta-${index}`}
-                        checked={
-                          preguntas[pregunta]
-                          === "Sí"
-                        }
-                        onChange={()=>
-
-                          setPreguntas({
-
-                            ...preguntas,
-
-                            [pregunta]:
-                              "Sí",
-
-                          })
-
-                        }
-                      />
-
-                      Sí
-
-                    </label>
-
-                    <label className="
-                      flex
-                      items-center
-                      gap-2
-                    ">
-
-                      <input
-                        type="radio"
-                        name={`pregunta-${index}`}
-                        checked={
-                          preguntas[pregunta]
-                          === "No"
-                        }
-                        onChange={()=>
-
-                          setPreguntas({
-
-                            ...preguntas,
-
-                            [pregunta]:
-                              "No",
-
-                          })
-
-                        }
-                      />
-
-                      No
-
-                    </label>
-
-                  </div>
-
-                </div>
-
-              ))
-
-            }
-
-          </div>
-
-        </div>
-
-        <div className="
-          mb-10
-        ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-            text-teal-700
-          ">
-
-            Observaciones Médicas
-
-          </h2>
-
-          <textarea
-            placeholder="
-Alergias, medicamentos, enfermedades,
-tratamientos médicos, observaciones...
-            "
-            value={observaciones}
-            onChange={(e)=>
-              setObservaciones(
-                e.target.value
-              )
-            }
-            className="
-              w-full
-              border
-              rounded-2xl
-              p-4
-              h-40
-            "
-          />
-
-        </div>
-
-        <div className="
-          mb-10
-        ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-            text-teal-700
-          ">
-
-            Consentimiento
-
-          </h2>
-
-          <label className="
-            flex
-            items-center
-            gap-3
-          ">
-
-            <input
-              type="checkbox"
-              checked={consentimiento}
-              onChange={(e)=>
-                setConsentimiento(
-                  e.target.checked
-                )
-              }
-            />
-
-            Acepto y autorizo el tratamiento dental.
-
-          </label>
-
-        </div>
-
-        <div className="
-          mb-10
-        ">
-
-          <h2 className="
-            text-2xl
-            font-bold
-            mb-4
-            text-teal-700
-          ">
-
-            Firma del Paciente
-
-          </h2>
 
           <input
             type="text"
-            placeholder="Escriba su nombre completo"
-            value={firma}
+            placeholder="Nombre completo"
+            value={nombre}
             onChange={(e)=>
-              setFirma(
+              setNombre(
                 e.target.value
               )
             }
             className="
-              w-full
               border
               rounded-2xl
               p-4
             "
           />
+
+          <input
+            type="text"
+            placeholder="Teléfono"
+            value={telefono}
+            onChange={(e)=>
+              setTelefono(
+                e.target.value
+              )
+            }
+            className="
+              border
+              rounded-2xl
+              p-4
+            "
+          />
+
+          <input
+            type="email"
+            placeholder="Correo"
+            value={correo}
+            onChange={(e)=>
+              setCorreo(
+                e.target.value
+              )
+            }
+            className="
+              border
+              rounded-2xl
+              p-4
+            "
+          />
+
+          <input
+            type="number"
+            placeholder="Edad"
+            value={edad}
+            onChange={(e)=>
+              setEdad(
+                e.target.value
+              )
+            }
+            className="
+              border
+              rounded-2xl
+              p-4
+            "
+          />
+
+          <input
+            type="text"
+            placeholder="Sexo"
+            value={sexo}
+            onChange={(e)=>
+              setSexo(
+                e.target.value
+              )
+            }
+            className="
+              border
+              rounded-2xl
+              p-4
+            "
+          />
+
+          <input
+            type="text"
+            placeholder="Dirección"
+            value={direccion}
+            onChange={(e)=>
+              setDireccion(
+                e.target.value
+              )
+            }
+            className="
+              border
+              rounded-2xl
+              p-4
+            "
+          />
+
+        </div>
+
+        <div className="
+          space-y-4
+          mb-10
+        ">
+
+          {
+
+            preguntasLista.map((pregunta,index)=>(
+
+              <div
+
+                key={index}
+
+                className="
+                  border
+                  rounded-2xl
+                  p-5
+                  bg-gray-50
+                "
+              >
+
+                <p className="
+                  font-semibold
+                  mb-3
+                ">
+
+                  {pregunta}
+
+                </p>
+
+                <div className="
+                  flex
+                  gap-8
+                ">
+
+                  <label className="
+                    flex
+                    items-center
+                    gap-2
+                  ">
+
+                    <input
+                      type="radio"
+                      checked={
+                        preguntas[pregunta]
+                        === "Sí"
+                      }
+                      onChange={()=>
+
+                        setPreguntas({
+
+                          ...preguntas,
+
+                          [pregunta]:
+                            "Sí",
+
+                        })
+
+                      }
+                    />
+
+                    Sí
+
+                  </label>
+
+                  <label className="
+                    flex
+                    items-center
+                    gap-2
+                  ">
+
+                    <input
+                      type="radio"
+                      checked={
+                        preguntas[pregunta]
+                        === "No"
+                      }
+                      onChange={()=>
+
+                        setPreguntas({
+
+                          ...preguntas,
+
+                          [pregunta]:
+                            "No",
+
+                        })
+
+                      }
+                    />
+
+                    No
+
+                  </label>
+
+                </div>
+
+              </div>
+
+            ))
+
+          }
+
+        </div>
+
+        <textarea
+          placeholder="
+Observaciones médicas...
+          "
+          value={observaciones}
+          onChange={(e)=>
+            setObservaciones(
+              e.target.value
+            )
+          }
+          className="
+            w-full
+            border
+            rounded-2xl
+            p-4
+            h-40
+            mb-10
+          "
+        />
+
+        <label className="
+          flex
+          items-center
+          gap-3
+          mb-10
+        ">
+
+          <input
+            type="checkbox"
+            checked={consentimiento}
+            onChange={(e)=>
+              setConsentimiento(
+                e.target.checked
+              )
+            }
+          />
+
+          Acepto y autorizo el tratamiento dental.
+
+        </label>
+
+        <div className="
+          mb-10
+        ">
+
+          <h2 className="
+            text-2xl
+            font-bold
+            mb-4
+            text-teal-700
+          ">
+
+            Firma Digital
+
+          </h2>
+
+          <div className="
+            border-2
+            border-slate-300
+            rounded-2xl
+            overflow-hidden
+            bg-white
+          ">
+
+            <SignatureCanvas
+
+              ref={firmaRef}
+
+              penColor="black"
+
+              canvasProps={{
+
+                width: 900,
+
+                height: 220,
+
+                className: "w-full"
+
+              }}
+
+            />
+
+          </div>
+
+          <button
+
+            onClick={() =>
+              firmaRef.current?.clear()
+            }
+
+            className="
+              mt-4
+              bg-red-500
+              hover:bg-red-600
+              text-white
+              px-4
+              py-2
+              rounded-xl
+              font-bold
+            "
+          >
+
+            Limpiar Firma
+
+          </button>
 
         </div>
 
@@ -573,7 +546,6 @@ tratamientos médicos, observaciones...
             font-bold
             w-full
             text-xl
-            transition-all
           "
         >
 
