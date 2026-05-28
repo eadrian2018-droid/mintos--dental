@@ -19,10 +19,12 @@ export default function Layout() {
 
     return `
 
-      p-3
-      rounded-xl
+      px-3
+      py-2
+      rounded-lg
       font-semibold
       transition
+      text-sm
 
       ${
 
@@ -42,32 +44,45 @@ export default function Layout() {
 
     <div className="
       flex
-      min-h-screen
+      h-screen
       bg-gray-100
+      overflow-hidden
     ">
 
-      <aside className="
-        w-72
-        bg-white
-        shadow-xl
-        p-6
-        flex
-        flex-col
-      ">
+      <aside
+
+        style={{
+
+          width: "170px",
+
+        }}
+
+        className="
+          bg-white
+          border-r
+          border-slate-200
+          p-3
+          flex
+          flex-col
+          flex-shrink-0
+        "
+      >
 
         <h1 className="
-          text-4xl
+          text-2xl
           font-bold
-          text-teal-700
-          mb-10
+          text-teal-600
+          mb-6
         ">
+
           MintOS
+
         </h1>
 
         <nav className="
           flex
           flex-col
-          gap-4
+          gap-2
         ">
 
           <Link
@@ -83,7 +98,9 @@ export default function Layout() {
             }
 
           >
+
             Dashboard
+
           </Link>
 
           <Link
@@ -99,7 +116,9 @@ export default function Layout() {
             }
 
           >
+
             Agenda
+
           </Link>
 
           <Link
@@ -115,24 +134,29 @@ export default function Layout() {
             }
 
           >
+
             Pacientes
+
           </Link>
 
         </nav>
 
         <div className="
           mt-auto
-          text-sm
-          text-gray-400
+          text-[10px]
+          text-slate-400
         ">
+
           MintOS Dental System
+
         </div>
 
       </aside>
 
       <main className="
         flex-1
-        p-8
+        overflow-y-auto
+        p-3
       ">
 
         <Outlet />
