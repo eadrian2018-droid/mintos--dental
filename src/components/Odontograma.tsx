@@ -426,77 +426,24 @@ export default function Odontograma({
             "
           >
 
-            <option value="caries">
-              Caries
-            </option>
+            {
 
-            <option value="resina">
-              Resina
-            </option>
+              Object.keys(
+                coloresTratamientos
+              ).map((t)=>(
 
-            <option value="extraccion">
-              Extracción
-            </option>
+                <option
+                  key={t}
+                  value={t}
+                >
 
-            <option value="corona">
-              Corona
-            </option>
+                  {t}
 
-            <option value="implante">
-              Implante
-            </option>
+                </option>
 
-            <option value="endodoncia">
-              Endodoncia
-            </option>
+              ))
 
-            <option value="carillas">
-              Carillas
-            </option>
-
-            <option value="puente">
-              Puente
-            </option>
-
-            <option value="protesis">
-              Prótesis
-            </option>
-
-            <option value="sellador">
-              Sellador
-            </option>
-
-            <option value="limpieza">
-              Limpieza
-            </option>
-
-            <option value="blanqueamiento">
-              Blanqueamiento
-            </option>
-
-            <option value="brackets">
-              Brackets
-            </option>
-
-            <option value="incrustacion">
-              Incrustación
-            </option>
-
-            <option value="amalgama">
-              Amalgama
-            </option>
-
-            <option value="fractura">
-              Fractura
-            </option>
-
-            <option value="movilidad">
-              Movilidad
-            </option>
-
-            <option value="ausente">
-              Ausente
-            </option>
+            }
 
           </select>
 
@@ -616,15 +563,7 @@ export default function Odontograma({
                   py-3
                   font-bold
                 ">
-                  Zona
-                </th>
-
-                <th className="
-                  px-4
-                  py-3
-                  font-bold
-                ">
-                  Tratamiento
+                  Tratamientos
                 </th>
 
                 <th className="
@@ -653,187 +592,211 @@ export default function Odontograma({
 
                 Object.entries(
                   estadoDientes
-                ).flatMap(([numero, zonas]) => {
+                ).map(([numero, zonas]) => {
 
                   const numeroDiente =
                     Number(numero);
 
-                  return Object.entries(
-                    zonas
-                  ).flatMap(([zona, tratamientos]) => {
+                  return (
 
-                    const lista =
-                      (tratamientos || []) as string[];
+                    <tr
 
-                    return lista.map((t)=>(
+                      key={numero}
 
-                      <tr
+                      className="
+                        bg-slate-50
+                        shadow-sm
+                      "
+                    >
 
-                        key={
-                          `${numero}-${zona}-${t}`
-                        }
+                      <td className="
+                        px-4
+                        py-4
+                        rounded-l-2xl
+                        font-bold
+                        text-slate-800
+                        align-top
+                      ">
 
-                        className="
-                          bg-slate-50
-                          shadow-sm
-                        "
-                      >
+                        {numero}
 
-                        <td className="
-                          px-4
-                          py-4
-                          rounded-l-2xl
-                          font-bold
-                          text-slate-800
+                      </td>
+
+                      <td className="
+                        px-4
+                        py-4
+                        min-w-[420px]
+                      ">
+
+                        <div className="
+                          flex
+                          flex-wrap
+                          gap-2
                         ">
 
-                          {numero}
+                          {
 
-                        </td>
+                            Object.entries(
+                              zonas
+                            ).flatMap(
 
-                        <td className="
-                          px-4
-                          py-4
-                          capitalize
-                        ">
+                              ([zona, tratamientos]) => {
 
-                          {zona}
+                                const lista =
+                                  (tratamientos || []) as string[];
 
-                        </td>
+                                return lista.map((t)=>(
 
-                        <td className="
-                          px-4
-                          py-4
-                        ">
+                                  <div
 
-                          <span
+                                    key={
+                                      `${numero}-${zona}-${t}`
+                                    }
 
-                            className="
-                              px-3
-                              py-2
-                              rounded-full
-                              text-white
-                              text-sm
-                              font-semibold
-                            "
+                                    className="
+                                      flex
+                                      items-center
+                                      gap-2
+                                      px-3
+                                      py-2
+                                      rounded-full
+                                      text-white
+                                      text-sm
+                                      font-semibold
+                                    "
 
-                            style={{
+                                    style={{
 
-                              backgroundColor:
-                                coloresTratamientos[t]
+                                      backgroundColor:
+                                        coloresTratamientos[t]
 
-                            }}
-                          >
+                                    }}
+                                  >
 
-                            {t}
+                                    <span className="
+                                      capitalize
+                                    ">
 
-                          </span>
+                                      {zona}
 
-                        </td>
+                                    </span>
 
-                        <td className="
-                          px-4
-                          py-4
-                          min-w-[280px]
-                        ">
+                                    <span>
 
-                          <textarea
+                                      :
 
-                            value={
-                              observacionesDientes[
-                                numeroDiente
-                              ] || ""
-                            }
+                                    </span>
 
-                            onChange={(e)=>
+                                    <span>
 
-                              setObservacionesDientes({
+                                      {t}
 
-                                ...observacionesDientes,
+                                    </span>
 
-                                [numeroDiente]:
-                                  e.target.value,
+                                  </div>
 
-                              })
+                                ));
 
-                            }
+                              }
 
-                            className="
-                              border
-                              border-slate-300
-                              rounded-xl
-                              p-3
-                              w-full
-                              min-h-[90px]
-                              resize-none
-                            "
+                            )
 
-                            placeholder="
+                          }
+
+                        </div>
+
+                      </td>
+
+                      <td className="
+                        px-4
+                        py-4
+                        min-w-[320px]
+                      ">
+
+                        <textarea
+
+                          value={
+                            observacionesDientes[
+                              numeroDiente
+                            ] || ""
+                          }
+
+                          onChange={(e)=>
+
+                            setObservacionesDientes({
+
+                              ...observacionesDientes,
+
+                              [numeroDiente]:
+                                e.target.value,
+
+                            })
+
+                          }
+
+                          className="
+                            border
+                            border-slate-300
+                            rounded-xl
+                            p-3
+                            w-full
+                            min-h-[90px]
+                            resize-none
+                          "
+
+                          placeholder="
 Observación clínica...
-                            "
+                          "
 
-                          />
+                        />
 
-                        </td>
+                      </td>
 
-                        <td className="
-                          px-4
-                          py-4
-                          rounded-r-2xl
-                        ">
+                      <td className="
+                        px-4
+                        py-4
+                        rounded-r-2xl
+                        align-top
+                      ">
 
-                          <button
+                        <button
 
-                            onClick={() => {
+                          onClick={() => {
 
-                              const nuevos =
-                                lista.filter(
+                            const nuevoEstado = {
+                              ...estadoDientes
+                            };
 
-                                  (x)=>
-                                    x !== t
+                            delete nuevoEstado[
+                              numeroDiente
+                            ];
 
-                                );
+                            setEstadoDientes(
+                              nuevoEstado
+                            );
 
-                              setEstadoDientes({
+                          }}
 
-                                ...estadoDientes,
+                          className="
+                            bg-red-500
+                            hover:bg-red-600
+                            text-white
+                            px-4
+                            py-2
+                            rounded-xl
+                            font-bold
+                          "
+                        >
 
-                                [numeroDiente]: {
+                          Limpiar
 
-                                  ...estadoDientes[
-                                    numeroDiente
-                                  ],
+                        </button>
 
-                                  [zona]: nuevos,
+                      </td>
 
-                                },
+                    </tr>
 
-                              });
-
-                            }}
-
-                            className="
-                              bg-red-500
-                              hover:bg-red-600
-                              text-white
-                              px-4
-                              py-2
-                              rounded-xl
-                              font-bold
-                            "
-                          >
-
-                            Eliminar
-
-                          </button>
-
-                        </td>
-
-                      </tr>
-
-                    ));
-
-                  });
+                  );
 
                 })
 
