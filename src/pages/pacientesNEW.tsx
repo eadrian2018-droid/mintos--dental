@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { Link } from "react-router-dom";
+
 import jsPDF from "jspdf";
 
 import * as htmlToImage from "html-to-image";
@@ -384,9 +386,9 @@ export default function Pacientes() {
 
           </h1>
 
-          <a
+          <Link
 
-            href="/qr-pacientes"
+            to="/qr-pacientes"
 
             className="
               bg-teal-600
@@ -402,7 +404,7 @@ export default function Pacientes() {
 
             QR
 
-          </a>
+          </Link>
 
         </div>
 
