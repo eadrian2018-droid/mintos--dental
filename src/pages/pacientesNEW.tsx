@@ -521,29 +521,161 @@ export default function Pacientes() {
                 mb-5
               ">
 
-                <div>
+                <div className="
+  flex-1
+">
 
-                  <h2 className="
-                    text-2xl
-                    font-bold
-                    text-teal-700
-                  ">
+  <div className="
+    bg-slate-50
+    border
+    border-slate-200
+    rounded-3xl
+    p-5
+  ">
 
-                    Expediente Clínico
+    <div className="
+      flex
+      gap-5
+      items-start
+    ">
 
-                  </h2>
+      <div className="
+        w-20
+        h-20
+        rounded-full
+        bg-teal-100
+        flex
+        items-center
+        justify-center
+        text-3xl
+        font-bold
+        text-teal-700
+        shrink-0
+      ">
 
-                  <p className="
-                    text-slate-500
-                    mt-1
-                    text-sm
-                  ">
+        {pacienteAbierto.nombre
+          ?.charAt(0)
+          ?.toUpperCase()}
 
-                    {pacienteAbierto.nombre}
+      </div>
 
-                  </p>
+      <div className="
+        flex-1
+      ">
 
-                </div>
+        <h2 className="
+          text-3xl
+          font-bold
+          text-slate-800
+        ">
+
+          {pacienteAbierto.nombre}
+
+        </h2>
+
+        <div className="
+          grid
+          grid-cols-2
+          lg:grid-cols-3
+          gap-y-2
+          gap-x-6
+          mt-4
+          text-sm
+        ">
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Edad:
+            </span>
+
+            {" "}
+
+            {pacienteAbierto.edad || "-"}
+
+          </div>
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Sexo:
+            </span>
+
+            {" "}
+
+            {pacienteAbierto.sexo || "-"}
+
+          </div>
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Teléfono:
+            </span>
+
+            {" "}
+
+            {pacienteAbierto.telefono || "-"}
+
+          </div>
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Email:
+            </span>
+
+            {" "}
+
+            {pacienteAbierto.correo || "-"}
+
+          </div>
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Registro:
+            </span>
+
+            {" "}
+
+            #{pacienteAbierto.id}
+
+          </div>
+
+          <div>
+
+            <span className="
+              font-semibold
+            ">
+              Última cita:
+            </span>
+
+            {" "}
+
+            Pendiente
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
                 <div className="
                   flex
