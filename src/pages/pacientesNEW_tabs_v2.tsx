@@ -75,7 +75,7 @@ export default function Pacientes() {
   const [imagenPreview,
     setImagenPreview] =
     useState("");
-
+    
   useEffect(() => {
 
     cargarPacientes();
