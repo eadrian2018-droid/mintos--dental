@@ -73,8 +73,12 @@ export default function Pacientes() {
     >({});
 
   const [imagenPreview,
-    setImagenPreview] =
-    useState("");
+  setImagenPreview] =
+  useState("");
+
+const [tabActiva,
+  setTabActiva] =
+  useState("general");
     
   useEffect(() => {
 
@@ -726,20 +730,201 @@ export default function Pacientes() {
 
               </div>
 
-              <Odontograma
-                observacionesDientes={
-                  observacionesDientes
-                }
-                setObservacionesDientes={
-                  setObservacionesDientes
-                }
-                estadoDientes={
-                  estadoDientes
-                }
-                setEstadoDientes={
-                  setEstadoDientes
-                }
-              />
+              <div className="
+  flex
+  gap-2
+  mb-6
+  bg-slate-100
+  p-2
+  rounded-2xl
+  w-fit
+">
+
+  <button
+    onClick={() =>
+      setTabActiva("general")
+    }
+    className={`
+      px-5
+      py-3
+      rounded-xl
+      font-semibold
+      transition-all
+
+      ${
+        tabActiva === "general"
+          ? "bg-white text-teal-600 shadow-md"
+          : "text-slate-500 hover:bg-white"
+      }
+    `}
+  >
+    General
+  </button>
+
+  <button
+    onClick={() =>
+      setTabActiva("expediente")
+    }
+    className={`
+      px-5
+      py-3
+      rounded-xl
+      font-semibold
+      transition-all
+
+      ${
+        tabActiva === "expediente"
+          ? "bg-white text-teal-600 shadow-md"
+          : "text-slate-500 hover:bg-white"
+      }
+    `}
+  >
+    Expediente Clínico
+  </button>
+
+  <button
+    onClick={() =>
+      setTabActiva("historial")
+    }
+    className={`
+      px-5
+      py-3
+      rounded-xl
+      font-semibold
+      transition-all
+
+      ${
+        tabActiva === "historial"
+          ? "bg-white text-teal-600 shadow-md"
+          : "text-slate-500 hover:bg-white"
+      }
+    `}
+  >
+    Historial Médico
+  </button>
+
+  <button
+    onClick={() =>
+      setTabActiva("citas")
+    }
+    className={`
+      px-5
+      py-3
+      rounded-xl
+      font-semibold
+      transition-all
+
+      ${
+        tabActiva === "citas"
+          ? "bg-white text-teal-600 shadow-md"
+          : "text-slate-500 hover:bg-white"
+      }
+    `}
+  >
+    Citas
+  </button>
+
+</div>
+
+{
+  tabActiva ===
+  "general" && (
+
+    <div className="
+      bg-slate-50
+      rounded-3xl
+      p-8
+      min-h-[400px]
+    ">
+
+      <h3 className="
+        text-2xl
+        font-bold
+        text-slate-800
+      ">
+
+        General
+
+      </h3>
+
+    </div>
+
+  )
+}
+
+{
+  tabActiva ===
+  "expediente" && (
+
+    <Odontograma
+      observacionesDientes={
+        observacionesDientes
+      }
+      setObservacionesDientes={
+        setObservacionesDientes
+      }
+      estadoDientes={
+        estadoDientes
+      }
+      setEstadoDientes={
+        setEstadoDientes
+      }
+    />
+
+  )
+}
+
+{
+  tabActiva ===
+  "historial" && (
+
+    <div className="
+      bg-slate-50
+      rounded-3xl
+      p-8
+      min-h-[400px]
+    ">
+
+      <h3 className="
+        text-2xl
+        font-bold
+        text-slate-800
+      ">
+
+        Historial Médico
+
+      </h3>
+
+    </div>
+
+  )
+}
+
+{
+  tabActiva ===
+  "citas" && (
+
+    <div className="
+      bg-slate-50
+      rounded-3xl
+      p-8
+      min-h-[400px]
+    ">
+
+      <h3 className="
+        text-2xl
+        font-bold
+        text-slate-800
+      ">
+
+        Citas
+
+      </h3>
+
+    </div>
+
+  )
+}
 
               <div className="
                 mt-8
