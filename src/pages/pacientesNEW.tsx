@@ -82,7 +82,21 @@ const [tabActiva,
 
   const [mostrarModalTratamiento,
   setMostrarModalTratamiento] =
-  useState(false);
+  useState(false);  
+
+  const [tratamientos,
+  setTratamientos] =
+  useState<any[]>([]);
+
+const [nuevoTratamiento,
+  setNuevoTratamiento] =
+  useState({
+    fecha: "",
+    tratamiento: "",
+    total: "",
+    pagado: "",
+    notas: "",
+  });
     
   useEffect(() => {
 
@@ -297,6 +311,43 @@ const [tabActiva,
     }
 
   }
+
+  function guardarTratamiento() {
+
+  const nuevo = {
+
+    ...nuevoTratamiento,
+
+    pendiente:
+
+      Number(
+        nuevoTratamiento.total || 0
+      ) -
+
+      Number(
+        nuevoTratamiento.pagado || 0
+      ),
+
+  };
+
+  setTratamientos([
+    ...tratamientos,
+    nuevo,
+  ]);
+
+  setNuevoTratamiento({
+    fecha: "",
+    tratamiento: "",
+    total: "",
+    pagado: "",
+    notas: "",
+  });
+
+  setMostrarModalTratamiento(
+    false
+  );
+
+}
 
   function abrirPaciente(
     paciente: Paciente
