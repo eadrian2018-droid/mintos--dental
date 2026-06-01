@@ -97,6 +97,12 @@ const [nuevoTratamiento,
     pagado: "",
     notas: "",
   });
+
+  const [editandoIndex,
+  setEditandoIndex] =
+  useState<number | null>(
+    null
+  );
     
   useEffect(() => {
 
@@ -312,7 +318,7 @@ const [nuevoTratamiento,
 
   }
 
-  function guardarTratamiento() {
+ function guardarTratamiento() {
 
   const nuevo = {
 
@@ -330,10 +336,32 @@ const [nuevoTratamiento,
 
   };
 
-  setTratamientos([
-    ...tratamientos,
-    nuevo,
-  ]);
+  if (
+    editandoIndex !== null
+  ) {
+
+    const copia = [
+      ...tratamientos,
+    ];
+
+    copia[
+      editandoIndex
+    ] = nuevo;
+
+    setTratamientos(
+      copia
+    );
+
+  }
+
+  else {
+
+    setTratamientos([
+      ...tratamientos,
+      nuevo,
+    ]);
+
+  }
 
   setNuevoTratamiento({
     fecha: "",
@@ -342,6 +370,10 @@ const [nuevoTratamiento,
     pagado: "",
     notas: "",
   });
+
+  setEditandoIndex(
+    null
+  );
 
   setMostrarModalTratamiento(
     false
@@ -1092,6 +1124,10 @@ const [nuevoTratamiento,
                 Estado
               </th>
 
+              <th className="p-4 text-left">
+  Acciones
+</th>
+
             </tr>
 
           </thead>
@@ -1109,7 +1145,7 @@ const [nuevoTratamiento,
       <tr>
 
         <td
-          colSpan={6}
+          colSpan={7}
           className="
             text-center
             p-10
@@ -1218,6 +1254,79 @@ const [nuevoTratamiento,
               }
 
             </td>
+
+<td className="
+  p-4
+">
+
+  <div className="
+    flex
+    gap-2
+  ">
+
+    <button
+      onClick={() => {
+
+        setNuevoTratamiento(
+          tratamiento
+        );
+
+        setEditandoIndex(
+          index
+        );
+
+        setMostrarModalTratamiento(
+          true
+        );
+
+      }}
+      className="
+        bg-blue-500
+        hover:bg-blue-600
+        text-white
+        px-3
+        py-1
+        rounded-lg
+        text-sm
+      "
+    >
+
+      Editar
+
+    </button>
+
+    <button
+      onClick={() => {
+
+        setTratamientos(
+
+          tratamientos.filter(
+            (_,
+            i) =>
+              i !== index
+          )
+
+        );
+
+      }}
+      className="
+        bg-red-500
+        hover:bg-red-600
+        text-white
+        px-3
+        py-1
+        rounded-lg
+        text-sm
+      "
+    >
+
+      Eliminar
+
+    </button>
+
+  </div>
+
+</td>
 
           </tr>
 
