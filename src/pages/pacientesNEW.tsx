@@ -831,21 +831,235 @@ const [tabActiva,
   "general" && (
 
     <div className="
-      bg-slate-50
-      rounded-3xl
-      p-8
-      min-h-[400px]
+      space-y-6
     ">
 
-      <h3 className="
-        text-2xl
-        font-bold
-        text-slate-800
+      <div className="
+        grid
+        grid-cols-1
+        md:grid-cols-3
+        gap-4
       ">
 
-        General
+        <div className="
+          bg-white
+          border
+          border-slate-200
+          rounded-3xl
+          p-5
+        ">
 
-      </h3>
+          <p className="
+            text-sm
+            text-slate-500
+          ">
+            Tratamientos
+          </p>
+
+          <h3 className="
+            text-3xl
+            font-bold
+            text-slate-800
+            mt-2
+          ">
+            0
+          </h3>
+
+        </div>
+
+        <div className="
+          bg-white
+          border
+          border-green-200
+          rounded-3xl
+          p-5
+        ">
+
+          <p className="
+            text-sm
+            text-slate-500
+          ">
+            Total Pagado
+          </p>
+
+          <h3 className="
+            text-3xl
+            font-bold
+            text-green-600
+            mt-2
+          ">
+            $0
+          </h3>
+
+        </div>
+
+        <div className="
+          bg-white
+          border
+          border-red-200
+          rounded-3xl
+          p-5
+        ">
+
+          <p className="
+            text-sm
+            text-slate-500
+          ">
+            Saldo Pendiente
+          </p>
+
+          <h3 className="
+            text-3xl
+            font-bold
+            text-red-600
+            mt-2
+          ">
+            $0
+          </h3>
+
+        </div>
+
+      </div>
+
+      <div className="
+        bg-white
+        border
+        border-slate-200
+        rounded-3xl
+        overflow-hidden
+      ">
+
+        <div className="
+          flex
+          items-center
+          justify-between
+          p-5
+          border-b
+          border-slate-200
+        ">
+
+          <h3 className="
+            text-xl
+            font-bold
+            text-slate-800
+          ">
+
+            Tratamientos
+
+          </h3>
+
+          <button
+            className="
+              bg-teal-600
+              hover:bg-teal-700
+              text-white
+              px-4
+              py-2
+              rounded-xl
+              font-semibold
+            "
+          >
+
+            + Agregar
+
+          </button>
+
+        </div>
+
+        <table className="
+          w-full
+        ">
+
+          <thead>
+
+            <tr className="
+              bg-slate-50
+            ">
+
+              <th className="p-4 text-left">
+                Fecha
+              </th>
+
+              <th className="p-4 text-left">
+                Tratamiento
+              </th>
+
+              <th className="p-4 text-left">
+                Total
+              </th>
+
+              <th className="p-4 text-left">
+                Pagado
+              </th>
+
+              <th className="p-4 text-left">
+                Pendiente
+              </th>
+
+              <th className="p-4 text-left">
+                Estado
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            <tr>
+
+              <td
+                colSpan={6}
+                className="
+                  text-center
+                  p-10
+                  text-slate-400
+                "
+              >
+
+                No hay tratamientos registrados
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <div className="
+        bg-white
+        border
+        border-slate-200
+        rounded-3xl
+        p-5
+      ">
+
+        <h3 className="
+          text-lg
+          font-bold
+          mb-3
+        ">
+
+          Notas
+
+        </h3>
+
+        <textarea
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-xl
+            p-3
+            min-h-[120px]
+          "
+          placeholder="Notas del paciente..."
+        />
+
+      </div>
 
     </div>
 
