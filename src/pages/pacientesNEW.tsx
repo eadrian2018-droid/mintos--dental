@@ -79,6 +79,10 @@ export default function Pacientes() {
 const [tabActiva,
   setTabActiva] =
   useState("general");
+
+  const [mostrarModalTratamiento,
+  setMostrarModalTratamiento] =
+  useState(false);
     
   useEffect(() => {
 
@@ -948,21 +952,26 @@ const [tabActiva,
 
           </h3>
 
-          <button
-            className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-4
-              py-2
-              rounded-xl
-              font-semibold
-            "
-          >
+ <button
+  onClick={() =>
+    setMostrarModalTratamiento(
+      true
+    )
+  }
+  className="
+    bg-teal-600
+    hover:bg-teal-700
+    text-white
+    px-4
+    py-2
+    rounded-xl
+    font-semibold
+  "
+>
 
-            + Agregar
+  + Agregar
 
-          </button>
+</button>
 
         </div>
 
@@ -1058,6 +1067,138 @@ const [tabActiva,
           "
           placeholder="Notas del paciente..."
         />
+
+      </div>
+
+    </div>
+
+  )
+}
+
+{
+  mostrarModalTratamiento && (
+
+    <div className="
+      fixed
+      inset-0
+      bg-black/50
+      flex
+      items-center
+      justify-center
+      z-50
+    ">
+
+      <div className="
+        bg-white
+        rounded-3xl
+        p-6
+        w-full
+        max-w-xl
+      ">
+
+        <h2 className="
+          text-2xl
+          font-bold
+          mb-5
+        ">
+
+          Nuevo Tratamiento
+
+        </h2>
+
+        <div className="
+          grid
+          gap-4
+        ">
+
+          <input
+            type="date"
+            className="
+              border
+              rounded-xl
+              p-3
+            "
+          />
+
+          <input
+            placeholder="Tratamiento"
+            className="
+              border
+              rounded-xl
+              p-3
+            "
+          />
+
+          <input
+            placeholder="Costo Total"
+            className="
+              border
+              rounded-xl
+              p-3
+            "
+          />
+
+          <input
+            placeholder="Pagado"
+            className="
+              border
+              rounded-xl
+              p-3
+            "
+          />
+
+          <textarea
+            placeholder="Notas"
+            className="
+              border
+              rounded-xl
+              p-3
+              min-h-[120px]
+            "
+          />
+
+        </div>
+
+        <div className="
+          flex
+          justify-end
+          gap-3
+          mt-6
+        ">
+
+          <button
+            onClick={() =>
+              setMostrarModalTratamiento(
+                false
+              )
+            }
+            className="
+              px-4
+              py-2
+              border
+              rounded-xl
+            "
+          >
+
+            Cancelar
+
+          </button>
+
+          <button
+            className="
+              bg-teal-600
+              text-white
+              px-4
+              py-2
+              rounded-xl
+            "
+          >
+
+            Guardar
+
+          </button>
+
+        </div>
 
       </div>
 
