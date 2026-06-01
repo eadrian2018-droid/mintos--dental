@@ -917,7 +917,7 @@ const [nuevoTratamiento,
             text-slate-800
             mt-2
           ">
-            0
+            {tratamientos.length}
           </h3>
 
         </div>
@@ -943,7 +943,23 @@ const [nuevoTratamiento,
             text-green-600
             mt-2
           ">
-            $0
+            $
+{
+  tratamientos.reduce(
+    (
+      total,
+      tratamiento
+    ) =>
+
+      total +
+
+      Number(
+        tratamiento.pagado || 0
+      ),
+
+    0
+  )
+}
           </h3>
 
         </div>
@@ -969,7 +985,23 @@ const [nuevoTratamiento,
             text-red-600
             mt-2
           ">
-            $0
+            $
+{
+  tratamientos.reduce(
+    (
+      total,
+      tratamiento
+    ) =>
+
+      total +
+
+      Number(
+        tratamiento.pendiente || 0
+      ),
+
+    0
+  )
+}
           </h3>
 
         </div>
@@ -1277,50 +1309,96 @@ const [nuevoTratamiento,
         ">
 
           <input
-            type="date"
-            className="
-              border
-              rounded-xl
-              p-3
-            "
-          />
+  type="date"
+  value={
+    nuevoTratamiento.fecha
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      fecha: e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+/>
 
           <input
-            placeholder="Tratamiento"
-            className="
-              border
-              rounded-xl
-              p-3
-            "
-          />
+  placeholder="Tratamiento"
+  value={
+    nuevoTratamiento.tratamiento
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      tratamiento:
+        e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+/>
 
           <input
-            placeholder="Costo Total"
-            className="
-              border
-              rounded-xl
-              p-3
-            "
-          />
+  placeholder="Costo Total"
+  value={
+    nuevoTratamiento.total
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      total: e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+/>
 
-          <input
-            placeholder="Pagado"
-            className="
-              border
-              rounded-xl
-              p-3
-            "
-          />
+         <input
+  placeholder="Pagado"
+  value={
+    nuevoTratamiento.pagado
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      pagado: e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+/>
 
           <textarea
-            placeholder="Notas"
-            className="
-              border
-              rounded-xl
-              p-3
-              min-h-[120px]
-            "
-          />
+  placeholder="Notas"
+  value={
+    nuevoTratamiento.notas
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      notas: e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+    min-h-[120px]
+  "
+/>
 
         </div>
 
