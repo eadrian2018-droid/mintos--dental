@@ -1066,24 +1066,138 @@ const [nuevoTratamiento,
 
           <tbody>
 
-            <tr>
+  {
 
-              <td
-                colSpan={6}
-                className="
-                  text-center
-                  p-10
-                  text-slate-400
-                "
-              >
+    tratamientos.length === 0
 
-                No hay tratamientos registrados
+    ?
 
-              </td>
+    (
 
-            </tr>
+      <tr>
 
-          </tbody>
+        <td
+          colSpan={6}
+          className="
+            text-center
+            p-10
+            text-slate-400
+          "
+        >
+
+          No hay tratamientos registrados
+
+        </td>
+
+      </tr>
+
+    )
+
+    :
+
+    (
+
+      tratamientos.map(
+
+        (
+          tratamiento,
+          index
+        ) => (
+
+          <tr
+            key={index}
+            className="
+              border-t
+              border-slate-200
+            "
+          >
+
+            <td className="
+              p-4
+            ">
+
+              {
+                tratamiento.fecha
+              }
+
+            </td>
+
+            <td className="
+              p-4
+            ">
+
+              {
+                tratamiento.tratamiento
+              }
+
+            </td>
+
+            <td className="
+              p-4
+            ">
+
+              $
+              {
+                tratamiento.total
+              }
+
+            </td>
+
+            <td className="
+              p-4
+            ">
+
+              $
+              {
+                tratamiento.pagado
+              }
+
+            </td>
+
+            <td className="
+              p-4
+            ">
+
+              $
+              {
+                tratamiento.pendiente
+              }
+
+            </td>
+
+            <td className="
+              p-4
+            ">
+
+              {
+
+                Number(
+                  tratamiento.pendiente
+                ) > 0
+
+                ?
+
+                "Pendiente"
+
+                :
+
+                "Pagado"
+
+              }
+
+            </td>
+
+          </tr>
+
+        )
+
+      )
+
+    )
+
+  }
+
+</tbody>
 
         </table>
 
@@ -1236,18 +1350,21 @@ const [nuevoTratamiento,
           </button>
 
           <button
-            className="
-              bg-teal-600
-              text-white
-              px-4
-              py-2
-              rounded-xl
-            "
-          >
+  onClick={
+    guardarTratamiento
+  }
+  className="
+    bg-teal-600
+    text-white
+    px-4
+    py-2
+    rounded-xl
+  "
+>
 
-            Guardar
+  Guardar
 
-          </button>
+</button>
 
         </div>
 
