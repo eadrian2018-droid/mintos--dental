@@ -96,6 +96,7 @@ const [nuevoTratamiento,
     total: "",
     pagado: "",
     notas: "",
+    proximaCita: "",
   });
 
   const [editandoIndex,
@@ -364,12 +365,13 @@ const [nuevoTratamiento,
   }
 
   setNuevoTratamiento({
-    fecha: "",
-    tratamiento: "",
-    total: "",
-    pagado: "",
-    notas: "",
-  });
+  fecha: "",
+  tratamiento: "",
+  total: "",
+  pagado: "",
+  notas: "",
+  proximaCita: "",
+});
 
   setEditandoIndex(
     null
@@ -1121,13 +1123,20 @@ const [nuevoTratamiento,
               </th>
 
               <th className="p-4 text-left">
-                Estado
-              </th>
-
-              <th className="p-4 text-left">
-  Acciones
+  Estado
 </th>
 
+<th className="p-4 text-left">
+  Próxima Cita
+</th>
+
+<th className="p-4 text-left">
+  Notas
+</th>
+
+<th className="p-4 text-left">
+  Acciones
+</th>
             </tr>
 
           </thead>
@@ -1145,7 +1154,7 @@ const [nuevoTratamiento,
       <tr>
 
         <td
-          colSpan={7}
+          colSpan={8}
           className="
             text-center
             p-10
@@ -1234,26 +1243,99 @@ const [nuevoTratamiento,
             </td>
 
             <td className="
-              p-4
-            ">
+  p-4
+">
 
-              {
+  {
 
-                Number(
-                  tratamiento.pendiente
-                ) > 0
+    Number(
+      tratamiento.pendiente
+    ) === 0
 
-                ?
+    ?
 
-                "Pendiente"
+    (
 
-                :
+      <span className="
+        bg-green-100
+        text-green-700
+        px-3
+        py-1
+        rounded-full
+        text-xs
+        font-semibold
+      ">
 
-                "Pagado"
+        Pagado
 
-              }
+      </span>
 
-            </td>
+    )
+
+    :
+
+    Number(
+      tratamiento.pagado
+    ) > 0
+
+    ?
+
+    (
+
+      <span className="
+        bg-yellow-100
+        text-yellow-700
+        px-3
+        py-1
+        rounded-full
+        text-xs
+        font-semibold
+      ">
+
+        Parcial
+
+      </span>
+
+    )
+
+    :
+
+    (
+
+      <span className="
+        bg-red-100
+        text-red-700
+        px-3
+        py-1
+        rounded-full
+        text-xs
+        font-semibold
+      ">
+
+        Pendiente
+
+      </span>
+
+    )
+
+  }
+
+</td>
+
+<td className="
+  p-4
+  max-w-[250px]
+">
+
+  {
+
+    tratamiento.notas ||
+
+    "-"
+
+  }
+
+</td>
 
 <td className="
   p-4
@@ -1481,6 +1563,25 @@ const [nuevoTratamiento,
     setNuevoTratamiento({
       ...nuevoTratamiento,
       pagado: e.target.value,
+    })
+  }
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+/>
+
+<input
+  type="date"
+  value={
+    nuevoTratamiento.proximaCita
+  }
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      proximaCita:
+        e.target.value,
     })
   }
   className="
