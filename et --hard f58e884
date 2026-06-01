@@ -1,0 +1,121 @@
+[33mfb8e884[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m patient tabs v2
+[33m48b7c4c[m trigger deployment
+[33m6813528[m add patient tabs v2
+[33m131023e[m add patient tabs v2
+[33m619a2d8[m add crm patient header
+[33m662c436[m add real digital signature canvas
+[33mf63118f[m fix qr links for hash router
+[33m266d6a1[m replace qr library with stable image qr
+[33m96c3ca5[m fix qr component crash
+[33mae45d60[m fix stable patients page with qr panel
+[33m90e222d[m fix qr component props crash
+[33mbbc5f54[m fix patients page with embedded qr panel
+[33ma059472[m embed qr and public form into patients page
+[33m491741e[m fix qr navigation using react router link
+[33m827a027[m replace external qr api with local qr generator
+[33m0f9d9fe[m fix qr public route
+[33m15a07af[m fix public qr route access
+[33mcaa5639[m create premium public patient qr workflow
+[33m4c50d25[m add removable treatment chips to odontograma
+[33m613fbcd[m final compact odontograma optimization
+[33m76cfb33[m force compact main sidebar width
+[33m4828422[m force vercel redeploy
+[33m25d361f[m compress sidebar and maximize odontograma area
+[33mce05090[m create ultra compact professional dental layout
+[33maa518b6[m optimize odontograma responsive layout
+[33m5aa15e0[m convert patients page into professional split layout
+[33m60a10b6[m restore qr patient route correctly
+[33m4e1a15f[m fix qr patient import path
+[33mdb19149[m restore patient QR routes
+[33m8ab296a[m finalize compact professional odontograma table
+[33m794b3c7[m convert active treatments into compact professional table
+[33m901b44e[m add professional active treatments panel
+[33m1bef3be[m improve professional odontograma spacing and layout
+[33m7d4f254[m finish professional quadrant odontograma
+[33mb6bff7d[m upgrade odontograma to professional quadrant system
+[33mda0b932[m convert odontograma to professional quadrant system
+[33md005c36[m upgrade all teeth to quadrant system
+[33m56a79f5[m fix odontograma multi treatment support
+[33mbf677ca[m fix patients page for multi treatment odontograma
+[33m07f0567[m upgrade odontograma with multi treatments
+[33m9a078cb[m fix expediente navigation and improve calendar colors
+[33maa809e9[m improve calendar styling and patient detail opening
+[33mf9b1fd2[m remove old layout navigation system
+[33m0c94b01[m restore complete patient detail routing
+[33m1a4630d[m fix vercel react router routes
+[33mc743999[m add professional patient treatments system
+[33mb64075f[m fix calendar events and appointment rendering
+[33mc4df9e1[m stabilize appointment workflow
+[33m981745a[m restore calendar patient display
+[33mb2e47a5[m restore dashboard navigation
+[33m5fd7c6a[m restore professional dashboard
+[33me70ab20[m fix patient detail import finally
+[33m71d1bdc[m fix nested router issue
+[33m80c9d1f[m fix blank screen routes
+[33m4dfd2ed[m fix linux filename issue
+[33m4fc7041[m fix paciente detalle page
+[33m26b9611[m fix pacienteDetalle casing
+[33mcdb315c[m connect patient detail routes
+[33mdf056fb[m fix custom patient input
+[33m14fad4e[m add searchable patient selector
+[33m62fa8dc[m connect appointments to patient records
+[33m9872689[m link appointments to real patients
+[33m9cf4871[m replace prompts with professional modal
+[33maeff897[m add doctor selection to appointments
+[33m2f6b9f5[m fix modal overlay
+[33m150ea93[m add react modal types
+[33mc0edf97[m add professional appointment modal
+[33m7b0b4d4[m add appointment status colors
+[33m13f0b00[m improve calendar hour labels
+[33ma74fd98[m add 15 minute appointments
+[33m05825b1[m fix fullcalendar css imports
+[33mdf82adf[m migrate to fullcalendar
+[33m4bc6ab4[m add appointment editing
+[33m83af3cb[m simplify appointment creation
+[33m223fa50[m fix calendar fully
+[33m7b67a80[m connect calendar to supabase
+[33m9620f1f[m remove broken calendar
+[33mc2f773e[m fix stable calendar
+[33mdc7d7a7[m fix draggable calendar types
+[33mc7779fc[m add draggable calendar
+[33m9a2009e[m improve calendar interactions
+[33m63bed14[m fix calendar types
+[33md69478f[m add real calendar
+[33mdf716b5[m add full patients module
+[33m4d2877d[m rename pages completely
+[33m93ed92b[m force lowercase filenames
+[33m4b2ec4d[m fix linux imports
+[33mdfdb9c2[m fix clean layout
+[33mf55e61f[m fix layout
+[33m8f33d73[m create modular layout
+[33maad4261[m add authentication
+[33mbbf4368[m add visual pdf
+[33mb35f19d[m fix expediente save
+[33mef0fe77[m stable pdf generation
+[33m80cb45d[m fix pdf generation
+[33m9717236[m add pdf generation
+[33md2cd9cb[m add email field
+[33m4afdac1[m fix full patient history
+[33ma0b0c36[m show full medical history
+[33m17482c3[m full admin radiography upload
+[33m1cfab9d[m add admin radiography upload
+[33mcf4adf0[m descripcion corta
+[33m2e5f936[m add radiography upload
+[33m09c3883[m restore medical questions
+[33m56bebbd[m connect public form to supabase
+[33ma4b5145[m fix toggle teeth
+[33m95b83f3[m fix tooth toggle
+[33m958f2bd[m switch to hash router
+[33me494e67[m fix qr route
+[33m8aba4ff[m replace qr library
+[33m954dab9[m install react qr code
+[33m63111a9[m fix qr component
+[33m9f35012[m restore qr clean
+[33m0cfe134[m hard reset app
+[33m5b573bf[m clean app test
+[33mb6dd736[m temporary disable supabase
+[33ma4194b3[m clean patient form
+[33m26194c2[m clean patient form
+[33m04d18e1[m disable odontograma
+[33m2867887[m final production qr
+[33m6aca920[m clean rebuild
