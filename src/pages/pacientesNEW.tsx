@@ -1930,9 +1930,135 @@ const [nuevoTratamiento,
 
         </h2>
 
-        <p className="mb-4">
-          Modal funcionando 🚀
-        </p>
+       <div className="
+  grid
+  gap-4
+">
+
+  <input
+    type="date"
+    value={
+      nuevaCita.fecha
+    }
+    onChange={(e)=>
+      setNuevaCita({
+        ...nuevaCita,
+        fecha:
+          e.target.value,
+      })
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <input
+    type="time"
+    value={
+      nuevaCita.horaInicio
+    }
+    onChange={(e)=>
+      setNuevaCita({
+        ...nuevaCita,
+        horaInicio:
+          e.target.value,
+      })
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <input
+    type="time"
+    value={
+      nuevaCita.horaFin
+    }
+    onChange={(e)=>
+      setNuevaCita({
+        ...nuevaCita,
+        horaFin:
+          e.target.value,
+      })
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <select
+
+    value={
+      nuevaCita.estado
+    }
+
+    onChange={(e)=>
+      setNuevaCita({
+        ...nuevaCita,
+        estado:
+          e.target.value,
+      })
+    }
+
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+
+  >
+
+    <option value="pendiente">
+      Pendiente
+    </option>
+
+    <option value="confirmada">
+      Confirmada
+    </option>
+
+    <option value="cancelada">
+      Cancelada
+    </option>
+
+    <option value="tratamiento">
+      Tratamiento
+    </option>
+
+  </select>
+
+  <input
+
+    value={
+      nuevaCita.doctor
+    }
+
+    onChange={(e)=>
+      setNuevaCita({
+        ...nuevaCita,
+        doctor:
+          e.target.value,
+      })
+    }
+
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+
+    placeholder="
+      Doctor
+    "
+
+  />
+
+</div>
 
         <button
 
@@ -1952,7 +2078,7 @@ const [nuevoTratamiento,
 
         >
 
-          Cerrar
+          Cancelar
 
         </button>
 
