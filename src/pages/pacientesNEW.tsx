@@ -199,6 +199,74 @@ const [nuevoTratamiento,
 
 }
 
+async function guardarCitaPaciente() {
+
+  if (!pacienteAbierto?.id)
+    return;
+
+  const inicio = new Date(
+    `${nuevaCita.fecha}T${nuevaCita.horaInicio}`
+  );
+
+  const fin = new Date(
+    `${nuevaCita.fecha}T${nuevaCita.horaFin}`
+  );
+
+  await supabase
+
+    .from("citas")
+
+    .insert([
+
+      {
+
+        paciente:
+          pacienteAbierto.nombre,
+
+        paciente_id:
+          pacienteAbierto.id,
+
+        inicio:
+          inicio.toISOString(),
+
+        fin:
+          fin.toISOString(),
+
+        estado:
+          nuevaCita.estado,
+
+        doctor:
+          nuevaCita.doctor,
+
+      },
+
+    ]);
+
+  await cargarCitas(
+    pacienteAbierto.id
+  );
+
+  setMostrarModalCita(
+    false
+  );
+
+  setNuevaCita({
+
+    fecha: "",
+
+    horaInicio: "",
+
+    horaFin: "",
+
+    estado: "pendiente",
+
+    doctor: "Dr. Edgar",
+
+  });
+
+}
+
+
   async function subirRadiografia(
     archivo: File
   ) {
@@ -2081,6 +2149,26 @@ const [nuevoTratamiento,
           Cancelar
 
         </button>
+
+        <button
+
+ onClick={
+  guardarCitaPaciente
+}
+
+  className="
+    bg-teal-600
+    text-white
+    px-4
+    py-2
+    rounded-xl
+  "
+
+>
+
+  Guardar
+
+</button>
 
       </div>
 
