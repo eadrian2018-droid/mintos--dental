@@ -426,9 +426,9 @@ const [nuevoTratamiento,
 
 }
 
-  function abrirPaciente(
-    paciente: Paciente
-  ) {
+  async function abrirPaciente(
+  paciente: Paciente
+) {
 
     setPacienteAbierto(
       paciente
@@ -464,7 +464,7 @@ const [nuevoTratamiento,
 
     }
 
-    else {
+        else {
 
       setObservacionesDientes({});
 
@@ -474,8 +474,75 @@ const [nuevoTratamiento,
 
     }
 
-  }
+    if (
+      paciente.id
+    ) {
 
+      const {
+        data,
+        error,
+      } = await supabase
+
+        .from(
+          "tratamientos"
+        )
+
+        .select("*")
+
+        .eq(
+          "paciente_id",
+          paciente.id
+        )
+
+        .order(
+          "created_at",
+          {
+            ascending: false,
+          }
+        );
+
+      if (
+        !error &&
+        data
+      ) {
+
+        setTratamientos(
+
+          data.map(
+            (
+              t
+            ) => ({
+
+              id:
+    t.id,
+
+  fecha:
+    t.fecha,
+
+  tratamiento:
+    t.tratamiento,
+
+  total:
+    t.total,
+
+  pagado:
+    t.pago,
+
+  pendiente:
+    t.resta,
+
+  notas:
+    "",
+})
+          )
+
+        );
+
+      }
+
+    }
+
+  }
   const pacientesFiltrados =
     pacientes.filter((p)=>
 
@@ -1421,33 +1488,55 @@ const [nuevoTratamiento,
     </button>
 
     <button
-      onClick={() => {
+  onClick={async () => {
 
-        setTratamientos(
+    const tratamientoEliminar =
+      tratamientos[index];
 
-          tratamientos.filter(
-            (_,
-            i) =>
-              i !== index
-          )
+    if (
+      tratamientoEliminar?.id
+    ) {
 
+      await supabase
+
+        .from(
+          "tratamientos"
+        )
+
+        .delete()
+
+        .eq(
+          "id",
+          tratamientoEliminar.id
         );
 
-      }}
-      className="
-        bg-red-500
-        hover:bg-red-600
-        text-white
-        px-3
-        py-1
-        rounded-lg
-        text-sm
-      "
-    >
+    }
 
-      Eliminar
+    setTratamientos(
 
-    </button>
+      tratamientos.filter(
+        (_,
+        i) =>
+          i !== index
+      )
+
+    );
+
+  }}
+  className="
+    bg-red-500
+    hover:bg-red-600
+    text-white
+    px-3
+    py-1
+    rounded-lg
+    text-sm
+  "
+>
+
+  Eliminar
+
+</button>
 
   </div>
 
