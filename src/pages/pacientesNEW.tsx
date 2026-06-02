@@ -1293,10 +1293,6 @@ const [nuevoTratamiento,
 </th>
 
 <th className="p-4 text-left">
-  Próxima Cita
-</th>
-
-<th className="p-4 text-left">
   Notas
 </th>
 
