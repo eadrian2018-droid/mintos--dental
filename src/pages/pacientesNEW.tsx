@@ -24,7 +24,7 @@ interface ZonaDiente {
 
 type Paciente = {
 
-  id?: number;
+  id: number;
 
   nombre: string;
 
@@ -88,6 +88,35 @@ const [tabActiva,
   setTratamientos] =
   useState<any[]>([]);
 
+  const [
+ citas,
+  setCitas,
+] = useState<any[]>([]);
+
+const [
+  mostrarModalCita,
+  setMostrarModalCita,
+] = useState(false);
+
+const [
+  nuevaCita,
+  setNuevaCita,
+] = useState({
+
+  fecha: "",
+
+  horaInicio: "",
+
+  horaFin: "",
+
+  estado: "pendiente",
+
+  doctor: "Dr. Edgar",
+
+});
+
+
+
 const [nuevoTratamiento,
   setNuevoTratamiento] =
   useState({
@@ -112,7 +141,7 @@ const [nuevoTratamiento,
 
   async function cargarPacientes() {
 
-    const { data } =
+   const { data } =
       await supabase
 
         .from("pacientes")
@@ -131,6 +160,44 @@ const [nuevoTratamiento,
     }
 
   }
+
+  async function cargarCitas(
+  pacienteId: number
+) {
+
+  const {
+    data,
+    error,
+  } = await supabase
+
+    .from("citas")
+
+    .select("*")
+
+    .eq(
+      "paciente_id",
+      pacienteId
+    )
+
+    .order(
+      "inicio",
+      {
+        ascending: false,
+      }
+    );
+
+  if (
+    !error &&
+    data
+  ) {
+
+    setCitas(
+      data
+    );
+
+  }
+
+}
 
   async function subirRadiografia(
     archivo: File
@@ -489,6 +556,10 @@ const [nuevoTratamiento,
     setPacienteAbierto(
       paciente
     );
+
+    cargarCitas(
+  paciente.id
+);
 
     if (
       paciente.observaciones_dientes
@@ -1829,6 +1900,70 @@ const [nuevoTratamiento,
 }
 
 {
+  mostrarModalCita && (
+
+    <div className="
+      fixed
+      inset-0
+      bg-black/50
+      flex
+      items-center
+      justify-center
+      z-50
+    ">
+
+      <div className="
+        bg-white
+        rounded-3xl
+        p-6
+        w-full
+        max-w-xl
+      ">
+
+        <h2 className="
+          text-2xl
+          font-bold
+          mb-5
+        ">
+
+          Nueva Cita
+
+        </h2>
+
+        <p className="mb-4">
+          Modal funcionando 🚀
+        </p>
+
+        <button
+
+          onClick={() =>
+            setMostrarModalCita(
+              false
+            )
+          }
+
+          className="
+            bg-red-500
+            text-white
+            px-4
+            py-2
+            rounded-xl
+          "
+
+        >
+
+          Cerrar
+
+        </button>
+
+      </div>
+
+    </div>
+
+  )
+}
+
+{
   tabActiva ===
   "expediente" && (
 
@@ -1855,21 +1990,201 @@ const [nuevoTratamiento,
   "historial" && (
 
     <div className="
-      bg-slate-50
-      rounded-3xl
-      p-8
-      min-h-[400px]
+      space-y-6
     ">
 
-      <h3 className="
-        text-2xl
-        font-bold
-        text-slate-800
+      <div className="
+        bg-white
+        border
+        border-slate-200
+        rounded-3xl
+        p-6
       ">
 
-        Historial Médico
+        <h3 className="
+          text-2xl
+          font-bold
+          mb-6
+          text-slate-800
+        ">
 
-      </h3>
+          Historial Médico
+
+        </h3>
+
+        <div className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          gap-4
+        ">
+
+
+
+          
+
+          <div className="
+            bg-slate-50
+            rounded-2xl
+            p-4
+          ">
+            <p className="text-sm text-slate-500">
+              Fuma
+            </p>
+            <p className="font-bold">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.fuma
+
+                  ? "Sí"
+
+                  : "No"
+              }
+            </p>
+          </div>
+
+          <div className="
+            bg-slate-50
+            rounded-2xl
+            p-4
+          ">
+            <p className="text-sm text-slate-500">
+              Consume Alcohol
+            </p>
+            <p className="font-bold">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.alcohol
+
+                  ? "Sí"
+
+                  : "No"
+              }
+            </p>
+          </div>
+
+          <div className="
+            bg-slate-50
+            rounded-2xl
+            p-4
+          ">
+            <p className="text-sm text-slate-500">
+              Embarazo
+            </p>
+            <p className="font-bold">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.embarazo
+
+                  ? "Sí"
+
+                  : "No"
+              }
+            </p>
+          </div>
+
+          <div className="
+            bg-slate-50
+            rounded-2xl
+            p-4
+          ">
+            <p className="text-sm text-slate-500">
+              Consentimiento
+            </p>
+            <p className="font-bold">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.consentimiento
+
+                  ? "Firmado"
+
+                  : "No"
+              }
+            </p>
+          </div>
+
+        </div>
+
+        <div className="
+          mt-6
+          space-y-4
+        ">
+
+          
+
+          <div>
+            <p className="
+              text-sm
+              text-slate-500
+              mb-1
+            ">
+              Alergias
+            </p>
+
+            <div className="
+              bg-slate-50
+              rounded-2xl
+              p-4
+            ">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.alergias || "-"
+              }
+            </div>
+          </div>
+
+          <div>
+            <p className="
+              text-sm
+              text-slate-500
+              mb-1
+            ">
+              Enfermedades
+            </p>
+
+            <div className="
+              bg-slate-50
+              rounded-2xl
+              p-4
+            ">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.enfermedades || "-"
+              }
+            </div>
+          </div>
+
+          <div>
+            <p className="
+              text-sm
+              text-slate-500
+              mb-1
+            ">
+              Medicamentos
+            </p>
+
+            <div className="
+              bg-slate-50
+              rounded-2xl
+              p-4
+            ">
+              {
+                pacienteAbierto
+                  ?.historial_clinico
+                  ?.medicamentos || "-"
+              }
+            </div>
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
 
@@ -1881,21 +2196,180 @@ const [nuevoTratamiento,
   "citas" && (
 
     <div className="
-      bg-slate-50
+      bg-white
+      border
+      border-slate-200
       rounded-3xl
-      p-8
-      min-h-[400px]
+      p-6
     ">
 
-      <h3 className="
-        text-2xl
-        font-bold
-        text-slate-800
+     <div className="
+  flex
+  justify-between
+  items-center
+  mb-6
+">
+
+  <h3 className="
+    text-2xl
+    font-bold
+  ">
+
+    Citas
+
+  </h3>
+
+  <button
+
+    onClick={() => {
+
+  console.log(
+    "CLICK CITA"
+  );
+
+  setMostrarModalCita(
+    true
+  );
+
+}}
+
+    className="
+      bg-teal-600
+      hover:bg-teal-700
+      text-white
+      px-4
+      py-2
+      rounded-xl
+      font-semibold
+    "
+
+  >
+
+    + Agregar
+
+  </button>
+
+</div>
+
+      <table className="
+        w-full
       ">
 
-        Citas
+        <thead>
 
-      </h3>
+          <tr className="
+            border-b
+            border-slate-200
+          ">
+
+            <th className="p-3 text-left">
+              Fecha
+            </th>
+
+            <th className="p-3 text-left">
+              Hora
+            </th>
+
+            <th className="p-3 text-left">
+              Estado
+            </th>
+
+            <th className="p-3 text-left">
+              Doctor
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {
+
+            citas.length === 0
+
+              ? (
+
+                <tr>
+
+                  <td
+                    colSpan={4}
+                    className="
+                      p-6
+                      text-center
+                      text-slate-500
+                    "
+                  >
+
+                    No hay citas registradas
+
+                  </td>
+
+                </tr>
+
+              )
+
+              : citas.map(
+                (cita: any) => (
+
+                  <tr
+                    key={cita.id}
+                    className="
+                      border-b
+                      border-slate-100
+                    "
+                  >
+
+                    <td className="p-3">
+
+                      {
+                        new Date(
+  cita.inicio
+).toLocaleDateString(
+  "es-MX"
+)
+                      }
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {
+                        new Date(
+                          cita.inicio
+                        ).toLocaleTimeString(
+                          [],
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )
+                      }
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {cita.estado}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {cita.doctor}
+
+                    </td>
+
+                  </tr>
+
+                )
+              )
+
+          }
+
+        </tbody>
+
+      </table>
 
     </div>
 
