@@ -96,7 +96,6 @@ const [nuevoTratamiento,
     total: "",
     pagado: "",
     notas: "",
-    proximaCita: "",
   });
 
   const [editandoIndex,
@@ -319,7 +318,7 @@ const [nuevoTratamiento,
 
   }
 
- function guardarTratamiento() {
+ async function guardarTratamiento() {
 
   const nuevo = {
 
@@ -336,6 +335,51 @@ const [nuevoTratamiento,
       ),
 
   };
+
+  if (
+  pacienteAbierto?.id
+) {
+
+  await supabase
+
+    .from(
+      "tratamientos"
+    )
+
+    .insert({
+
+      paciente_id:
+        pacienteAbierto.id,
+
+      fecha:
+        nuevo.fecha,
+
+      tratamiento:
+        nuevo.tratamiento,
+
+      total:
+        Number(
+          nuevo.total
+        ),
+
+      pago:
+        Number(
+          nuevo.pagado
+        ),
+
+      resta:
+        Number(
+          nuevo.pendiente
+        ),
+
+      pendiente:
+        Number(
+          nuevo.pendiente
+        ) > 0,
+
+    });
+
+}
 
   if (
     editandoIndex !== null
@@ -370,7 +414,6 @@ const [nuevoTratamiento,
   total: "",
   pagado: "",
   notas: "",
-  proximaCita: "",
 });
 
   setEditandoIndex(
@@ -1563,25 +1606,6 @@ const [nuevoTratamiento,
     setNuevoTratamiento({
       ...nuevoTratamiento,
       pagado: e.target.value,
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-/>
-
-<input
-  type="date"
-  value={
-    nuevoTratamiento.proximaCita
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      proximaCita:
-        e.target.value,
     })
   }
   className="
