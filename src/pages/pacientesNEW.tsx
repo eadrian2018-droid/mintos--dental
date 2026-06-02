@@ -340,44 +340,100 @@ const [nuevoTratamiento,
   pacienteAbierto?.id
 ) {
 
-  await supabase
+  if (
+    editandoIndex !== null
+  ) {
 
-    .from(
-      "tratamientos"
-    )
+    const tratamientoEditar =
+      tratamientos[
+        editandoIndex
+      ];
 
-    .insert({
+    await supabase
 
-      paciente_id:
-        pacienteAbierto.id,
+      .from(
+        "tratamientos"
+      )
 
-      fecha:
-        nuevo.fecha,
+      .update({
 
-      tratamiento:
-        nuevo.tratamiento,
+        fecha:
+          nuevo.fecha,
 
-      total:
-        Number(
-          nuevo.total
-        ),
+        tratamiento:
+          nuevo.tratamiento,
 
-      pago:
-        Number(
-          nuevo.pagado
-        ),
+        total:
+          Number(
+            nuevo.total
+          ),
 
-      resta:
-        Number(
-          nuevo.pendiente
-        ),
+        pago:
+          Number(
+            nuevo.pagado
+          ),
 
-      pendiente:
-        Number(
-          nuevo.pendiente
-        ) > 0,
+        resta:
+          Number(
+            nuevo.pendiente
+          ),
 
-    });
+        pendiente:
+          Number(
+            nuevo.pendiente
+          ) > 0,
+
+      })
+
+      .eq(
+        "id",
+        tratamientoEditar.id
+      );
+
+  }
+
+  else {
+
+    await supabase
+
+      .from(
+        "tratamientos"
+      )
+
+      .insert({
+
+        paciente_id:
+          pacienteAbierto.id,
+
+        fecha:
+          nuevo.fecha,
+
+        tratamiento:
+          nuevo.tratamiento,
+
+        total:
+          Number(
+            nuevo.total
+          ),
+
+        pago:
+          Number(
+            nuevo.pagado
+          ),
+
+        resta:
+          Number(
+            nuevo.pendiente
+          ),
+
+        pendiente:
+          Number(
+            nuevo.pendiente
+          ) > 0,
+
+      });
+
+  }
 
 }
 
