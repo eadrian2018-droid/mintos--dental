@@ -93,6 +93,14 @@ const [tabActiva,
   setCitas,
 ] = useState<any[]>([]);
 
+const proximaCita =
+
+  citas.length > 0
+
+    ? citas[0]
+
+    : null;
+
 const [
   mostrarModalCita,
   setMostrarModalCita,
@@ -1184,17 +1192,33 @@ else {
 
           <div>
 
-            <span className="
-              font-semibold
-            ">
-              Última cita:
-            </span>
+  <span className="
+    font-semibold
+  ">
+    Próxima cita:
+  </span>
 
-            {" "}
+  {" "}
 
-            Pendiente
+  {
 
-          </div>
+    proximaCita
+
+      ?
+
+      `${new Date(
+        proximaCita.inicio
+      ).toLocaleDateString(
+        "es-MX"
+      )}`
+
+      :
+
+      "Sin citas"
+
+  }
+
+</div>
 
         </div>
 
