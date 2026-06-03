@@ -22,6 +22,8 @@ import Pacientes from "./pages/pacientesNEW";
 
 import PacienteDetalle from "./pages/pacientedetalle";
 
+import Finanzas from "./pages/finanzasNEW";
+
 import QRCodePaciente from "./components/QRCodePaciente";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
@@ -110,6 +112,14 @@ export default function App() {
               element={<QRCodePaciente />}
 
             />
+
+            <Route
+
+  path="/finanzas"
+
+  element={<Finanzas />}
+
+/>
 
           </Route>
 
