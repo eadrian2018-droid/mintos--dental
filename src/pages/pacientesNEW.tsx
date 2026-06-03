@@ -199,7 +199,44 @@ const [nuevoTratamiento,
 
 }
 
+ async function eliminarCita(
+  citaId: number
+) {
+
+  if (
+    !pacienteAbierto?.id
+  )
+    return;
+
+  const confirmar =
+
+    window.confirm(
+      "¿Eliminar esta cita?"
+    );
+
+  if (!confirmar)
+    return;
+
+  await supabase
+
+    .from("citas")
+
+    .delete()
+
+    .eq(
+      "id",
+      citaId
+    );
+
+  await cargarCitas(
+    pacienteAbierto.id
+  );
+
+}
+
 async function guardarCitaPaciente() {
+
+ 
 
   if (!pacienteAbierto?.id)
     return;
@@ -2492,6 +2529,10 @@ async function guardarCitaPaciente() {
               Doctor
             </th>
 
+            <th className="p-3 text-left">
+  Acciones
+</th>
+
           </tr>
 
         </thead>
@@ -2573,6 +2614,65 @@ async function guardarCitaPaciente() {
                       {cita.doctor}
 
                     </td>
+
+                    <td className="p-3">
+
+  <div className="
+    flex
+    gap-2
+  ">
+
+    <button
+
+      onClick={() =>
+        editarCita(
+          cita
+        )
+      }
+
+      className="
+        bg-blue-500
+        hover:bg-blue-600
+        text-white
+        px-3
+        py-1
+        rounded-lg
+        text-sm
+      "
+
+    >
+
+      Editar
+
+    </button>
+
+    <button
+
+      onClick={() =>
+        eliminarCita(
+          cita.id
+        )
+      }
+
+      className="
+        bg-red-500
+        hover:bg-red-600
+        text-white
+        px-3
+        py-1
+        rounded-lg
+        text-sm
+      "
+
+    >
+
+      Eliminar
+
+    </button>
+
+  </div>
+
+</td>
 
                   </tr>
 
