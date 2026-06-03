@@ -115,6 +115,12 @@ const [
 
 });
 
+const [
+  citaEditando,
+  setCitaEditando,
+] = useState<number | null>(
+  null
+);
 
 
 const [nuevoTratamiento,
@@ -234,6 +240,55 @@ const [nuevoTratamiento,
 
 }
 
+function editarCita(
+  cita: any
+) {
+
+  const inicio =
+    new Date(
+      cita.inicio
+    );
+
+  const fin =
+    new Date(
+      cita.fin
+    );
+
+  setNuevaCita({
+
+    fecha:
+      inicio
+        .toISOString()
+        .split("T")[0],
+
+    horaInicio:
+      inicio
+        .toTimeString()
+        .slice(0, 5),
+
+    horaFin:
+      fin
+        .toTimeString()
+        .slice(0, 5),
+
+    estado:
+      cita.estado,
+
+    doctor:
+      cita.doctor,
+
+  });
+
+  setCitaEditando(
+    cita.id
+  );
+
+  setMostrarModalCita(
+    true
+  );
+
+}
+
 async function guardarCitaPaciente() {
 
  
@@ -248,6 +303,39 @@ async function guardarCitaPaciente() {
   const fin = new Date(
     `${nuevaCita.fecha}T${nuevaCita.horaFin}`
   );
+
+  if (
+  citaEditando
+) {
+
+  await supabase
+
+    .from("citas")
+
+    .update({
+
+      inicio:
+        inicio.toISOString(),
+
+      fin:
+        fin.toISOString(),
+
+      estado:
+        nuevaCita.estado,
+
+      doctor:
+        nuevaCita.doctor,
+
+    })
+
+    .eq(
+      "id",
+      citaEditando
+    );
+
+}
+
+else {
 
   await supabase
 
@@ -279,6 +367,8 @@ async function guardarCitaPaciente() {
 
     ]);
 
+}
+
   await cargarCitas(
     pacienteAbierto.id
   );
@@ -300,6 +390,10 @@ async function guardarCitaPaciente() {
     doctor: "Dr. Edgar",
 
   });
+
+  setCitaEditando(
+  null
+);
 
 }
 
