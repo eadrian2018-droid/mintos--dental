@@ -426,11 +426,11 @@ const gananciaNeta =
 
     </div>
 
-    <div
+        <div
       className="
         flex-1
       "
-    ></div>
+    >
 
       <h1
         className="
@@ -839,6 +839,8 @@ const gananciaNeta =
 </div>
 
       </div>
+
+    </div>
 
     </div>
 
