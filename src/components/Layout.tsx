@@ -139,6 +139,24 @@ export default function Layout() {
 
           </Link>
 
+                    <Link
+
+            to="/finanzas"
+
+            className={
+
+              linkClasses(
+                "/finanzas"
+              )
+
+            }
+
+          >
+
+            Finanzas
+
+          </Link>
+
         </nav>
 
         <div className="
