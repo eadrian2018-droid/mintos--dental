@@ -24,6 +24,13 @@ const [
   setGastos,
 ] = useState<any[]>([]);
 
+const [
+  seccionActiva,
+  setSeccionActiva,
+] = useState(
+  "resumen"
+);
+
 useEffect(() => {
 
   cargarTratamientos();
@@ -190,9 +197,240 @@ const gananciaNeta =
 
   
 
-  return (
+ return (
 
-    <div>
+  <div
+    className="
+      flex
+      gap-4
+    "
+  >
+
+        <div
+      className="
+        w-40
+        bg-white
+        rounded-3xl
+        shadow-lg
+        p-4
+        h-fit
+      "
+    >
+
+      <h2
+        className="
+          font-bold
+          text-lg
+          mb-4
+        "
+      >
+
+        Finanzas
+
+      </h2>
+
+      <div
+        className="
+          flex
+          flex-col
+          gap-2
+        "
+      >
+
+       <button
+
+  onClick={() =>
+    setSeccionActiva(
+      "resumen"
+    )
+  }
+
+  className={`
+
+    p-3
+    rounded-xl
+    text-left
+    transition
+
+    ${
+
+      seccionActiva ===
+      "resumen"
+
+      ?
+
+      "bg-teal-600 text-white"
+
+      :
+
+      "bg-slate-100"
+
+    }
+
+  `}
+>
+
+  Resumen
+
+</button>
+
+       <button
+
+  onClick={() =>
+    setSeccionActiva(
+      "gastos"
+    )
+  }
+
+  className={`
+
+    p-3
+    rounded-xl
+    text-left
+    transition
+
+    ${
+
+      seccionActiva ===
+      "gastos"
+
+      ?
+
+      "bg-teal-600 text-white"
+
+      :
+
+      "bg-slate-100"
+
+    }
+
+  `}
+>
+
+  Gastos
+
+</button>
+
+<button
+
+  onClick={() =>
+    setSeccionActiva(
+      "comisiones"
+    )
+  }
+
+  className={`
+
+    p-3
+    rounded-xl
+    text-left
+    transition
+
+    ${
+
+      seccionActiva ===
+      "comisiones"
+
+      ?
+
+      "bg-teal-600 text-white"
+
+      :
+
+      "bg-slate-100"
+
+    }
+
+  `}
+>
+
+  Comisiones
+
+</button>
+
+<button
+
+  onClick={() =>
+    setSeccionActiva(
+      "doctores"
+    )
+  }
+
+  className={`
+
+    p-3
+    rounded-xl
+    text-left
+    transition
+
+    ${
+
+      seccionActiva ===
+      "doctores"
+
+      ?
+
+      "bg-teal-600 text-white"
+
+      :
+
+      "bg-slate-100"
+
+    }
+
+  `}
+>
+
+  Doctores
+
+</button>
+
+<button
+
+  onClick={() =>
+    setSeccionActiva(
+      "configuracion"
+    )
+  }
+
+  className={`
+
+    p-3
+    rounded-xl
+    text-left
+    transition
+
+    ${
+
+      seccionActiva ===
+      "configuracion"
+
+      ?
+
+      "bg-teal-600 text-white"
+
+      :
+
+      "bg-slate-100"
+
+    }
+
+  `}
+>
+
+  Configuración
+
+</button>
+
+      </div>
+
+    </div>
+
+    <div
+      className="
+        flex-1
+      "
+    ></div>
 
       <h1
         className="
