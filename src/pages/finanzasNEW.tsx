@@ -163,6 +163,31 @@ const pendiente =
 
   cobrado;
 
+  const totalGastos =
+
+  gastos.reduce(
+
+    (
+      total,
+      gasto: any
+    ) =>
+
+      total +
+
+      Number(
+        gasto.monto || 0
+      ),
+
+    0
+
+  );
+
+const gananciaNeta =
+
+  ingresos -
+
+  totalGastos;
+
   
 
   return (
@@ -300,6 +325,70 @@ const pendiente =
           </h2>
 
         </div>
+
+        <div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Gastos
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-red-600
+    "
+  >
+
+    $
+
+    {totalGastos.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Ganancia Neta
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-green-600
+    "
+  >
+
+    $
+
+    {gananciaNeta.toLocaleString()}
+
+  </h2>
+
+</div>
 
       </div>
 
