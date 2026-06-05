@@ -199,6 +199,40 @@ async function guardarGasto() {
 
 }
 
+async function eliminarGasto(
+  id: number
+) {
+
+  const confirmar =
+    window.confirm(
+      "¿Eliminar este gasto?"
+    );
+
+  if (
+    !confirmar
+  ) {
+
+    return;
+
+  }
+
+  await supabase
+
+    .from(
+      "gastos"
+    )
+
+    .delete()
+
+    .eq(
+      "id",
+      id
+    );
+
+  cargarGastos();
+
+}
+
 const ingresos =
 
   tratamientos.reduce(
@@ -736,6 +770,12 @@ const gananciaNeta =
 
         </th>
 
+        <th className="p-3 text-left">
+
+  Acciones
+
+</th>
+
       </tr>
 
     </thead>
@@ -784,6 +824,33 @@ const gananciaNeta =
                 ).toLocaleString()}
 
               </td>
+
+              <td className="p-3">
+
+  <button
+
+    onClick={() =>
+      eliminarGasto(
+        gasto.id
+      )
+    }
+
+    className="
+      bg-red-600
+      text-white
+      px-3
+      py-1
+      rounded-lg
+    "
+  >
+
+    Eliminar
+
+  </button>
+
+</td>
+
+          
 
             </tr>
 
