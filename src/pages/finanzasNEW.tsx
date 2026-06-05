@@ -31,6 +31,31 @@ const [
   "resumen"
 );
 
+const [
+  fechaGasto,
+  setFechaGasto,
+] = useState("");
+
+const [
+  conceptoGasto,
+  setConceptoGasto,
+] = useState("");
+
+const [
+  categoriaGasto,
+  setCategoriaGasto,
+] = useState("");
+
+const [
+  montoGasto,
+  setMontoGasto,
+] = useState("");
+
+const [
+  notasGasto,
+  setNotasGasto,
+] = useState("");
+
 useEffect(() => {
 
   cargarTratamientos();
@@ -123,6 +148,54 @@ async function cargarGastos() {
     );
 
   }
+
+}
+
+async function guardarGasto() {
+
+  const {
+    error,
+  } = await supabase
+
+    .from(
+      "gastos"
+    )
+
+    .insert([
+      {
+        fecha: fechaGasto,
+        concepto: conceptoGasto,
+        categoria: categoriaGasto,
+        monto: Number(
+          montoGasto
+        ),
+        notas: notasGasto,
+      },
+    ]);
+
+  if (
+    error
+  ) {
+
+    alert(
+      "Error al guardar gasto"
+    );
+
+    return;
+
+  }
+
+  setFechaGasto("");
+
+  setConceptoGasto("");
+
+  setCategoriaGasto("");
+
+  setMontoGasto("");
+
+  setNotasGasto("");
+
+  cargarGastos();
 
 }
 
@@ -494,6 +567,115 @@ const gananciaNeta =
     </div>
 
     <p>
+
+      <div
+  className="
+    grid
+    md:grid-cols-2
+    gap-4
+    mt-6
+    mb-6
+  "
+>
+
+  <input
+    type="date"
+    value={fechaGasto}
+    onChange={(e) =>
+      setFechaGasto(
+        e.target.value
+      )
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <input
+    type="text"
+    placeholder="Concepto"
+    value={conceptoGasto}
+    onChange={(e) =>
+      setConceptoGasto(
+        e.target.value
+      )
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <input
+    type="text"
+    placeholder="Categoría"
+    value={categoriaGasto}
+    onChange={(e) =>
+      setCategoriaGasto(
+        e.target.value
+      )
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <input
+    type="number"
+    placeholder="Monto"
+    value={montoGasto}
+    onChange={(e) =>
+      setMontoGasto(
+        e.target.value
+      )
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+    "
+  />
+
+  <textarea
+    placeholder="Notas"
+    value={notasGasto}
+    onChange={(e) =>
+      setNotasGasto(
+        e.target.value
+      )
+    }
+    className="
+      border
+      rounded-xl
+      p-3
+      md:col-span-2
+    "
+  />
+
+  <button
+    onClick={
+      guardarGasto
+    }
+    className="
+      bg-teal-600
+      text-white
+      px-4
+      py-3
+      rounded-xl
+      md:col-span-2
+    "
+  >
+
+    Guardar gasto
+
+  </button>
+
+</div>
 
       Total de gastos registrados:
 
