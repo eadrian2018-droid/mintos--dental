@@ -136,6 +136,12 @@ const [nuevoTratamiento,
   useState({
     fecha: "",
     tratamiento: "",
+    doctor: "",
+    metodo_pago: "",
+    moneda: "",
+    laboratorio: "",
+    especialista: "",
+    comision_banco: "",
     total: "",
     pagado: "",
     notas: "",
@@ -637,6 +643,30 @@ else {
         tratamiento:
           nuevo.tratamiento,
 
+          doctor:
+  nuevo.doctor,
+
+  metodo_pago:
+  nuevo.metodo_pago,
+
+  moneda:
+  nuevo.moneda,
+
+  laboratorio:
+  Number(
+    nuevo.laboratorio || 0
+  ),
+
+especialista:
+  Number(
+    nuevo.especialista || 0
+  ),
+
+comision_banco:
+  Number(
+    nuevo.comision_banco || 0
+  ),
+
         total:
           Number(
             nuevo.total
@@ -684,6 +714,30 @@ else {
 
         tratamiento:
           nuevo.tratamiento,
+
+          doctor:
+  nuevo.doctor,
+
+          metodo_pago:
+  nuevo.metodo_pago,
+
+  moneda:
+  nuevo.moneda,
+
+  laboratorio:
+  Number(
+    nuevo.laboratorio || 0
+  ),
+
+especialista:
+  Number(
+    nuevo.especialista || 0
+  ),
+
+comision_banco:
+  Number(
+    nuevo.comision_banco || 0
+  ),
 
         total:
           Number(
@@ -741,6 +795,12 @@ else {
   setNuevoTratamiento({
   fecha: "",
   tratamiento: "",
+  doctor: "",
+  metodo_pago: "",
+  moneda: "",
+  laboratorio: "",
+  especialista: "",
+  comision_banco: "",
   total: "",
   pagado: "",
   notas: "",
@@ -855,6 +915,15 @@ else {
 
   tratamiento:
     t.tratamiento,
+
+    doctor:
+  t.doctor,
+
+metodo_pago:
+  t.metodo_pago,
+
+moneda:
+  t.moneda,
 
   total:
     t.total,
@@ -1567,6 +1636,18 @@ else {
               </th>
 
               <th className="p-4 text-left">
+                Doctor
+              </th>
+
+              <th className="p-4 text-left">
+  Método
+</th>
+
+<th className="p-4 text-left">
+  Moneda
+</th>
+
+              <th className="p-4 text-left">
                 Tratamiento
               </th>
 
@@ -1610,7 +1691,7 @@ else {
       <tr>
 
         <td
-          colSpan={8}
+          colSpan={11}
           className="
             text-center
             p-10
@@ -1654,6 +1735,48 @@ else {
               }
 
             </td>
+
+            <td className="
+  p-4
+">
+
+  {
+
+    tratamiento.doctor ||
+
+    "-"
+
+  }
+
+</td>
+
+<td className="
+  p-4
+">
+
+  {
+
+    tratamiento.metodo_pago ||
+
+    "-"
+
+  }
+
+</td>
+
+<td className="
+  p-4
+">
+
+  {
+
+    tratamiento.moneda ||
+
+    "-"
+
+  }
+
+</td>
 
             <td className="
               p-4
@@ -2012,6 +2135,225 @@ else {
     rounded-xl
     p-3
   "
+/>
+
+<select
+
+  value={
+    nuevoTratamiento.doctor || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      doctor:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+>
+
+  <option value="">
+
+    Seleccionar Doctor
+
+  </option>
+
+  <option value="Dr. García">
+
+    Dr. García
+
+  </option>
+
+  <option value="Dr. López">
+
+    Dr. López
+
+  </option>
+
+  <option value="Dr. Martínez">
+
+    Dr. Martínez
+
+  </option>
+
+</select>
+
+<select
+
+  value={
+    nuevoTratamiento.metodo_pago || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      metodo_pago:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+>
+
+  <option value="">
+
+    Método de Pago
+
+  </option>
+
+  <option value="Efectivo">
+
+    Efectivo
+
+  </option>
+
+  <option value="Tarjeta">
+
+    Tarjeta
+
+  </option>
+
+  <option value="Transferencia">
+
+    Transferencia
+
+  </option>
+
+  <option value="Cheque">
+
+    Cheque
+
+  </option>
+
+</select>
+
+<select
+
+  value={
+    nuevoTratamiento.moneda || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      moneda:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+>
+
+  <option value="">
+
+    Moneda
+
+  </option>
+
+  <option value="MXN">
+
+    MXN
+
+  </option>
+
+  <option value="USD">
+
+    USD
+
+  </option>
+
+</select>
+
+<input
+
+  type="number"
+
+  placeholder="Costo Laboratorio"
+
+  value={
+    nuevoTratamiento.laboratorio || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      laboratorio:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+
+/>
+
+<input
+
+  type="number"
+
+  placeholder="Costo Especialista"
+
+  value={
+    nuevoTratamiento.especialista || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      especialista:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+
+/>
+
+<input
+
+  type="number"
+
+  placeholder="Comisión Banco"
+
+  value={
+    nuevoTratamiento.comision_banco || ""
+  }
+
+  onChange={(e) =>
+    setNuevoTratamiento({
+      ...nuevoTratamiento,
+      comision_banco:
+        e.target.value,
+    })
+  }
+
+  className="
+    border
+    rounded-xl
+    p-3
+  "
+
 />
 
           <input
