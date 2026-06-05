@@ -441,9 +441,103 @@ const gananciaNeta =
         "
       >
 
-        Finanzas
+        {seccionActiva.charAt(0).toUpperCase() + seccionActiva.slice(1)}
 
       </h1>
+
+      {seccionActiva === "gastos" && (
+
+  <div
+    className="
+      bg-white
+      rounded-3xl
+      shadow-lg
+      p-6
+      mb-6
+    "
+  >
+
+    <h2 className="text-2xl font-bold">
+
+      Gastos
+
+    </h2>
+
+    <p>
+
+      Módulo de gastos en construcción.
+
+    </p>
+
+  </div>
+
+)}
+
+{seccionActiva === "comisiones" && (
+
+  <div
+    className="
+      bg-white
+      rounded-3xl
+      shadow-lg
+      p-6
+      mb-6
+    "
+  >
+
+    <h2 className="text-2xl font-bold">
+
+      Comisiones
+
+    </h2>
+
+  </div>
+
+)}
+
+{seccionActiva === "doctores" && (
+
+  <div
+    className="
+      bg-white
+      rounded-3xl
+      shadow-lg
+      p-6
+      mb-6
+    "
+  >
+
+    <h2 className="text-2xl font-bold">
+
+      Doctores
+
+    </h2>
+
+  </div>
+
+)}
+
+{seccionActiva === "configuracion" && (
+
+  <div
+    className="
+      bg-white
+      rounded-3xl
+      shadow-lg
+      p-6
+      mb-6
+    "
+  >
+
+    <h2 className="text-2xl font-bold">
+
+      Configuración
+
+    </h2>
+
+  </div>
+
+)}
 
       <div
         className="
