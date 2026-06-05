@@ -827,21 +827,78 @@ const gananciaNeta =
     "
   />
 
-  <input
-    type="text"
-    placeholder="Categoría"
-    value={categoriaGasto}
-    onChange={(e) =>
-      setCategoriaGasto(
-        e.target.value
-      )
-    }
-    className="
-      border
-      rounded-xl
-      p-3
-    "
-  />
+ <select
+
+  value={categoriaGasto}
+
+  onChange={(e) =>
+    setCategoriaGasto(
+      e.target.value
+    )
+  }
+
+  className="
+    border
+    rounded-lg
+    p-3
+  "
+>
+
+  <option value="">
+
+    Seleccionar categoría
+
+  </option>
+
+  <option value="Material Dental">
+
+    Material Dental
+
+  </option>
+
+  <option value="Limpieza">
+
+    Limpieza
+
+  </option>
+
+  <option value="Laboratorio">
+
+    Laboratorio
+
+  </option>
+
+  <option value="Especialistas">
+
+    Especialistas
+
+  </option>
+
+  <option value="Nómina">
+
+    Nómina
+
+  </option>
+
+  <option value="Servicios">
+
+    Servicios
+
+  </option>
+
+  <option value="Marketing">
+
+    Marketing
+
+  </option>
+
+  <option value="Otros">
+
+    Otros
+
+  </option>
+
+</select>
 
   <input
     type="number"
