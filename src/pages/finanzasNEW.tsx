@@ -32,6 +32,13 @@ const [
 );
 
 const [
+  periodo,
+  setPeriodo,
+] = useState(
+  "semana"
+);
+
+const [
   fechaGasto,
   setFechaGasto,
 ] = useState("");
@@ -233,9 +240,98 @@ async function eliminarGasto(
 
 }
 
+const hoy = new Date();
+
+const inicioSemana =
+  new Date(hoy);
+
+inicioSemana.setDate(
+  hoy.getDate() -
+  hoy.getDay()
+);
+
+inicioSemana.setHours(
+  0,
+  0,
+  0,
+  0
+);
+
+const tratamientosFiltrados =
+
+  tratamientos.filter(
+    (item: any) => {
+
+      if (
+        periodo ===
+        "historico"
+      ) {
+
+        return true;
+
+      }
+
+      const fecha =
+        new Date(
+          item.fecha
+        );
+
+      if (
+        periodo ===
+        "semana"
+      ) {
+
+        return (
+          fecha >=
+          inicioSemana
+        );
+
+      }
+
+      return true;
+
+    }
+  );
+
+const gastosFiltrados =
+
+  gastos.filter(
+    (gasto: any) => {
+
+      if (
+        periodo ===
+        "historico"
+      ) {
+
+        return true;
+
+      }
+
+      const fecha =
+        new Date(
+          gasto.fecha
+        );
+
+      if (
+        periodo ===
+        "semana"
+      ) {
+
+        return (
+          fecha >=
+          inicioSemana
+        );
+
+      }
+
+      return true;
+
+    }
+  );
+
 const ingresos =
 
-  tratamientos.reduce(
+  tratamientosFiltrados.reduce(
 
     (
       total,
@@ -254,7 +350,7 @@ const ingresos =
 
 const cobrado =
 
-  tratamientos.reduce(
+  tratamientosFiltrados.reduce(
 
     (
       total,
@@ -279,7 +375,7 @@ const pendiente =
 
   const totalGastos =
 
-  gastos.reduce(
+  gastosFiltrados.reduce(
 
     (
       total,
@@ -302,7 +398,42 @@ const gananciaNeta =
 
   totalGastos;
 
-  
+  const gastosPorCategoria =
+
+  gastosFiltrados.reduce(
+
+    (
+      acumulado: any,
+      gasto: any
+    ) => {
+
+      const categoria =
+
+        gasto.categoria ||
+
+        "Sin categoría";
+
+      acumulado[
+        categoria
+      ] =
+
+        (
+          acumulado[
+            categoria
+          ] || 0
+        ) +
+
+        Number(
+          gasto.monto || 0
+        );
+
+      return acumulado;
+
+    },
+
+    {}
+
+  );
 
  return (
 
@@ -551,6 +682,59 @@ const gananciaNeta =
         {seccionActiva.charAt(0).toUpperCase() + seccionActiva.slice(1)}
 
       </h1>
+
+      <div
+  className="
+    mb-6
+  "
+>
+
+  <select
+
+    value={periodo}
+
+    onChange={(e) =>
+      setPeriodo(
+        e.target.value
+      )
+    }
+
+    className="
+      border
+      rounded-xl
+      px-4
+      py-2
+      bg-white
+    "
+  >
+
+    <option value="semana">
+
+      Semana
+
+    </option>
+
+    <option value="mes">
+
+      Mes
+
+    </option>
+
+    <option value="anio">
+
+      Año
+
+    </option>
+
+    <option value="historico">
+
+      Histórico
+
+    </option>
+
+  </select>
+
+</div>
 
       {seccionActiva === "gastos" && (
 
@@ -859,9 +1043,116 @@ const gananciaNeta =
 
       }
 
+      <tr
+  className="
+    bg-slate-50
+    font-bold
+    border-t-2
+    border-slate-300
+  "
+>
+
+  <td
+    className="p-3"
+    colSpan={3}
+  >
+
+    TOTAL GASTOS
+
+  </td>
+
+  <td className="p-3">
+
+    $
+
+    {totalGastos.toLocaleString()}
+
+  </td>
+
+  <td className="p-3">
+
+  </td>
+
+</tr>
+
     </tbody>
 
   </table>
+
+</div>
+
+<div
+  className="
+    bg-slate-50
+    rounded-2xl
+    p-6
+    mt-6
+  "
+>
+
+  <h3
+    className="
+      text-xl
+      font-bold
+      mb-4
+    "
+  >
+
+    Resumen por Categoría
+
+  </h3>
+
+  {
+
+    Object.entries(
+      gastosPorCategoria
+    ).map(
+
+      (
+        [
+          categoria,
+          total,
+        ]: any
+      ) => (
+
+        <div
+          key={categoria}
+          className="
+            flex
+            justify-between
+            py-2
+            border-b
+            border-slate-200
+          "
+        >
+
+          <span>
+
+            {categoria}
+
+          </span>
+
+          <span
+            className="
+              font-semibold
+            "
+          >
+
+            $
+
+            {Number(
+              total
+            ).toLocaleString()}
+
+          </span>
+
+        </div>
+
+      )
+
+    )
+
+  }
 
 </div>
 
