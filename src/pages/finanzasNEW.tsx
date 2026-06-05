@@ -242,6 +242,53 @@ async function eliminarGasto(
 
 const hoy = new Date();
 
+const lunesSemana =
+
+  new Date(
+    hoy
+  );
+
+const diaActual =
+
+  hoy.getDay();
+
+const diasDesdeLunes =
+
+  diaActual === 0
+
+    ? 6
+
+    : diaActual - 1;
+
+lunesSemana.setDate(
+
+  hoy.getDate() -
+
+  diasDesdeLunes
+
+);
+
+lunesSemana.setHours(
+  0,
+  0,
+  0,
+  0
+);
+
+const domingoSemana =
+
+  new Date(
+    lunesSemana
+  );
+
+domingoSemana.setDate(
+
+  lunesSemana.getDate() +
+
+  6
+
+);
+
 const inicioSemana =
   new Date(hoy);
 
@@ -733,6 +780,57 @@ const gananciaNeta =
     </option>
 
   </select>
+
+</div>
+
+<div
+  className="
+    mb-6
+    text-slate-600
+  "
+>
+
+  {
+
+    periodo ===
+    "semana"
+
+    &&
+
+    <>
+
+      Semana Actual
+
+      <br />
+
+      {
+
+        lunesSemana.toLocaleDateString()
+
+      }
+
+      {" - "}
+
+      {
+
+        domingoSemana.toLocaleDateString()
+
+      }
+
+    </>
+
+  }
+
+  {
+
+    periodo ===
+    "historico"
+
+    &&
+
+    <>Todos los registros</>
+
+  }
 
 </div>
 
