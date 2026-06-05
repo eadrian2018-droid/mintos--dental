@@ -457,17 +457,164 @@ const gananciaNeta =
     "
   >
 
-    <h2 className="text-2xl font-bold">
+    <div
+      className="
+        flex
+        justify-between
+        items-center
+        mb-6
+      "
+    >
 
-      Gastos
+      <h2
+        className="
+          text-2xl
+          font-bold
+        "
+      >
 
-    </h2>
+        Gastos
+
+      </h2>
+
+      <button
+        className="
+          bg-teal-600
+          text-white
+          px-4
+          py-2
+          rounded-xl
+        "
+      >
+
+        Agregar gasto
+
+      </button>
+
+    </div>
 
     <p>
 
-      Módulo de gastos en construcción.
+      Total de gastos registrados:
+
+      {" "}
+
+      <strong>
+
+        {gastos.length}
+
+      </strong>
 
     </p>
+
+    <div
+  className="
+    overflow-x-auto
+    mt-6
+  "
+>
+
+  <table
+    className="
+      w-full
+      text-sm
+    "
+  >
+
+    <thead>
+
+      <tr
+        className="
+          border-b
+          border-slate-200
+        "
+      >
+
+        <th className="p-3 text-left">
+
+          Fecha
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          Concepto
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          Categoría
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          Monto
+
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {
+
+        gastos.map(
+          (
+            gasto: any
+          ) => (
+
+            <tr
+              key={gasto.id}
+              className="
+                border-b
+                border-slate-100
+              "
+            >
+
+              <td className="p-3">
+
+                {gasto.fecha}
+
+              </td>
+
+              <td className="p-3">
+
+                {gasto.concepto}
+
+              </td>
+
+              <td className="p-3">
+
+                {gasto.categoria}
+
+              </td>
+
+              <td className="p-3">
+
+                $
+
+                {Number(
+                  gasto.monto
+                ).toLocaleString()}
+
+              </td>
+
+            </tr>
+
+          )
+        )
+
+      }
+
+    </tbody>
+
+  </table>
+
+</div>
 
   </div>
 
