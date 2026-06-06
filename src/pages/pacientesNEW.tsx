@@ -925,6 +925,15 @@ metodo_pago:
 moneda:
   t.moneda,
 
+  laboratorio:
+  t.laboratorio,
+
+especialista:
+  t.especialista,
+
+comision_banco:
+  t.comision_banco,
+
   total:
     t.total,
 
@@ -1647,6 +1656,19 @@ moneda:
   Moneda
 </th>
 
+<th className="p-4 text-left">
+  Lab
+</th>
+
+<th className="p-4 text-left">
+  Esp
+</th>
+
+<th className="p-4 text-left">
+  Banco
+</th>
+
+
               <th className="p-4 text-left">
                 Tratamiento
               </th>
@@ -1665,6 +1687,10 @@ moneda:
 
               <th className="p-4 text-left">
   Estado
+</th>
+
+<th className="p-4 text-left">
+  Utilidad
 </th>
 
 <th className="p-4 text-left">
@@ -1691,7 +1717,7 @@ moneda:
       <tr>
 
         <td
-          colSpan={11}
+          colSpan={15}
           className="
             text-center
             p-10
@@ -1777,6 +1803,56 @@ moneda:
   }
 
 </td>
+
+<td className="
+  p-4
+">
+
+  $
+
+  {
+
+    tratamiento.laboratorio ||
+
+    0
+
+  }
+
+</td>
+
+<td className="
+  p-4
+">
+
+  $
+
+  {
+
+    tratamiento.especialista ||
+
+    0
+
+  }
+
+</td>
+
+<td className="
+  p-4
+">
+
+  $
+
+  {
+
+    tratamiento.comision_banco ||
+
+    0
+
+  }
+
+</td>
+
+
 
             <td className="
               p-4
@@ -1903,6 +1979,46 @@ moneda:
 
 <td className="
   p-4
+  font-semibold
+  text-green-600
+">
+
+  $
+
+  {
+
+    (
+
+      Number(
+        tratamiento.pagado || 0
+      )
+
+      -
+
+      Number(
+        tratamiento.laboratorio || 0
+      )
+
+      -
+
+      Number(
+        tratamiento.especialista || 0
+      )
+
+      -
+
+      Number(
+        tratamiento.comision_banco || 0
+      )
+
+    ).toLocaleString()
+
+  }
+
+</td>
+
+<td className="
+  p-4
   max-w-[250px]
 ">
 
@@ -1915,6 +2031,8 @@ moneda:
   }
 
 </td>
+
+
 
 <td className="
   p-4
