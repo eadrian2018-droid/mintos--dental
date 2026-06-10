@@ -63,6 +63,26 @@ const [
   setNotasGasto,
 ] = useState("");
 
+const [
+  doctores,
+  setDoctores,
+] = useState<any[]>([]);
+
+const [
+  nombreDoctor,
+  setNombreDoctor,
+] = useState("");
+
+const [
+  especialidadDoctor,
+  setEspecialidadDoctor,
+] = useState("");
+
+const [
+  porcentajeDoctor,
+  setPorcentajeDoctor,
+] = useState("30");
+
 useEffect(() => {
 
   cargarTratamientos();
@@ -71,7 +91,63 @@ useEffect(() => {
 
   cargarGastos();
 
+  cargarDoctores();
+
 }, []);
+
+async function guardarDoctor() {
+
+  const {
+    error,
+  } = await supabase
+
+    .from(
+      "doctores"
+    )
+
+    .insert([
+      {
+        nombre:
+          nombreDoctor,
+
+        especialidad:
+          especialidadDoctor,
+
+        porcentaje:
+          Number(
+            porcentajeDoctor
+          ),
+
+        activo: true,
+      },
+    ]);
+
+  if (
+  error
+) {
+
+  console.log(
+    error
+  );
+
+  alert(
+    error.message
+  );
+
+  return;
+
+}
+  setNombreDoctor("");
+
+  setEspecialidadDoctor("");
+
+  setPorcentajeDoctor(
+    "30"
+  );
+
+  cargarDoctores();
+
+}
 
 async function cargarTratamientos() {
 
@@ -151,6 +227,39 @@ async function cargarGastos() {
   ) {
 
     setGastos(
+      data
+    );
+
+  }
+
+}
+
+async function cargarDoctores() {
+
+  const {
+    data,
+    error,
+  } = await supabase
+
+    .from(
+      "doctores"
+    )
+
+    .select("*")
+
+    .order(
+      "nombre",
+      {
+        ascending: true,
+      }
+    );
+
+  if (
+    !error &&
+    data
+  ) {
+
+    setDoctores(
       data
     );
 
@@ -1436,6 +1545,193 @@ const gananciaNeta =
   }
 
 </div>
+
+  </div>
+
+)}
+
+{seccionActiva === "doctores" && (
+
+  <div
+    className="
+      bg-white
+      rounded-3xl
+      shadow-lg
+      p-6
+    "
+  >
+
+    <h2
+      className="
+        text-2xl
+        font-bold
+        mb-6
+      "
+    >
+
+      Doctores
+
+    </h2>
+
+    <div
+      className="
+        grid
+        md:grid-cols-3
+        gap-4
+        mb-6
+      "
+    >
+
+      <input
+        type="text"
+        placeholder="Nombre"
+        value={nombreDoctor}
+        onChange={(e) =>
+          setNombreDoctor(
+            e.target.value
+          )
+        }
+        className="
+          border
+          rounded-xl
+          p-3
+        "
+      />
+
+      <input
+        type="text"
+        placeholder="Especialidad"
+        value={especialidadDoctor}
+        onChange={(e) =>
+          setEspecialidadDoctor(
+            e.target.value
+          )
+        }
+        className="
+          border
+          rounded-xl
+          p-3
+        "
+      />
+
+      <input
+        type="number"
+        placeholder="% Comisión"
+        value={porcentajeDoctor}
+        onChange={(e) =>
+          setPorcentajeDoctor(
+            e.target.value
+          )
+        }
+        className="
+          border
+          rounded-xl
+          p-3
+        "
+      />
+
+    </div>
+
+    <button
+      onClick={
+        guardarDoctor
+      }
+      className="
+        bg-teal-600
+        text-white
+        px-4
+        py-3
+        rounded-xl
+        mb-6
+      "
+    >
+
+      Guardar Doctor
+
+    </button>
+
+    <table
+      className="
+        w-full
+      "
+    >
+
+      <thead>
+
+        <tr
+          className="
+            border-b
+            border-slate-200
+          "
+        >
+
+          <th className="p-3 text-left">
+
+            Nombre
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            Especialidad
+
+          </th>
+
+          <th className="p-3 text-left">
+
+            %
+
+          </th>
+
+        </tr>
+
+      </thead>
+
+      <tbody>
+
+        {
+
+          doctores.map(
+            (
+              doctor: any
+            ) => (
+
+              <tr
+                key={doctor.id}
+                className="
+                  border-b
+                  border-slate-100
+                "
+              >
+
+                <td className="p-3">
+
+                  {doctor.nombre}
+
+                </td>
+
+                <td className="p-3">
+
+                  {doctor.especialidad}
+
+                </td>
+
+                <td className="p-3">
+
+                  {doctor.porcentaje}%
+
+                </td>
+
+              </tr>
+
+            )
+          )
+
+        }
+
+      </tbody>
+
+    </table>
 
   </div>
 
