@@ -979,6 +979,9 @@ comision_banco:
     doctor:
   t.doctor,
 
+  doctor_id:
+  t.doctor_id,
+
 metodo_pago:
   t.metodo_pago,
 
@@ -1015,6 +1018,18 @@ comision_banco:
     }
 
   }
+
+  function obtenerDoctor(
+  doctorId: number
+) {
+
+  return doctores.find(
+    (d: any) =>
+      d.id === doctorId
+  );
+
+}
+
   const pacientesFiltrados =
     pacientes.filter((p)=>
 
@@ -1750,7 +1765,15 @@ comision_banco:
 </th>
 
 <th className="p-4 text-left">
-  Utilidad
+  Base Clínica
+</th>
+
+<th className="p-4 text-left">
+  Comisión Dr
+</th>
+
+<th className="p-4 text-left">
+  Utilidad Clínica
 </th>
 
 <th className="p-4 text-left">
@@ -2040,7 +2063,7 @@ comision_banco:
 <td className="
   p-4
   font-semibold
-  text-green-600
+  text-blue-600
 ">
 
   $
@@ -2074,6 +2097,76 @@ comision_banco:
     ).toLocaleString()
 
   }
+
+</td>
+
+<td className="
+  p-4
+  font-semibold
+  text-orange-600
+">
+
+  $
+
+  {
+
+    (
+
+      (
+
+        Number(
+          tratamiento.pagado || 0
+        )
+
+        -
+
+        Number(
+          tratamiento.laboratorio || 0
+        )
+
+        -
+
+        Number(
+          tratamiento.especialista || 0
+        )
+
+        -
+
+        Number(
+          tratamiento.comision_banco || 0
+        )
+
+      )
+
+      *
+
+      (
+
+        Number(
+
+          obtenerDoctor(
+            tratamiento.doctor_id
+          )?.porcentaje || 0
+
+        )
+
+        / 100
+
+      )
+
+    ).toLocaleString()
+
+  }
+
+</td>
+
+<td className="
+  p-4
+  font-semibold
+  text-green-600
+">
+
+  Próximamente
 
 </td>
 
