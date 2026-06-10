@@ -152,12 +152,24 @@ const [nuevoTratamiento,
   useState<number | null>(
     null
   );
+
+  const [
+  doctores,
+  setDoctores,
+] = useState<any[]>([]);
+
+const [
+  doctorSeleccionado,
+  setDoctorSeleccionado,
+] = useState<any>(null);
     
   useEffect(() => {
 
-    cargarPacientes();
+  cargarPacientes();
 
-  }, []);
+  cargarDoctores();
+
+}, []);
 
   async function cargarPacientes() {
 
@@ -180,6 +192,44 @@ const [nuevoTratamiento,
     }
 
   }
+
+  async function cargarDoctores() {
+
+  const {
+    data,
+    error,
+  } = await supabase
+
+    .from(
+      "doctores"
+    )
+
+    .select("*")
+
+    .eq(
+      "activo",
+      true
+    )
+
+    .order(
+      "nombre",
+      {
+        ascending: true,
+      }
+    );
+
+  if (
+    !error &&
+    data
+  ) {
+
+    setDoctores(
+      data
+    );
+
+  }
+
+}
 
   async function cargarCitas(
   pacienteId: number
@@ -646,6 +696,9 @@ else {
           doctor:
   nuevo.doctor,
 
+  doctor_id:
+  doctorSeleccionado?.id || null,
+
   metodo_pago:
   nuevo.metodo_pago,
 
@@ -717,6 +770,9 @@ comision_banco:
 
           doctor:
   nuevo.doctor,
+
+  doctor_id:
+  doctorSeleccionado?.id || null,
 
           metodo_pago:
   nuevo.metodo_pago,
@@ -809,6 +865,10 @@ comision_banco:
   setEditandoIndex(
     null
   );
+
+  setDoctorSeleccionado(
+  null
+);
 
   setMostrarModalTratamiento(
     false
@@ -2258,16 +2318,30 @@ comision_banco:
 <select
 
   value={
-    nuevoTratamiento.doctor || ""
-  }
+  nuevoTratamiento.doctor || ""
+}
 
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      doctor:
-        e.target.value,
-    })
-  }
+ onChange={(e) => {
+
+  const doctor =
+
+    doctores.find(
+      (d: any) =>
+        String(d.id) ===
+        e.target.value
+    );
+
+  setDoctorSeleccionado(
+    doctor
+  );
+
+  setNuevoTratamiento({
+    ...nuevoTratamiento,
+    doctor:
+      doctor?.nombre || "",
+  });
+
+}}
 
   className="
     border
@@ -2282,23 +2356,26 @@ comision_banco:
 
   </option>
 
-  <option value="Dr. García">
+{
 
-    Dr. García
+  doctores.map(
+    (
+      doctor: any
+    ) => (
 
-  </option>
+     <option
+  key={doctor.id}
+  value={doctor.id}
+>
 
-  <option value="Dr. López">
+        {doctor.nombre}
 
-    Dr. López
+      </option>
 
-  </option>
+    )
+  )
 
-  <option value="Dr. Martínez">
-
-    Dr. Martínez
-
-  </option>
+}
 
 </select>
 
