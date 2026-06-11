@@ -747,6 +747,118 @@ const totalTransferencia =
 
     );
 
+    const totalMXN =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+        t.moneda ===
+        "MXN"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
+const totalUSD =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+        t.moneda ===
+        "USD"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
+    const cajaMXN =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+
+        t.moneda === "MXN" &&
+
+        t.metodo_pago === "Efectivo"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
+const cajaUSD =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+
+        t.moneda === "USD" &&
+
+        t.metodo_pago === "Efectivo"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
   const gastosPorCategoria =
 
   gastosFiltrados.reduce(
@@ -2336,6 +2448,70 @@ const totalTransferencia =
 
 </div>
 
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    MXN
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-green-600
+    "
+  >
+
+    $
+
+    {totalMXN.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    USD
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-blue-600
+    "
+  >
+
+    $
+
+    {totalUSD.toLocaleString()}
+
+  </h2>
+
+</div>
+
       </div>
 
       <div
@@ -2346,6 +2522,133 @@ const totalTransferencia =
           p-6
         "
       >
+
+<div
+  className="
+    bg-slate-50
+    rounded-2xl
+    p-6
+    mb-6
+  "
+>
+
+  <h3
+    className="
+      text-xl
+      font-bold
+      mb-4
+    "
+  >
+
+    Corte de Caja
+
+  </h3>
+
+  <div
+    className="
+      grid
+      md:grid-cols-2
+      gap-4
+    "
+  >
+
+    <div>
+
+      <p className="text-slate-500">
+
+        Caja MXN
+
+      </p>
+
+      <p
+        className="
+          text-2xl
+          font-bold
+          text-green-600
+        "
+      >
+
+        $
+
+        {cajaMXN.toLocaleString()}
+
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-slate-500">
+
+        Caja USD
+
+      </p>
+
+      <p
+        className="
+          text-2xl
+          font-bold
+          text-blue-600
+        "
+      >
+
+        $
+
+        {cajaUSD.toLocaleString()}
+
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-slate-500">
+
+        Tarjetas
+
+      </p>
+
+      <p
+        className="
+          text-2xl
+          font-bold
+        "
+      >
+
+        $
+
+        {totalTarjeta.toLocaleString()}
+
+      </p>
+
+    </div>
+
+    <div>
+
+      <p className="text-slate-500">
+
+        Transferencias
+
+      </p>
+
+      <p
+        className="
+          text-2xl
+          font-bold
+        "
+      >
+
+        $
+
+        {totalTransferencia.toLocaleString()}
+
+      </p>
+
+    </div>
+
+  </div>
+
+</div>
 
         <h2
 
