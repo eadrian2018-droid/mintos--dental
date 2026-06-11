@@ -2103,15 +2103,15 @@ const cajaUSD =
 
             <th className="p-3 text-left">
 
-              %
+  %
 
-              <th className="p-3 text-left">
+</th>
+
+<th className="p-3 text-left">
 
   Tratamientos
 
 </th>
-
-            </th>
 
             <th className="p-3 text-left">
 
