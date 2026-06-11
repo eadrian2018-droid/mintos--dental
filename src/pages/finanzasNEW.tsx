@@ -113,12 +113,6 @@ async function guardarDoctor() {
         especialidad:
           especialidadDoctor,
 
-        porcentaje:
-          Number(
-            porcentajeDoctor
-          ),
-
-        activo: true,
       },
     ]);
 
