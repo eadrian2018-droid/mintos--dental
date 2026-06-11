@@ -84,7 +84,7 @@ const [
 ] = useState("30");
 
 const [
-  doctorDetalle,
+  _doctorDetalle,
   setDoctorDetalle,
 ] = useState<any>(
   null
