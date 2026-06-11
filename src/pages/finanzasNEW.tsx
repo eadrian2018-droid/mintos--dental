@@ -83,6 +83,13 @@ const [
   setPorcentajeDoctor,
 ] = useState("30");
 
+const [
+  doctorDetalle,
+  setDoctorDetalle,
+] = useState<any>(
+  null
+);
+
 useEffect(() => {
 
   cargarTratamientos();
@@ -2098,6 +2105,12 @@ const cajaUSD =
 
               %
 
+              <th className="p-3 text-left">
+
+  Tratamientos
+
+</th>
+
             </th>
 
             <th className="p-3 text-left">
@@ -2111,6 +2124,12 @@ const cajaUSD =
               Comisión
 
             </th>
+
+            <th className="p-3 text-left">
+
+  Detalle
+
+</th>
 
           </tr>
 
@@ -2211,6 +2230,12 @@ const cajaUSD =
 
                     <td className="p-3">
 
+  {tratamientosDoctor.length}
+
+</td>
+
+                    <td className="p-3">
+
                       $
 
                       {baseClinica.toLocaleString()}
@@ -2230,6 +2255,34 @@ const cajaUSD =
                       {comision.toLocaleString()}
 
                     </td>
+
+                    <td className="p-3">
+
+  <button
+
+    onClick={() =>
+      setDoctorDetalle(
+        doctor
+      )
+    }
+
+    className="
+      bg-blue-500
+      hover:bg-blue-600
+      text-white
+      px-3
+      py-1
+      rounded-lg
+      text-sm
+    "
+
+  >
+
+    Ver Detalle
+
+  </button>
+
+</td>
 
                   </tr>
 
