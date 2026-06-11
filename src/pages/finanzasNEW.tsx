@@ -2054,11 +2054,198 @@ const cajaUSD =
     "
   >
 
-    <h2 className="text-2xl font-bold">
+    <h2
+      className="
+        text-2xl
+        font-bold
+        mb-6
+      "
+    >
 
-      Comisiones
+      Comisiones por Doctor
 
     </h2>
+
+    <div
+      className="
+        overflow-x-auto
+      "
+    >
+
+      <table
+        className="
+          w-full
+          text-sm
+        "
+      >
+
+        <thead>
+
+          <tr
+            className="
+              border-b
+              border-slate-200
+            "
+          >
+
+            <th className="p-3 text-left">
+
+              Doctor
+
+            </th>
+
+            <th className="p-3 text-left">
+
+              %
+
+            </th>
+
+            <th className="p-3 text-left">
+
+              Base Clínica
+
+            </th>
+
+            <th className="p-3 text-left">
+
+              Comisión
+
+            </th>
+
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          {
+
+            doctores.map(
+              (
+                doctor: any
+              ) => {
+
+                const tratamientosDoctor =
+
+                  tratamientos.filter(
+                    (
+                      t: any
+                    ) =>
+
+                      t.doctor_id ===
+                      doctor.id
+                  );
+
+                const baseClinica =
+
+                  tratamientosDoctor.reduce(
+
+                    (
+                      total: number,
+                      t: any
+                    ) =>
+
+                      total +
+
+                      (
+
+                        Number(
+                          t.pago || 0
+                        )
+
+                        -
+
+                        Number(
+                          t.laboratorio || 0
+                        )
+
+                        -
+
+                        Number(
+                          t.especialista || 0
+                        )
+
+                        -
+
+                        Number(
+                          t.comision_banco || 0
+                        )
+
+                      ),
+
+                    0
+
+                  );
+
+                const comision =
+
+                  baseClinica *
+
+                  Number(
+                    doctor.porcentaje || 0
+                  ) /
+
+                  100;
+
+                return (
+
+                  <tr
+                    key={doctor.id}
+                    className="
+                      border-b
+                      border-slate-100
+                    "
+                  >
+
+                    <td className="p-3">
+
+                      {doctor.nombre}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {doctor.porcentaje}%
+
+                    </td>
+
+                    <td className="p-3">
+
+                      $
+
+                      {baseClinica.toLocaleString()}
+
+                    </td>
+
+                    <td
+                      className="
+                        p-3
+                        font-bold
+                        text-green-600
+                      "
+                    >
+
+                      $
+
+                      {comision.toLocaleString()}
+
+                    </td>
+
+                  </tr>
+
+                );
+
+              }
+
+            )
+
+          }
+
+        </tbody>
+
+      </table>
+
+    </div>
 
   </div>
 
