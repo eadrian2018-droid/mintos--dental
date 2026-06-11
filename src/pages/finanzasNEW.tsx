@@ -548,11 +548,210 @@ const pendiente =
 
   );
 
+  const totalBaseClinica =
+
+  tratamientosFiltrados.reduce(
+
+    (
+      total,
+      item: any
+    ) =>
+
+      total +
+
+      (
+
+        Number(
+          item.pago || 0
+        )
+
+        -
+
+        Number(
+          item.laboratorio || 0
+        )
+
+        -
+
+        Number(
+          item.especialista || 0
+        )
+
+        -
+
+        Number(
+          item.comision_banco || 0
+        )
+
+      ),
+
+    0
+
+  );
+
+const totalComisionesDoctor =
+
+  tratamientosFiltrados.reduce(
+
+    (
+      total,
+      item: any
+    ) => {
+
+      const doctor =
+
+        doctores.find(
+          (d: any) =>
+            d.id ===
+            item.doctor_id
+        );
+
+      const porcentaje =
+
+        Number(
+          doctor?.porcentaje || 0
+        );
+
+      const baseClinica =
+
+        Number(
+          item.pago || 0
+        )
+
+        -
+
+        Number(
+          item.laboratorio || 0
+        )
+
+        -
+
+        Number(
+          item.especialista || 0
+        )
+
+        -
+
+        Number(
+          item.comision_banco || 0
+        );
+
+      return (
+
+        total +
+
+        (
+
+          baseClinica *
+
+          porcentaje /
+
+          100
+
+        )
+
+      );
+
+    },
+
+    0
+
+  );
+
 const gananciaNeta =
 
-  ingresos -
+
+
+  totalBaseClinica
+
+  -
+
+  totalComisionesDoctor
+
+  -
 
   totalGastos;
+
+  const totalEfectivo =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+        t.metodo_pago ===
+        "Efectivo"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
+const totalTarjeta =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+        t.metodo_pago ===
+        "Tarjeta"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
+
+const totalTransferencia =
+
+  tratamientosFiltrados
+
+    .filter(
+      (t: any) =>
+        t.metodo_pago ===
+        "Transferencia"
+    )
+
+    .reduce(
+
+      (
+        total,
+        t: any
+      ) =>
+
+        total +
+
+        Number(
+          t.pago || 0
+        ),
+
+      0
+
+    );
 
   const gastosPorCategoria =
 
@@ -1965,6 +2164,70 @@ const gananciaNeta =
 
   <p className="text-slate-500">
 
+    Base Clínica
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-blue-600
+    "
+  >
+
+    $
+
+    {totalBaseClinica.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Comisiones Doctores
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+      text-orange-600
+    "
+  >
+
+    $
+
+    {totalComisionesDoctor.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
     Ganancia Neta
 
   </p>
@@ -1981,6 +2244,99 @@ const gananciaNeta =
     $
 
     {gananciaNeta.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Efectivo
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+    "
+  >
+
+    $
+
+    {totalEfectivo.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Tarjeta
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+    "
+  >
+
+    $
+
+    {totalTarjeta.toLocaleString()}
+
+  </h2>
+
+</div>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+
+    Transferencia
+
+  </p>
+
+  <h2
+    className="
+      text-3xl
+      font-bold
+      mt-2
+    "
+  >
+
+    $
+
+    {totalTransferencia.toLocaleString()}
 
   </h2>
 
