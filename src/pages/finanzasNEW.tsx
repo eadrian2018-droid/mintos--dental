@@ -1429,9 +1429,9 @@ const cajaUSD =
 
     </div>
 
-    <p>
-
-      <div
+   <div>
+  
+  <div
   className="
     grid
     md:grid-cols-2
@@ -1607,7 +1607,7 @@ const cajaUSD =
 
       </strong>
 
-    </p>
+</div>
 
     <div
   className="
@@ -3076,6 +3076,7 @@ const cajaUSD =
   <td className="p-3">
 
     $
+    
 
     {pendiente.toLocaleString()}
 
@@ -3089,12 +3090,12 @@ const cajaUSD =
 
 </div>
 
-      </div>
+           </div>
 
-    </div>
+        </div>
 
-    </div>
+</div>
 
-  );
+);
 
 }
