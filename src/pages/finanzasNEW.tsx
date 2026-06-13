@@ -666,6 +666,18 @@ const totalComisionesDoctor =
 
   );
 
+const gananciaNeta =
+
+  totalBaseClinica
+
+  -
+
+  totalComisionesDoctor
+
+  -
+
+  totalGastos;
+
  
 
   const totalTarjeta =
@@ -2477,7 +2489,7 @@ console.log(
 
         </div>
 
-        <div
+       <div
           className="
             bg-white
             rounded-3xl
@@ -2499,6 +2511,38 @@ console.log(
           >
 
             ${pendiente.toLocaleString()}
+
+          </h2>
+
+        </div>
+
+        <div
+          className="
+            bg-white
+            rounded-3xl
+            shadow-lg
+            p-6
+          "
+        >
+
+          <p className="text-slate-500">
+
+            Ganancia Neta
+
+          </p>
+
+          <h2
+            className="
+              text-3xl
+              font-bold
+              mt-2
+              text-green-600
+            "
+          >
+
+            $
+
+            {gananciaNeta.toLocaleString()}
 
           </h2>
 
