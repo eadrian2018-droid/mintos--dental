@@ -666,19 +666,7 @@ const totalComisionesDoctor =
 
   );
 
-const gananciaNeta =
-
-
-
-  totalBaseClinica
-
-  -
-
-  totalComisionesDoctor
-
-  -
-
-  totalGastos;
+ 
 
   const totalTarjeta =
 
@@ -1181,131 +1169,7 @@ const cajaUSD =
 
 </div>
 
-<div
-  className="
-    bg-white
-    rounded-3xl
-    shadow-lg
-    p-6
-    mb-8
-  "
->
 
-  <h2
-    className="
-      text-xl
-      font-bold
-      mb-4
-    "
-  >
-
-    Corte Semanal
-
-  </h2>
-
-  <div
-    className="
-      grid
-      md:grid-cols-2
-      gap-4
-    "
-  >
-
-    <div>
-
-      Ingresos Totales
-
-    </div>
-
-    <div
-      className="
-        font-semibold
-      "
-    >
-
-      $
-
-      {ingresos.toLocaleString()}
-
-    </div>
-
-    <div>
-
-      Cobrado
-
-    </div>
-
-    <div
-      className="
-        font-semibold
-      "
-    >
-
-      $
-
-      {cobrado.toLocaleString()}
-
-    </div>
-
-    <div>
-
-      Pendiente
-
-    </div>
-
-    <div
-      className="
-        font-semibold
-      "
-    >
-
-      $
-
-      {pendiente.toLocaleString()}
-
-    </div>
-
-    <div>
-
-      Gastos
-
-    </div>
-
-    <div
-      className="
-        font-semibold
-        text-red-600
-      "
-    >
-
-      $
-
-      {totalGastos.toLocaleString()}
-
-    </div>
-
-    <div>
-
-      Ganancia Neta
-
-    </div>
-
-    <div
-      className="
-        font-bold
-        text-green-600
-      "
-    >
-
-      $
-
-      {gananciaNeta.toLocaleString()}
-
-    </div>
-
-  </div>
-
-</div>
 
       {seccionActiva === "gastos" && (
 
@@ -2495,6 +2359,7 @@ console.log(
     mt-6
   "
 >
+  
 
   <div
     className="
@@ -2543,7 +2408,7 @@ console.log(
   "
 >
 
-  Indicadores Principales
+  Resumen Financiero
 
 </h2>
 
@@ -2639,18 +2504,20 @@ console.log(
 
         </div>
 
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            shadow-lg
-            p-6
-          "
-        >
 
-          <p className="text-slate-500">
-            Tratamientos
-          </p>
+
+<div
+  className="
+    bg-white
+    rounded-3xl
+    shadow-lg
+    p-6
+  "
+>
+
+  <p className="text-slate-500">
+    Tratamientos
+  </p>
 
           <h2
             className="
@@ -2757,38 +2624,6 @@ console.log(
     $
 
     {totalComisionesDoctor.toLocaleString()}
-
-  </h2>
-
-</div>
-
-<div
-  className="
-    bg-white
-    rounded-3xl
-    shadow-lg
-    p-6
-  "
->
-
-  <p className="text-slate-500">
-
-    Ganancia Neta
-
-  </p>
-
-  <h2
-    className="
-      text-3xl
-      font-bold
-      mt-2
-      text-green-600
-    "
-  >
-
-    $
-
-    {gananciaNeta.toLocaleString()}
 
   </h2>
 
