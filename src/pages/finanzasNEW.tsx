@@ -2552,6 +2552,28 @@ console.log(
 
 <div
   className="
+    md:col-span-4
+    mt-2
+    mb-2
+  "
+>
+
+  <h2
+    className="
+      text-xl
+      font-bold
+      text-slate-700
+    "
+  >
+
+    Indicadores Operativos
+
+  </h2>
+
+</div>
+
+<div
+  className="
     bg-white
     rounded-3xl
     shadow-lg
