@@ -440,17 +440,20 @@ const tratamientosFiltrados =
           item.fecha
         );
 
-      if (
-        periodo ===
-        "semana"
-      ) {
+   if (
+  periodo ===
+  "semana"
+) {
 
-        return (
-          fecha >=
-          inicioSemana
-        );
+  return (
 
-      }
+    fecha >= lunesSemana &&
+
+    fecha <= domingoSemana
+
+  );
+
+}
 
       return true;
 
@@ -476,17 +479,20 @@ const gastosFiltrados =
           gasto.fecha
         );
 
-      if (
-        periodo ===
-        "semana"
-      ) {
+   if (
+  periodo ===
+  "semana"
+) {
 
-        return (
-          fecha >=
-          inicioSemana
-        );
+  return (
 
-      }
+    fecha >= lunesSemana &&
+
+    fecha <= domingoSemana
+
+  );
+
+}
 
       return true;
 
@@ -1306,7 +1312,7 @@ const cajaUSD =
       "
     >
 
-      {gastos.length}
+      {gastosFiltrados.length}
 
     </h3>
 
