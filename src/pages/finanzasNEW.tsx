@@ -440,7 +440,7 @@ const tratamientosFiltrados =
           item.fecha
         );
 
-   if (
+ if (
   periodo ===
   "semana"
 ) {
@@ -455,7 +455,40 @@ const tratamientosFiltrados =
 
 }
 
-      return true;
+if (
+  periodo ===
+  "mes"
+) {
+
+  return (
+
+    fecha.getMonth() ===
+      hoy.getMonth()
+
+    &&
+
+    fecha.getFullYear() ===
+      hoy.getFullYear()
+
+  );
+
+}
+
+if (
+  periodo ===
+  "anio"
+) {
+
+  return (
+
+    fecha.getFullYear() ===
+    hoy.getFullYear()
+
+  );
+
+}
+
+return true;
 
     }
   );
@@ -479,7 +512,7 @@ const gastosFiltrados =
           gasto.fecha
         );
 
-   if (
+ if (
   periodo ===
   "semana"
 ) {
@@ -494,7 +527,40 @@ const gastosFiltrados =
 
 }
 
-      return true;
+if (
+  periodo ===
+  "mes"
+) {
+
+  return (
+
+    fecha.getMonth() ===
+      hoy.getMonth()
+
+    &&
+
+    fecha.getFullYear() ===
+      hoy.getFullYear()
+
+  );
+
+}
+
+if (
+  periodo ===
+  "anio"
+) {
+
+  return (
+
+    fecha.getFullYear() ===
+    hoy.getFullYear()
+
+  );
+
+}
+
+return true;
 
     }
   );
