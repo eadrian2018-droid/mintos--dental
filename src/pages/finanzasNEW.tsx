@@ -1204,16 +1204,31 @@ const cajaUSD =
       "
     >
 
-      <h2
-        className="
-          text-2xl
-          font-bold
-        "
-      >
+      <div>
 
-        Gastos
+  <h2
+    className="
+      text-2xl
+      font-bold
+    "
+  >
 
-      </h2>
+    Gastos
+
+  </h2>
+
+  <p
+    className="
+      text-slate-500
+      mt-1
+    "
+  >
+
+    Control y administración de gastos operativos
+
+  </p>
+
+</div>
 
       <button
         className="
@@ -1231,8 +1246,89 @@ const cajaUSD =
 
     </div>
 
-   <div>
-  
+<div
+  className="
+    grid
+    md:grid-cols-2
+    gap-4
+    mb-6
+  "
+>
+
+  <div
+    className="
+      bg-slate-50
+      rounded-2xl
+      p-4
+    "
+  >
+
+    <p className="text-slate-500">
+
+      Total Gastos
+
+    </p>
+
+    <h3
+      className="
+        text-2xl
+        font-bold
+        text-red-600
+      "
+    >
+
+      $
+
+      {totalGastos.toLocaleString()}
+
+    </h3>
+
+  </div>
+
+  <div
+    className="
+      bg-slate-50
+      rounded-2xl
+      p-4
+    "
+  >
+
+    <p className="text-slate-500">
+
+      Cantidad de Gastos
+
+    </p>
+
+    <h3
+      className="
+        text-2xl
+        font-bold
+      "
+    >
+
+      {gastos.length}
+
+    </h3>
+
+  </div>
+
+</div>
+
+<div>
+
+  <h3
+    className="
+      text-xl
+      font-bold
+      mt-6
+      mb-4
+    "
+  >
+
+    Nuevo Gasto
+
+  </h3>
+
   <div
   className="
     grid
@@ -1399,19 +1495,39 @@ const cajaUSD =
 
 </div>
 
-      Total de gastos registrados:
+<h3
+  className="
+    text-xl
+    font-bold
+    mt-8
+    mb-2
+  "
+>
 
-      {" "}
+  Historial de Gastos
 
-      <strong>
+</h3>
 
-        {gastos.length}
+<p
+  className="
+    text-slate-600
+    mb-4
+  "
+>
 
-      </strong>
+  Total de registros:
 
-</div>
+  {" "}
 
-    <div
+  <strong>
+
+    {gastos.length}
+
+  </strong>
+
+</p>
+
+<div
   className="
     overflow-x-auto
     mt-6
@@ -1660,7 +1776,9 @@ const cajaUSD =
 
 </div>
 
-  </div>
+</div>
+
+</div>
 
 )}
 
@@ -2128,7 +2246,7 @@ console.log(
     "
   >
 
-```
+
 <div
   className="
     flex
@@ -2190,7 +2308,7 @@ console.log(
     "
   >
 
-```
+
 <thead>
 
   <tr
@@ -3029,11 +3147,11 @@ console.log(
 
     </tbody>
 
-  </table>
+</table>
 
 </div>
 
-           </div>
+</div>
 
 </>
 
