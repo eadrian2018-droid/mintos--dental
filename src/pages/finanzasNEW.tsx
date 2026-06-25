@@ -7,6 +7,8 @@ import {
   supabase,
 } from "../lib/supabase";
 
+import Gastos from "../components/finanzas/Gastos";
+
 export default function Finanzas() {
 
   const [
@@ -1255,7 +1257,7 @@ const cajaUSD =
 
 
 
-      {seccionActiva === "gastos" && (
+      {seccionActiva === "gastos" && false && (
 
   <div
     className="
@@ -1851,6 +1853,12 @@ const cajaUSD =
 </div>
 
 </div>
+
+)}
+
+{seccionActiva === "gastos" && (
+
+  <Gastos />
 
 )}
 
