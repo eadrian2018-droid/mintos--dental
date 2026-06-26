@@ -1,3 +1,8 @@
+import Gastos from "../components/finanzas/Gastos";
+
+// import Resumen from "../components/finanzas/Resumen";
+// import Doctores from "../components/finanzas/Doctores";
+// import Comisiones from "../components/finanzas/Comisiones";
 import {
   useEffect,
   useState,
@@ -7,7 +12,6 @@ import {
   supabase,
 } from "../lib/supabase";
 
-import Gastos from "../components/finanzas/Gastos";
 
 export default function Finanzas() {
 
@@ -1390,465 +1394,6 @@ const cajaUSD =
 
 <div>
 
-  <h3
-    className="
-      text-xl
-      font-bold
-      mt-6
-      mb-4
-    "
-  >
-
-    Nuevo Gasto
-
-  </h3>
-
-  <div
-  className="
-    grid
-    md:grid-cols-2
-    gap-4
-    mt-6
-    mb-6
-  "
->
-
-  <input
-    type="date"
-    value={fechaGasto}
-    onChange={(e) =>
-      setFechaGasto(
-        e.target.value
-      )
-    }
-    className="
-      border
-      rounded-xl
-      p-3
-    "
-  />
-
-  <input
-    type="text"
-    placeholder="Concepto"
-    value={conceptoGasto}
-    onChange={(e) =>
-      setConceptoGasto(
-        e.target.value
-      )
-    }
-    className="
-      border
-      rounded-xl
-      p-3
-    "
-  />
-
- <select
-
-  value={categoriaGasto}
-
-  onChange={(e) =>
-    setCategoriaGasto(
-      e.target.value
-    )
-  }
-
-  className="
-    border
-    rounded-lg
-    p-3
-  "
->
-
-  <option value="">
-
-    Seleccionar categoría
-
-  </option>
-
-  <option value="Material Dental">
-
-    Material Dental
-
-  </option>
-
-  <option value="Limpieza">
-
-    Limpieza
-
-  </option>
-
-  <option value="Laboratorio">
-
-    Laboratorio
-
-  </option>
-
-  <option value="Especialistas">
-
-    Especialistas
-
-  </option>
-
-  <option value="Nómina">
-
-    Nómina
-
-  </option>
-
-  <option value="Servicios">
-
-    Servicios
-
-  </option>
-
-  <option value="Marketing">
-
-    Marketing
-
-  </option>
-
-  <option value="Otros">
-
-    Otros
-
-  </option>
-
-</select>
-
-  <input
-    type="number"
-    placeholder="Monto"
-    value={montoGasto}
-    onChange={(e) =>
-      setMontoGasto(
-        e.target.value
-      )
-    }
-    className="
-      border
-      rounded-xl
-      p-3
-    "
-  />
-
-  <textarea
-    placeholder="Notas"
-    value={notasGasto}
-    onChange={(e) =>
-      setNotasGasto(
-        e.target.value
-      )
-    }
-    className="
-      border
-      rounded-xl
-      p-3
-      md:col-span-2
-    "
-  />
-
-  <button
-    onClick={
-      guardarGasto
-    }
-    className="
-      bg-teal-600
-      text-white
-      px-4
-      py-3
-      rounded-xl
-      md:col-span-2
-    "
-  >
-
-    Guardar gasto
-
-  </button>
-
-</div>
-
-<h3
-  className="
-    text-xl
-    font-bold
-    mt-8
-    mb-2
-  "
->
-
-  Historial de Gastos
-
-</h3>
-
-<p
-  className="
-    text-slate-600
-    mb-4
-  "
->
-
-  Total de registros:
-
-  {" "}
-
-  <strong>
-
-    {gastos.length}
-
-  </strong>
-
-</p>
-
-<div
-  className="
-    overflow-x-auto
-    mt-6
-  "
->
-
-  <table
-    className="
-      w-full
-      text-sm
-    "
-  >
-
-    <thead>
-
-      <tr
-        className="
-          border-b
-          border-slate-200
-        "
-      >
-
-        <th className="p-3 text-left">
-
-          Fecha
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Concepto
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Categoría
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Monto
-
-        </th>
-
-        <th className="p-3 text-left">
-
-  Acciones
-
-</th>
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {
-
-        gastos.map(
-          (
-            gasto: any
-          ) => (
-
-            <tr
-              key={gasto.id}
-              className="
-                border-b
-                border-slate-100
-              "
-            >
-
-              <td className="p-3">
-
-                {gasto.fecha}
-
-              </td>
-
-              <td className="p-3">
-
-                {gasto.concepto}
-
-              </td>
-
-              <td className="p-3">
-
-                {gasto.categoria}
-
-              </td>
-
-              <td className="p-3">
-
-                $
-
-                {Number(
-                  gasto.monto
-                ).toLocaleString()}
-
-              </td>
-
-              <td className="p-3">
-
-  <button
-
-    onClick={() =>
-      eliminarGasto(
-        gasto.id
-      )
-    }
-
-    className="
-      bg-red-600
-      text-white
-      px-3
-      py-1
-      rounded-lg
-    "
-  >
-
-    Eliminar
-
-  </button>
-
-</td>
-
-          
-
-            </tr>
-
-          )
-        )
-
-      }
-
-      <tr
-  className="
-    bg-slate-50
-    font-bold
-    border-t-2
-    border-slate-300
-  "
->
-
-  <td
-    className="p-3"
-    colSpan={3}
-  >
-
-    TOTAL GASTOS
-
-  </td>
-
-  <td className="p-3">
-
-    $
-
-    {totalGastos.toLocaleString()}
-
-  </td>
-
-  <td className="p-3">
-
-  </td>
-
-</tr>
-
-    </tbody>
-
-  </table>
-
-</div>
-
-<div
-  className="
-    bg-slate-50
-    rounded-2xl
-    p-6
-    mt-6
-  "
->
-
-  <h3
-    className="
-      text-xl
-      font-bold
-      mb-4
-    "
-  >
-
-    Resumen por Categoría
-
-  </h3>
-
-  {
-
-    Object.entries(
-      gastosPorCategoria
-    ).map(
-
-      (
-        [
-          categoria,
-          total,
-        ]: any
-      ) => (
-
-        <div
-          key={categoria}
-          className="
-            flex
-            justify-between
-            py-2
-            border-b
-            border-slate-200
-          "
-        >
-
-          <span>
-
-            {categoria}
-
-          </span>
-
-          <span
-            className="
-              font-semibold
-            "
-          >
-
-            $
-
-            {Number(
-              total
-            ).toLocaleString()}
-
-          </span>
-
-        </div>
-
-      )
-
-    )
-
-  }
-
-</div>
 
 </div>
 
@@ -1858,7 +1403,40 @@ const cajaUSD =
 
 {seccionActiva === "gastos" && (
 
-  <Gastos />
+<Gastos
+
+  total={totalGastos}
+
+  cantidad={gastosFiltrados.length}
+
+  fechaGasto={fechaGasto}
+  setFechaGasto={setFechaGasto}
+
+  conceptoGasto={conceptoGasto}
+  setConceptoGasto={setConceptoGasto}
+
+  categoriaGasto={categoriaGasto}
+  setCategoriaGasto={setCategoriaGasto}
+
+  montoGasto={montoGasto}
+  setMontoGasto={setMontoGasto}
+
+  notasGasto={notasGasto}
+  setNotasGasto={setNotasGasto}
+
+  guardarGasto={guardarGasto}
+
+  gastos={gastos}
+
+eliminarGasto={eliminarGasto}
+
+gastosPorCategoria={gastosPorCategoria}
+
+/>
+
+  /*
+     TODO EL BLOQUE VIEJO DE GASTOS
+  */
 
 )}
 
