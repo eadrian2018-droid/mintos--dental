@@ -1426,7 +1426,7 @@ const cajaUSD =
 
   guardarGasto={guardarGasto}
 
-  gastos={gastos}
+  gastosFiltrados={gastosFiltrados}
 
 eliminarGasto={eliminarGasto}
 

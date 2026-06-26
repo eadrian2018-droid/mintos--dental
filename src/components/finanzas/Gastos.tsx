@@ -19,7 +19,7 @@ type GastosProps = {
 
   guardarGasto: () => void;
 
-  gastos: any[];
+gastosFiltrados: any[];
 
 eliminarGasto: (id: number) => void;
 
@@ -49,7 +49,7 @@ export default function Gastos({
 
 guardarGasto,
 
-gastos,
+gastosFiltrados,
 
 eliminarGasto,
 
@@ -339,7 +339,7 @@ gastosPorCategoria,
 
     {" "}
 
-    {gastos.length}
+    gastosFiltrados,
 
   </strong>
 
@@ -405,7 +405,7 @@ gastosPorCategoria,
 
       {
 
-        gastos.map((gasto: any) => (
+        gastosFiltrados.map((gasto: any) => (
 
           <tr
             key={gasto.id}
