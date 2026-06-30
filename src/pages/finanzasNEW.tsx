@@ -4,8 +4,6 @@ import Resumen from "../components/finanzas/Resumen";
 
 import Doctores from "../components/finanzas/Doctores";
 
-import useFinanzas from "../hooks/useFinanzas";
-
 import Comisiones from "../components/finanzas/Comisiones";
 
 import {
@@ -19,12 +17,6 @@ import {
 
 
 export default function Finanzas() {
-
- const {
-  tratamientos: hookTratamientos,
-} = useFinanzas();
-
-void hookTratamientos;
 
   const [
   tratamientos,
@@ -1444,10 +1436,6 @@ eliminarGasto={eliminarGasto}
 gastosPorCategoria={gastosPorCategoria}
 
 />
-
-  /*
-     TODO EL BLOQUE VIEJO DE GASTOS
-  */
 
 )}
 
