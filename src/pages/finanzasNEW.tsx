@@ -1,7 +1,9 @@
 import Gastos from "../components/finanzas/Gastos";
 
 import Resumen from "../components/finanzas/Resumen";
-// import Doctores from "../components/finanzas/Doctores";
+
+import Doctores from "../components/finanzas/Doctores";
+
 // import Comisiones from "../components/finanzas/Comisiones";
 import {
   useEffect,
@@ -1442,188 +1444,22 @@ gastosPorCategoria={gastosPorCategoria}
 
 {seccionActiva === "doctores" && (
 
-  <div
-    className="
-      bg-white
-      rounded-3xl
-      shadow-lg
-      p-6
-    "
-  >
+<Doctores
 
-    <h2
-      className="
-        text-2xl
-        font-bold
-        mb-6
-      "
-    >
+  doctores={doctores}
 
-      Doctores
+  nombreDoctor={nombreDoctor}
+  setNombreDoctor={setNombreDoctor}
 
-    </h2>
+  especialidadDoctor={especialidadDoctor}
+  setEspecialidadDoctor={setEspecialidadDoctor}
 
-    <div
-      className="
-        grid
-        md:grid-cols-3
-        gap-4
-        mb-6
-      "
-    >
+  porcentajeDoctor={porcentajeDoctor}
+  setPorcentajeDoctor={setPorcentajeDoctor}
 
-      <input
-        type="text"
-        placeholder="Nombre"
-        value={nombreDoctor}
-        onChange={(e) =>
-          setNombreDoctor(
-            e.target.value
-          )
-        }
-        className="
-          border
-          rounded-xl
-          p-3
-        "
-      />
+  guardarDoctor={guardarDoctor}
 
-      <input
-        type="text"
-        placeholder="Especialidad"
-        value={especialidadDoctor}
-        onChange={(e) =>
-          setEspecialidadDoctor(
-            e.target.value
-          )
-        }
-        className="
-          border
-          rounded-xl
-          p-3
-        "
-      />
-
-      <input
-        type="number"
-        placeholder="% Comisión"
-        value={porcentajeDoctor}
-        onChange={(e) =>
-          setPorcentajeDoctor(
-            e.target.value
-          )
-        }
-        className="
-          border
-          rounded-xl
-          p-3
-        "
-      />
-
-    </div>
-
-    <button
-      onClick={
-        guardarDoctor
-      }
-      className="
-        bg-teal-600
-        text-white
-        px-4
-        py-3
-        rounded-xl
-        mb-6
-      "
-    >
-
-      Guardar Doctor
-
-    </button>
-
-    <table
-      className="
-        w-full
-      "
-    >
-
-      <thead>
-
-        <tr
-          className="
-            border-b
-            border-slate-200
-          "
-        >
-
-          <th className="p-3 text-left">
-
-            Nombre
-
-          </th>
-
-          <th className="p-3 text-left">
-
-            Especialidad
-
-          </th>
-
-          <th className="p-3 text-left">
-
-            %
-
-          </th>
-
-        </tr>
-
-      </thead>
-
-      <tbody>
-
-        {
-
-          doctores.map(
-            (
-              doctor: any
-            ) => (
-
-              <tr
-                key={doctor.id}
-                className="
-                  border-b
-                  border-slate-100
-                "
-              >
-
-                <td className="p-3">
-
-                  {doctor.nombre}
-
-                </td>
-
-                <td className="p-3">
-
-                  {doctor.especialidad}
-
-                </td>
-
-                <td className="p-3">
-
-                  {doctor.porcentaje}%
-
-                </td>
-
-              </tr>
-
-            )
-          )
-
-        }
-
-      </tbody>
-
-    </table>
-
-  </div>
+/>
 
 )}
 
