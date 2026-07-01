@@ -6,6 +6,8 @@ import Doctores from "../components/finanzas/Doctores";
 
 import Comisiones from "../components/finanzas/Comisiones";
 
+import { finanzasService } from "../services/finanzas.service";
+
 import {
   useEffect,
   useState,
@@ -168,27 +170,12 @@ async function guardarDoctor() {
 
 async function cargarTratamientos() {
 
-  const {
-    data,
-    error,
-  } = await supabase
+  const tratamientosDB =
+    await finanzasService.cargarTratamientos();
 
-    .from(
-      "tratamientos"
-    )
-
-    .select("*");
-
-  if (
-    !error &&
-    data
-  ) {
-
-    setTratamientos(
-      data
-    );
-
-  }
+  setTratamientos(
+    tratamientosDB
+  );
 
 }
 
