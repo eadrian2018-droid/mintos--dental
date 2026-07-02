@@ -8,6 +8,8 @@ import Comisiones from "../components/finanzas/Comisiones";
 
 import { finanzasService } from "../services/finanzas.service";
 
+ 
+
 import {
   useEffect,
   useState,
@@ -237,37 +239,14 @@ async function cargarGastos() {
   }
 
 }
-
 async function cargarDoctores() {
 
-  const {
-    data,
-    error,
-  } = await supabase
+  const doctoresDB =
+    await finanzasService.cargarDoctores();
 
-    .from(
-      "doctores"
-    )
-
-    .select("*")
-
-    .order(
-      "nombre",
-      {
-        ascending: true,
-      }
-    );
-
-  if (
-    !error &&
-    data
-  ) {
-
-    setDoctores(
-      data
-    );
-
-  }
+  setDoctores(
+    doctoresDB
+  );
 
 }
 
