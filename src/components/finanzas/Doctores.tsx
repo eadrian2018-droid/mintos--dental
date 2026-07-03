@@ -1,4 +1,5 @@
 type DoctoresProps = {
+
   doctores: any[];
 
   nombreDoctor: string;
@@ -11,6 +12,9 @@ type DoctoresProps = {
   setPorcentajeDoctor: React.Dispatch<React.SetStateAction<string>>;
 
   guardarDoctor: () => void;
+
+  setDoctorDetalle: React.Dispatch<any>;
+
 };
 
 export default function Doctores({
@@ -27,6 +31,8 @@ export default function Doctores({
   setPorcentajeDoctor,
 
   guardarDoctor,
+
+  setDoctorDetalle,
 
 }: DoctoresProps) {
 
@@ -127,6 +133,131 @@ export default function Doctores({
         Guardar Doctor
 
       </button>
+
+      <div
+  className="
+    mt-8
+    overflow-x-auto
+  "
+>
+
+  <table
+    className="
+      w-full
+      text-sm
+    "
+  >
+
+    <thead>
+
+      <tr
+        className="
+          border-b
+          border-slate-200
+        "
+      >
+
+        <th className="p-3 text-left">
+
+          Nombre
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          Especialidad
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          %
+
+        </th>
+
+        <th className="p-3 text-left">
+
+          Acción
+
+        </th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {
+
+        doctores.map(
+          (doctor: any) => (
+
+            <tr
+              key={doctor.id}
+              className="
+                border-b
+                border-slate-100
+              "
+            >
+
+              <td className="p-3">
+
+                {doctor.nombre}
+
+              </td>
+
+              <td className="p-3">
+
+                {doctor.especialidad}
+
+              </td>
+
+              <td className="p-3">
+
+                {doctor.porcentaje}%
+
+              </td>
+
+              <td className="p-3">
+
+                <button
+
+                  onClick={() =>
+                    setDoctorDetalle(
+                      doctor
+                    )
+                  }
+
+                  className="
+                    bg-blue-500
+                    hover:bg-blue-600
+                    text-white
+                    px-3
+                    py-1
+                    rounded-lg
+                  "
+
+                >
+
+                  Ver detalle
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          )
+
+        )
+
+      }
+
+    </tbody>
+
+  </table>
+
+</div>
 
       <table
         className="

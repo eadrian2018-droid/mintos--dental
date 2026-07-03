@@ -8,6 +8,11 @@ import Comisiones from "../components/finanzas/Comisiones";
 
 import { finanzasService } from "../services/finanzas.service";
 
+import DoctorDetalle from "../components/DoctorDetalle";
+
+import usePeriodo from "../hooks/usePeriodo";
+
+import useIndicadores from "../hooks/useIndicadores";
  
 
 import {
@@ -124,49 +129,35 @@ useEffect(() => {
 
 async function guardarDoctor() {
 
-  const {
-    error,
-  } = await supabase
+  try {
 
-    .from(
-      "doctores"
-    )
+    await finanzasService.guardarDoctor(
 
-    .insert([
-      {
-        nombre:
-          nombreDoctor,
+      nombreDoctor,
 
-        especialidad:
-          especialidadDoctor,
+      especialidadDoctor,
 
-      },
-    ]);
+      porcentajeDoctor
 
-  if (
-  error
-) {
+    );
 
-  console.log(
-    error
-  );
+    setNombreDoctor("");
 
-  alert(
-    error.message
-  );
+    setEspecialidadDoctor("");
 
-  return;
+    setPorcentajeDoctor("30");
 
-}
-  setNombreDoctor("");
+    cargarDoctores();
 
-  setEspecialidadDoctor("");
+  }
 
-  setPorcentajeDoctor(
-    "30"
-  );
+  catch (error: any) {
 
-  cargarDoctores();
+    console.error(error);
+
+    alert(error.message);
+
+  }
 
 }
 
@@ -252,49 +243,45 @@ async function cargarDoctores() {
 
 async function guardarGasto() {
 
-  const {
-    error,
-  } = await supabase
+  try {
 
-    .from(
-      "gastos"
-    )
+    await finanzasService.guardarGasto(
 
-    .insert([
-      {
-        fecha: fechaGasto,
-        concepto: conceptoGasto,
-        categoria: categoriaGasto,
-        monto: Number(
-          montoGasto
-        ),
-        notas: notasGasto,
-      },
-    ]);
+      fechaGasto,
 
-  if (
-    error
-  ) {
+      conceptoGasto,
 
-    alert(
-      "Error al guardar gasto"
+      categoriaGasto,
+
+      Number(
+        montoGasto
+      ),
+
+      notasGasto
+
     );
 
-    return;
+    setFechaGasto("");
+
+    setConceptoGasto("");
+
+    setCategoriaGasto("");
+
+    setMontoGasto("");
+
+    setNotasGasto("");
+
+    cargarGastos();
 
   }
 
-  setFechaGasto("");
+  catch (error: any) {
 
-  setConceptoGasto("");
+    console.error(error);
 
-  setCategoriaGasto("");
+    alert(error.message);
 
-  setMontoGasto("");
-
-  setNotasGasto("");
-
-  cargarGastos();
+  }
 
 }
 
@@ -307,574 +294,88 @@ async function eliminarGasto(
       "¿Eliminar este gasto?"
     );
 
-  if (
-    !confirmar
-  ) {
+  if (!confirmar) {
 
     return;
 
   }
 
-  await supabase
+  try {
 
-    .from(
-      "gastos"
-    )
-
-    .delete()
-
-    .eq(
-      "id",
+    await finanzasService.eliminarGasto(
       id
     );
 
-  cargarGastos();
+    cargarGastos();
+
+  }
+
+  catch (error: any) {
+
+    console.error(error);
+
+    alert(error.message);
+
+  }
 
 }
 
-const hoy = new Date();
+const {
 
-const lunesSemana =
+  lunesSemana,
 
-  new Date(
-    hoy
-  );
+  domingoSemana,
 
-const diaActual =
+  tratamientosFiltrados,
 
-  hoy.getDay();
+  gastosFiltrados,
 
-const diasDesdeLunes =
+} = usePeriodo({
 
-  diaActual === 0
+  periodo,
 
-    ? 6
+  tratamientos,
 
-    : diaActual - 1;
+  gastos,
 
-lunesSemana.setDate(
+});
 
-  hoy.getDate() -
+const {
 
-  diasDesdeLunes
+  ingresos,
 
-);
+  cobrado,
 
-lunesSemana.setHours(
-  0,
-  0,
-  0,
-  0
-);
+  pendiente,
 
-const domingoSemana =
+  totalGastos,
 
-  new Date(
-    lunesSemana
-  );
+  totalBaseClinica,
 
-domingoSemana.setDate(
+  totalComisionesDoctor,
 
-  lunesSemana.getDate() +
+  gananciaNeta,
 
-  6
+  totalTarjeta,
 
-);
+  totalTransferencia,
 
-const inicioSemana =
-  new Date(hoy);
+  cajaMXN,
 
-inicioSemana.setDate(
-  hoy.getDate() -
-  hoy.getDay()
-);
+  cajaUSD,
 
-inicioSemana.setHours(
-  0,
-  0,
-  0,
-  0
-);
+  gastosPorCategoria,
 
-const tratamientosFiltrados =
+} = useIndicadores({
 
-  tratamientos.filter(
-    (item: any) => {
+  tratamientosFiltrados,
 
-      if (
-        periodo ===
-        "historico"
-      ) {
+  gastosFiltrados,
 
-        return true;
+  doctores,
 
-      }
+});
 
-      const fecha =
-        new Date(
-          item.fecha
-        );
-
- if (
-  periodo ===
-  "semana"
-) {
-
-  return (
-
-    fecha >= lunesSemana &&
-
-    fecha <= domingoSemana
-
-  );
-
-}
-
-if (
-  periodo ===
-  "mes"
-) {
-
-  return (
-
-    fecha.getMonth() ===
-      hoy.getMonth()
-
-    &&
-
-    fecha.getFullYear() ===
-      hoy.getFullYear()
-
-  );
-
-}
-
-if (
-  periodo ===
-  "anio"
-) {
-
-  return (
-
-    fecha.getFullYear() ===
-    hoy.getFullYear()
-
-  );
-
-}
-
-return true;
-
-    }
-  );
-
-const gastosFiltrados =
-
-  gastos.filter(
-    (gasto: any) => {
-
-      if (
-        periodo ===
-        "historico"
-      ) {
-
-        return true;
-
-      }
-
-      const fecha =
-        new Date(
-          gasto.fecha
-        );
-
- if (
-  periodo ===
-  "semana"
-) {
-
-  return (
-
-    fecha >= lunesSemana &&
-
-    fecha <= domingoSemana
-
-  );
-
-}
-
-if (
-  periodo ===
-  "mes"
-) {
-
-  return (
-
-    fecha.getMonth() ===
-      hoy.getMonth()
-
-    &&
-
-    fecha.getFullYear() ===
-      hoy.getFullYear()
-
-  );
-
-}
-
-if (
-  periodo ===
-  "anio"
-) {
-
-  return (
-
-    fecha.getFullYear() ===
-    hoy.getFullYear()
-
-  );
-
-}
-
-return true;
-
-    }
-  );
-
-const ingresos =
-
-  tratamientosFiltrados.reduce(
-
-    (
-      total,
-      item
-    ) =>
-
-      total +
-
-      Number(
-        item.total || 0
-      ),
-
-    0
-
-  );
-
-const cobrado =
-
-  tratamientosFiltrados.reduce(
-
-    (
-      total,
-      item
-    ) =>
-
-      total +
-
-      Number(
-        item.pago || 0
-      ),
-
-    0
-
-  );
-
-const pendiente =
-
-  ingresos -
-
-  cobrado;
-
-  const totalGastos =
-
-  gastosFiltrados.reduce(
-
-    (
-      total,
-      gasto: any
-    ) =>
-
-      total +
-
-      Number(
-        gasto.monto || 0
-      ),
-
-    0
-
-  );
-
-  const totalBaseClinica =
-
-  tratamientosFiltrados.reduce(
-
-    (
-      total,
-      item: any
-    ) =>
-
-      total +
-
-      (
-
-        Number(
-          item.pago || 0
-        )
-
-        -
-
-        Number(
-          item.laboratorio || 0
-        )
-
-        -
-
-        Number(
-          item.especialista || 0
-        )
-
-        -
-
-        Number(
-          item.comision_banco || 0
-        )
-
-      ),
-
-    0
-
-  );
-
-const totalComisionesDoctor =
-
-  tratamientosFiltrados.reduce(
-
-    (
-      total,
-      item: any
-    ) => {
-
-      const doctor =
-
-        doctores.find(
-          (d: any) =>
-            d.id ===
-            item.doctor_id
-        );
-
-      const porcentaje =
-
-        Number(
-          doctor?.porcentaje || 0
-        );
-
-      const baseClinica =
-
-        Number(
-          item.pago || 0
-        )
-
-        -
-
-        Number(
-          item.laboratorio || 0
-        )
-
-        -
-
-        Number(
-          item.especialista || 0
-        )
-
-        -
-
-        Number(
-          item.comision_banco || 0
-        );
-
-      return (
-
-        total +
-
-        (
-
-          baseClinica *
-
-          porcentaje /
-
-          100
-
-        )
-
-      );
-
-    },
-
-    0
-
-  );
-
-const gananciaNeta =
-
-  totalBaseClinica
-
-  -
-
-  totalComisionesDoctor
-
-  -
-
-  totalGastos;
-
- 
-
-  const totalTarjeta =
-
-  tratamientosFiltrados
-
-    .filter(
-      (t: any) =>
-        t.metodo_pago ===
-        "Tarjeta"
-    )
-
-    .reduce(
-
-      (
-        total,
-        t: any
-      ) =>
-
-        total +
-
-        Number(
-          t.pago || 0
-        ),
-
-      0
-
-    );
-
-const totalTransferencia =
-
-  tratamientosFiltrados
-
-    .filter(
-      (t: any) =>
-        t.metodo_pago ===
-        "Transferencia"
-    )
-
-  .reduce(
-
-      (
-        total,
-        t: any
-      ) =>
-
-        total +
-
-        Number(
-          t.pago || 0
-        ),
-
-      0
-
-    );
-
-    const cajaMXN =
-
-  tratamientosFiltrados
-
-    .filter(
-      (t: any) =>
-
-        t.moneda === "MXN" &&
-
-        t.metodo_pago === "Efectivo"
-    )
-
-    .reduce(
-
-      (
-        total,
-        t: any
-      ) =>
-
-        total +
-
-        Number(
-          t.pago || 0
-        ),
-
-      0
-
-    );
-
-const cajaUSD =
-
-  tratamientosFiltrados
-
-    .filter(
-      (t: any) =>
-
-        t.moneda === "USD" &&
-
-        t.metodo_pago === "Efectivo"
-    )
-
-    .reduce(
-
-      (
-        total,
-        t: any
-      ) =>
-
-        total +
-
-        Number(
-          t.pago || 0
-        ),
-
-      0
-
-    );
-
-  const gastosPorCategoria =
-
-  gastosFiltrados.reduce(
-
-    (
-      acumulado: any,
-      gasto: any
-    ) => {
-
-      const categoria =
-
-        gasto.categoria ||
-
-        "Sin categoría";
-
-      acumulado[
-        categoria
-      ] =
-
-        (
-          acumulado[
-            categoria
-          ] || 0
-        ) +
-
-        Number(
-          gasto.monto || 0
-        );
-
-      return acumulado;
-
-    },
-
-    {}
-
-  );
 
  return (
 
@@ -1422,6 +923,8 @@ gastosPorCategoria={gastosPorCategoria}
 
   guardarDoctor={guardarDoctor}
 
+  setDoctorDetalle={setDoctorDetalle}
+
 />
 
 )}
@@ -1443,40 +946,15 @@ gastosPorCategoria={gastosPorCategoria}
 
 {_doctorDetalle && (
 
-  <div
-    className="
-      bg-white
-      rounded-3xl
-      shadow-lg
-      p-6
-      mt-6
-    "
-  >
+  <DoctorDetalle
 
+    doctor={_doctorDetalle}
 
-<div
-  className="
-    flex
-    justify-between
-    items-center
-    mb-4
-  "
->
+    pacientes={pacientes}
 
-  <h3
-    className="
-      text-xl
-      font-bold
-    "
-  >
+    tratamientos={tratamientos}
 
-    Detalle de {_doctorDetalle.nombre}
-
-  </h3>
-
-  <button
-
-    onClick={() => {
+    onClose={() => {
 
       setDoctorDetalle(
         null
@@ -1484,251 +962,7 @@ gastosPorCategoria={gastosPorCategoria}
 
     }}
 
-    className="
-      bg-red-500
-      hover:bg-red-600
-      text-white
-      px-4
-      py-2
-      rounded-lg
-    "
-
-  >
-
-    Cerrar
-
-  </button>
-
-</div>
-
-<div
-  className="
-    overflow-x-auto
-    mt-6
-  "
->
-
-  <table
-    className="
-      w-full
-      text-sm
-    "
-  >
-
-
-<thead>
-
-  <tr
-    className="
-      border-b
-      border-slate-200
-    "
-  >
-
-    <th className="p-3 text-left">
-      Fecha
-    </th>
-
-    <th className="p-3 text-left">
-  Paciente
-</th>
-
-    <th className="p-3 text-left">
-      Tratamiento
-    </th>
-
-    <th className="p-3 text-left">
-      Pagado
-    </th>
-
-    <th className="p-3 text-left">
-      Base Clínica
-    </th>
-
-    <th className="p-3 text-left">
-      Comisión
-    </th>
-
-  </tr>
-
-</thead>
-
-<tbody>
-
-  {
-
-    tratamientos
-
-      .filter(
-        (t: any) =>
-          t.doctor_id ===
-          _doctorDetalle.id
-      )
-
-      .map(
-        (t: any) => {
-
-          const baseClinica =
-
-            Number(
-              t.pago || 0
-            )
-
-            -
-
-            Number(
-              t.laboratorio || 0
-            )
-
-            -
-
-            Number(
-              t.especialista || 0
-            )
-
-            -
-
-            Number(
-              t.comision_banco || 0
-            );
-
-          const comision =
-
-            baseClinica *
-
-            Number(
-              _doctorDetalle.porcentaje || 0
-            ) /
-
-            100;
-
-          return (
-
-            <tr
-              key={t.id}
-              className="
-                border-b
-                border-slate-100
-              "
-            >
-
-              <td className="p-3">
-
-                {t.fecha}
-
-              </td>
-
-              <td className="p-3">
-
-  {
-
-    pacientes.find(
-      (p: any) =>
-        p.id ===
-        t.paciente_id
-    )?.nombre ||
-
-    "-"
-
-  }
-
-</td>
-
-              <td className="p-3">
-
-                {t.tratamiento}
-
-              </td>
-
-              <td className="p-3">
-
-                $
-
-                {Number(
-                  t.pago || 0
-                ).toLocaleString()}
-
-              </td>
-
-              <td className="p-3">
-
-                $
-
-                {baseClinica.toLocaleString()}
-
-              </td>
-
-              <td
-                className="
-                  p-3
-                  font-bold
-                  text-green-600
-                "
-              >
-
-                $
-
-                {comision.toLocaleString()}
-
-              </td>
-
-            </tr>
-
-          );
-
-        }
-
-      )
-
-  }
-
-</tbody>
-
-  </table>
-
-</div>
-
-<div
-  className="
-    grid
-    md:grid-cols-4
-    gap-4
-    mt-6
-  "
->
-  
-
-  <div
-    className="
-      bg-slate-50
-      rounded-xl
-      p-4
-    "
-  >
-
-    <p className="text-slate-500">
-      Tratamientos
-    </p>
-
-    <h3 className="text-2xl font-bold">
-
-      {
-
-        tratamientos.filter(
-          (t: any) =>
-            t.doctor_id ===
-            _doctorDetalle.id
-        ).length
-
-      }
-
-    </h3>
-
-  </div>
-
-</div>
-
-  </div>
+  />
 
 )}
 

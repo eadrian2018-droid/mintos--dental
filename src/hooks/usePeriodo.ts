@@ -1,10 +1,24 @@
 import { useMemo } from "react";
 
-export default function usePeriodo(
-  periodo: string,
-  tratamientos: any[],
-  gastos: any[]
-) {
+type Props = {
+
+  periodo: string;
+
+  tratamientos: any[];
+
+  gastos: any[];
+
+};
+
+export default function usePeriodo({
+
+  periodo,
+
+  tratamientos,
+
+  gastos,
+
+}: Props) {
 
   const hoy = new Date();
 
@@ -13,10 +27,13 @@ export default function usePeriodo(
   const diaActual = hoy.getDay();
 
   const diasDesdeLunes =
-    diaActual === 0 ? 6 : diaActual - 1;
+    diaActual === 0
+      ? 6
+      : diaActual - 1;
 
   lunesSemana.setDate(
-    hoy.getDate() - diasDesdeLunes
+    hoy.getDate() -
+    diasDesdeLunes
   );
 
   lunesSemana.setHours(
@@ -30,7 +47,8 @@ export default function usePeriodo(
     new Date(lunesSemana);
 
   domingoSemana.setDate(
-    lunesSemana.getDate() + 6
+    lunesSemana.getDate() +
+    6
   );
 
   const tratamientosFiltrados =
@@ -40,38 +58,62 @@ export default function usePeriodo(
         (item: any) => {
 
           if (
-            periodo === "historico"
-          ) return true;
+            periodo ===
+            "historico"
+          )
+            return true;
 
           const fecha =
-            new Date(item.fecha);
+            new Date(
+              item.fecha
+            );
 
-          if (periodo === "semana") {
+          if (
+            periodo ===
+            "semana"
+          ) {
 
             return (
-              fecha >= lunesSemana &&
-              fecha <= domingoSemana
+
+              fecha >=
+                lunesSemana &&
+
+              fecha <=
+                domingoSemana
+
             );
 
           }
 
-          if (periodo === "mes") {
+          if (
+            periodo ===
+            "mes"
+          ) {
 
             return (
+
               fecha.getMonth() ===
                 hoy.getMonth()
+
               &&
+
               fecha.getFullYear() ===
                 hoy.getFullYear()
+
             );
 
           }
 
-          if (periodo === "anio") {
+          if (
+            periodo ===
+            "anio"
+          ) {
 
             return (
+
               fecha.getFullYear() ===
               hoy.getFullYear()
+
             );
 
           }
@@ -84,7 +126,7 @@ export default function usePeriodo(
 
     }, [
       periodo,
-      tratamientos
+      tratamientos,
     ]);
 
   const gastosFiltrados =
@@ -94,38 +136,62 @@ export default function usePeriodo(
         (gasto: any) => {
 
           if (
-            periodo === "historico"
-          ) return true;
+            periodo ===
+            "historico"
+          )
+            return true;
 
           const fecha =
-            new Date(gasto.fecha);
+            new Date(
+              gasto.fecha
+            );
 
-          if (periodo === "semana") {
+          if (
+            periodo ===
+            "semana"
+          ) {
 
             return (
-              fecha >= lunesSemana &&
-              fecha <= domingoSemana
+
+              fecha >=
+                lunesSemana &&
+
+              fecha <=
+                domingoSemana
+
             );
 
           }
 
-          if (periodo === "mes") {
+          if (
+            periodo ===
+            "mes"
+          ) {
 
             return (
+
               fecha.getMonth() ===
                 hoy.getMonth()
+
               &&
+
               fecha.getFullYear() ===
                 hoy.getFullYear()
+
             );
 
           }
 
-          if (periodo === "anio") {
+          if (
+            periodo ===
+            "anio"
+          ) {
 
             return (
+
               fecha.getFullYear() ===
               hoy.getFullYear()
+
             );
 
           }
@@ -138,7 +204,7 @@ export default function usePeriodo(
 
     }, [
       periodo,
-      gastos
+      gastos,
     ]);
 
   return {
