@@ -82,20 +82,21 @@ const {
 
 } = finanzas;
 
-const [
+const {
+
   nombreDoctor,
+
   setNombreDoctor,
-] = useState("");
 
-const [
   especialidadDoctor,
-  setEspecialidadDoctor,
-] = useState("");
 
-const [
+  setEspecialidadDoctor,
+
   porcentajeDoctor,
+
   setPorcentajeDoctor,
-] = useState("30");
+
+} = finanzas;
 
 const [
   _doctorDetalle,

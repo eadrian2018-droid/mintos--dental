@@ -42,6 +42,30 @@ export default function useFinanzas() {
 
   }, []);
 
+  const [
+
+  nombreDoctor,
+
+  setNombreDoctor,
+
+] = useState("");
+
+const [
+
+  especialidadDoctor,
+
+  setEspecialidadDoctor,
+
+] = useState("");
+
+const [
+
+  porcentajeDoctor,
+
+  setPorcentajeDoctor,
+
+] = useState("30");
+
   async function cargarTodo() {
 
     await Promise.all([
@@ -97,18 +121,40 @@ export default function useFinanzas() {
 
   }
 
-  async function cargarDoctores() {
+async function cargarDoctores() {
 
-    const data =
+  const data =
 
-      await finanzasService
-        .cargarDoctores();
+    await finanzasService
+      .cargarDoctores();
 
-    setDoctores(
-      data
-    );
+  setDoctores(
+    data
+  );
 
-  }
+}
+
+async function guardarDoctor() {
+
+  await finanzasService.guardarDoctor(
+
+    nombreDoctor,
+
+    especialidadDoctor,
+
+    porcentajeDoctor
+
+  );
+
+  setNombreDoctor("");
+
+  setEspecialidadDoctor("");
+
+  setPorcentajeDoctor("30");
+
+  await cargarDoctores();
+
+}
 
   return {
 
@@ -124,6 +170,8 @@ export default function useFinanzas() {
     doctores,
     setDoctores,
 
+    guardarDoctor,
+
     cargarTratamientos,
 
     cargarPacientes,
@@ -131,6 +179,15 @@ export default function useFinanzas() {
     cargarGastos,
 
     cargarDoctores,
+
+    nombreDoctor,
+setNombreDoctor,
+
+especialidadDoctor,
+setEspecialidadDoctor,
+
+porcentajeDoctor,
+setPorcentajeDoctor,
 
   };
 
