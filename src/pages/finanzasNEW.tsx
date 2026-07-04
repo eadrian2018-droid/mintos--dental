@@ -13,6 +13,8 @@ import DoctorDetalle from "../components/DoctorDetalle";
 import usePeriodo from "../hooks/usePeriodo";
 
 import useIndicadores from "../hooks/useIndicadores";
+
+import useFinanzas from "../hooks/useFinanzas";
  
 
 import {
@@ -22,20 +24,7 @@ import {
 
 export default function Finanzas() {
 
-  const [
-  tratamientos,
-  setTratamientos,
-] = useState<any[]>([]);
-
-const [
-  pacientes,
-  setPacientes,
-] = useState<any[]>([]);
-
-const [
-  gastos,
-  setGastos,
-] = useState<any[]>([]);
+  const finanzas = useFinanzas();
 
 const [
   seccionActiva,
@@ -76,10 +65,22 @@ const [
   setNotasGasto,
 ] = useState("");
 
-const [
+const {
+
+  tratamientos,
+
+  pacientes,
+
+  gastos,
+
   doctores,
-  setDoctores,
-] = useState<any[]>([]);
+
+  cargarTratamientos,
+  cargarPacientes,
+  cargarGastos,
+  cargarDoctores,
+
+} = finanzas;
 
 const [
   nombreDoctor,
@@ -153,54 +154,6 @@ async function guardarDoctor() {
     alert(error.message);
 
   }
-
-}
-
-async function cargarTratamientos() {
-
-  const tratamientosDB =
-    await finanzasService.cargarTratamientos();
-
-  setTratamientos(
-    tratamientosDB
-  );
-
-}
-
-async function cargarPacientes() {
-
-  const pacientesDB =
-
-    await finanzasService
-      .cargarPacientes();
-
-  setPacientes(
-    pacientesDB
-  );
-
-}
-
-async function cargarGastos() {
-
-  const gastosDB =
-
-    await finanzasService
-      .cargarGastos();
-
-  setGastos(
-    gastosDB
-  );
-
-}
-
-async function cargarDoctores() {
-
-  const doctoresDB =
-    await finanzasService.cargarDoctores();
-
-  setDoctores(
-    doctoresDB
-  );
 
 }
 
