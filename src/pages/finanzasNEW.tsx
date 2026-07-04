@@ -20,11 +20,6 @@ import {
   useState,
 } from "react";
 
-import {
-  supabase,
-} from "../lib/supabase";
-
-
 export default function Finanzas() {
 
   const [
@@ -174,62 +169,30 @@ async function cargarTratamientos() {
 
 async function cargarPacientes() {
 
-  const {
-    data,
-    error,
-  } = await supabase
+  const pacientesDB =
 
-    .from(
-      "pacientes"
-    )
+    await finanzasService
+      .cargarPacientes();
 
-    .select("*");
-
-  if (
-    !error &&
-    data
-  ) {
-
-    setPacientes(
-      data
-    );
-
-  }
+  setPacientes(
+    pacientesDB
+  );
 
 }
 
 async function cargarGastos() {
 
-  const {
-    data,
-    error,
-  } = await supabase
+  const gastosDB =
 
-    .from(
-      "gastos"
-    )
+    await finanzasService
+      .cargarGastos();
 
-    .select("*")
-
-    .order(
-      "fecha",
-      {
-        ascending: false,
-      }
-    );
-
-  if (
-    !error &&
-    data
-  ) {
-
-    setGastos(
-      data
-    );
-
-  }
+  setGastos(
+    gastosDB
+  );
 
 }
+
 async function cargarDoctores() {
 
   const doctoresDB =
