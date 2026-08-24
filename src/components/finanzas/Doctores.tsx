@@ -1,19 +1,45 @@
+import type {
+  Dispatch,
+  SetStateAction,
+} from "react";
+
+import type {
+  Doctor,
+} from "../../types/Doctor";
+
 type DoctoresProps = {
 
-  doctores: any[];
+  doctores: Doctor[];
 
   nombreDoctor: string;
-  setNombreDoctor: React.Dispatch<React.SetStateAction<string>>;
+
+  setNombreDoctor:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   especialidadDoctor: string;
-  setEspecialidadDoctor: React.Dispatch<React.SetStateAction<string>>;
+
+  setEspecialidadDoctor:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   porcentajeDoctor: string;
-  setPorcentajeDoctor: React.Dispatch<React.SetStateAction<string>>;
+
+  setPorcentajeDoctor:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   guardarDoctor: () => void;
 
-  setDoctorDetalle: React.Dispatch<any>;
+  setDoctorDetalle:
+    Dispatch<
+      SetStateAction<
+        Doctor | null
+      >
+    >;
 
 };
 
@@ -135,213 +161,125 @@ export default function Doctores({
       </button>
 
       <div
-  className="
-    mt-8
-    overflow-x-auto
-  "
->
-
-  <table
-    className="
-      w-full
-      text-sm
-    "
-  >
-
-    <thead>
-
-      <tr
         className="
-          border-b
-          border-slate-200
+          mt-8
+          overflow-x-auto
         "
       >
 
-        <th className="p-3 text-left">
+        <table
+          className="
+            w-full
+            text-sm
+          "
+        >
 
-          Nombre
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Especialidad
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          %
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Acción
-
-        </th>
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {
-
-        doctores.map(
-          (doctor: any) => (
+          <thead>
 
             <tr
-              key={doctor.id}
               className="
                 border-b
-                border-slate-100
+                border-slate-200
               "
             >
 
-              <td className="p-3">
+              <th className="p-3 text-left">
 
-                {doctor.nombre}
+                Nombre
 
-              </td>
+              </th>
 
-              <td className="p-3">
+              <th className="p-3 text-left">
 
-                {doctor.especialidad}
+                Especialidad
 
-              </td>
+              </th>
 
-              <td className="p-3">
+              <th className="p-3 text-left">
 
-                {doctor.porcentaje}%
+                %
 
-              </td>
+              </th>
 
-              <td className="p-3">
+              <th className="p-3 text-left">
 
-                <button
+                Acción
 
-                  onClick={() =>
-                    setDoctorDetalle(
-                      doctor
-                    )
-                  }
-
-                  className="
-                    bg-blue-500
-                    hover:bg-blue-600
-                    text-white
-                    px-3
-                    py-1
-                    rounded-lg
-                  "
-
-                >
-
-                  Ver detalle
-
-                </button>
-
-              </td>
+              </th>
 
             </tr>
 
-          )
+          </thead>
 
-        )
+          <tbody>
 
-      }
+            {
 
-    </tbody>
+              doctores.map(
+                (doctor) => (
 
-  </table>
+                  <tr
+                    key={doctor.id}
+                    className="
+                      border-b
+                      border-slate-100
+                    "
+                  >
 
-</div>
+                    <td className="p-3">
 
-      <table
-        className="
-          w-full
-        "
-      >
+                      {doctor.nombre}
 
-        <thead>
+                    </td>
 
-          <tr
-            className="
-              border-b
-              border-slate-200
-            "
-          >
+                    <td className="p-3">
 
-            <th className="p-3 text-left">
+                      {doctor.especialidad}
 
-              Nombre
+                    </td>
 
-            </th>
+                    <td className="p-3">
 
-            <th className="p-3 text-left">
+                      {doctor.porcentaje}%
 
-              Especialidad
+                    </td>
 
-            </th>
+                    <td className="p-3">
 
-            <th className="p-3 text-left">
+                      <button
+                        onClick={() =>
+                          setDoctorDetalle(
+                            doctor
+                          )
+                        }
+                        className="
+                          bg-blue-500
+                          hover:bg-blue-600
+                          text-white
+                          px-3
+                          py-1
+                          rounded-lg
+                        "
+                      >
 
-              %
+                        Ver detalle
 
-            </th>
+                      </button>
 
-          </tr>
+                    </td>
 
-        </thead>
+                  </tr>
 
-        <tbody>
-
-          {
-
-            doctores.map(
-              (
-                doctor: any
-              ) => (
-
-                <tr
-                  key={doctor.id}
-                  className="
-                    border-b
-                    border-slate-100
-                  "
-                >
-
-                  <td className="p-3">
-
-                    {doctor.nombre}
-
-                  </td>
-
-                  <td className="p-3">
-
-                    {doctor.especialidad}
-
-                  </td>
-
-                  <td className="p-3">
-
-                    {doctor.porcentaje}%
-
-                  </td>
-
-                </tr>
-
+                )
               )
 
-            )
+            }
 
-          }
+          </tbody>
 
-        </tbody>
+        </table>
 
-      </table>
+      </div>
 
     </div>
 

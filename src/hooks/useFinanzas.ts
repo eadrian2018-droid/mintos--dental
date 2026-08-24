@@ -2,27 +2,43 @@ import { useEffect, useState } from "react";
 
 import { finanzasService } from "../services/finanzas.service";
 
+import type {
+  Tratamiento,
+} from "../types/Tratamiento";
+
+import type {
+  Paciente,
+} from "../types/Paciente";
+
+import type {
+  Gasto,
+} from "../types/Gasto";
+
+import type {
+  Doctor,
+} from "../types/Doctor";
+
 export default function useFinanzas() {
 
   const [
     tratamientos,
     setTratamientos,
-  ] = useState<any[]>([]);
+  ] = useState<Tratamiento[]>([]);
 
   const [
     pacientes,
     setPacientes,
-  ] = useState<any[]>([]);
+  ] = useState<Paciente[]>([]);
 
   const [
     gastos,
     setGastos,
-  ] = useState<any[]>([]);
+  ] = useState<Gasto[]>([]);
 
   const [
     doctores,
     setDoctores,
-  ] = useState<any[]>([]);
+  ] = useState<Doctor[]>([]);
 
   const [
     nombreDoctor,

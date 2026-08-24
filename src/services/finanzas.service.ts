@@ -1,8 +1,25 @@
 import { supabase } from "../lib/supabase";
 
+import type {
+  Tratamiento,
+} from "../types/Tratamiento";
+
+import type {
+  Paciente,
+} from "../types/Paciente";
+
+import type {
+  Gasto,
+} from "../types/Gasto";
+
+import type {
+  Doctor,
+} from "../types/Doctor";
+
 export const finanzasService = {
 
-  async cargarTratamientos() {
+  async cargarTratamientos():
+    Promise<Tratamiento[]> {
 
     const {
       data,
@@ -15,11 +32,14 @@ export const finanzasService = {
       throw error;
     }
 
-    return data ?? [];
+    return (
+      data ?? []
+    ) as Tratamiento[];
 
   },
 
-  async cargarPacientes() {
+  async cargarPacientes():
+    Promise<Paciente[]> {
 
     const {
       data,
@@ -32,11 +52,14 @@ export const finanzasService = {
       throw error;
     }
 
-    return data ?? [];
+    return (
+      data ?? []
+    ) as Paciente[];
 
   },
 
-  async cargarGastos() {
+  async cargarGastos():
+    Promise<Gasto[]> {
 
     const {
       data,
@@ -44,19 +67,25 @@ export const finanzasService = {
     } = await supabase
       .from("gastos")
       .select("*")
-      .order("fecha", {
-        ascending: false,
-      });
+      .order(
+        "fecha",
+        {
+          ascending: false,
+        }
+      );
 
     if (error) {
       throw error;
     }
 
-    return data ?? [];
+    return (
+      data ?? []
+    ) as Gasto[];
 
   },
 
-  async cargarDoctores() {
+  async cargarDoctores():
+    Promise<Doctor[]> {
 
     const {
       data,
@@ -64,15 +93,20 @@ export const finanzasService = {
     } = await supabase
       .from("doctores")
       .select("*")
-      .order("nombre", {
-        ascending: true,
-      });
+      .order(
+        "nombre",
+        {
+          ascending: true,
+        }
+      );
 
     if (error) {
       throw error;
     }
 
-    return data ?? [];
+    return (
+      data ?? []
+    ) as Doctor[];
 
   },
 
@@ -80,19 +114,21 @@ export const finanzasService = {
     nombre: string,
     especialidad: string,
     porcentaje: string
-  ) {
+  ): Promise<void> {
 
-    const { error } = await supabase
-
+    const {
+      error,
+    } = await supabase
       .from("doctores")
-
       .insert([
         {
           nombre,
           especialidad,
-          porcentaje: Number(
-            porcentaje
-          ),
+
+          porcentaje:
+            Number(
+              porcentaje
+            ),
         },
       ]);
 
@@ -108,12 +144,12 @@ export const finanzasService = {
     categoria: string,
     monto: number,
     notas: string
-  ) {
+  ): Promise<void> {
 
-    const { error } = await supabase
-
+    const {
+      error,
+    } = await supabase
       .from("gastos")
-
       .insert([
         {
           fecha,
@@ -132,14 +168,13 @@ export const finanzasService = {
 
   async eliminarGasto(
     id: number
-  ) {
+  ): Promise<void> {
 
-    const { error } = await supabase
-
+    const {
+      error,
+    } = await supabase
       .from("gastos")
-
       .delete()
-
       .eq(
         "id",
         id

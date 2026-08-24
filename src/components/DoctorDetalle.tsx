@@ -1,19 +1,51 @@
+import type {
+  Doctor,
+} from "../types/Doctor";
+
+import type {
+  Paciente,
+} from "../types/Paciente";
+
+import type {
+  Tratamiento,
+} from "../types/Tratamiento";
+
 type DoctorDetalleProps = {
-  doctor: any;
-  pacientes: any[];
-  tratamientos: any[];
+
+  doctor: Doctor | null;
+
+  pacientes: Paciente[];
+
+  tratamientos: Tratamiento[];
+
   onClose: () => void;
+
 };
 
 export default function DoctorDetalle({
+
   doctor,
+
   pacientes,
+
   tratamientos,
+
   onClose,
-  
+
 }: DoctorDetalleProps) {
 
-  if (!doctor) return null;
+  if (!doctor) {
+
+    return null;
+
+  }
+
+  const tratamientosDoctor =
+    tratamientos.filter(
+      (t) =>
+        t.doctor_id ===
+        doctor.id
+    );
 
   return (
 
@@ -48,9 +80,7 @@ export default function DoctorDetalle({
         </h3>
 
         <button
-
           onClick={onClose}
-
           className="
             bg-red-500
             hover:bg-red-600
@@ -59,7 +89,6 @@ export default function DoctorDetalle({
             py-2
             rounded-lg
           "
-
         >
 
           Cerrar
@@ -121,18 +150,10 @@ export default function DoctorDetalle({
 
           <tbody>
 
-                      {
+            {
 
-            tratamientos
-
-              .filter(
-                (t: any) =>
-                  t.doctor_id ===
-                  doctor.id
-              )
-
-              .map(
-                (t: any) => {
+              tratamientosDoctor.map(
+                (t) => {
 
                   const baseClinica =
 
@@ -168,6 +189,14 @@ export default function DoctorDetalle({
 
                     100;
 
+                  const paciente =
+
+                    pacientes.find(
+                      (p) =>
+                        p.id ===
+                        t.paciente_id
+                    );
+
                   return (
 
                     <tr
@@ -186,17 +215,7 @@ export default function DoctorDetalle({
 
                       <td className="p-3">
 
-                        {
-
-                          pacientes.find(
-                            (p: any) =>
-                              p.id ===
-                              t.paciente_id
-                          )?.nombre ||
-
-                          "-"
-
-                        }
+                        {paciente?.nombre || "-"}
 
                       </td>
 
@@ -243,10 +262,9 @@ export default function DoctorDetalle({
                   );
 
                 }
-
               )
 
-          }
+            }
 
           </tbody>
 
@@ -279,15 +297,7 @@ export default function DoctorDetalle({
 
           <h3 className="text-2xl font-bold">
 
-            {
-
-              tratamientos.filter(
-                (t: any) =>
-                  t.doctor_id ===
-                  doctor.id
-              ).length
-
-            }
+            {tratamientosDoctor.length}
 
           </h3>
 

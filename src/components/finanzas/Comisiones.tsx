@@ -1,12 +1,33 @@
+import type {
+  Dispatch,
+  SetStateAction,
+} from "react";
+
+import type {
+  Doctor,
+} from "../../types/Doctor";
+
+import type {
+  Tratamiento,
+} from "../../types/Tratamiento";
+
 type ComisionesProps = {
 
-  doctores: any[];
+  doctores: Doctor[];
 
-  tratamientos: any[];
+  tratamientos: Tratamiento[];
 
-  setDoctorDetalle: React.Dispatch<React.SetStateAction<any>>;
+  setDoctorDetalle:
+    Dispatch<
+      SetStateAction<
+        Doctor | null
+      >
+    >;
 
-  setMostrarDetalleDoctor: React.Dispatch<React.SetStateAction<boolean>>;
+  setMostrarDetalleDoctor:
+    Dispatch<
+      SetStateAction<boolean>
+    >;
 
 };
 
@@ -69,39 +90,27 @@ export default function Comisiones({
             >
 
               <th className="p-3 text-left">
-
                 Doctor
-
               </th>
 
               <th className="p-3 text-left">
-
                 %
-
               </th>
 
               <th className="p-3 text-left">
-
                 Tratamientos
-
               </th>
 
               <th className="p-3 text-left">
-
                 Base Clínica
-
               </th>
 
               <th className="p-3 text-left">
-
                 Comisión
-
               </th>
 
               <th className="p-3 text-left">
-
                 Detalle
-
               </th>
 
             </tr>
@@ -113,61 +122,49 @@ export default function Comisiones({
             {
 
               doctores.map(
-
-                (
-
-                  doctor: any
-
-                ) => {
+                (doctor) => {
 
                   const tratamientosDoctor =
-
                     tratamientos.filter(
-
-                      (
-
-                        t: any
-
-                      ) =>
-
-                        t.doctor_id === doctor.id
-
+                      (t) =>
+                        t.doctor_id ===
+                        doctor.id
                     );
 
                   const baseClinica =
-
                     tratamientosDoctor.reduce(
-
                       (
-
-                        total: number,
-
-                        t: any
-
+                        total,
+                        t
                       ) =>
 
                         total +
 
                         (
-
-                          Number(t.pago || 0)
-
-                          -
-
-                          Number(t.laboratorio || 0)
+                          Number(
+                            t.pago || 0
+                          )
 
                           -
 
-                          Number(t.especialista || 0)
+                          Number(
+                            t.laboratorio || 0
+                          )
 
                           -
 
-                          Number(t.comision_banco || 0)
+                          Number(
+                            t.especialista || 0
+                          )
 
+                          -
+
+                          Number(
+                            t.comision_banco || 0
+                          )
                         ),
 
                       0
-
                     );
 
                   const comision =
@@ -175,9 +172,7 @@ export default function Comisiones({
                     baseClinica *
 
                     Number(
-
                       doctor.porcentaje || 0
-
                     ) /
 
                     100;
@@ -185,14 +180,11 @@ export default function Comisiones({
                   return (
 
                     <tr
-
                       key={doctor.id}
-
                       className="
                         border-b
                         border-slate-100
                       "
-
                     >
 
                       <td className="p-3">
@@ -238,23 +230,17 @@ export default function Comisiones({
                       <td className="p-3">
 
                         <button
-
                           onClick={() => {
 
                             setDoctorDetalle(
-
                               doctor
-
                             );
 
                             setMostrarDetalleDoctor(
-
                               true
-
                             );
 
                           }}
-
                           className="
                             bg-blue-500
                             hover:bg-blue-600
@@ -264,7 +250,6 @@ export default function Comisiones({
                             rounded-lg
                             text-sm
                           "
-
                         >
 
                           Ver Detalle
@@ -278,7 +263,6 @@ export default function Comisiones({
                   );
 
                 }
-
               )
 
             }

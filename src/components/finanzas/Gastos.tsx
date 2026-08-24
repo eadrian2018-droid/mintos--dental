@@ -1,35 +1,74 @@
+import type {
+  Dispatch,
+  SetStateAction,
+} from "react";
+
+import type {
+  Gasto,
+} from "../../types/Gasto";
+
 type GastosProps = {
+
   total: number;
+
   cantidad: number;
 
   fechaGasto: string;
-  setFechaGasto: React.Dispatch<React.SetStateAction<string>>;
+
+  setFechaGasto:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   conceptoGasto: string;
-  setConceptoGasto: React.Dispatch<React.SetStateAction<string>>;
+
+  setConceptoGasto:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   categoriaGasto: string;
-  setCategoriaGasto: React.Dispatch<React.SetStateAction<string>>;
+
+  setCategoriaGasto:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   montoGasto: string;
-  setMontoGasto: React.Dispatch<React.SetStateAction<string>>;
+
+  setMontoGasto:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   notasGasto: string;
-  setNotasGasto: React.Dispatch<React.SetStateAction<string>>;
+
+  setNotasGasto:
+    Dispatch<
+      SetStateAction<string>
+    >;
 
   guardarGasto: () => void;
 
-gastosFiltrados: any[];
+  gastosFiltrados: Gasto[];
 
-eliminarGasto: (id: number) => void;
+  eliminarGasto:
+    (
+      id: number
+    ) => void;
 
-gastosPorCategoria: any;
+  gastosPorCategoria:
+    Record<
+      string,
+      number
+    >;
 
 };
 
 export default function Gastos({
 
   total,
+
   cantidad,
 
   fechaGasto,
@@ -47,13 +86,13 @@ export default function Gastos({
   notasGasto,
   setNotasGasto,
 
-guardarGasto,
+  guardarGasto,
 
-gastosFiltrados,
+  gastosFiltrados,
 
-eliminarGasto,
+  eliminarGasto,
 
-gastosPorCategoria,
+  gastosPorCategoria,
 
 }: GastosProps) {
 
@@ -180,7 +219,7 @@ gastosPorCategoria,
         "
       >
 
-                <input
+        <input
           type="date"
           value={fechaGasto}
           onChange={(e) =>
@@ -226,39 +265,57 @@ gastosPorCategoria,
         >
 
           <option value="">
+
             Seleccionar categoría
+
           </option>
 
           <option value="Material Dental">
+
             Material Dental
+
           </option>
 
           <option value="Limpieza">
+
             Limpieza
+
           </option>
 
           <option value="Laboratorio">
+
             Laboratorio
+
           </option>
 
           <option value="Especialistas">
+
             Especialistas
+
           </option>
 
           <option value="Nómina">
+
             Nómina
+
           </option>
 
           <option value="Servicios">
+
             Servicios
+
           </option>
 
           <option value="Marketing">
+
             Marketing
+
           </option>
 
           <option value="Otros">
+
             Otros
+
           </option>
 
         </select>
@@ -314,248 +371,244 @@ gastosPorCategoria,
       </div>
 
       <h3
-  className="
-    text-xl
-    font-bold
-    mt-8
-    mb-2
-  "
->
-
-  Historial de Gastos
-
-</h3>
-
-<p
-  className="
-    text-slate-600
-    mb-4
-  "
->
-
-  Total de registros:
-
-  <strong>
-
-    {" "}
-
-    gastosFiltrados,
-
-  </strong>
-
-</p>
-
-<div
-  className="
-    overflow-x-auto
-  "
->
-
-  <table
-    className="
-      w-full
-      text-sm
-    "
-  >
-
-    <thead>
-
-      <tr
         className="
-          border-b
-          border-slate-200
+          text-xl
+          font-bold
+          mt-8
+          mb-2
         "
       >
 
-        <th className="p-3 text-left">
+        Historial de Gastos
 
-          Fecha
+      </h3>
 
-        </th>
+      <p
+        className="
+          text-slate-600
+          mb-4
+        "
+      >
 
-        <th className="p-3 text-left">
+        Total de registros:
 
-          Concepto
+        <strong>
 
-        </th>
+          {" "}
 
-        <th className="p-3 text-left">
+          {gastosFiltrados.length}
 
-          Categoría
+        </strong>
 
-        </th>
+      </p>
 
-        <th className="p-3 text-left">
+      <div
+        className="
+          overflow-x-auto
+        "
+      >
 
-          Monto
-
-        </th>
-
-        <th className="p-3 text-left">
-
-          Acción
-
-        </th>
-
-      </tr>
-
-    </thead>
-
-    <tbody>
-
-      {
-
-        gastosFiltrados.map((gasto: any) => (
-
-          <tr
-            key={gasto.id}
-            className="
-              border-b
-              border-slate-100
-            "
-          >
-
-            <td className="p-3">
-
-              {gasto.fecha}
-
-            </td>
-
-            <td className="p-3">
-
-              {gasto.concepto}
-
-            </td>
-
-            <td className="p-3">
-
-              {gasto.categoria}
-
-            </td>
-
-            <td className="p-3">
-
-              $
-
-              {Number(
-                gasto.monto
-              ).toLocaleString()}
-
-            </td>
-
-            <td className="p-3">
-
-              <button
-
-                onClick={() =>
-                  eliminarGasto(
-                    gasto.id
-                  )
-                }
-
-                className="
-                  bg-red-600
-                  text-white
-                  px-3
-                  py-1
-                  rounded-lg
-                "
-              >
-
-                Eliminar
-
-              </button>
-
-            </td>
-
-          </tr>
-
-        ))
-
-      }
-
-    </tbody>
-
-  </table>
-
-</div>
-
-<div
-  className="
-    bg-slate-50
-    rounded-2xl
-    p-6
-    mt-6
-  "
->
-
-  <h3
-    className="
-      text-xl
-      font-bold
-      mb-4
-    "
-  >
-
-    Resumen por Categoría
-
-  </h3>
-
-  {
-
-    Object.entries(
-      gastosPorCategoria
-    ).map(
-
-      (
-        [
-          categoria,
-          total,
-        ]: any
-      ) => (
-
-        <div
-          key={categoria}
+        <table
           className="
-            flex
-            justify-between
-            py-2
-            border-b
-            border-slate-200
+            w-full
+            text-sm
           "
         >
 
-          <span>
+          <thead>
 
-            {categoria}
+            <tr
+              className="
+                border-b
+                border-slate-200
+              "
+            >
 
-          </span>
+              <th className="p-3 text-left">
 
-          <span
-            className="
-              font-semibold
-            "
-          >
+                Fecha
 
-            $
+              </th>
 
-            {Number(
-              total
-            ).toLocaleString()}
+              <th className="p-3 text-left">
 
-          </span>
+                Concepto
 
-        </div>
+              </th>
 
-      )
+              <th className="p-3 text-left">
 
-    )
+                Categoría
 
-  }
+              </th>
 
-</div>
+              <th className="p-3 text-left">
 
-          </div>
+                Monto
+
+              </th>
+
+              <th className="p-3 text-left">
+
+                Acción
+
+              </th>
+
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            {
+
+              gastosFiltrados.map(
+                (gasto) => (
+
+                  <tr
+                    key={gasto.id}
+                    className="
+                      border-b
+                      border-slate-100
+                    "
+                  >
+
+                    <td className="p-3">
+
+                      {gasto.fecha}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {gasto.concepto}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      {gasto.categoria}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      $
+
+                      {Number(
+                        gasto.monto
+                      ).toLocaleString()}
+
+                    </td>
+
+                    <td className="p-3">
+
+                      <button
+                        onClick={() =>
+                          eliminarGasto(
+                            gasto.id
+                          )
+                        }
+                        className="
+                          bg-red-600
+                          text-white
+                          px-3
+                          py-1
+                          rounded-lg
+                        "
+                      >
+
+                        Eliminar
+
+                      </button>
+
+                    </td>
+
+                  </tr>
+
+                )
+              )
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+      <div
+        className="
+          bg-slate-50
+          rounded-2xl
+          p-6
+          mt-6
+        "
+      >
+
+        <h3
+          className="
+            text-xl
+            font-bold
+            mb-4
+          "
+        >
+
+          Resumen por Categoría
+
+        </h3>
+
+        {
+
+          Object.entries(
+            gastosPorCategoria
+          ).map(
+            (
+              [
+                categoria,
+                totalCategoria,
+              ]
+            ) => (
+
+              <div
+                key={categoria}
+                className="
+                  flex
+                  justify-between
+                  py-2
+                  border-b
+                  border-slate-200
+                "
+              >
+
+                <span>
+
+                  {categoria}
+
+                </span>
+
+                <span
+                  className="
+                    font-semibold
+                  "
+                >
+
+                  $
+
+                  {totalCategoria.toLocaleString()}
+
+                </span>
+
+              </div>
+
+            )
+          )
+
+        }
+
+      </div>
+
+    </div>
 
   );
 

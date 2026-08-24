@@ -1,88 +1,97 @@
+import { useState } from "react";
+
 import Gastos from "../components/finanzas/Gastos";
-
 import Resumen from "../components/finanzas/Resumen";
-
 import Doctores from "../components/finanzas/Doctores";
-
 import Comisiones from "../components/finanzas/Comisiones";
-
 import DoctorDetalle from "../components/DoctorDetalle";
 
 import usePeriodo from "../hooks/usePeriodo";
-
 import useIndicadores from "../hooks/useIndicadores";
-
 import useFinanzas from "../hooks/useFinanzas";
- 
 
-import {
-  useState,
-} from "react";
+import type {
+  Doctor,
+} from "../types/Doctor";
+
+type SeccionFinanzas =
+  | "resumen"
+  | "gastos"
+  | "comisiones"
+  | "doctores"
+  | "configuracion";
+
+type PeriodoFinanzas =
+  | "semana"
+  | "mes"
+  | "anio"
+  | "historico";
 
 export default function Finanzas() {
 
-  const finanzas = useFinanzas();
+  const finanzas =
+    useFinanzas();
 
   const [
     seccionActiva,
     setSeccionActiva,
-  ] = useState(
+  ] = useState<SeccionFinanzas>(
     "resumen"
   );
 
   const [
     periodo,
     setPeriodo,
-  ] = useState(
+  ] = useState<PeriodoFinanzas>(
     "semana"
   );
 
- const {
+  const {
 
-  tratamientos,
+    tratamientos,
 
-  pacientes,
+    pacientes,
 
-  gastos,
+    gastos,
 
-  doctores,
+    doctores,
 
-  nombreDoctor,
-  setNombreDoctor,
+    nombreDoctor,
+    setNombreDoctor,
 
-  especialidadDoctor,
-  setEspecialidadDoctor,
+    especialidadDoctor,
+    setEspecialidadDoctor,
 
-  porcentajeDoctor,
-  setPorcentajeDoctor,
+    porcentajeDoctor,
+    setPorcentajeDoctor,
 
-  fechaGasto,
-  setFechaGasto,
+    fechaGasto,
+    setFechaGasto,
 
-  conceptoGasto,
-  setConceptoGasto,
+    conceptoGasto,
+    setConceptoGasto,
 
-  categoriaGasto,
-  setCategoriaGasto,
+    categoriaGasto,
+    setCategoriaGasto,
 
-  montoGasto,
-  setMontoGasto,
+    montoGasto,
+    setMontoGasto,
 
-  notasGasto,
-  setNotasGasto,
+    notasGasto,
+    setNotasGasto,
 
-  guardarDoctor,
+    guardarDoctor,
 
-  guardarGasto,
+    guardarGasto,
 
-  eliminarGasto,
+    eliminarGasto,
 
-} = finanzas;
+  } = finanzas;
 
   const [
-    _doctorDetalle,
+    doctorDetalle,
     setDoctorDetalle,
-  ] = useState<any>(
+  ] = useState<Doctor | null>(
     null
   );
 
@@ -93,681 +102,623 @@ export default function Finanzas() {
     false
   );
 
-const {
+  const {
 
-  lunesSemana,
+    lunesSemana,
 
-  domingoSemana,
+    sabadoSemana,
 
-  tratamientosFiltrados,
+    tratamientosFiltrados,
 
-  gastosFiltrados,
+    gastosFiltrados,
 
-} = usePeriodo({
+  } = usePeriodo({
 
-  periodo,
+    periodo,
 
-  tratamientos,
+    tratamientos,
 
-  gastos,
+    gastos,
 
-});
+  });
 
-const {
+  const {
 
-  ingresos,
+    ingresos,
 
-  cobrado,
+    cobrado,
 
-  pendiente,
+    pendiente,
 
-  totalGastos,
+    totalGastos,
 
-  totalBaseClinica,
+    totalBaseClinica,
 
-  totalComisionesDoctor,
+    totalComisionesDoctor,
 
-  gananciaNeta,
+    gananciaNeta,
 
-  totalTarjeta,
+    totalTarjeta,
 
-  totalTransferencia,
+    totalTransferencia,
 
-  cajaMXN,
+    cajaMXN,
 
-  cajaUSD,
+    cajaUSD,
 
-  gastosPorCategoria,
+    gastosPorCategoria,
 
-} = useIndicadores({
+  } = useIndicadores({
 
-  tratamientosFiltrados,
+    tratamientosFiltrados,
 
-  gastosFiltrados,
+    gastosFiltrados,
 
-  doctores,
+    doctores,
 
-});
+  });
 
+  return (
 
- return (
-
-  <div
-    className="
-      flex
-      gap-4
-    "
-  >
-
-        <div
+    <div
       className="
-        w-40
-        bg-white
-        rounded-3xl
-        shadow-lg
-        p-4
-        h-fit
+        flex
+        gap-4
       "
     >
 
-      <h2
+      <div
         className="
-          font-bold
-          text-lg
-          mb-4
+          w-40
+          bg-white
+          rounded-3xl
+          shadow-lg
+          p-4
+          h-fit
         "
       >
 
-        Finanzas
+        <h2
+          className="
+            font-bold
+            text-lg
+            mb-4
+          "
+        >
 
-      </h2>
+          Finanzas
+
+        </h2>
+
+        <div
+          className="
+            flex
+            flex-col
+            gap-2
+          "
+        >
+
+          <button
+            onClick={() =>
+              setSeccionActiva(
+                "resumen"
+              )
+            }
+            className={`
+              p-3
+              rounded-xl
+              text-left
+              transition
+
+              ${
+                seccionActiva ===
+                "resumen"
+
+                  ? "bg-teal-600 text-white"
+
+                  : "bg-slate-100"
+              }
+            `}
+          >
+
+            Resumen
+
+          </button>
+
+          <button
+            onClick={() =>
+              setSeccionActiva(
+                "gastos"
+              )
+            }
+            className={`
+              p-3
+              rounded-xl
+              text-left
+              transition
+
+              ${
+                seccionActiva ===
+                "gastos"
+
+                  ? "bg-teal-600 text-white"
+
+                  : "bg-slate-100"
+              }
+            `}
+          >
+
+            Gastos
+
+          </button>
+
+          <button
+            onClick={() =>
+              setSeccionActiva(
+                "comisiones"
+              )
+            }
+            className={`
+              p-3
+              rounded-xl
+              text-left
+              transition
+
+              ${
+                seccionActiva ===
+                "comisiones"
+
+                  ? "bg-teal-600 text-white"
+
+                  : "bg-slate-100"
+              }
+            `}
+          >
+
+            Comisiones
+
+          </button>
+
+          <button
+            onClick={() =>
+              setSeccionActiva(
+                "doctores"
+              )
+            }
+            className={`
+              p-3
+              rounded-xl
+              text-left
+              transition
+
+              ${
+                seccionActiva ===
+                "doctores"
+
+                  ? "bg-teal-600 text-white"
+
+                  : "bg-slate-100"
+              }
+            `}
+          >
+
+            Doctores
+
+          </button>
+
+          <button
+            onClick={() =>
+              setSeccionActiva(
+                "configuracion"
+              )
+            }
+            className={`
+              p-3
+              rounded-xl
+              text-left
+              transition
+
+              ${
+                seccionActiva ===
+                "configuracion"
+
+                  ? "bg-teal-600 text-white"
+
+                  : "bg-slate-100"
+              }
+            `}
+          >
+
+            Configuración
+
+          </button>
+
+        </div>
+
+      </div>
 
       <div
         className="
-          flex
-          flex-col
-          gap-2
+          flex-1
         "
       >
 
-       <button
+        <h1
+          className="
+            text-4xl
+            font-bold
+            text-slate-800
+            mb-8
+          "
+        >
 
-  onClick={() =>
-    setSeccionActiva(
-      "resumen"
-    )
-  }
+          {
+            seccionActiva
+              .charAt(0)
+              .toUpperCase()
+            +
+            seccionActiva.slice(1)
+          }
 
-  className={`
+        </h1>
 
-    p-3
-    rounded-xl
-    text-left
-    transition
+        <div
+          className="
+            mb-6
+          "
+        >
 
-    ${
+      <select
+  value={periodo}
+  onChange={(e) => {
+    setPeriodo(
+      e.target.value as PeriodoFinanzas
+    );
+  }}
+            className="
+              border
+              rounded-xl
+              px-4
+              py-2
+              bg-white
+            "
+          >
 
-      seccionActiva ===
-      "resumen"
+            <option value="semana">
 
-      ?
+              Semana
 
-      "bg-teal-600 text-white"
+            </option>
 
-      :
+            <option value="mes">
 
-      "bg-slate-100"
+              Mes
 
-    }
+            </option>
 
-  `}
->
+            <option value="anio">
 
-  Resumen
+              Año
 
-</button>
+            </option>
 
-       <button
+            <option value="historico">
 
-  onClick={() =>
-    setSeccionActiva(
-      "gastos"
-    )
-  }
+              Histórico
 
-  className={`
+            </option>
 
-    p-3
-    rounded-xl
-    text-left
-    transition
+          </select>
 
-    ${
+        </div>
 
-      seccionActiva ===
-      "gastos"
+        <div
+          className="
+            mb-6
+            text-slate-600
+          "
+        >
 
-      ?
+          {
+            periodo ===
+            "semana"
 
-      "bg-teal-600 text-white"
+            &&
 
-      :
+            <>
 
-      "bg-slate-100"
+              Semana Actual
 
-    }
+              <br />
 
-  `}
->
+              {
+                lunesSemana
+                  .toLocaleDateString()
+              }
 
-  Gastos
+              {" - "}
 
-</button>
+              {
+                sabadoSemana
+                  .toLocaleDateString()
+              }
 
-<button
+            </>
+          }
 
-  onClick={() =>
-    setSeccionActiva(
-      "comisiones"
-    )
-  }
+          {
+            periodo ===
+            "mes"
 
-  className={`
+            &&
 
-    p-3
-    rounded-xl
-    text-left
-    transition
+            <>Mes Actual</>
+          }
 
-    ${
+          {
+            periodo ===
+            "anio"
 
-      seccionActiva ===
-      "comisiones"
+            &&
 
-      ?
+            <>Año Actual</>
+          }
 
-      "bg-teal-600 text-white"
+          {
+            periodo ===
+            "historico"
 
-      :
+            &&
 
-      "bg-slate-100"
+            <>Todos los registros</>
+          }
 
-    }
+        </div>
 
-  `}
->
+        {
+          seccionActiva ===
+          "gastos"
 
-  Comisiones
+          &&
 
-</button>
+          <Gastos
 
-<button
+            total={
+              totalGastos
+            }
 
-  onClick={() =>
-    setSeccionActiva(
-      "doctores"
-    )
-  }
+            cantidad={
+              gastosFiltrados.length
+            }
 
-  className={`
+            fechaGasto={
+              fechaGasto
+            }
 
-    p-3
-    rounded-xl
-    text-left
-    transition
+            setFechaGasto={
+              setFechaGasto
+            }
 
-    ${
+            conceptoGasto={
+              conceptoGasto
+            }
 
-      seccionActiva ===
-      "doctores"
+            setConceptoGasto={
+              setConceptoGasto
+            }
 
-      ?
+            categoriaGasto={
+              categoriaGasto
+            }
 
-      "bg-teal-600 text-white"
+            setCategoriaGasto={
+              setCategoriaGasto
+            }
 
-      :
+            montoGasto={
+              montoGasto
+            }
 
-      "bg-slate-100"
+            setMontoGasto={
+              setMontoGasto
+            }
 
-    }
+            notasGasto={
+              notasGasto
+            }
 
-  `}
->
+            setNotasGasto={
+              setNotasGasto
+            }
 
-  Doctores
+            guardarGasto={
+              guardarGasto
+            }
 
-</button>
+            gastosFiltrados={
+              gastosFiltrados
+            }
 
-<button
+            eliminarGasto={
+              eliminarGasto
+            }
 
-  onClick={() =>
-    setSeccionActiva(
-      "configuracion"
-    )
-  }
+            gastosPorCategoria={
+              gastosPorCategoria
+            }
 
-  className={`
+          />
+        }
 
-    p-3
-    rounded-xl
-    text-left
-    transition
+        {
+          seccionActiva ===
+          "doctores"
 
-    ${
+          &&
 
-      seccionActiva ===
-      "configuracion"
+          <Doctores
 
-      ?
+            doctores={
+              doctores
+            }
 
-      "bg-teal-600 text-white"
+            nombreDoctor={
+              nombreDoctor
+            }
 
-      :
+            setNombreDoctor={
+              setNombreDoctor
+            }
 
-      "bg-slate-100"
+            especialidadDoctor={
+              especialidadDoctor
+            }
 
-    }
+            setEspecialidadDoctor={
+              setEspecialidadDoctor
+            }
 
-  `}
->
+            porcentajeDoctor={
+              porcentajeDoctor
+            }
 
-  Configuración
+            setPorcentajeDoctor={
+              setPorcentajeDoctor
+            }
 
-</button>
+            guardarDoctor={
+              guardarDoctor
+            }
+
+            setDoctorDetalle={
+              setDoctorDetalle
+            }
+
+          />
+        }
+
+        {
+          seccionActiva ===
+          "comisiones"
+
+          &&
+
+          <Comisiones
+
+            doctores={
+              doctores
+            }
+
+            tratamientos={
+              tratamientos
+            }
+
+            setDoctorDetalle={
+              setDoctorDetalle
+            }
+
+            setMostrarDetalleDoctor={
+              setMostrarDetalleDoctor
+            }
+
+          />
+        }
+
+        {
+          doctorDetalle
+
+          &&
+
+          <DoctorDetalle
+
+            doctor={
+              doctorDetalle
+            }
+
+            pacientes={
+              pacientes
+            }
+
+            tratamientos={
+              tratamientos
+            }
+
+            onClose={() =>
+              setDoctorDetalle(
+                null
+              )
+            }
+
+          />
+        }
+
+        {
+          seccionActiva ===
+          "resumen"
+
+          &&
+
+          <Resumen
+
+            ingresos={
+              ingresos
+            }
+
+            cobrado={
+              cobrado
+            }
+
+            pendiente={
+              pendiente
+            }
+
+            gananciaNeta={
+              gananciaNeta
+            }
+
+            totalGastos={
+              totalGastos
+            }
+
+            totalBaseClinica={
+              totalBaseClinica
+            }
+
+            totalComisionesDoctor={
+              totalComisionesDoctor
+            }
+
+            cajaMXN={
+              cajaMXN
+            }
+
+            cajaUSD={
+              cajaUSD
+            }
+
+            totalTarjeta={
+              totalTarjeta
+            }
+
+            totalTransferencia={
+              totalTransferencia
+            }
+
+            pacientes={
+              pacientes
+            }
+
+            tratamientosFiltrados={
+              tratamientosFiltrados
+            }
+
+          />
+        }
 
       </div>
 
     </div>
 
-        <div
-      className="
-        flex-1
-      "
-    >
-
-      <h1
-        className="
-          text-4xl
-          font-bold
-          text-slate-800
-          mb-8
-        "
-      >
-
-        {seccionActiva.charAt(0).toUpperCase() + seccionActiva.slice(1)}
-
-      </h1>
-
-      <div
-  className="
-    mb-6
-  "
->
-
-  <select
-
-    value={periodo}
-
-    onChange={(e) =>
-      setPeriodo(
-        e.target.value
-      )
-    }
-
-    className="
-      border
-      rounded-xl
-      px-4
-      py-2
-      bg-white
-    "
-  >
-
-    <option value="semana">
-
-      Semana
-
-    </option>
-
-    <option value="mes">
-
-      Mes
-
-    </option>
-
-    <option value="anio">
-
-      Año
-
-    </option>
-
-    <option value="historico">
-
-      Histórico
-
-    </option>
-
-  </select>
-
-</div>
-
-<div
-  className="
-    mb-6
-    text-slate-600
-  "
->
-
-  {
-
-    periodo ===
-    "semana"
-
-    &&
-
-    <>
-
-      Semana Actual
-
-      <br />
-
-      {
-
-        lunesSemana.toLocaleDateString()
-
-      }
-
-      {" - "}
-
-      {
-
-        domingoSemana.toLocaleDateString()
-
-      }
-
-    </>
-
-  }
-
-  {
-
-    periodo ===
-    "historico"
-
-    &&
-
-    <>Todos los registros</>
-
-  }
-
-</div>
-
-
-
-      {seccionActiva === "gastos" && false && (
-
-  <div
-    className="
-      bg-white
-      rounded-3xl
-      shadow-lg
-      p-6
-      mb-6
-    "
-  >
-
-    <div
-      className="
-        flex
-        justify-between
-        items-center
-        mb-6
-      "
-    >
-
-      <div>
-
-  <h2
-    className="
-      text-2xl
-      font-bold
-    "
-  >
-
-    Gastos
-
-  </h2>
-
-  <p
-    className="
-      text-slate-500
-      mt-1
-    "
-  >
-
-    Control y administración de gastos operativos
-
-  </p>
-
-</div>
-
-      <button
-        className="
-          bg-teal-600
-          text-white
-          px-4
-          py-2
-          rounded-xl
-        "
-      >
-
-        Agregar gasto
-
-      </button>
-
-    </div>
-
-<div
-  className="
-    grid
-    md:grid-cols-2
-    gap-4
-    mb-6
-  "
->
-
-  <div
-    className="
-      bg-slate-50
-      rounded-2xl
-      p-4
-    "
-  >
-
-    <p className="text-slate-500">
-
-      Total Gastos
-
-    </p>
-
-    <h3
-      className="
-        text-2xl
-        font-bold
-        text-red-600
-      "
-    >
-
-      $
-
-      {totalGastos.toLocaleString()}
-
-    </h3>
-
-  </div>
-
-  <div
-    className="
-      bg-slate-50
-      rounded-2xl
-      p-4
-    "
-  >
-
-    <p className="text-slate-500">
-
-      Cantidad de Gastos
-
-    </p>
-
-    <h3
-      className="
-        text-2xl
-        font-bold
-      "
-    >
-
-      {gastosFiltrados.length}
-
-    </h3>
-
-  </div>
-
-</div>
-
-<div>
-
-
-</div>
-
-</div>
-
-)}
-
-{seccionActiva === "gastos" && (
-
-<Gastos
-
-  total={totalGastos}
-
-  cantidad={gastosFiltrados.length}
-
-  fechaGasto={fechaGasto}
-  setFechaGasto={setFechaGasto}
-
-  conceptoGasto={conceptoGasto}
-  setConceptoGasto={setConceptoGasto}
-
-  categoriaGasto={categoriaGasto}
-  setCategoriaGasto={setCategoriaGasto}
-
-  montoGasto={montoGasto}
-  setMontoGasto={setMontoGasto}
-
-  notasGasto={notasGasto}
-  setNotasGasto={setNotasGasto}
-
-  guardarGasto={guardarGasto}
-
-  gastosFiltrados={gastosFiltrados}
-
-eliminarGasto={eliminarGasto}
-
-gastosPorCategoria={gastosPorCategoria}
-
-/>
-
-)}
-
-{seccionActiva === "doctores" && (
-
-<Doctores
-
-  doctores={doctores}
-
-  nombreDoctor={nombreDoctor}
-  setNombreDoctor={setNombreDoctor}
-
-  especialidadDoctor={especialidadDoctor}
-  setEspecialidadDoctor={setEspecialidadDoctor}
-
-  porcentajeDoctor={porcentajeDoctor}
-  setPorcentajeDoctor={setPorcentajeDoctor}
-
-  guardarDoctor={guardarDoctor}
-
-  setDoctorDetalle={setDoctorDetalle}
-
-/>
-
-)}
-{seccionActiva === "comisiones" && (
-
-  <Comisiones
-
-    doctores={doctores}
-
-    tratamientos={tratamientos}
-
-    setDoctorDetalle={setDoctorDetalle}
-
-    setMostrarDetalleDoctor={setMostrarDetalleDoctor}
-
-  />
-
-)}
-
-{_doctorDetalle && (
-
-  <DoctorDetalle
-
-    doctor={_doctorDetalle}
-
-    pacientes={pacientes}
-
-    tratamientos={tratamientos}
-
-    onClose={() => {
-
-      setDoctorDetalle(
-        null
-      );
-
-    }}
-
-  />
-
-)}
-
-
-{seccionActiva === "resumen" && (
-
-<Resumen
-
-  ingresos={ingresos}
-  cobrado={cobrado}
-  pendiente={pendiente}
-  gananciaNeta={gananciaNeta}
-  tratamientos={tratamientos}
-  totalGastos={totalGastos}
-  totalBaseClinica={totalBaseClinica}
-  totalComisionesDoctor={totalComisionesDoctor}
-  cajaMXN={cajaMXN}
-  cajaUSD={cajaUSD}
-  totalTarjeta={totalTarjeta}
-  totalTransferencia={totalTransferencia}
-  pacientes={pacientes}
-  tratamientosFiltrados={tratamientosFiltrados}
-
-/>
-
-)}
-
-
-</div>
-
-</div>
-
-);
+  );
 
 }
