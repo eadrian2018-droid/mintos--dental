@@ -2,9 +2,9 @@ import { useState } from "react";
 
 import Gastos from "../components/finanzas/Gastos";
 import Resumen from "../components/finanzas/Resumen";
-import Doctores from "../components/finanzas/Doctores";
 import Comisiones from "../components/finanzas/Comisiones";
 import DoctorDetalle from "../components/DoctorDetalle";
+import ConfiguracionFinanzas from "../components/finanzas/ConfiguracionFinanzas";
 
 import usePeriodo from "../hooks/usePeriodo";
 import useIndicadores from "../hooks/useIndicadores";
@@ -18,7 +18,6 @@ type SeccionFinanzas =
   | "resumen"
   | "gastos"
   | "comisiones"
-  | "doctores"
   | "configuracion";
 
 type PeriodoFinanzas =
@@ -82,9 +81,17 @@ export default function Finanzas() {
 
     guardarDoctor,
 
+    actualizarDoctor,
+
     guardarGasto,
 
     eliminarGasto,
+
+    catalogoTratamientos,
+
+    guardarTratamientoCatalogo,
+
+    cambiarEstadoTratamientoCatalogo,
 
   } = finanzas;
 
@@ -276,33 +283,6 @@ export default function Finanzas() {
           >
 
             Comisiones
-
-          </button>
-
-          <button
-            onClick={() =>
-              setSeccionActiva(
-                "doctores"
-              )
-            }
-            className={`
-              p-3
-              rounded-xl
-              text-left
-              transition
-
-              ${
-                seccionActiva ===
-                "doctores"
-
-                  ? "bg-teal-600 text-white"
-
-                  : "bg-slate-100"
-              }
-            `}
-          >
-
-            Doctores
 
           </button>
 
@@ -552,53 +532,6 @@ export default function Finanzas() {
 
         {
           seccionActiva ===
-          "doctores"
-
-          &&
-
-          <Doctores
-
-            doctores={
-              doctores
-            }
-
-            nombreDoctor={
-              nombreDoctor
-            }
-
-            setNombreDoctor={
-              setNombreDoctor
-            }
-
-            especialidadDoctor={
-              especialidadDoctor
-            }
-
-            setEspecialidadDoctor={
-              setEspecialidadDoctor
-            }
-
-            porcentajeDoctor={
-              porcentajeDoctor
-            }
-
-            setPorcentajeDoctor={
-              setPorcentajeDoctor
-            }
-
-            guardarDoctor={
-              guardarDoctor
-            }
-
-            setDoctorDetalle={
-              setDoctorDetalle
-            }
-
-          />
-        }
-
-        {
-          seccionActiva ===
           "comisiones"
 
           &&
@@ -651,6 +584,68 @@ export default function Finanzas() {
 
           />
         }
+{
+  seccionActiva ===
+  "configuracion"
+
+  &&
+
+  <ConfiguracionFinanzas
+
+    doctores={
+      doctores
+    }
+
+    catalogoTratamientos={
+      catalogoTratamientos
+    }
+
+    nombreDoctor={
+      nombreDoctor
+    }
+
+    setNombreDoctor={
+      setNombreDoctor
+    }
+
+    especialidadDoctor={
+      especialidadDoctor
+    }
+
+    setEspecialidadDoctor={
+      setEspecialidadDoctor
+    }
+
+    porcentajeDoctor={
+      porcentajeDoctor
+    }
+
+    setPorcentajeDoctor={
+      setPorcentajeDoctor
+    }
+
+    guardarDoctor={
+      guardarDoctor
+    }
+
+    actualizarDoctor={
+  actualizarDoctor
+}
+
+    setDoctorDetalle={
+      setDoctorDetalle
+    }
+
+    guardarTratamientoCatalogo={
+      guardarTratamientoCatalogo
+    }
+
+    cambiarEstadoTratamientoCatalogo={
+      cambiarEstadoTratamientoCatalogo
+    }
+
+  />
+}
 
         {
           seccionActiva ===

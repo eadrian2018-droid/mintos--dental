@@ -1,3 +1,7 @@
+import {
+  useState,
+} from "react";
+
 import type {
   Dispatch,
   SetStateAction,
@@ -32,7 +36,16 @@ type DoctoresProps = {
       SetStateAction<string>
     >;
 
-  guardarDoctor: () => void;
+  guardarDoctor:
+    () => void;
+
+  actualizarDoctor:
+    (
+      id: number,
+      nombre: string,
+      especialidad: string,
+      porcentaje: number
+    ) => Promise<void>;
 
   setDoctorDetalle:
     Dispatch<
@@ -58,9 +71,96 @@ export default function Doctores({
 
   guardarDoctor,
 
+  actualizarDoctor,
+
   setDoctorDetalle,
 
 }: DoctoresProps) {
+
+  const [
+    doctorEditando,
+    setDoctorEditando,
+  ] = useState<Doctor | null>(
+    null
+  );
+
+  function iniciarEdicion(
+    doctor: Doctor
+  ) {
+
+    setDoctorEditando(
+      doctor
+    );
+
+    setNombreDoctor(
+      doctor.nombre
+    );
+
+    setEspecialidadDoctor(
+      doctor.especialidad
+    );
+
+    setPorcentajeDoctor(
+      String(
+        doctor.porcentaje
+      )
+    );
+
+  }
+
+  function cancelarEdicion() {
+
+    setDoctorEditando(
+      null
+    );
+
+    setNombreDoctor("");
+
+    setEspecialidadDoctor("");
+
+    setPorcentajeDoctor(
+      "30"
+    );
+
+  }
+
+  async function guardarCambios() {
+
+    if (
+      !doctorEditando
+    ) {
+
+      return;
+
+    }
+
+    await actualizarDoctor(
+
+      doctorEditando.id,
+
+      nombreDoctor,
+
+      especialidadDoctor,
+
+      Number(
+        porcentajeDoctor
+      )
+
+    );
+
+    setDoctorEditando(
+      null
+    );
+
+    setNombreDoctor("");
+
+    setEspecialidadDoctor("");
+
+    setPorcentajeDoctor(
+      "30"
+    );
+
+  }
 
   return (
 
@@ -73,17 +173,51 @@ export default function Doctores({
       "
     >
 
-      <h2
+      <div
         className="
-          text-2xl
-          font-bold
+          flex
+          items-center
+          justify-between
           mb-6
         "
       >
 
-        Doctores
+        <div>
 
-      </h2>
+          <h2
+            className="
+              text-2xl
+              font-bold
+            "
+          >
+
+            Doctores
+
+          </h2>
+
+          {
+            doctorEditando
+
+            &&
+
+            <p
+              className="
+                text-sm
+                text-slate-500
+                mt-1
+              "
+            >
+
+              Editando:
+              {" "}
+              {doctorEditando.nombre}
+
+            </p>
+          }
+
+        </div>
+
+      </div>
 
       <div
         className="
@@ -144,21 +278,88 @@ export default function Doctores({
 
       </div>
 
-      <button
-        onClick={guardarDoctor}
+      <div
         className="
-          bg-teal-600
-          text-white
-          px-4
-          py-3
-          rounded-xl
+          flex
+          flex-wrap
+          gap-3
           mb-6
         "
       >
 
-        Guardar Doctor
+        {
+          doctorEditando
 
-      </button>
+          ? (
+
+            <button
+              onClick={
+                guardarCambios
+              }
+              className="
+                bg-teal-600
+                hover:bg-teal-700
+                text-white
+                px-4
+                py-3
+                rounded-xl
+              "
+            >
+
+              Actualizar Doctor
+
+            </button>
+
+          )
+
+          : (
+
+            <button
+              onClick={
+                guardarDoctor
+              }
+              className="
+                bg-teal-600
+                hover:bg-teal-700
+                text-white
+                px-4
+                py-3
+                rounded-xl
+              "
+            >
+
+              Guardar Doctor
+
+            </button>
+
+          )
+        }
+
+        {
+          doctorEditando
+
+          &&
+
+          <button
+            onClick={
+              cancelarEdicion
+            }
+            className="
+              bg-slate-200
+              hover:bg-slate-300
+              text-slate-700
+              px-4
+              py-3
+              rounded-xl
+            "
+          >
+
+            Cancelar
+
+          </button>
+        }
+
+      </div>
 
       <div
         className="
@@ -197,13 +398,13 @@ export default function Doctores({
 
               <th className="p-3 text-left">
 
-                %
+                Comisión
 
               </th>
 
               <th className="p-3 text-left">
 
-                Acción
+                Acciones
 
               </th>
 
@@ -246,25 +447,55 @@ export default function Doctores({
 
                     <td className="p-3">
 
-                      <button
-                        onClick={() =>
-                          setDoctorDetalle(
-                            doctor
-                          )
-                        }
+                      <div
                         className="
-                          bg-blue-500
-                          hover:bg-blue-600
-                          text-white
-                          px-3
-                          py-1
-                          rounded-lg
+                          flex
+                          flex-wrap
+                          gap-2
                         "
                       >
 
-                        Ver detalle
+                        <button
+                          onClick={() =>
+                            iniciarEdicion(
+                              doctor
+                            )
+                          }
+                          className="
+                            bg-amber-500
+                            hover:bg-amber-600
+                            text-white
+                            px-3
+                            py-1
+                            rounded-lg
+                          "
+                        >
 
-                      </button>
+                          Editar
+
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            setDoctorDetalle(
+                              doctor
+                            )
+                          }
+                          className="
+                            bg-blue-500
+                            hover:bg-blue-600
+                            text-white
+                            px-3
+                            py-1
+                            rounded-lg
+                          "
+                        >
+
+                          Ver detalle
+
+                        </button>
+
+                      </div>
 
                     </td>
 

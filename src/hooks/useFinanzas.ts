@@ -18,6 +18,10 @@ import type {
   Doctor,
 } from "../types/Doctor";
 
+import type {
+  TratamientoCatalogo,
+} from "../types/TratamientoCatalogo";
+
 export default function useFinanzas() {
 
   const [
@@ -39,6 +43,11 @@ export default function useFinanzas() {
     doctores,
     setDoctores,
   ] = useState<Doctor[]>([]);
+
+  const [
+    catalogoTratamientos,
+    setCatalogoTratamientos,
+  ] = useState<TratamientoCatalogo[]>([]);
 
   const [
     nombreDoctor,
@@ -98,6 +107,8 @@ export default function useFinanzas() {
 
       cargarDoctores(),
 
+      cargarCatalogoTratamientos(),
+
     ]);
 
   }
@@ -150,6 +161,18 @@ export default function useFinanzas() {
 
   }
 
+  async function cargarCatalogoTratamientos() {
+
+    const data =
+      await finanzasService
+        .cargarCatalogoTratamientos();
+
+    setCatalogoTratamientos(
+      data
+    );
+
+  }
+
   async function guardarDoctor() {
 
     await finanzasService.guardarDoctor(
@@ -167,6 +190,30 @@ export default function useFinanzas() {
     setEspecialidadDoctor("");
 
     setPorcentajeDoctor("30");
+
+    await cargarDoctores();
+
+  }
+
+  async function actualizarDoctor(
+    id: number,
+    nombre: string,
+    especialidad: string,
+    porcentaje: number
+  ) {
+
+    await finanzasService
+      .actualizarDoctor(
+
+        id,
+
+        nombre,
+
+        especialidad,
+
+        porcentaje
+
+      );
 
     await cargarDoctores();
 
@@ -227,6 +274,59 @@ export default function useFinanzas() {
 
   }
 
+  async function guardarTratamientoCatalogo(
+    tratamiento:
+      Omit<
+        TratamientoCatalogo,
+        "id"
+      >
+  ) {
+
+    await finanzasService
+      .guardarTratamientoCatalogo(
+        tratamiento
+      );
+
+    await cargarCatalogoTratamientos();
+
+  }
+
+  async function actualizarTratamientoCatalogo(
+    id: number,
+    cambios:
+      Partial<
+        Omit<
+          TratamientoCatalogo,
+          "id"
+        >
+      >
+  ) {
+
+    await finanzasService
+      .actualizarTratamientoCatalogo(
+        id,
+        cambios
+      );
+
+    await cargarCatalogoTratamientos();
+
+  }
+
+  async function cambiarEstadoTratamientoCatalogo(
+    id: number,
+    activo: boolean
+  ) {
+
+    await finanzasService
+      .cambiarEstadoTratamientoCatalogo(
+        id,
+        activo
+      );
+
+    await cargarCatalogoTratamientos();
+
+  }
+
   return {
 
     tratamientos,
@@ -236,6 +336,8 @@ export default function useFinanzas() {
     gastos,
 
     doctores,
+
+    catalogoTratamientos,
 
     nombreDoctor,
     setNombreDoctor,
@@ -263,9 +365,17 @@ export default function useFinanzas() {
 
     guardarDoctor,
 
+    actualizarDoctor,
+
     guardarGasto,
 
     eliminarGasto,
+
+    guardarTratamientoCatalogo,
+
+    actualizarTratamientoCatalogo,
+
+    cambiarEstadoTratamientoCatalogo,
 
     cargarTratamientos,
 
@@ -274,6 +384,8 @@ export default function useFinanzas() {
     cargarGastos,
 
     cargarDoctores,
+
+    cargarCatalogoTratamientos,
 
   };
 

@@ -16,6 +16,10 @@ import type {
   Doctor,
 } from "../types/Doctor";
 
+import type {
+  TratamientoCatalogo,
+} from "../types/TratamientoCatalogo";
+
 export const finanzasService = {
 
   async cargarTratamientos():
@@ -138,6 +142,33 @@ export const finanzasService = {
 
   },
 
+  async actualizarDoctor(
+    id: number,
+    nombre: string,
+    especialidad: string,
+    porcentaje: number
+  ): Promise<void> {
+
+    const {
+      error,
+    } = await supabase
+      .from("doctores")
+      .update({
+        nombre,
+        especialidad,
+        porcentaje,
+      })
+      .eq(
+        "id",
+        id
+      );
+
+    if (error) {
+      throw error;
+    }
+
+  },
+
   async guardarGasto(
     fecha: string,
     concepto: string,
@@ -175,6 +206,153 @@ export const finanzasService = {
     } = await supabase
       .from("gastos")
       .delete()
+      .eq(
+        "id",
+        id
+      );
+
+    if (error) {
+      throw error;
+    }
+
+  },
+
+  async cargarCatalogoTratamientos():
+    Promise<TratamientoCatalogo[]> {
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(
+        "catalogo_tratamientos"
+      )
+      .select("*")
+      .order(
+        "nombre",
+        {
+          ascending: true,
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    return (
+      data ?? []
+    ) as TratamientoCatalogo[];
+
+  },
+
+  async guardarTratamientoCatalogo(
+    tratamiento:
+      Omit<
+        TratamientoCatalogo,
+        "id"
+      >
+  ): Promise<void> {
+
+    const {
+      error,
+    } = await supabase
+      .from(
+        "catalogo_tratamientos"
+      )
+      .insert([
+        {
+          nombre:
+            tratamiento.nombre,
+
+          categoria:
+            tratamiento.categoria,
+
+          tipo:
+            tratamiento.tipo,
+
+          precio_mxn:
+            Number(
+              tratamiento.precio_mxn
+            ),
+
+          precio_usd:
+            Number(
+              tratamiento.precio_usd
+            ),
+
+          costo_especialista_mxn:
+            Number(
+              tratamiento
+                .costo_especialista_mxn
+            ),
+
+          costo_especialista_usd:
+            Number(
+              tratamiento
+                .costo_especialista_usd
+            ),
+
+          doctor_id:
+            tratamiento.doctor_id ??
+            null,
+
+          activo:
+            tratamiento.activo,
+        },
+      ]);
+
+    if (error) {
+      throw error;
+    }
+
+  },
+
+  async actualizarTratamientoCatalogo(
+    id: number,
+
+    cambios:
+      Partial<
+        Omit<
+          TratamientoCatalogo,
+          "id"
+        >
+      >
+  ): Promise<void> {
+
+    const {
+      error,
+    } = await supabase
+      .from(
+        "catalogo_tratamientos"
+      )
+      .update(
+        cambios
+      )
+      .eq(
+        "id",
+        id
+      );
+
+    if (error) {
+      throw error;
+    }
+
+  },
+
+  async cambiarEstadoTratamientoCatalogo(
+    id: number,
+    activo: boolean
+  ): Promise<void> {
+
+    const {
+      error,
+    } = await supabase
+      .from(
+        "catalogo_tratamientos"
+      )
+      .update({
+        activo,
+      })
       .eq(
         "id",
         id
