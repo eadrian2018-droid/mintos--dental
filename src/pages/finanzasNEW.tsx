@@ -6,8 +6,6 @@ import Doctores from "../components/finanzas/Doctores";
 
 import Comisiones from "../components/finanzas/Comisiones";
 
-import { finanzasService } from "../services/finanzas.service";
-
 import DoctorDetalle from "../components/DoctorDetalle";
 
 import usePeriodo from "../hooks/usePeriodo";
@@ -18,7 +16,6 @@ import useFinanzas from "../hooks/useFinanzas";
  
 
 import {
-  useEffect,
   useState,
 } from "react";
 
@@ -26,46 +23,21 @@ export default function Finanzas() {
 
   const finanzas = useFinanzas();
 
-const [
-  seccionActiva,
-  setSeccionActiva,
-] = useState(
-  "resumen"
-);
+  const [
+    seccionActiva,
+    setSeccionActiva,
+  ] = useState(
+    "resumen"
+  );
 
-const [
-  periodo,
-  setPeriodo,
-] = useState(
-  "semana"
-);
+  const [
+    periodo,
+    setPeriodo,
+  ] = useState(
+    "semana"
+  );
 
-const [
-  fechaGasto,
-  setFechaGasto,
-] = useState("");
-
-const [
-  conceptoGasto,
-  setConceptoGasto,
-] = useState("");
-
-const [
-  categoriaGasto,
-  setCategoriaGasto,
-] = useState("");
-
-const [
-  montoGasto,
-  setMontoGasto,
-] = useState("");
-
-const [
-  notasGasto,
-  setNotasGasto,
-] = useState("");
-
-const {
+ const {
 
   tratamientos,
 
@@ -75,167 +47,51 @@ const {
 
   doctores,
 
-  cargarTratamientos,
-  cargarPacientes,
-  cargarGastos,
-  cargarDoctores,
-
-} = finanzas;
-
-const {
-
   nombreDoctor,
-
   setNombreDoctor,
 
   especialidadDoctor,
-
   setEspecialidadDoctor,
 
   porcentajeDoctor,
-
   setPorcentajeDoctor,
+
+  fechaGasto,
+  setFechaGasto,
+
+  conceptoGasto,
+  setConceptoGasto,
+
+  categoriaGasto,
+  setCategoriaGasto,
+
+  montoGasto,
+  setMontoGasto,
+
+  notasGasto,
+  setNotasGasto,
+
+  guardarDoctor,
+
+  guardarGasto,
+
+  eliminarGasto,
 
 } = finanzas;
 
-const [
-  _doctorDetalle,
-  setDoctorDetalle,
-] = useState<any>(
-  null
-);
+  const [
+    _doctorDetalle,
+    setDoctorDetalle,
+  ] = useState<any>(
+    null
+  );
 
-const [
-  _mostrarDetalleDoctor,
-  setMostrarDetalleDoctor,
-] = useState(
-  false
-);
-
-useEffect(() => {
-
-  cargarTratamientos();
-
-  cargarPacientes();
-
-  cargarGastos();
-
-  cargarDoctores();
-
-}, []);
-
-async function guardarDoctor() {
-
-  try {
-
-    await finanzasService.guardarDoctor(
-
-      nombreDoctor,
-
-      especialidadDoctor,
-
-      porcentajeDoctor
-
-    );
-
-    setNombreDoctor("");
-
-    setEspecialidadDoctor("");
-
-    setPorcentajeDoctor("30");
-
-    cargarDoctores();
-
-  }
-
-  catch (error: any) {
-
-    console.error(error);
-
-    alert(error.message);
-
-  }
-
-}
-
-async function guardarGasto() {
-
-  try {
-
-    await finanzasService.guardarGasto(
-
-      fechaGasto,
-
-      conceptoGasto,
-
-      categoriaGasto,
-
-      Number(
-        montoGasto
-      ),
-
-      notasGasto
-
-    );
-
-    setFechaGasto("");
-
-    setConceptoGasto("");
-
-    setCategoriaGasto("");
-
-    setMontoGasto("");
-
-    setNotasGasto("");
-
-    cargarGastos();
-
-  }
-
-  catch (error: any) {
-
-    console.error(error);
-
-    alert(error.message);
-
-  }
-
-}
-
-async function eliminarGasto(
-  id: number
-) {
-
-  const confirmar =
-    window.confirm(
-      "¿Eliminar este gasto?"
-    );
-
-  if (!confirmar) {
-
-    return;
-
-  }
-
-  try {
-
-    await finanzasService.eliminarGasto(
-      id
-    );
-
-    cargarGastos();
-
-  }
-
-  catch (error: any) {
-
-    console.error(error);
-
-    alert(error.message);
-
-  }
-
-}
+  const [
+    _mostrarDetalleDoctor,
+    setMostrarDetalleDoctor,
+  ] = useState(
+    false
+  );
 
 const {
 

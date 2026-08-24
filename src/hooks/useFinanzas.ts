@@ -5,66 +5,70 @@ import { finanzasService } from "../services/finanzas.service";
 export default function useFinanzas() {
 
   const [
-
     tratamientos,
-
     setTratamientos,
-
   ] = useState<any[]>([]);
 
   const [
-
     pacientes,
-
     setPacientes,
-
   ] = useState<any[]>([]);
 
   const [
-
     gastos,
-
     setGastos,
-
   ] = useState<any[]>([]);
 
   const [
-
     doctores,
-
     setDoctores,
-
   ] = useState<any[]>([]);
+
+  const [
+    nombreDoctor,
+    setNombreDoctor,
+  ] = useState("");
+
+  const [
+    especialidadDoctor,
+    setEspecialidadDoctor,
+  ] = useState("");
+
+  const [
+    porcentajeDoctor,
+    setPorcentajeDoctor,
+  ] = useState("30");
+
+  const [
+    fechaGasto,
+    setFechaGasto,
+  ] = useState("");
+
+  const [
+    conceptoGasto,
+    setConceptoGasto,
+  ] = useState("");
+
+  const [
+    categoriaGasto,
+    setCategoriaGasto,
+  ] = useState("");
+
+  const [
+    montoGasto,
+    setMontoGasto,
+  ] = useState("");
+
+  const [
+    notasGasto,
+    setNotasGasto,
+  ] = useState("");
 
   useEffect(() => {
 
     cargarTodo();
 
   }, []);
-
-  const [
-
-  nombreDoctor,
-
-  setNombreDoctor,
-
-] = useState("");
-
-const [
-
-  especialidadDoctor,
-
-  setEspecialidadDoctor,
-
-] = useState("");
-
-const [
-
-  porcentajeDoctor,
-
-  setPorcentajeDoctor,
-
-] = useState("30");
 
   async function cargarTodo() {
 
@@ -85,7 +89,6 @@ const [
   async function cargarTratamientos() {
 
     const data =
-
       await finanzasService
         .cargarTratamientos();
 
@@ -98,7 +101,6 @@ const [
   async function cargarPacientes() {
 
     const data =
-
       await finanzasService
         .cargarPacientes();
 
@@ -111,7 +113,6 @@ const [
   async function cargarGastos() {
 
     const data =
-
       await finanzasService
         .cargarGastos();
 
@@ -121,56 +122,134 @@ const [
 
   }
 
-async function cargarDoctores() {
+  async function cargarDoctores() {
 
-  const data =
+    const data =
+      await finanzasService
+        .cargarDoctores();
 
-    await finanzasService
-      .cargarDoctores();
+    setDoctores(
+      data
+    );
 
-  setDoctores(
-    data
-  );
+  }
 
-}
+  async function guardarDoctor() {
 
-async function guardarDoctor() {
+    await finanzasService.guardarDoctor(
 
-  await finanzasService.guardarDoctor(
+      nombreDoctor,
 
-    nombreDoctor,
+      especialidadDoctor,
 
-    especialidadDoctor,
+      porcentajeDoctor
 
-    porcentajeDoctor
+    );
 
-  );
+    setNombreDoctor("");
 
-  setNombreDoctor("");
+    setEspecialidadDoctor("");
 
-  setEspecialidadDoctor("");
+    setPorcentajeDoctor("30");
 
-  setPorcentajeDoctor("30");
+    await cargarDoctores();
 
-  await cargarDoctores();
+  }
 
-}
+  async function guardarGasto() {
+
+    await finanzasService.guardarGasto(
+
+      fechaGasto,
+
+      conceptoGasto,
+
+      categoriaGasto,
+
+      Number(
+        montoGasto
+      ),
+
+      notasGasto
+
+    );
+
+    setFechaGasto("");
+
+    setConceptoGasto("");
+
+    setCategoriaGasto("");
+
+    setMontoGasto("");
+
+    setNotasGasto("");
+
+    await cargarGastos();
+
+  }
+
+  async function eliminarGasto(
+    id: number
+  ) {
+
+    const confirmar =
+      window.confirm(
+        "¿Eliminar este gasto?"
+      );
+
+    if (!confirmar) {
+
+      return;
+
+    }
+
+    await finanzasService.eliminarGasto(
+      id
+    );
+
+    await cargarGastos();
+
+  }
 
   return {
 
     tratamientos,
-    setTratamientos,
 
     pacientes,
-    setPacientes,
 
     gastos,
-    setGastos,
 
     doctores,
-    setDoctores,
+
+    nombreDoctor,
+    setNombreDoctor,
+
+    especialidadDoctor,
+    setEspecialidadDoctor,
+
+    porcentajeDoctor,
+    setPorcentajeDoctor,
+
+    fechaGasto,
+    setFechaGasto,
+
+    conceptoGasto,
+    setConceptoGasto,
+
+    categoriaGasto,
+    setCategoriaGasto,
+
+    montoGasto,
+    setMontoGasto,
+
+    notasGasto,
+    setNotasGasto,
 
     guardarDoctor,
+
+    guardarGasto,
+
+    eliminarGasto,
 
     cargarTratamientos,
 
@@ -179,15 +258,6 @@ async function guardarDoctor() {
     cargarGastos,
 
     cargarDoctores,
-
-    nombreDoctor,
-setNombreDoctor,
-
-especialidadDoctor,
-setEspecialidadDoctor,
-
-porcentajeDoctor,
-setPorcentajeDoctor,
 
   };
 
