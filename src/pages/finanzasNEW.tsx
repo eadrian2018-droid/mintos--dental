@@ -91,7 +91,13 @@ export default function Finanzas() {
 
     guardarTratamientoCatalogo,
 
+    actualizarTratamientoCatalogo,
+
     cambiarEstadoTratamientoCatalogo,
+
+    configuracionPagos,
+
+    actualizarConfiguracionPago,
 
   } = finanzas;
 
@@ -600,6 +606,18 @@ export default function Finanzas() {
       catalogoTratamientos
     }
 
+    configuracionPagos={
+      configuracionPagos
+    }
+
+    actualizarConfiguracionPago={
+      actualizarConfiguracionPago
+    }
+
+    actualizarTratamientoCatalogo={
+      actualizarTratamientoCatalogo
+    }
+
     nombreDoctor={
       nombreDoctor
     }
@@ -629,8 +647,8 @@ export default function Finanzas() {
     }
 
     actualizarDoctor={
-  actualizarDoctor
-}
+      actualizarDoctor
+    }
 
     setDoctorDetalle={
       setDoctorDetalle

@@ -10,6 +10,7 @@ import type {
 } from "../../types/TratamientoCatalogo";
 
 type CatalogoTratamientosProps = {
+
   doctores: Doctor[];
 
   catalogoTratamientos:
@@ -24,11 +25,24 @@ type CatalogoTratamientosProps = {
         >
     ) => Promise<void>;
 
+  actualizarTratamientoCatalogo:
+    (
+      id: number,
+      cambios:
+        Partial<
+          Omit<
+            TratamientoCatalogo,
+            "id"
+          >
+        >
+    ) => Promise<void>;
+
   cambiarEstadoTratamientoCatalogo:
     (
       id: number,
       activo: boolean
     ) => Promise<void>;
+
 };
 
 export default function CatalogoTratamientos({
@@ -38,6 +52,8 @@ export default function CatalogoTratamientos({
   catalogoTratamientos,
 
   guardarTratamientoCatalogo,
+
+  actualizarTratamientoCatalogo,
 
   cambiarEstadoTratamientoCatalogo,
 
@@ -85,49 +101,14 @@ export default function CatalogoTratamientos({
     setDoctorId,
   ] = useState("");
 
-  async function guardar() {
+  const [
+    tratamientoEditandoId,
+    setTratamientoEditandoId,
+  ] = useState<number | null>(
+    null
+  );
 
-    await guardarTratamientoCatalogo({
-
-      nombre,
-
-      categoria,
-
-      tipo,
-
-      precio_mxn:
-        Number(
-          precioMXN || 0
-        ),
-
-      precio_usd:
-        Number(
-          precioUSD || 0
-        ),
-
-      costo_especialista_mxn:
-        Number(
-          costoEspecialistaMXN || 0
-        ),
-
-      costo_especialista_usd:
-        Number(
-          costoEspecialistaUSD || 0
-        ),
-
-      doctor_id:
-        tipo === "especialista"
-          && doctorId
-
-          ? Number(
-              doctorId
-            )
-
-          : null,
-
-      activo: true,
-
-    });
+  function limpiarFormulario() {
 
     setNombre("");
 
@@ -146,6 +127,172 @@ export default function CatalogoTratamientos({
     setCostoEspecialistaUSD("");
 
     setDoctorId("");
+
+    setTratamientoEditandoId(
+      null
+    );
+
+  }
+
+  async function guardar() {
+
+    if (!nombre.trim()) {
+
+      window.alert(
+        "Ingresa el nombre del tratamiento."
+      );
+
+      return;
+
+    }
+
+    const datosTratamiento = {
+
+      nombre:
+        nombre.trim(),
+
+      categoria:
+        categoria.trim(),
+
+      tipo,
+
+      precio_mxn:
+        Number(
+          precioMXN || 0
+        ),
+
+      precio_usd:
+        Number(
+          precioUSD || 0
+        ),
+
+      costo_especialista_mxn:
+        tipo === "especialista"
+          ? Number(
+              costoEspecialistaMXN || 0
+            )
+          : 0,
+
+      costo_especialista_usd:
+        tipo === "especialista"
+          ? Number(
+              costoEspecialistaUSD || 0
+            )
+          : 0,
+
+      doctor_id:
+        tipo === "especialista"
+          && doctorId
+
+          ? Number(
+              doctorId
+            )
+
+          : null,
+
+      activo: true,
+
+    };
+
+    if (
+      tratamientoEditandoId !==
+      null
+    ) {
+
+      const tratamientoActual =
+        catalogoTratamientos.find(
+          (tratamiento) =>
+            tratamiento.id ===
+            tratamientoEditandoId
+        );
+
+      await actualizarTratamientoCatalogo(
+
+        tratamientoEditandoId,
+
+        {
+          ...datosTratamiento,
+
+          activo:
+            tratamientoActual
+              ?.activo ?? true,
+        }
+
+      );
+
+    } else {
+
+      await guardarTratamientoCatalogo(
+        datosTratamiento
+      );
+
+    }
+
+    limpiarFormulario();
+
+  }
+
+  function editarTratamiento(
+    tratamiento:
+      TratamientoCatalogo
+  ) {
+
+    setTratamientoEditandoId(
+      tratamiento.id
+    );
+
+    setNombre(
+      tratamiento.nombre
+    );
+
+    setCategoria(
+      tratamiento.categoria
+    );
+
+    setTipo(
+      tratamiento.tipo
+    );
+
+    setPrecioMXN(
+      String(
+        tratamiento.precio_mxn ?? 0
+      )
+    );
+
+    setPrecioUSD(
+      String(
+        tratamiento.precio_usd ?? 0
+      )
+    );
+
+    setCostoEspecialistaMXN(
+      String(
+        tratamiento
+          .costo_especialista_mxn ??
+        0
+      )
+    );
+
+    setCostoEspecialistaUSD(
+      String(
+        tratamiento
+          .costo_especialista_usd ??
+        0
+      )
+    );
+
+    setDoctorId(
+      tratamiento.doctor_id
+        ? String(
+            tratamiento.doctor_id
+          )
+        : ""
+    );
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
 
   }
 
@@ -200,17 +347,61 @@ export default function CatalogoTratamientos({
         "
       >
 
-        <h3
+        <div
           className="
-            text-xl
-            font-bold
+            flex
+            justify-between
+            items-center
+            gap-4
             mb-6
           "
         >
 
-          Nuevo Tratamiento
+          <h3
+            className="
+              text-xl
+              font-bold
+            "
+          >
 
-        </h3>
+            {
+              tratamientoEditandoId !==
+              null
+
+                ? "Editar Tratamiento"
+
+                : "Nuevo Tratamiento"
+            }
+
+          </h3>
+
+          {
+            tratamientoEditandoId !==
+            null
+
+            &&
+
+            <button
+              type="button"
+              onClick={
+                limpiarFormulario
+              }
+              className="
+                bg-slate-200
+                hover:bg-slate-300
+                text-slate-700
+                px-4
+                py-2
+                rounded-xl
+              "
+            >
+
+              Cancelar edición
+
+            </button>
+          }
+
+        </div>
 
         <div
           className="
@@ -220,7 +411,7 @@ export default function CatalogoTratamientos({
           "
         >
 
-                      <input
+          <input
             type="text"
             placeholder="Nombre del tratamiento"
             value={nombre}
@@ -254,11 +445,35 @@ export default function CatalogoTratamientos({
 
           <select
             value={tipo}
-         onChange={(e) => {
-  setTipo(
-    e.target.value as TipoTratamiento
-  );
-}}
+            onChange={(e) => {
+
+        const nuevoTipo =
+  e.target.value as TipoTratamiento;
+
+              setTipo(
+                nuevoTipo
+              );
+
+              if (
+                nuevoTipo ===
+                "clinica"
+              ) {
+
+                setCostoEspecialistaMXN(
+                  ""
+                );
+
+                setCostoEspecialistaUSD(
+                  ""
+                );
+
+                setDoctorId(
+                  ""
+                );
+
+              }
+
+            }}
             className="
               border
               rounded-xl
@@ -313,7 +528,8 @@ export default function CatalogoTratamientos({
           />
 
           {
-            tipo === "especialista"
+            tipo ===
+            "especialista"
 
             &&
 
@@ -322,7 +538,9 @@ export default function CatalogoTratamientos({
               <input
                 type="number"
                 placeholder="Costo especialista MXN"
-                value={costoEspecialistaMXN}
+                value={
+                  costoEspecialistaMXN
+                }
                 onChange={(e) =>
                   setCostoEspecialistaMXN(
                     e.target.value
@@ -338,7 +556,9 @@ export default function CatalogoTratamientos({
               <input
                 type="number"
                 placeholder="Costo especialista USD"
-                value={costoEspecialistaUSD}
+                value={
+                  costoEspecialistaUSD
+                }
                 onChange={(e) =>
                   setCostoEspecialistaUSD(
                     e.target.value
@@ -373,13 +593,16 @@ export default function CatalogoTratamientos({
                 </option>
 
                 {
-
                   doctores.map(
                     (doctor) => (
 
                       <option
-                        key={doctor.id}
-                        value={doctor.id}
+                        key={
+                          doctor.id
+                        }
+                        value={
+                          doctor.id
+                        }
                       >
 
                         {doctor.nombre}
@@ -388,7 +611,6 @@ export default function CatalogoTratamientos({
 
                     )
                   )
-
                 }
 
               </select>
@@ -397,9 +619,12 @@ export default function CatalogoTratamientos({
           }
 
           <button
-            onClick={guardar}
+            onClick={
+              guardar
+            }
             className="
               bg-teal-600
+              hover:bg-teal-700
               text-white
               px-4
               py-3
@@ -408,7 +633,14 @@ export default function CatalogoTratamientos({
             "
           >
 
-            Guardar tratamiento
+            {
+              tratamientoEditandoId !==
+              null
+
+                ? "Guardar cambios"
+
+                : "Guardar tratamiento"
+            }
 
           </button>
 
@@ -460,39 +692,57 @@ export default function CatalogoTratamientos({
               >
 
                 <th className="p-3 text-left">
+
                   Tratamiento
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Categoría
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Tipo
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Precio MXN
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Precio USD
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Costo Especialista MXN
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Costo Especialista USD
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Estado
+
                 </th>
 
                 <th className="p-3 text-left">
+
                   Acción
+
                 </th>
 
               </tr>
@@ -502,12 +752,13 @@ export default function CatalogoTratamientos({
             <tbody>
 
               {
-
                 catalogoTratamientos.map(
                   (tratamiento) => (
 
                     <tr
-                      key={tratamiento.id}
+                      key={
+                        tratamiento.id
+                      }
                       className="
                         border-b
                         border-slate-100
@@ -516,13 +767,17 @@ export default function CatalogoTratamientos({
 
                       <td className="p-3">
 
-                        {tratamiento.nombre}
+                        {
+                          tratamiento.nombre
+                        }
 
                       </td>
 
                       <td className="p-3">
 
-                        {tratamiento.categoria}
+                        {
+                          tratamiento.categoria
+                        }
 
                       </td>
 
@@ -531,7 +786,9 @@ export default function CatalogoTratamientos({
                         {
                           tratamiento.tipo ===
                           "clinica"
+
                             ? "Clínica"
+
                             : "Especialista"
                         }
 
@@ -542,9 +799,11 @@ export default function CatalogoTratamientos({
                         $
 
                         {
-                          tratamiento
-                            .precio_mxn
-                            .toLocaleString()
+                          Number(
+                            tratamiento
+                              .precio_mxn ||
+                            0
+                          ).toLocaleString()
                         }
 
                       </td>
@@ -554,33 +813,11 @@ export default function CatalogoTratamientos({
                         $
 
                         {
-                          tratamiento
-                            .precio_usd
-                            .toLocaleString()
-                        }
-
-                      </td>
-
-                      <td className="p-3">
-
-                        $
-
-                        {
-                          tratamiento
-                            .costo_especialista_mxn
-                            .toLocaleString()
-                        }
-
-                      </td>
-
-                      <td className="p-3">
-
-                        $
-
-                        {
-                          tratamiento
-                            .costo_especialista_usd
-                            .toLocaleString()
+                          Number(
+                            tratamiento
+                              .precio_usd ||
+                            0
+                          ).toLocaleString()
                         }
 
                       </td>
@@ -588,39 +825,124 @@ export default function CatalogoTratamientos({
                       <td className="p-3">
 
                         {
-                          tratamiento.activo
-                            ? "Activo"
-                            : "Inactivo"
+                          tratamiento.tipo ===
+                          "especialista"
+
+                            ? `$${Number(
+                                tratamiento
+                                  .costo_especialista_mxn ||
+                                0
+                              ).toLocaleString()}`
+
+                            : "-"
                         }
 
                       </td>
 
                       <td className="p-3">
 
-                        <button
-                          onClick={() =>
-                            cambiarEstadoTratamientoCatalogo(
-                              tratamiento.id,
-                              !tratamiento.activo
-                            )
-                          }
-                          className="
-                            bg-slate-700
-                            hover:bg-slate-800
-                            text-white
+                        {
+                          tratamiento.tipo ===
+                          "especialista"
+
+                            ? `$${Number(
+                                tratamiento
+                                  .costo_especialista_usd ||
+                                0
+                              ).toLocaleString()}`
+
+                            : "-"
+                        }
+
+                      </td>
+
+                      <td className="p-3">
+
+                        <span
+                          className={`
+                            inline-flex
                             px-3
                             py-1
-                            rounded-lg
-                          "
+                            rounded-full
+                            text-xs
+                            font-semibold
+
+                            ${
+                              tratamiento.activo
+
+                                ? "bg-green-100 text-green-700"
+
+                                : "bg-slate-200 text-slate-600"
+                            }
+                          `}
                         >
 
                           {
                             tratamiento.activo
-                              ? "Desactivar"
-                              : "Activar"
+                              ? "Activo"
+                              : "Inactivo"
                           }
 
-                        </button>
+                        </span>
+
+                      </td>
+
+                      <td className="p-3">
+
+                        <div
+                          className="
+                            flex
+                            gap-2
+                            flex-wrap
+                          "
+                        >
+
+                          <button
+                            onClick={() =>
+                              editarTratamiento(
+                                tratamiento
+                              )
+                            }
+                            className="
+                              bg-blue-500
+                              hover:bg-blue-600
+                              text-white
+                              px-3
+                              py-1
+                              rounded-lg
+                            "
+                          >
+
+                            Editar
+
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              cambiarEstadoTratamientoCatalogo(
+                                tratamiento.id,
+                                !tratamiento.activo
+                              )
+                            }
+                            className="
+                              bg-slate-700
+                              hover:bg-slate-800
+                              text-white
+                              px-3
+                              py-1
+                              rounded-lg
+                            "
+                          >
+
+                            {
+                              tratamiento.activo
+                                ? "Desactivar"
+                                : "Activar"
+                            }
+
+                          </button>
+
+                        </div>
 
                       </td>
 
@@ -628,7 +950,6 @@ export default function CatalogoTratamientos({
 
                   )
                 )
-
               }
 
             </tbody>
@@ -644,4 +965,3 @@ export default function CatalogoTratamientos({
   );
 
 }
-

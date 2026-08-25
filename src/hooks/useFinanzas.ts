@@ -22,6 +22,10 @@ import type {
   TratamientoCatalogo,
 } from "../types/TratamientoCatalogo";
 
+import type {
+  ConfiguracionPago,
+} from "../types/ConfiguracionPago";
+
 export default function useFinanzas() {
 
   const [
@@ -48,6 +52,11 @@ export default function useFinanzas() {
     catalogoTratamientos,
     setCatalogoTratamientos,
   ] = useState<TratamientoCatalogo[]>([]);
+
+  const [
+    configuracionPagos,
+    setConfiguracionPagos,
+  ] = useState<ConfiguracionPago[]>([]);
 
   const [
     nombreDoctor,
@@ -109,6 +118,8 @@ export default function useFinanzas() {
 
       cargarCatalogoTratamientos(),
 
+      cargarConfiguracionPagos(),
+
     ]);
 
   }
@@ -168,6 +179,18 @@ export default function useFinanzas() {
         .cargarCatalogoTratamientos();
 
     setCatalogoTratamientos(
+      data
+    );
+
+  }
+
+  async function cargarConfiguracionPagos() {
+
+    const data =
+      await finanzasService
+        .cargarConfiguracionPagos();
+
+    setConfiguracionPagos(
       data
     );
 
@@ -327,6 +350,27 @@ export default function useFinanzas() {
 
   }
 
+  async function actualizarConfiguracionPago(
+    id: number,
+    cambios:
+      Partial<
+        Omit<
+          ConfiguracionPago,
+          "id"
+        >
+      >
+  ) {
+
+    await finanzasService
+      .actualizarConfiguracionPago(
+        id,
+        cambios
+      );
+
+    await cargarConfiguracionPagos();
+
+  }
+
   return {
 
     tratamientos,
@@ -338,6 +382,8 @@ export default function useFinanzas() {
     doctores,
 
     catalogoTratamientos,
+
+    configuracionPagos,
 
     nombreDoctor,
     setNombreDoctor,
@@ -377,6 +423,8 @@ export default function useFinanzas() {
 
     cambiarEstadoTratamientoCatalogo,
 
+    actualizarConfiguracionPago,
+
     cargarTratamientos,
 
     cargarPacientes,
@@ -386,6 +434,8 @@ export default function useFinanzas() {
     cargarDoctores,
 
     cargarCatalogoTratamientos,
+
+    cargarConfiguracionPagos,
 
   };
 

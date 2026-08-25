@@ -20,6 +20,10 @@ import type {
   TratamientoCatalogo,
 } from "../types/TratamientoCatalogo";
 
+import type {
+  ConfiguracionPago,
+} from "../types/ConfiguracionPago";
+
 export const finanzasService = {
 
   async cargarTratamientos():
@@ -353,6 +357,65 @@ export const finanzasService = {
       .update({
         activo,
       })
+      .eq(
+        "id",
+        id
+      );
+
+    if (error) {
+      throw error;
+    }
+
+  },
+
+  async cargarConfiguracionPagos():
+    Promise<ConfiguracionPago[]> {
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(
+        "configuracion_pagos"
+      )
+      .select("*")
+      .order(
+        "id",
+        {
+          ascending: true,
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    return (
+      data ?? []
+    ) as ConfiguracionPago[];
+
+  },
+
+  async actualizarConfiguracionPago(
+    id: number,
+    cambios:
+      Partial<
+        Omit<
+          ConfiguracionPago,
+          "id"
+        >
+      >
+  ): Promise<void> {
+
+    const {
+      error,
+    } = await supabase
+      .from(
+        "configuracion_pagos"
+      )
+      .update(
+        cambios
+      )
       .eq(
         "id",
         id

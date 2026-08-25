@@ -19,6 +19,16 @@ import type {
   TratamientoCatalogo,
 } from "../../types/TratamientoCatalogo";
 
+import ComisionesCostos
+  from "./ComisionesCostos";
+
+  import ConfiguracionPagos
+  from "./ConfiguracionPagos";
+
+import type {
+  ConfiguracionPago,
+} from "../../types/ConfiguracionPago";
+
 type SeccionConfiguracion =
   | "tratamientos"
   | "doctores"
@@ -31,6 +41,21 @@ type ConfiguracionFinanzasProps = {
 
   catalogoTratamientos:
     TratamientoCatalogo[];
+
+      configuracionPagos:
+    ConfiguracionPago[];
+
+  actualizarConfiguracionPago:
+    (
+      id: number,
+      cambios:
+        Partial<
+          Omit<
+            ConfiguracionPago,
+            "id"
+          >
+        >
+    ) => Promise<void>;
 
   nombreDoctor: string;
 
@@ -80,6 +105,18 @@ type ConfiguracionFinanzasProps = {
         >
     ) => Promise<void>;
 
+  actualizarTratamientoCatalogo:
+    (
+      id: number,
+      cambios:
+        Partial<
+          Omit<
+            TratamientoCatalogo,
+            "id"
+          >
+        >
+    ) => Promise<void>;
+
   cambiarEstadoTratamientoCatalogo:
     (
       id: number,
@@ -93,6 +130,10 @@ export default function ConfiguracionFinanzas({
   doctores,
 
   catalogoTratamientos,
+
+  configuracionPagos,
+
+  actualizarConfiguracionPago,
 
   nombreDoctor,
   setNombreDoctor,
@@ -110,6 +151,8 @@ export default function ConfiguracionFinanzas({
   setDoctorDetalle,
 
   guardarTratamientoCatalogo,
+
+  actualizarTratamientoCatalogo,
 
   cambiarEstadoTratamientoCatalogo,
 
@@ -279,6 +322,10 @@ export default function ConfiguracionFinanzas({
             guardarTratamientoCatalogo
           }
 
+          actualizarTratamientoCatalogo={
+            actualizarTratamientoCatalogo
+          }
+
           cambiarEstadoTratamientoCatalogo={
             cambiarEstadoTratamientoCatalogo
           }
@@ -338,90 +385,42 @@ export default function ConfiguracionFinanzas({
       }
 
       {
-        seccion ===
-        "comisiones"
+  seccion ===
+  "comisiones"
 
-        &&
+  &&
 
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            shadow-lg
-            p-6
-          "
-        >
+  <ComisionesCostos
 
-          <h2
-            className="
-              text-2xl
-              font-bold
-            "
-          >
+    doctores={
+      doctores
+    }
 
-            Comisiones y costos
+    catalogoTratamientos={
+      catalogoTratamientos
+    }
 
-          </h2>
-
-          <p
-            className="
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Aquí configuraremos
-            comisiones por doctor,
-            costos de especialistas
-            y reglas financieras.
-
-          </p>
-
-        </div>
-      }
+  />
+}
 
       {
-        seccion ===
-        "pagos"
+  seccion ===
+  "pagos"
 
-        &&
+  &&
 
-        <div
-          className="
-            bg-white
-            rounded-3xl
-            shadow-lg
-            p-6
-          "
-        >
+  <ConfiguracionPagos
 
-          <h2
-            className="
-              text-2xl
-              font-bold
-            "
-          >
+    configuracionPagos={
+      configuracionPagos
+    }
 
-            Pagos
+    actualizarConfiguracionPago={
+      actualizarConfiguracionPago
+    }
 
-          </h2>
-
-          <p
-            className="
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Aquí configuraremos
-            comisión bancaria,
-            métodos de pago
-            y reglas relacionadas.
-
-          </p>
-
-        </div>
-      }
+  />
+}
 
     </div>
 
