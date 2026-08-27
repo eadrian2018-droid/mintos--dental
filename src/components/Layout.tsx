@@ -6,12 +6,27 @@ import {
 
   useLocation,
 
+  useNavigate,
+
 } from "react-router-dom";
+
+import { supabase } from "../lib/supabase";
+
+import { useAuth } from "../context/AuthContext";
 
 export default function Layout() {
 
   const location =
     useLocation();
+
+  const navigate =
+    useNavigate();
+
+  const {
+
+    perfil,
+
+  } = useAuth();
 
   function linkClasses(
     path: string
@@ -37,6 +52,67 @@ export default function Layout() {
       }
 
     `;
+
+  }
+
+  function obtenerNombreRol() {
+
+    if (
+      perfil?.rol === "admin"
+    ) {
+
+      return "Administrador";
+
+    }
+
+    if (
+      perfil?.rol === "doctor"
+    ) {
+
+      return "Doctor";
+
+    }
+
+    if (
+      perfil?.rol === "recepcionista"
+    ) {
+
+      return "Recepcionista";
+
+    }
+
+    return "";
+
+  }
+
+  async function cerrarSesion() {
+
+    const {
+      error,
+    } = await supabase.auth
+      .signOut();
+
+    if (error) {
+
+      console.error(
+        "Error cerrando sesión:",
+        error
+      );
+
+      alert(
+        "No se pudo cerrar la sesión."
+      );
+
+      return;
+
+    }
+
+    navigate(
+      "/",
+      {
+        replace: true,
+      }
+    );
 
   }
 
@@ -139,33 +215,136 @@ export default function Layout() {
 
           </Link>
 
-                    <Link
+          {
 
-            to="/finanzas"
+            perfil?.rol === "admin"
 
-            className={
+            &&
 
-              linkClasses(
-                "/finanzas"
-              )
+            <Link
 
-            }
+              to="/finanzas"
 
-          >
+              className={
 
-            Finanzas
+                linkClasses(
+                  "/finanzas"
+                )
 
-          </Link>
+              }
+
+            >
+
+              Finanzas
+
+            </Link>
+
+          }
+
+          {
+
+            perfil?.rol === "admin"
+
+            &&
+
+            <Link
+
+              to="/configuracion"
+
+              className={
+
+                linkClasses(
+                  "/configuracion"
+                )
+
+              }
+
+            >
+
+              ⚙ Configuración
+
+            </Link>
+
+          }
 
         </nav>
 
         <div className="
           mt-auto
-          text-[10px]
-          text-slate-400
+          pt-4
+          border-t
+          border-slate-200
         ">
 
-          MintOS Dental System
+          <div className="
+            px-3
+            mb-3
+          ">
+
+            <p className="
+              text-sm
+              font-bold
+              text-slate-800
+              truncate
+            ">
+
+              {
+                perfil?.nombre ||
+                "Usuario"
+              }
+
+            </p>
+
+            <p className="
+              text-xs
+              text-slate-500
+              mt-1
+            ">
+
+              {
+                obtenerNombreRol()
+              }
+
+            </p>
+
+          </div>
+
+          <button
+
+            type="button"
+
+            onClick={
+              cerrarSesion
+            }
+
+            className="
+              w-full
+              text-left
+              px-3
+              py-2
+              rounded-lg
+              font-semibold
+              text-sm
+              text-red-600
+              hover:bg-red-50
+              transition
+            "
+          >
+
+            Cerrar sesión
+
+          </button>
+
+          <div className="
+            mt-3
+            px-3
+            text-[10px]
+            text-slate-400
+          ">
+
+            MintOS Dental System
+
+          </div>
 
         </div>
 

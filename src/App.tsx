@@ -8,22 +8,6 @@ import {
 
 } from "react-router-dom";
 
-import {
-
-  useEffect,
-
-  useState,
-
-} from "react";
-
-import type {
-
-  Session,
-
-} from "@supabase/supabase-js";
-
-import { supabase } from "./lib/supabase";
-
 import Layout from "./components/Layout";
 
 import Login from "./components/Login";
@@ -44,82 +28,24 @@ import QRCodePaciente from "./components/QRCodePaciente";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
+import Configuracion from "./pages/configuracion";
+
+import { useAuth } from "./context/AuthContext";
+
 export default function App() {
 
-  const [
+  const {
 
     session,
 
-    setSession,
+    perfil,
 
-  ] = useState<Session | null>(
-    null
-  );
+    loading,
 
-  const [
-
-    cargandoSesion,
-
-    setCargandoSesion,
-
-  ] = useState(true);
-
-  useEffect(() => {
-
-    async function cargarSesion() {
-
-      const {
-
-        data,
-
-      } = await supabase.auth
-        .getSession();
-
-      setSession(
-        data.session
-      );
-
-      setCargandoSesion(
-        false
-      );
-
-    }
-
-    cargarSesion();
-
-    const {
-
-      data: authListener,
-
-    } = supabase.auth
-      .onAuthStateChange(
-        (
-          _event,
-          nuevaSession
-        ) => {
-
-          setSession(
-            nuevaSession
-          );
-
-          setCargandoSesion(
-            false
-          );
-
-        }
-      );
-
-    return () => {
-
-      authListener.subscription
-        .unsubscribe();
-
-    };
-
-  }, []);
+  } = useAuth();
 
   if (
-    cargandoSesion
+    loading
   ) {
 
     return (
@@ -150,11 +76,137 @@ export default function App() {
 
   }
 
+  if (
+    session &&
+    !perfil
+  ) {
+
+    return (
+
+      <div
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-gray-100
+          p-6
+        "
+      >
+
+        <div
+          className="
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            p-6
+            max-w-md
+            w-full
+            text-center
+          "
+        >
+
+          <h2
+            className="
+              text-xl
+              font-bold
+              text-slate-800
+            "
+          >
+
+            Perfil no configurado
+
+          </h2>
+
+          <p
+            className="
+              text-sm
+              text-slate-500
+              mt-2
+            "
+          >
+
+            Tu cuenta existe, pero todavía no tiene un perfil configurado en MintOS.
+
+          </p>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
+  if (
+    perfil &&
+    !perfil.activo
+  ) {
+
+    return (
+
+      <div
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-gray-100
+          p-6
+        "
+      >
+
+        <div
+          className="
+            bg-white
+            border
+            border-slate-200
+            rounded-2xl
+            p-6
+            max-w-md
+            w-full
+            text-center
+          "
+        >
+
+          <h2
+            className="
+              text-xl
+              font-bold
+              text-slate-800
+            "
+          >
+
+            Usuario desactivado
+
+          </h2>
+
+          <p
+            className="
+              text-sm
+              text-slate-500
+              mt-2
+            "
+          >
+
+            Tu cuenta no tiene acceso activo a MintOS.
+
+          </p>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
   return (
 
     <Routes>
 
-      {/* RUTA PÚBLICA */}
+      {/* RUTAS PÚBLICAS */}
 
       <Route
 
@@ -168,13 +220,13 @@ export default function App() {
 
       <Route
 
-  path="/reset-password"
+        path="/reset-password"
 
-  element={
-    <ResetPassword />
-  }
+        element={
+          <ResetPassword />
+        }
 
-/>
+      />
 
       {
 
@@ -254,16 +306,47 @@ export default function App() {
                 }
 
               />
+<Route
 
-              <Route
+  path="/finanzas"
 
-                path="/finanzas"
+  element={
 
-                element={
-                  <Finanzas />
-                }
+    perfil?.rol === "admin"
 
-              />
+      ? <Finanzas />
+
+      : (
+        <Navigate
+          to="/dashboard"
+          replace
+        />
+      )
+
+  }
+
+/>
+
+<Route
+
+  path="/configuracion"
+
+  element={
+
+    perfil?.rol === "admin"
+
+      ? <Configuracion />
+
+      : (
+        <Navigate
+          to="/dashboard"
+          replace
+        />
+      )
+
+  }
+
+/>
 
             </Route>
 
