@@ -139,40 +139,73 @@ export function AuthProvider({
 
     }
 
-    const {
+    try {
 
-      data,
+      const {
 
-      error,
+        data,
 
-    } = await supabase
+        error,
 
-      .from(
-        "perfiles"
-      )
+      } = await supabase
 
- .select(
-  `
-    id,
-    nombre,
-    rol,
-    doctor_id,
-    activo,
-    password_configurado
-  `
-)
+        .from(
+          "perfiles"
+        )
 
-      .eq(
-        "id",
-        usuario.id
-      )
+        .select(
+          `
+            id,
+            nombre,
+            rol,
+            doctor_id,
+            activo,
+            password_configurado
+          `
+        )
 
-      .maybeSingle();
+        .eq(
+          "id",
+          usuario.id
+        )
 
-    if (error) {
+        .maybeSingle();
+
+      if (error) {
+
+        console.error(
+          "Error cargando perfil:",
+          error
+        );
+
+        setPerfil(
+          null
+        );
+
+        return;
+
+      }
+
+      if (
+        !data
+      ) {
+
+        setPerfil(
+          null
+        );
+
+        return;
+
+      }
+
+      setPerfil(
+        data as PerfilUsuario
+      );
+
+    } catch (error) {
 
       console.error(
-        "Error cargando perfil:",
+        "Error inesperado cargando perfil:",
         error
       );
 
@@ -180,25 +213,7 @@ export function AuthProvider({
         null
       );
 
-      return;
-
     }
-
-    if (
-      !data
-    ) {
-
-      setPerfil(
-        null
-      );
-
-      return;
-
-    }
-
-    setPerfil(
-      data as PerfilUsuario
-    );
 
   }
 
@@ -212,35 +227,94 @@ export function AuthProvider({
 
   useEffect(() => {
 
+    let montado =
+      true;
+
     async function iniciarAuth() {
 
-      const {
+      try {
 
-        data,
+        const {
 
-      } = await supabase.auth
-        .getSession();
+          data,
 
-      const sesionActual =
-        data.session;
+          error,
 
-      setSession(
-        sesionActual
-      );
+        } = await supabase.auth
+          .getSession();
 
-      setUser(
-        sesionActual?.user ??
-        null
-      );
+        if (error) {
 
-      await cargarPerfil(
-        sesionActual?.user ??
-        null
-      );
+          console.error(
+            "Error cargando sesión:",
+            error
+          );
 
-      setLoading(
-        false
-      );
+        }
+
+        if (
+          !montado
+        ) {
+
+          return;
+
+        }
+
+        const sesionActual =
+          data.session;
+
+        setSession(
+          sesionActual
+        );
+
+        setUser(
+          sesionActual?.user ??
+          null
+        );
+
+        await cargarPerfil(
+          sesionActual?.user ??
+          null
+        );
+
+      } catch (error) {
+
+        console.error(
+          "Error iniciando autenticación:",
+          error
+        );
+
+        if (
+          montado
+        ) {
+
+          setSession(
+            null
+          );
+
+          setUser(
+            null
+          );
+
+          setPerfil(
+            null
+          );
+
+        }
+
+      } finally {
+
+        if (
+          montado
+        ) {
+
+          setLoading(
+            false
+          );
+
+        }
+
+      }
 
     }
 
@@ -253,11 +327,18 @@ export function AuthProvider({
 
     } = supabase.auth
       .onAuthStateChange(
-
-        async (
+        (
           _event,
           nuevaSession
         ) => {
+
+          if (
+            !montado
+          ) {
+
+            return;
+
+          }
 
           setSession(
             nuevaSession
@@ -268,20 +349,35 @@ export function AuthProvider({
             null
           );
 
-          await cargarPerfil(
-            nuevaSession?.user ??
-            null
-          );
-
           setLoading(
             false
           );
 
-        }
+          setTimeout(
+            () => {
 
+              if (
+                montado
+              ) {
+
+                cargarPerfil(
+                  nuevaSession?.user ??
+                  null
+                );
+
+              }
+
+            },
+            0
+          );
+
+        }
       );
 
     return () => {
+
+      montado =
+        false;
 
       authListener
         .subscription
