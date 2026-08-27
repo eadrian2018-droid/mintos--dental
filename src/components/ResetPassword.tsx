@@ -2,7 +2,17 @@ import { useState } from "react";
 
 import { supabase } from "../lib/supabase";
 
+import { useAuth } from "../context/AuthContext";
+
 export default function ResetPassword() {
+
+  const {
+
+    user,
+
+    recargarPerfil,
+
+  } = useAuth();
 
   const [
     password,
@@ -59,10 +69,25 @@ export default function ResetPassword() {
 
     }
 
-    setLoading(true);
+    if (
+      !user?.id
+    ) {
+
+      alert(
+        "No se encontró una sesión válida."
+      );
+
+      return;
+
+    }
+
+    setLoading(
+      true
+    );
 
     const {
-      error,
+      error:
+        passwordError,
     } = await supabase.auth
       .updateUser({
 
@@ -70,12 +95,16 @@ export default function ResetPassword() {
 
       });
 
-    setLoading(false);
+    if (
+      passwordError
+    ) {
 
-    if (error) {
+      setLoading(
+        false
+      );
 
       console.error(
-        error
+        passwordError
       );
 
       alert(
@@ -86,12 +115,59 @@ export default function ResetPassword() {
 
     }
 
+    const {
+      error:
+        perfilError,
+    } = await supabase
+
+      .from(
+        "perfiles"
+      )
+
+      .update({
+
+        password_configurado:
+          true,
+
+      })
+
+      .eq(
+        "id",
+        user.id
+      );
+
+    if (
+      perfilError
+    ) {
+
+      setLoading(
+        false
+      );
+
+      console.error(
+        perfilError
+      );
+
+      alert(
+        "La contraseña fue actualizada, pero no se pudo actualizar el perfil."
+      );
+
+      return;
+
+    }
+
+    await recargarPerfil();
+
+    setLoading(
+      false
+    );
+
     alert(
       "Contraseña actualizada correctamente."
     );
 
-    window.location.href =
-      "/";
+    window.location.hash =
+      "#/dashboard";
 
   }
 

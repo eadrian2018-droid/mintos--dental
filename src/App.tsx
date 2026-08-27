@@ -202,6 +202,32 @@ export default function App() {
 
   }
 
+  if (
+  session &&
+  perfil &&
+  !perfil.password_configurado
+) {
+
+  return (
+
+    <Routes>
+
+      <Route
+
+        path="*"
+
+        element={
+          <ResetPassword />
+        }
+
+      />
+
+    </Routes>
+
+  );
+
+}
+
   return (
 
     <Routes>

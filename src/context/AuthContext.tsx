@@ -44,6 +44,8 @@ type PerfilUsuario = {
 
   activo: boolean;
 
+  password_configurado: boolean;
+
 };
 
 type AuthContextType = {
@@ -149,15 +151,16 @@ export function AuthProvider({
         "perfiles"
       )
 
-      .select(
-        `
-          id,
-          nombre,
-          rol,
-          doctor_id,
-          activo
-        `
-      )
+ .select(
+  `
+    id,
+    nombre,
+    rol,
+    doctor_id,
+    activo,
+    password_configurado
+  `
+)
 
       .eq(
         "id",
