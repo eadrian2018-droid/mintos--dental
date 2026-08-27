@@ -1,27 +1,17 @@
 import {
-
   createContext,
-
   useContext,
-
   useEffect,
-
   useState,
-
 } from "react";
 
 import type {
-
   ReactNode,
-
 } from "react";
 
 import type {
-
   Session,
-
   User,
-
 } from "@supabase/supabase-js";
 
 import { supabase } from "../lib/supabase";
@@ -32,38 +22,20 @@ type RolUsuario =
   | "recepcionista";
 
 type PerfilUsuario = {
-
   id: string;
-
   nombre: string;
-
   rol: RolUsuario;
-
-  doctor_id:
-    number | null;
-
+  doctor_id: number | null;
   activo: boolean;
-
   password_configurado: boolean;
-
 };
 
 type AuthContextType = {
-
-  session:
-    Session | null;
-
-  user:
-    User | null;
-
-  perfil:
-    PerfilUsuario | null;
-
+  session: Session | null;
+  user: User | null;
+  perfil: PerfilUsuario | null;
   loading: boolean;
-
-  recargarPerfil:
-    () => Promise<void>;
-
+  recargarPerfil: () => Promise<void>;
 };
 
 const AuthContext =
@@ -72,103 +44,66 @@ const AuthContext =
   );
 
 type AuthProviderProps = {
-
-  children:
-    ReactNode;
-
+  children: ReactNode;
 };
 
 export function AuthProvider({
-
   children,
-
 }: AuthProviderProps) {
 
   const [
-
     session,
-
     setSession,
-
   ] = useState<Session | null>(
     null
   );
 
   const [
-
     user,
-
     setUser,
-
   ] = useState<User | null>(
     null
   );
 
   const [
-
     perfil,
-
     setPerfil,
-
   ] = useState<PerfilUsuario | null>(
     null
   );
 
   const [
-
     loading,
-
     setLoading,
-
   ] = useState(true);
 
-  async function cargarPerfil(
-    usuario:
-      User | null
-  ) {
+  async function obtenerPerfil(
+    usuario: User | null
+  ): Promise<PerfilUsuario | null> {
 
-    if (
-      !usuario
-    ) {
-
-      setPerfil(
-        null
-      );
-
-      return;
-
+    if (!usuario) {
+      return null;
     }
 
     try {
 
       const {
-
         data,
-
         error,
-
       } = await supabase
-
-        .from(
-          "perfiles"
-        )
-
-        .select(
-          `
-            id,
-            nombre,
-            rol,
-            doctor_id,
-            activo,
-            password_configurado
-          `
-        )
-
+        .from("perfiles")
+        .select(`
+          id,
+          nombre,
+          rol,
+          doctor_id,
+          activo,
+          password_configurado
+        `)
         .eq(
           "id",
           usuario.id
         )
-
         .maybeSingle();
 
       if (error) {
@@ -178,29 +113,14 @@ export function AuthProvider({
           error
         );
 
-        setPerfil(
-          null
-        );
-
-        return;
-
+        return null;
       }
 
-      if (
-        !data
-      ) {
-
-        setPerfil(
-          null
-        );
-
-        return;
-
+      if (!data) {
+        return null;
       }
 
-      setPerfil(
-        data as PerfilUsuario
-      );
+      return data as PerfilUsuario;
 
     } catch (error) {
 
@@ -209,20 +129,38 @@ export function AuthProvider({
         error
       );
 
-      setPerfil(
-        null
+      return null;
+    }
+  }
+
+  async function cargarPerfil(
+    usuario: User | null
+  ) {
+
+    const perfilNuevo =
+      await obtenerPerfil(
+        usuario
       );
 
-    }
-
+    setPerfil(
+      perfilNuevo
+    );
   }
 
   async function recargarPerfil() {
 
+    if (!user) {
+
+      setPerfil(
+        null
+      );
+
+      return;
+    }
+
     await cargarPerfil(
       user
     );
-
   }
 
   useEffect(() => {
@@ -234,12 +172,13 @@ export function AuthProvider({
 
       try {
 
+        setLoading(
+          true
+        );
+
         const {
-
           data,
-
           error,
-
         } = await supabase.auth
           .getSession();
 
@@ -249,32 +188,38 @@ export function AuthProvider({
             "Error cargando sesión:",
             error
           );
-
         }
 
-        if (
-          !montado
-        ) {
-
+        if (!montado) {
           return;
-
         }
 
         const sesionActual =
           data.session;
+
+        const usuarioActual =
+          sesionActual?.user ??
+          null;
 
         setSession(
           sesionActual
         );
 
         setUser(
-          sesionActual?.user ??
-          null
+          usuarioActual
         );
 
-        await cargarPerfil(
-          sesionActual?.user ??
-          null
+        const perfilActual =
+          await obtenerPerfil(
+            usuarioActual
+          );
+
+        if (!montado) {
+          return;
+        }
+
+        setPerfil(
+          perfilActual
         );
 
       } catch (error) {
@@ -284,9 +229,7 @@ export function AuthProvider({
           error
         );
 
-        if (
-          montado
-        ) {
+        if (montado) {
 
           setSession(
             null
@@ -299,32 +242,24 @@ export function AuthProvider({
           setPerfil(
             null
           );
-
         }
 
       } finally {
 
-        if (
-          montado
-        ) {
+        if (montado) {
 
           setLoading(
             false
           );
-
         }
-
       }
-
     }
 
     iniciarAuth();
 
     const {
-
       data:
         authListener,
-
     } = supabase.auth
       .onAuthStateChange(
         (
@@ -332,45 +267,53 @@ export function AuthProvider({
           nuevaSession
         ) => {
 
-          if (
-            !montado
-          ) {
-
+          if (!montado) {
             return;
-
           }
+
+          const nuevoUsuario =
+            nuevaSession?.user ??
+            null;
+
+          setLoading(
+            true
+          );
+
+          setPerfil(
+            null
+          );
 
           setSession(
             nuevaSession
           );
 
           setUser(
-            nuevaSession?.user ??
-            null
-          );
-
-          setLoading(
-            false
+            nuevoUsuario
           );
 
           setTimeout(
-            () => {
+            async () => {
 
-              if (
-                montado
-              ) {
-
-                cargarPerfil(
-                  nuevaSession?.user ??
-                  null
+              const perfilNuevo =
+                await obtenerPerfil(
+                  nuevoUsuario
                 );
 
+              if (!montado) {
+                return;
               }
+
+              setPerfil(
+                perfilNuevo
+              );
+
+              setLoading(
+                false
+              );
 
             },
             0
           );
-
         }
       );
 
@@ -382,35 +325,23 @@ export function AuthProvider({
       authListener
         .subscription
         .unsubscribe();
-
     };
 
   }, []);
 
   return (
-
     <AuthContext.Provider
       value={{
-
         session,
-
         user,
-
         perfil,
-
         loading,
-
         recargarPerfil,
-
       }}
     >
-
       {children}
-
     </AuthContext.Provider>
-
   );
-
 }
 
 export function useAuth() {
@@ -420,16 +351,12 @@ export function useAuth() {
       AuthContext
     );
 
-  if (
-    !context
-  ) {
+  if (!context) {
 
     throw new Error(
       "useAuth debe utilizarse dentro de AuthProvider."
     );
-
   }
 
   return context;
-
 }
