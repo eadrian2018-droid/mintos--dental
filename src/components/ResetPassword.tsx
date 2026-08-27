@@ -166,8 +166,8 @@ export default function ResetPassword() {
       "Contraseña actualizada correctamente."
     );
 
-    window.location.hash =
-      "#/dashboard";
+    window.location.href =
+  "/dashboard";
 
   }
 
