@@ -132,20 +132,35 @@ const [
 
 
 const [nuevoTratamiento,
-  setNuevoTratamiento] =
-  useState({
-    fecha: "",
-    tratamiento: "",
-    doctor: "",
-    metodo_pago: "",
-    moneda: "",
-    laboratorio: "",
-    especialista: "",
-    comision_banco: "",
-    total: "",
-    pagado: "",
-    notas: "",
-  });
+  setNuevoTratamiento
+
+] = useState({
+
+  fecha: "",
+
+  tratamiento: "",
+
+  doctor: "",
+
+  estado: "Pendiente",
+
+  metodo_pago: "",
+
+  moneda: "",
+
+  laboratorio: "",
+
+  especialista: "",
+
+  comision_banco: "",
+
+  total: "",
+
+  pagado: "",
+
+  notas: "",
+
+});
 
   const [editandoIndex,
   setEditandoIndex] =
@@ -162,12 +177,34 @@ const [
   doctorSeleccionado,
   setDoctorSeleccionado,
 ] = useState<any>(null);
+
+const [
+  catalogoTratamientos,
+  setCatalogoTratamientos,
+] = useState<any[]>([]);
+
+const [
+  notasClinicas,
+  setNotasClinicas,
+] = useState<any[]>([]);
+
+const [
+  nuevaNotaClinica,
+  setNuevaNotaClinica,
+] = useState("");
+
+const [
+  doctorNotaId,
+  setDoctorNotaId,
+] = useState("");
     
-  useEffect(() => {
+useEffect(() => {
 
   cargarPacientes();
 
   cargarDoctores();
+
+  cargarCatalogoTratamientos();
 
 }, []);
 
@@ -228,6 +265,185 @@ const [
     );
 
   }
+
+}
+
+async function cargarCatalogoTratamientos() {
+
+  const {
+    data,
+    error,
+  } = await supabase
+
+    .from(
+      "catalogo_tratamientos"
+    )
+
+    .select("*")
+
+    .eq(
+      "activo",
+      true
+    )
+
+    .order(
+      "nombre",
+      {
+        ascending: true,
+      }
+    );
+
+  if (
+    !error &&
+    data
+  ) {
+
+    setCatalogoTratamientos(
+      data
+    );
+
+  }
+
+}
+
+async function cargarNotasClinicas(
+  pacienteId: number
+) {
+
+  const {
+    data,
+    error,
+  } = await supabase
+
+    .from(
+      "notas_clinicas"
+    )
+
+    .select("*")
+
+    .eq(
+      "paciente_id",
+      pacienteId
+    )
+
+    .order(
+      "created_at",
+      {
+        ascending: false,
+      }
+    );
+
+  if (
+    !error &&
+    data
+  ) {
+
+    setNotasClinicas(
+      data
+    );
+
+  }
+
+}
+
+async function guardarNotaClinica() {
+
+  if (
+    !pacienteAbierto?.id
+  ) {
+
+    return;
+
+  }
+
+  if (
+    !nuevaNotaClinica.trim()
+  ) {
+
+    alert(
+      "Escribe una nota clínica."
+    );
+
+    return;
+
+  }
+
+  if (
+    !doctorNotaId
+  ) {
+
+    alert(
+      "Selecciona un doctor."
+    );
+
+    return;
+
+  }
+
+  const doctor =
+
+    doctores.find(
+      (d: any) =>
+        String(d.id) ===
+        doctorNotaId
+    );
+
+  if (
+    !doctor
+  ) {
+
+    return;
+
+  }
+
+  const {
+    error,
+  } = await supabase
+
+    .from(
+      "notas_clinicas"
+    )
+
+    .insert({
+
+      paciente_id:
+        pacienteAbierto.id,
+
+      tratamiento_id:
+        null,
+
+      doctor_id:
+        doctor.id,
+
+      doctor_nombre:
+        doctor.nombre,
+
+      nota:
+        nuevaNotaClinica.trim(),
+
+    });
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "Error guardando nota clínica."
+    );
+
+    return;
+
+  }
+
+  setNuevaNotaClinica("");
+
+  setDoctorNotaId("");
+
+  await cargarNotasClinicas(
+    pacienteAbierto.id
+  );
 
 }
 
@@ -648,27 +864,51 @@ else {
 
   }
 
- async function guardarTratamiento() {
+async function guardarTratamiento() {
+
+  if (
+    !pacienteAbierto?.id
+  ) {
+
+    return;
+
+  }
+
+  if (
+    !nuevoTratamiento.fecha ||
+    !nuevoTratamiento.tratamiento ||
+    !nuevoTratamiento.doctor
+  ) {
+
+    alert(
+      "Completa fecha, tratamiento y doctor."
+    );
+
+    return;
+
+  }
 
   const nuevo = {
 
     ...nuevoTratamiento,
 
-    pendiente:
+    metodo_pago: "",
 
-      Number(
-        nuevoTratamiento.total || 0
-      ) -
+    moneda: "",
 
-      Number(
-        nuevoTratamiento.pagado || 0
-      ),
+    laboratorio: "",
+
+    especialista: "",
+
+    comision_banco: "",
+
+    total: "",
+
+    pagado: "",
+
+    pendiente: 0,
 
   };
-
-  if (
-  pacienteAbierto?.id
-) {
 
   if (
     editandoIndex !== null
@@ -679,79 +919,73 @@ else {
         editandoIndex
       ];
 
-    await supabase
+    if (
+      tratamientoEditar?.id
+    ) {
 
-      .from(
-        "tratamientos"
-      )
+      const {
+        error,
+      } = await supabase
 
-      .update({
+        .from(
+          "tratamientos"
+        )
 
-        fecha:
-          nuevo.fecha,
+        .update({
 
-        tratamiento:
-          nuevo.tratamiento,
+          fecha:
+            nuevo.fecha,
+
+          tratamiento:
+            nuevo.tratamiento,
 
           doctor:
-  nuevo.doctor,
+            nuevo.doctor,
 
-  doctor_id:
-  doctorSeleccionado?.id || null,
+    doctor_id:
+  doctorSeleccionado?.id ||
+  tratamientoEditar.doctor_id ||
+  null,
 
-  metodo_pago:
-  nuevo.metodo_pago,
+estado:
+  nuevo.estado ||
+  tratamientoEditar.estado ||
+  "Pendiente",
 
-  moneda:
-  nuevo.moneda,
+notas:
+  nuevo.notas || "",
 
-  laboratorio:
-  Number(
-    nuevo.laboratorio || 0
-  ),
+        })
 
-especialista:
-  Number(
-    nuevo.especialista || 0
-  ),
+        .eq(
+          "id",
+          tratamientoEditar.id
+        );
 
-comision_banco:
-  Number(
-    nuevo.comision_banco || 0
-  ),
+      if (error) {
 
-        total:
-          Number(
-            nuevo.total
-          ),
+        console.error(
+          error
+        );
 
-        pago:
-          Number(
-            nuevo.pagado
-          ),
+        alert(
+          "Error actualizando tratamiento."
+        );
 
-        resta:
-          Number(
-            nuevo.pendiente
-          ),
+        return;
 
-        pendiente:
-          Number(
-            nuevo.pendiente
-          ) > 0,
+      }
 
-      })
-
-      .eq(
-        "id",
-        tratamientoEditar.id
-      );
+    }
 
   }
 
   else {
 
-    await supabase
+    const {
+      data,
+      error,
+    } = await supabase
 
       .from(
         "tratamientos"
@@ -768,58 +1002,52 @@ comision_banco:
         tratamiento:
           nuevo.tratamiento,
 
-          doctor:
-  nuevo.doctor,
+        doctor:
+          nuevo.doctor,
 
-  doctor_id:
-  doctorSeleccionado?.id || null,
+ doctor_id:
+  doctorSeleccionado?.id ||
+  null,
 
-          metodo_pago:
-  nuevo.metodo_pago,
+estado:
+  nuevo.estado ||
+  "Pendiente",
 
-  moneda:
-  nuevo.moneda,
+notas:
+  nuevo.notas || "",
 
-  laboratorio:
-  Number(
-    nuevo.laboratorio || 0
-  ),
+      })
 
-especialista:
-  Number(
-    nuevo.especialista || 0
-  ),
+      .select()
+      .single();
 
-comision_banco:
-  Number(
-    nuevo.comision_banco || 0
-  ),
+    if (error) {
 
-        total:
-          Number(
-            nuevo.total
-          ),
+      console.error(
+        error
+      );
 
-        pago:
-          Number(
-            nuevo.pagado
-          ),
+      alert(
+        "Error guardando tratamiento."
+      );
 
-        resta:
-          Number(
-            nuevo.pendiente
-          ),
+      return;
 
-        pendiente:
-          Number(
-            nuevo.pendiente
-          ) > 0,
+    }
 
-      });
+ if (data) {
 
-  }
+  setTratamientos([
+    ...tratamientos,
+    {
+      ...nuevo,
+      id: data.id,
+    },
+  ]);
 
 }
+
+  }
 
   if (
     editandoIndex !== null
@@ -831,7 +1059,15 @@ comision_banco:
 
     copia[
       editandoIndex
-    ] = nuevo;
+    ] = {
+
+      ...copia[
+        editandoIndex
+      ],
+
+      ...nuevo,
+
+    };
 
     setTratamientos(
       copia
@@ -839,27 +1075,39 @@ comision_banco:
 
   }
 
-  else {
+ else {
 
-    setTratamientos([
-      ...tratamientos,
-      nuevo,
-    ]);
+  // El nuevo tratamiento ya fue agregado
+  // después de guardarse en Supabase.
 
-  }
+}
 
-  setNuevoTratamiento({
+setNuevoTratamiento({
+
   fecha: "",
+
   tratamiento: "",
+
   doctor: "",
+
+  estado: "Pendiente",
+
   metodo_pago: "",
+
   moneda: "",
+
   laboratorio: "",
+
   especialista: "",
+
   comision_banco: "",
+
   total: "",
+
   pagado: "",
+
   notas: "",
+
 });
 
   setEditandoIndex(
@@ -867,8 +1115,8 @@ comision_banco:
   );
 
   setDoctorSeleccionado(
-  null
-);
+    null
+  );
 
   setMostrarModalTratamiento(
     false
@@ -884,7 +1132,11 @@ comision_banco:
       paciente
     );
 
-    cargarCitas(
+   cargarCitas(
+  paciente.id
+);
+
+cargarNotasClinicas(
   paciente.id
 );
 
@@ -979,8 +1231,11 @@ comision_banco:
     doctor:
   t.doctor,
 
-  doctor_id:
+doctor_id:
   t.doctor_id,
+
+estado:
+  t.estado || "Pendiente",
 
 metodo_pago:
   t.metodo_pago,
@@ -1006,8 +1261,8 @@ comision_banco:
   pendiente:
     t.resta,
 
-  notas:
-    "",
+ notas:
+  t.notas || "",
 })
           )
 
@@ -1018,6 +1273,66 @@ comision_banco:
     }
 
   }
+
+  async function actualizarEstadoTratamiento(
+  tratamientoId: number,
+  nuevoEstado: string
+) {
+
+  const {
+    error,
+  } = await supabase
+
+    .from(
+      "tratamientos"
+    )
+
+    .update({
+
+      estado:
+        nuevoEstado,
+
+    })
+
+    .eq(
+      "id",
+      tratamientoId
+    );
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "Error actualizando estado."
+    );
+
+    return;
+
+  }
+
+  setTratamientos(
+    tratamientos.map(
+      (
+        tratamiento
+      ) =>
+
+        tratamiento.id ===
+        tratamientoId
+
+          ? {
+              ...tratamiento,
+              estado:
+                nuevoEstado,
+            }
+
+          : tratamiento
+    )
+  );
+
+}
 
   function obtenerDoctor(
   doctorId: number
@@ -1979,83 +2294,124 @@ comision_banco:
               }
 
             </td>
-
-            <td className="
-  p-4
-">
+<td
+  className="
+    p-4
+  "
+>
 
   {
+    tratamiento.estado ===
+    "Finalizado"
 
-    Number(
-      tratamiento.pendiente
-    ) === 0
+      ? (
 
-    ?
+        <span
+          className="
+            bg-green-100
+            text-green-700
+            px-3
+            py-1
+            rounded-full
+            text-xs
+            font-semibold
+          "
+        >
 
-    (
+          Finalizado
 
-      <span className="
-        bg-green-100
-        text-green-700
-        px-3
-        py-1
-        rounded-full
-        text-xs
-        font-semibold
-      ">
+        </span>
 
-        Pagado
+      )
 
-      </span>
+      : tratamiento.estado ===
+        "En proceso"
 
-    )
+        ? (
 
-    :
+          <span
+            className="
+              bg-blue-100
+              text-blue-700
+              px-3
+              py-1
+              rounded-full
+              text-xs
+              font-semibold
+            "
+          >
 
-    Number(
-      tratamiento.pagado
-    ) > 0
+            En proceso
 
-    ?
+          </span>
 
-    (
+        )
 
-      <span className="
-        bg-yellow-100
-        text-yellow-700
-        px-3
-        py-1
-        rounded-full
-        text-xs
-        font-semibold
-      ">
+        : tratamiento.estado ===
+          "Confirmado"
 
-        Parcial
+          ? (
 
-      </span>
+            <span
+              className="
+                bg-teal-100
+                text-teal-700
+                px-3
+                py-1
+                rounded-full
+                text-xs
+                font-semibold
+              "
+            >
 
-    )
+              Confirmado
 
-    :
+            </span>
 
-    (
+          )
 
-      <span className="
-        bg-red-100
-        text-red-700
-        px-3
-        py-1
-        rounded-full
-        text-xs
-        font-semibold
-      ">
+          : tratamiento.estado ===
+            "Cancelado"
 
-        Pendiente
+            ? (
 
-      </span>
+              <span
+                className="
+                  bg-slate-200
+                  text-slate-600
+                  px-3
+                  py-1
+                  rounded-full
+                  text-xs
+                  font-semibold
+                "
+              >
 
-    )
+                Cancelado
 
+              </span>
+
+            )
+
+            : (
+
+              <span
+                className="
+                  bg-yellow-100
+                  text-yellow-700
+                  px-3
+                  py-1
+                  rounded-full
+                  text-xs
+                  font-semibold
+                "
+              >
+
+                Pendiente
+
+              </span>
+
+            )
   }
 
 </td>
@@ -2196,6 +2552,49 @@ comision_banco:
     gap-2
   ">
 
+    <select
+  value={
+    tratamiento.estado ||
+    "Pendiente"
+  }
+  onChange={(e) =>
+    actualizarEstadoTratamiento(
+      tratamiento.id,
+      e.target.value
+    )
+  }
+  className="
+    border
+    border-slate-300
+    rounded-lg
+    px-2
+    py-1
+    text-sm
+  "
+>
+
+  <option value="Pendiente">
+    Pendiente
+  </option>
+
+  <option value="Confirmado">
+    Confirmado
+  </option>
+
+  <option value="En proceso">
+    En proceso
+  </option>
+
+  <option value="Finalizado">
+    Finalizado
+  </option>
+
+  <option value="Cancelado">
+    Cancelado
+  </option>
+
+</select>
+
     <button
       onClick={() => {
 
@@ -2298,37 +2697,305 @@ comision_banco:
 
       </div>
 
-      <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
-        p-5
-      ">
+    <div
+  className="
+    bg-white
+    border
+    border-slate-200
+    rounded-3xl
+    p-5
+  "
+>
 
-        <h3 className="
+  <div
+    className="
+      flex
+      items-center
+      justify-between
+      mb-5
+    "
+  >
+
+    <div>
+
+      <h3
+        className="
           text-lg
           font-bold
-          mb-3
-        ">
+          text-slate-800
+        "
+      >
 
-          Notas
+        Evolución Clínica
 
-        </h3>
+      </h3>
 
-        <textarea
-          className="
-            w-full
-            border
-            border-slate-300
-            rounded-xl
-            p-3
-            min-h-[120px]
-          "
-          placeholder="Notas del paciente..."
-        />
+      <p
+        className="
+          text-sm
+          text-slate-500
+          mt-1
+        "
+      >
 
-      </div>
+        Historial de notas y observaciones clínicas del paciente.
+
+      </p>
+
+    </div>
+
+  </div>
+
+  <div
+    className="
+      grid
+      gap-3
+      mb-6
+    "
+  >
+
+    <select
+      value={
+        doctorNotaId
+      }
+      onChange={(e) =>
+        setDoctorNotaId(
+          e.target.value
+        )
+      }
+      className="
+        border
+        border-slate-300
+        rounded-xl
+        p-3
+        w-full
+      "
+    >
+
+      <option value="">
+
+        Seleccionar Doctor
+
+      </option>
+
+      {
+        doctores.map(
+          (
+            doctor: any
+          ) => (
+
+            <option
+              key={
+                doctor.id
+              }
+              value={
+                doctor.id
+              }
+            >
+
+              {doctor.nombre}
+
+            </option>
+
+          )
+        )
+      }
+
+    </select>
+
+    <textarea
+      value={
+        nuevaNotaClinica
+      }
+      onChange={(e) =>
+        setNuevaNotaClinica(
+          e.target.value
+        )
+      }
+      placeholder="Agregar nueva nota clínica..."
+      className="
+        w-full
+        border
+        border-slate-300
+        rounded-xl
+        p-3
+        min-h-[120px]
+        resize-y
+      "
+    />
+
+    <div
+      className="
+        flex
+        justify-end
+      "
+    >
+
+      <button
+        type="button"
+        onClick={
+          guardarNotaClinica
+        }
+        className="
+          bg-teal-600
+          hover:bg-teal-700
+          text-white
+          px-4
+          py-2
+          rounded-xl
+          font-semibold
+        "
+      >
+
+        Guardar Nota Clínica
+
+      </button>
+
+    </div>
+
+  </div>
+
+  <div
+    className="
+      border-t
+      border-slate-200
+      pt-5
+    "
+  >
+
+    <h4
+      className="
+        font-bold
+        text-slate-800
+        mb-4
+      "
+    >
+
+      Historial
+
+    </h4>
+
+    {
+
+      notasClinicas.length === 0
+
+        ? (
+
+          <div
+            className="
+              bg-slate-50
+              rounded-xl
+              p-5
+              text-sm
+              text-slate-500
+            "
+          >
+
+            No hay notas clínicas registradas.
+
+          </div>
+
+        )
+
+        : (
+
+          <div
+            className="
+              space-y-3
+            "
+          >
+
+            {
+
+              notasClinicas.map(
+                (
+                  nota: any
+                ) => (
+
+                  <div
+                    key={
+                      nota.id
+                    }
+                    className="
+                      border
+                      border-slate-200
+                      rounded-2xl
+                      p-4
+                    "
+                  >
+
+                    <div
+                      className="
+                        flex
+                        items-center
+                        justify-between
+                        gap-4
+                        mb-3
+                      "
+                    >
+
+                      <span
+                        className="
+                          font-semibold
+                          text-slate-800
+                        "
+                      >
+
+                        {
+                          nota.doctor_nombre
+                        }
+
+                      </span>
+
+                      <span
+                        className="
+                          text-xs
+                          text-slate-500
+                        "
+                      >
+
+                        {
+                          new Date(
+                            nota.created_at
+                          ).toLocaleString(
+                            "es-MX"
+                          )
+                        }
+
+                      </span>
+
+                    </div>
+
+                    <p
+                      className="
+                        text-sm
+                        text-slate-700
+                        whitespace-pre-wrap
+                      "
+                    >
+
+                      {
+                        nota.nota
+                      }
+
+                    </p>
+
+                  </div>
+
+                )
+              )
+
+            }
+
+          </div>
+
+        )
+
+    }
+
+  </div>
+
+</div>
 
     </div>
 
@@ -2338,382 +3005,396 @@ comision_banco:
 {
   mostrarModalTratamiento && (
 
-    <div className="
-      fixed
-      inset-0
-      bg-black/50
-      flex
-      items-center
-      justify-center
-      z-50
-    ">
+    <div
+      className="
+        fixed
+        inset-0
+        bg-black/50
+        flex
+        items-center
+        justify-center
+        z-50
+      "
+    >
 
-      <div className="
-        bg-white
-        rounded-3xl
-        p-6
-        w-full
-        max-w-xl
-      ">
+      <div
+        className="
+          bg-white
+          rounded-3xl
+          p-6
+          w-full
+          max-w-xl
+        "
+      >
 
-        <h2 className="
-          text-2xl
-          font-bold
-          mb-5
-        ">
+        <h2
+          className="
+            text-2xl
+            font-bold
+            mb-2
+          "
+        >
 
           Nuevo Tratamiento
 
         </h2>
 
-        <div className="
-          grid
-          gap-4
-        ">
+        <p
+          className="
+            text-sm
+            text-slate-500
+            mb-5
+          "
+        >
 
-          <input
-  type="date"
+          Registra la información clínica del tratamiento.
+
+        </p>
+
+        <div
+          className="
+            grid
+            gap-4
+          "
+        >
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+                mb-2
+              "
+            >
+
+              Fecha
+
+            </label>
+
+            <input
+              type="date"
+              value={
+                nuevoTratamiento.fecha
+              }
+              onChange={(e) =>
+                setNuevoTratamiento({
+                  ...nuevoTratamiento,
+                  fecha:
+                    e.target.value,
+                })
+              }
+              className="
+                border
+                rounded-xl
+                p-3
+                w-full
+              "
+            />
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+                mb-2
+              "
+            >
+
+              Tratamiento
+
+            </label>
+
+            <select
+              value={
+                nuevoTratamiento.tratamiento ||
+                ""
+              }
+              onChange={(e) => {
+
+                setNuevoTratamiento({
+
+                  ...nuevoTratamiento,
+
+                  tratamiento:
+                    e.target.value,
+
+                });
+
+              }}
+              className="
+                border
+                rounded-xl
+                p-3
+                w-full
+              "
+            >
+
+              <option value="">
+
+                Seleccionar Tratamiento
+
+              </option>
+
+              {
+                catalogoTratamientos.map(
+                  (
+                    tratamiento: any
+                  ) => (
+
+                    <option
+                      key={
+                        tratamiento.id
+                      }
+                      value={
+                        tratamiento.nombre
+                      }
+                    >
+
+                      {
+                        tratamiento.nombre
+                      }
+
+                    </option>
+
+                  )
+                )
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+                mb-2
+              "
+            >
+
+              Doctor
+
+            </label>
+
+            <select
+              value={
+                doctorSeleccionado?.id
+                  ? String(
+                      doctorSeleccionado.id
+                    )
+                  : ""
+              }
+              onChange={(e) => {
+
+                const doctor =
+
+                  doctores.find(
+                    (d: any) =>
+                      String(d.id) ===
+                      e.target.value
+                  );
+
+                setDoctorSeleccionado(
+                  doctor || null
+                );
+
+                setNuevoTratamiento({
+
+                  ...nuevoTratamiento,
+
+                  doctor:
+                    doctor?.nombre ||
+                    "",
+
+                });
+
+              }}
+              className="
+                border
+                rounded-xl
+                p-3
+                w-full
+              "
+            >
+
+              <option value="">
+
+                Seleccionar Doctor
+
+              </option>
+
+              {
+                doctores.map(
+                  (
+                    doctor: any
+                  ) => (
+
+                    <option
+                      key={
+                        doctor.id
+                      }
+                      value={
+                        doctor.id
+                      }
+                    >
+
+                      {doctor.nombre}
+
+                    </option>
+
+                  )
+                )
+              }
+
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+                mb-2
+              "
+            >
+
+              Estado
+
+            </label>
+
+     <select
   value={
-    nuevoTratamiento.fecha
+    nuevoTratamiento.estado ||
+    "Pendiente"
   }
   onChange={(e) =>
     setNuevoTratamiento({
-      ...nuevoTratamiento,
-      fecha: e.target.value,
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-/>
 
-          <input
-  placeholder="Tratamiento"
-  value={
-    nuevoTratamiento.tratamiento
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
       ...nuevoTratamiento,
-      tratamiento:
+
+      estado:
         e.target.value,
+
     })
   }
   className="
     border
     rounded-xl
     p-3
+    w-full
   "
-/>
-
-<select
-
-  value={
-  nuevoTratamiento.doctor || ""
-}
-
- onChange={(e) => {
-
-  const doctor =
-
-    doctores.find(
-      (d: any) =>
-        String(d.id) ===
-        e.target.value
-    );
-
-  setDoctorSeleccionado(
-    doctor
-  );
-
-  setNuevoTratamiento({
-    ...nuevoTratamiento,
-    doctor:
-      doctor?.nombre || "",
-  });
-
-}}
-
-  className="
-    border
-    rounded-xl
-    p-3
-  "
+  disabled
 >
 
-  <option value="">
+  <option value="Pendiente">
 
-    Seleccionar Doctor
+    Pendiente
 
   </option>
-
-{
-
-  doctores.map(
-    (
-      doctor: any
-    ) => (
-
-     <option
-  key={doctor.id}
-  value={doctor.id}
->
-
-        {doctor.nombre}
-
-      </option>
-
-    )
-  )
-
-}
 
 </select>
 
-<select
+            <p
+              className="
+                text-xs
+                text-slate-400
+                mt-1
+              "
+            >
 
-  value={
-    nuevoTratamiento.metodo_pago || ""
-  }
+              El doctor podrá confirmar y actualizar el estado posteriormente.
 
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      metodo_pago:
-        e.target.value,
-    })
-  }
+            </p>
 
-  className="
-    border
-    rounded-xl
-    p-3
-  "
->
+          </div>
 
-  <option value="">
+          <div>
 
-    Método de Pago
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                text-slate-700
+                mb-2
+              "
+            >
 
-  </option>
+              Notas clínicas iniciales
 
-  <option value="Efectivo">
+            </label>
 
-    Efectivo
+            <textarea
+              placeholder="Observaciones relevantes sobre el tratamiento..."
+              value={
+                nuevoTratamiento.notas
+              }
+              onChange={(e) =>
+                setNuevoTratamiento({
 
-  </option>
+                  ...nuevoTratamiento,
 
-  <option value="Tarjeta">
+                  notas:
+                    e.target.value,
 
-    Tarjeta
+                })
+              }
+              className="
+                border
+                rounded-xl
+                p-3
+                min-h-[120px]
+                w-full
+                resize-y
+              "
+            />
 
-  </option>
-
-  <option value="Transferencia">
-
-    Transferencia
-
-  </option>
-
-  <option value="Cheque">
-
-    Cheque
-
-  </option>
-
-</select>
-
-<select
-
-  value={
-    nuevoTratamiento.moneda || ""
-  }
-
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      moneda:
-        e.target.value,
-    })
-  }
-
-  className="
-    border
-    rounded-xl
-    p-3
-  "
->
-
-  <option value="">
-
-    Moneda
-
-  </option>
-
-  <option value="MXN">
-
-    MXN
-
-  </option>
-
-  <option value="USD">
-
-    USD
-
-  </option>
-
-</select>
-
-<input
-
-  type="number"
-
-  placeholder="Costo Laboratorio"
-
-  value={
-    nuevoTratamiento.laboratorio || ""
-  }
-
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      laboratorio:
-        e.target.value,
-    })
-  }
-
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-
-/>
-
-<input
-
-  type="number"
-
-  placeholder="Costo Especialista"
-
-  value={
-    nuevoTratamiento.especialista || ""
-  }
-
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      especialista:
-        e.target.value,
-    })
-  }
-
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-
-/>
-
-<input
-
-  type="number"
-
-  placeholder="Comisión Banco"
-
-  value={
-    nuevoTratamiento.comision_banco || ""
-  }
-
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      comision_banco:
-        e.target.value,
-    })
-  }
-
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-
-/>
-
-          <input
-  placeholder="Costo Total"
-  value={
-    nuevoTratamiento.total
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      total: e.target.value,
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-/>
-
-         <input
-  placeholder="Pagado"
-  value={
-    nuevoTratamiento.pagado
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      pagado: e.target.value,
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-  "
-/>
-
-          <textarea
-  placeholder="Notas"
-  value={
-    nuevoTratamiento.notas
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
-      ...nuevoTratamiento,
-      notas: e.target.value,
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-    min-h-[120px]
-  "
-/>
+          </div>
 
         </div>
 
-        <div className="
-          flex
-          justify-end
-          gap-3
-          mt-6
-        ">
+        <div
+          className="
+            flex
+            justify-end
+            gap-3
+            mt-6
+          "
+        >
 
           <button
-            onClick={() =>
+            type="button"
+            onClick={() => {
+
               setMostrarModalTratamiento(
                 false
-              )
-            }
+              );
+
+              setEditandoIndex(
+                null
+              );
+
+              setDoctorSeleccionado(
+                null
+              );
+
+            }}
             className="
               px-4
               py-2
@@ -2727,21 +3408,24 @@ comision_banco:
           </button>
 
           <button
-  onClick={
-    guardarTratamiento
-  }
-  className="
-    bg-teal-600
-    text-white
-    px-4
-    py-2
-    rounded-xl
-  "
->
+            type="button"
+            onClick={
+              guardarTratamiento
+            }
+            className="
+              bg-teal-600
+              hover:bg-teal-700
+              text-white
+              px-4
+              py-2
+              rounded-xl
+              font-semibold
+            "
+          >
 
-  Guardar
+            Guardar Tratamiento
 
-</button>
+          </button>
 
         </div>
 

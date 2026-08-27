@@ -8,7 +8,21 @@ import {
 
 } from "react-router-dom";
 
-import { useState } from "react";
+import {
+
+  useEffect,
+
+  useState,
+
+} from "react";
+
+import type {
+
+  Session,
+
+} from "@supabase/supabase-js";
+
+import { supabase } from "./lib/supabase";
 
 import Layout from "./components/Layout";
 
@@ -30,14 +44,115 @@ import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
 export default function App() {
 
-  const [usuario] =
-    useState(true);
+  const [
+
+    session,
+
+    setSession,
+
+  ] = useState<Session | null>(
+    null
+  );
+
+  const [
+
+    cargandoSesion,
+
+    setCargandoSesion,
+
+  ] = useState(true);
+
+  useEffect(() => {
+
+    async function cargarSesion() {
+
+      const {
+
+        data,
+
+      } = await supabase.auth
+        .getSession();
+
+      setSession(
+        data.session
+      );
+
+      setCargandoSesion(
+        false
+      );
+
+    }
+
+    cargarSesion();
+
+    const {
+
+      data: authListener,
+
+    } = supabase.auth
+      .onAuthStateChange(
+        (
+          _event,
+          nuevaSession
+        ) => {
+
+          setSession(
+            nuevaSession
+          );
+
+          setCargandoSesion(
+            false
+          );
+
+        }
+      );
+
+    return () => {
+
+      authListener.subscription
+        .unsubscribe();
+
+    };
+
+  }, []);
+
+  if (
+    cargandoSesion
+  ) {
+
+    return (
+
+      <div
+        className="
+          min-h-screen
+          flex
+          items-center
+          justify-center
+          bg-gray-100
+        "
+      >
+
+        <p
+          className="
+            text-slate-500
+          "
+        >
+
+          Cargando MintOS...
+
+        </p>
+
+      </div>
+
+    );
+
+  }
 
   return (
 
     <Routes>
 
-      {/* RUTA PUBLICA */}
+      {/* RUTA PÚBLICA */}
 
       <Route
 
@@ -51,91 +166,110 @@ export default function App() {
 
       {
 
-        usuario
+        session
 
-        ? (
-
-          <Route
-
-            path="/"
-
-            element={<Layout />}
-
-          >
+          ? (
 
             <Route
 
-              index
+              path="/"
 
               element={
-                <Navigate to="/dashboard" />
+                <Layout />
+              }
+
+            >
+
+              <Route
+
+                index
+
+                element={
+                  <Navigate
+                    to="/dashboard"
+                    replace
+                  />
+                }
+
+              />
+
+              <Route
+
+                path="/dashboard"
+
+                element={
+                  <Dashboard />
+                }
+
+              />
+
+              <Route
+
+                path="/agenda"
+
+                element={
+                  <AgendaCalendar />
+                }
+
+              />
+
+              <Route
+
+                path="/pacientes"
+
+                element={
+                  <Pacientes />
+                }
+
+              />
+
+              <Route
+
+                path="/paciente/:id"
+
+                element={
+                  <PacienteDetalle />
+                }
+
+              />
+
+              <Route
+
+                path="/qr-pacientes"
+
+                element={
+                  <QRCodePaciente />
+                }
+
+              />
+
+              <Route
+
+                path="/finanzas"
+
+                element={
+                  <Finanzas />
+                }
+
+              />
+
+            </Route>
+
+          )
+
+          : (
+
+            <Route
+
+              path="*"
+
+              element={
+                <Login />
               }
 
             />
 
-            <Route
-
-              path="/dashboard"
-
-              element={<Dashboard />}
-
-            />
-
-            <Route
-
-              path="/agenda"
-
-              element={<AgendaCalendar />}
-
-            />
-
-            <Route
-
-              path="/pacientes"
-
-              element={<Pacientes />}
-
-            />
-
-            <Route
-
-              path="/paciente/:id"
-
-              element={<PacienteDetalle />}
-
-            />
-
-            <Route
-
-              path="/qr-pacientes"
-
-              element={<QRCodePaciente />}
-
-            />
-
-            <Route
-
-  path="/finanzas"
-
-  element={<Finanzas />}
-
-/>
-
-          </Route>
-
-        )
-
-        : (
-
-          <Route
-
-            path="*"
-
-            element={<Login />}
-
-          />
-
-        )
+          )
 
       }
 
