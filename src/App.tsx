@@ -28,6 +28,8 @@ import Layout from "./components/Layout";
 
 import Login from "./components/Login";
 
+import ResetPassword from "./components/ResetPassword";
+
 import Dashboard from "./pages/dashboardNEW";
 
 import AgendaCalendar from "./pages/agendaCalendar";
@@ -163,6 +165,16 @@ export default function App() {
         }
 
       />
+
+      <Route
+
+  path="/reset-password"
+
+  element={
+    <ResetPassword />
+  }
+
+/>
 
       {
 
