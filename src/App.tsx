@@ -14,6 +14,8 @@ import Login from "./components/Login";
 
 import ResetPassword from "./components/ResetPassword";
 
+import AcceptInvite from "./components/AcceptInvite";
+
 import Dashboard from "./pages/dashboardNEW";
 
 import AgendaCalendar from "./pages/agendaCalendar";
@@ -243,6 +245,13 @@ export default function App() {
         }
 
       />
+
+      <Route
+  path="/accept-invite"
+  element={
+    <AcceptInvite />
+  }
+/>
 
       <Route
 
