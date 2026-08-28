@@ -1344,17 +1344,41 @@ comision_banco:
   );
 
 }
+const pacientesFiltrados =
+  pacientes.filter((p) => {
 
-  const pacientesFiltrados =
-    pacientes.filter((p)=>
-
-      p.nombre
+    const textoBusqueda =
+      busqueda
         .toLowerCase()
-        .includes(
-          busqueda.toLowerCase()
-        )
+        .trim();
 
+    if (!textoBusqueda) {
+      return true;
+    }
+
+    const nombre =
+      p.nombre
+        ?.toLowerCase() || "";
+
+    const telefono =
+      p.telefono
+        ?.toLowerCase() || "";
+
+    const correo =
+      p.correo
+        ?.toLowerCase() || "";
+
+    const idPaciente =
+      String(p.id);
+
+    return (
+      nombre.includes(textoBusqueda) ||
+      telefono.includes(textoBusqueda) ||
+      correo.includes(textoBusqueda) ||
+      idPaciente.includes(textoBusqueda)
     );
+
+  });
 
   return (
 
@@ -1364,141 +1388,349 @@ comision_banco:
       gap-3
     ">
 
-      <div className="
-        w-[155px]
-        min-w-[155px]
-        bg-white
-        rounded-2xl
-        shadow-lg
-        p-2
-        overflow-y-auto
-      ">
+      <div
+  className="
+    w-[280px]
+    min-w-[280px]
+    bg-white
+    border
+    border-slate-200
+    rounded-2xl
+    overflow-hidden
+    flex
+    flex-col
+  "
+>
 
-        <div className="
-          flex
-          items-center
-          justify-between
-          mb-3
-        ">
+  <div
+    className="
+      p-4
+      border-b
+      border-slate-200
+    "
+  >
 
-          <h1 className="
-            text-sm
+    <div
+      className="
+        flex
+        items-center
+        justify-between
+        gap-3
+        mb-4
+      "
+    >
+
+      <div>
+
+        <h1
+          className="
+            text-lg
             font-bold
-            text-gray-800
-          ">
+            text-slate-800
+          "
+        >
+          Pacientes
+        </h1>
 
-            Pacientes
+        <p
+          className="
+            text-xs
+            text-slate-500
+            mt-1
+          "
+        >
+          {pacientes.length}
+          {" "}
+          pacientes registrados
+        </p>
 
-          </h1>
+      </div>
 
-          <a
+      <a
+        href="/qr-pacientes"
+        className="
+          bg-teal-600
+          hover:bg-teal-700
+          text-white
+          px-3
+          py-2
+          rounded-xl
+          font-semibold
+          text-xs
+          transition
+          shrink-0
+        "
+      >
+        + QR
+      </a>
 
-            href="/qr-pacientes"
+    </div>
 
+    <input
+      value={busqueda}
+      onChange={(e) =>
+        setBusqueda(
+          e.target.value
+        )
+      }
+      placeholder="Buscar paciente..."
+      className="
+        w-full
+        border
+        border-slate-200
+        bg-slate-50
+        rounded-xl
+        px-3
+        py-2.5
+        text-sm
+        outline-none
+        focus:ring-2
+        focus:ring-teal-100
+        focus:border-teal-500
+        transition
+      "
+    />
+
+  </div>
+
+  <div
+    className="
+      flex-1
+      overflow-y-auto
+      p-3
+    "
+  >
+
+    {
+      pacientesFiltrados.length === 0
+
+        ? (
+
+          <div
             className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-2
-              py-1
-              rounded-lg
-              font-semibold
-              text-[10px]
+              text-center
+              py-10
+              px-4
             "
           >
 
-            QR
+            <div
+              className="
+                w-12
+                h-12
+                rounded-full
+                bg-slate-100
+                flex
+                items-center
+                justify-center
+                mx-auto
+                mb-3
+                text-lg
+                font-bold
+                text-slate-400
+              "
+            >
+              ?
+            </div>
 
-          </a>
+            <p
+              className="
+                text-sm
+                font-semibold
+                text-slate-600
+              "
+            >
+              Sin resultados
+            </p>
 
-        </div>
+            <p
+              className="
+                text-xs
+                text-slate-400
+                mt-1
+              "
+            >
+              No encontramos pacientes
+              con esa búsqueda.
+            </p>
 
-        <input
-          value={busqueda}
-          onChange={(e)=>
-            setBusqueda(
-              e.target.value
-            )
-          }
-          placeholder="Buscar..."
-          className="
-            border
-            border-slate-300
-            rounded-lg
-            p-2
-            w-full
-            mb-3
-            text-xs
-          "
-        />
+          </div>
 
-        <div className="
-          space-y-2
-        ">
+        )
 
-          {
+        : (
 
-            pacientesFiltrados
-              .map((p)=>(
+          <div
+            className="
+              space-y-2
+            "
+          >
 
-                <button
+            {
+              pacientesFiltrados.map(
+                (p) => {
 
-                  key={p.id}
+                  const seleccionado =
+                    pacienteAbierto?.id ===
+                    p.id;
 
-                  onClick={()=>
-                    abrirPaciente(p)
-                  }
+                  return (
 
-                  className={`
-                    w-full
-                    text-left
-                    border
-                    rounded-xl
-                    p-2
-                    transition-all
-                    hover:shadow-md
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        abrirPaciente(p)
+                      }
+                      className={`
+                        w-full
+                        text-left
+                        rounded-xl
+                        border
+                        p-3
+                        transition-all
 
-                    ${
-                      pacienteAbierto?.id === p.id
+                        ${
+                          seleccionado
 
-                      ? "border-teal-500 bg-teal-50"
+                            ? `
+                              border-teal-500
+                              bg-teal-50
+                              shadow-sm
+                            `
 
-                      : "border-slate-200 bg-white"
-                    }
-                  `}
-                >
+                            : `
+                              border-transparent
+                              bg-white
+                              hover:bg-slate-50
+                              hover:border-slate-200
+                            `
+                        }
+                      `}
+                    >
 
-                  <h3 className="
-                    text-xs
-                    font-bold
-                    text-slate-800
-                    truncate
-                  ">
+                      <div
+                        className="
+                          flex
+                          items-center
+                          gap-3
+                        "
+                      >
 
-                    {p.nombre}
+                        <div
+                          className={`
+                            w-10
+                            h-10
+                            rounded-full
+                            flex
+                            items-center
+                            justify-center
+                            shrink-0
+                            font-bold
+                            text-sm
 
-                  </h3>
+                            ${
+                              seleccionado
 
-                  <p className="
-                    text-slate-500
-                    mt-1
-                    text-[10px]
-                    truncate
-                  ">
+                                ? `
+                                  bg-teal-600
+                                  text-white
+                                `
 
-                    {p.telefono}
+                                : `
+                                  bg-slate-100
+                                  text-slate-600
+                                `
+                            }
+                          `}
+                        >
 
-                  </p>
+                          {
+                            p.nombre
+                              ?.charAt(0)
+                              ?.toUpperCase()
+                          }
 
-                </button>
+                        </div>
 
-              ))
+                        <div
+                          className="
+                            min-w-0
+                            flex-1
+                          "
+                        >
 
-          }
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                              gap-2
+                            "
+                          >
 
-        </div>
+                            <h3
+                              className={`
+                                text-sm
+                                font-semibold
+                                truncate
 
-      </div>
+                                ${
+                                  seleccionado
+                                    ? "text-teal-800"
+                                    : "text-slate-800"
+                                }
+                              `}
+                            >
+                              {p.nombre}
+                            </h3>
+
+                            <span
+                              className="
+                                text-[10px]
+                                text-slate-400
+                                shrink-0
+                              "
+                            >
+                              #{p.id}
+                            </span>
+
+                          </div>
+
+                          <p
+                            className="
+                              text-xs
+                              text-slate-500
+                              truncate
+                              mt-1
+                            "
+                          >
+                            {
+                              p.telefono ||
+                              "Sin teléfono"
+                            }
+                          </p>
+
+                        </div>
+
+                      </div>
+
+                    </button>
+
+                  );
+
+                }
+              )
+            }
+
+          </div>
+
+        )
+    }
+
+  </div>
+
+</div>
 
       <div className="
         flex-1
@@ -1519,176 +1751,246 @@ comision_banco:
               "
             >
 
-              <div className="
-                flex
-                items-center
-                justify-between
-                mb-5
-              ">
-
-                <div className="
-  flex-1
+             <div className="
+  mb-5
 ">
 
   <div className="
-    bg-slate-50
+    bg-white
     border
     border-slate-200
     rounded-3xl
     p-5
+    shadow-sm
   ">
 
     <div className="
       flex
+      flex-col
+      xl:flex-row
+      xl:items-center
+      justify-between
       gap-5
-      items-start
     ">
 
       <div className="
-        w-20
-        h-20
-        rounded-full
-        bg-teal-100
         flex
-        items-center
-        justify-center
-        text-3xl
-        font-bold
-        text-teal-700
-        shrink-0
+        items-start
+        gap-4
+        min-w-0
       ">
 
-        {pacienteAbierto.nombre
-          ?.charAt(0)
-          ?.toUpperCase()}
+        <div className="
+          w-16
+          h-16
+          rounded-2xl
+          bg-teal-100
+          flex
+          items-center
+          justify-center
+          text-2xl
+          font-bold
+          text-teal-700
+          shrink-0
+        ">
+
+          {pacienteAbierto.nombre
+            ?.charAt(0)
+            ?.toUpperCase()}
+
+        </div>
+
+        <div className="
+          min-w-0
+          flex-1
+        ">
+
+          <div className="
+            flex
+            flex-wrap
+            items-center
+            gap-3
+          ">
+
+            <h2 className="
+              text-2xl
+              lg:text-3xl
+              font-bold
+              text-slate-800
+            ">
+
+              {pacienteAbierto.nombre}
+
+            </h2>
+
+            <span className="
+              bg-teal-50
+              text-teal-700
+              border
+              border-teal-100
+              px-3
+              py-1
+              rounded-full
+              text-xs
+              font-semibold
+            ">
+
+              Expediente #{pacienteAbierto.id}
+
+            </span>
+
+          </div>
+
+          <div className="
+            flex
+            flex-wrap
+            items-center
+            gap-x-5
+            gap-y-2
+            mt-3
+            text-sm
+            text-slate-500
+          ">
+
+            <span>
+
+              <strong className="
+                text-slate-700
+                font-semibold
+              ">
+                Edad:
+              </strong>
+
+              {" "}
+
+              {pacienteAbierto.edad || "-"}
+
+            </span>
+
+            <span>
+
+              <strong className="
+                text-slate-700
+                font-semibold
+              ">
+                Sexo:
+              </strong>
+
+              {" "}
+
+              {pacienteAbierto.sexo || "-"}
+
+            </span>
+
+            <span>
+
+              <strong className="
+                text-slate-700
+                font-semibold
+              ">
+                Tel:
+              </strong>
+
+              {" "}
+
+              {pacienteAbierto.telefono || "-"}
+
+            </span>
+
+            <span>
+
+              <strong className="
+                text-slate-700
+                font-semibold
+              ">
+                Correo:
+              </strong>
+
+              {" "}
+
+              {pacienteAbierto.correo || "-"}
+
+            </span>
+
+          </div>
+
+        </div>
 
       </div>
 
       <div className="
-        flex-1
+        bg-slate-50
+        border
+        border-slate-200
+        rounded-2xl
+        px-4
+        py-3
+        min-w-[190px]
+        shrink-0
       ">
 
-        <h2 className="
-          text-3xl
+        <p className="
+          text-xs
+          uppercase
+          tracking-wide
+          font-semibold
+          text-slate-400
+        ">
+          Próxima cita
+        </p>
+
+        <p className="
+          text-sm
           font-bold
           text-slate-800
+          mt-1
         ">
 
-          {pacienteAbierto.nombre}
+          {
+            proximaCita
 
-        </h2>
+              ? new Date(
+                  proximaCita.inicio
+                ).toLocaleDateString(
+                  "es-MX",
+                  {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }
+                )
 
-        <div className="
-          grid
-          grid-cols-2
-          lg:grid-cols-3
-          gap-y-2
-          gap-x-6
-          mt-4
-          text-sm
-        ">
+              : "Sin citas programadas"
+          }
 
-          <div>
+        </p>
 
-            <span className="
+        {
+          proximaCita && (
+
+            <p className="
+              text-xs
+              text-teal-600
               font-semibold
+              mt-1
             ">
-              Edad:
-            </span>
 
-            {" "}
+              {
+                new Date(
+                  proximaCita.inicio
+                ).toLocaleTimeString(
+                  "es-MX",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  }
+                )
+              }
 
-            {pacienteAbierto.edad || "-"}
+            </p>
 
-          </div>
-
-          <div>
-
-            <span className="
-              font-semibold
-            ">
-              Sexo:
-            </span>
-
-            {" "}
-
-            {pacienteAbierto.sexo || "-"}
-
-          </div>
-
-          <div>
-
-            <span className="
-              font-semibold
-            ">
-              Teléfono:
-            </span>
-
-            {" "}
-
-            {pacienteAbierto.telefono || "-"}
-
-          </div>
-
-          <div>
-
-            <span className="
-              font-semibold
-            ">
-              Email:
-            </span>
-
-            {" "}
-
-            {pacienteAbierto.correo || "-"}
-
-          </div>
-
-          <div>
-
-            <span className="
-              font-semibold
-            ">
-              Registro:
-            </span>
-
-            {" "}
-
-            #{pacienteAbierto.id}
-
-          </div>
-
-          <div>
-
-  <span className="
-    font-semibold
-  ">
-    Próxima cita:
-  </span>
-
-  {" "}
-
-  {
-
-    proximaCita
-
-      ?
-
-      `${new Date(
-        proximaCita.inicio
-      ).toLocaleDateString(
-        "es-MX"
-      )}`
-
-      :
-
-      "Sin citas"
-
-  }
-
-</div>
-
-        </div>
+          )
+        }
 
       </div>
 
@@ -1745,101 +2047,107 @@ comision_banco:
 
                 </div>
 
-              </div>
-
-              <div className="
-  flex
-  gap-2
+        <div className="
   mb-6
-  bg-slate-100
-  p-2
-  rounded-2xl
-  w-fit
+  border-b
+  border-slate-200
 ">
 
-  <button
-    onClick={() =>
-      setTabActiva("general")
-    }
-    className={`
-      px-5
-      py-3
-      rounded-xl
-      font-semibold
-      transition-all
+  <div className="
+    flex
+    flex-wrap
+    gap-1
+  ">
 
-      ${
-        tabActiva === "general"
-          ? "bg-white text-teal-600 shadow-md"
-          : "text-slate-500 hover:bg-white"
+    <button
+      onClick={() =>
+        setTabActiva("general")
       }
-    `}
-  >
-    General
-  </button>
+      className={`
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        border-b-2
+        transition-colors
 
-  <button
-    onClick={() =>
-      setTabActiva("expediente")
-    }
-    className={`
-      px-5
-      py-3
-      rounded-xl
-      font-semibold
-      transition-all
+        ${
+          tabActiva === "general"
+            ? "border-teal-600 text-teal-700"
+            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+        }
+      `}
+    >
+      General
+    </button>
 
-      ${
-        tabActiva === "expediente"
-          ? "bg-white text-teal-600 shadow-md"
-          : "text-slate-500 hover:bg-white"
+    <button
+      onClick={() =>
+        setTabActiva("expediente")
       }
-    `}
-  >
-    Expediente Clínico
-  </button>
+      className={`
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        border-b-2
+        transition-colors
 
-  <button
-    onClick={() =>
-      setTabActiva("historial")
-    }
-    className={`
-      px-5
-      py-3
-      rounded-xl
-      font-semibold
-      transition-all
+        ${
+          tabActiva === "expediente"
+            ? "border-teal-600 text-teal-700"
+            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+        }
+      `}
+    >
+      Expediente Clínico
+    </button>
 
-      ${
-        tabActiva === "historial"
-          ? "bg-white text-teal-600 shadow-md"
-          : "text-slate-500 hover:bg-white"
+    <button
+      onClick={() =>
+        setTabActiva("historial")
       }
-    `}
-  >
-    Historial Médico
-  </button>
+      className={`
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        border-b-2
+        transition-colors
 
-  <button
-    onClick={() =>
-      setTabActiva("citas")
-    }
-    className={`
-      px-5
-      py-3
-      rounded-xl
-      font-semibold
-      transition-all
+        ${
+          tabActiva === "historial"
+            ? "border-teal-600 text-teal-700"
+            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+        }
+      `}
+    >
+      Historial Médico
+    </button>
 
-      ${
-        tabActiva === "citas"
-          ? "bg-white text-teal-600 shadow-md"
-          : "text-slate-500 hover:bg-white"
+    <button
+      onClick={() =>
+        setTabActiva("citas")
       }
-    `}
-  >
-    Citas
-  </button>
+      className={`
+        px-5
+        py-3
+        text-sm
+        font-semibold
+        border-b-2
+        transition-colors
+
+        ${
+          tabActiva === "citas"
+            ? "border-teal-600 text-teal-700"
+            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+        }
+      `}
+    >
+      Citas
+    </button>
+
+  </div>
 
 </div>
 
@@ -1851,124 +2159,238 @@ comision_banco:
       space-y-6
     ">
 
-      <div className="
-        grid
-        grid-cols-1
-        md:grid-cols-3
-        gap-4
-      ">
+   <div className="
+  grid
+  grid-cols-1
+  md:grid-cols-3
+  gap-4
+">
 
-        <div className="
-          bg-white
-          border
-          border-slate-200
-          rounded-3xl
-          p-5
+  <div className="
+    bg-white
+    border
+    border-slate-200
+    rounded-2xl
+    p-5
+    shadow-sm
+  ">
+
+    <div className="
+      flex
+      items-center
+      justify-between
+      gap-4
+    ">
+
+      <div>
+
+        <p className="
+          text-xs
+          font-semibold
+          uppercase
+          tracking-wide
+          text-slate-400
         ">
+          Tratamientos
+        </p>
 
-          <p className="
-            text-sm
-            text-slate-500
-          ">
-            Tratamientos
-          </p>
-
-          <h3 className="
-            text-3xl
-            font-bold
-            text-slate-800
-            mt-2
-          ">
-            {tratamientos.length}
-          </h3>
-
-        </div>
-
-        <div className="
-          bg-white
-          border
-          border-green-200
-          rounded-3xl
-          p-5
+        <h3 className="
+          text-3xl
+          font-bold
+          text-slate-800
+          mt-2
         ">
+          {tratamientos.length}
+        </h3>
 
-          <p className="
-            text-sm
-            text-slate-500
-          ">
-            Total Pagado
-          </p>
-
-          <h3 className="
-            text-3xl
-            font-bold
-            text-green-600
-            mt-2
-          ">
-            $
-{
-  tratamientos.reduce(
-    (
-      total,
-      tratamiento
-    ) =>
-
-      total +
-
-      Number(
-        tratamiento.pagado || 0
-      ),
-
-    0
-  )
-}
-          </h3>
-
-        </div>
-
-        <div className="
-          bg-white
-          border
-          border-red-200
-          rounded-3xl
-          p-5
+        <p className="
+          text-sm
+          text-slate-500
+          mt-1
         ">
-
-          <p className="
-            text-sm
-            text-slate-500
-          ">
-            Saldo Pendiente
-          </p>
-
-          <h3 className="
-            text-3xl
-            font-bold
-            text-red-600
-            mt-2
-          ">
-            $
-{
-  tratamientos.reduce(
-    (
-      total,
-      tratamiento
-    ) =>
-
-      total +
-
-      Number(
-        tratamiento.pendiente || 0
-      ),
-
-    0
-  )
-}
-          </h3>
-
-        </div>
+          Registrados
+        </p>
 
       </div>
+
+      <div className="
+        w-12
+        h-12
+        rounded-2xl
+        bg-slate-100
+        flex
+        items-center
+        justify-center
+        text-slate-600
+        font-bold
+        text-lg
+      ">
+        #
+      </div>
+
+    </div>
+
+  </div>
+
+  <div className="
+    bg-white
+    border
+    border-emerald-200
+    rounded-2xl
+    p-5
+    shadow-sm
+  ">
+
+    <div className="
+      flex
+      items-center
+      justify-between
+      gap-4
+    ">
+
+      <div>
+
+        <p className="
+          text-xs
+          font-semibold
+          uppercase
+          tracking-wide
+          text-slate-400
+        ">
+          Total Pagado
+        </p>
+
+        <h3 className="
+          text-3xl
+          font-bold
+          text-emerald-600
+          mt-2
+        ">
+          $
+          {
+            tratamientos.reduce(
+              (
+                total,
+                tratamiento
+              ) =>
+                total +
+                Number(
+                  tratamiento.pagado || 0
+                ),
+              0
+            )
+          }
+        </h3>
+
+        <p className="
+          text-sm
+          text-slate-500
+          mt-1
+        ">
+          Pagos recibidos
+        </p>
+
+      </div>
+
+      <div className="
+        w-12
+        h-12
+        rounded-2xl
+        bg-emerald-50
+        flex
+        items-center
+        justify-center
+        text-emerald-600
+        font-bold
+        text-xl
+      ">
+        $
+      </div>
+
+    </div>
+
+  </div>
+
+  <div className="
+    bg-white
+    border
+    border-rose-200
+    rounded-2xl
+    p-5
+    shadow-sm
+  ">
+
+    <div className="
+      flex
+      items-center
+      justify-between
+      gap-4
+    ">
+
+      <div>
+
+        <p className="
+          text-xs
+          font-semibold
+          uppercase
+          tracking-wide
+          text-slate-400
+        ">
+          Saldo Pendiente
+        </p>
+
+        <h3 className="
+          text-3xl
+          font-bold
+          text-rose-600
+          mt-2
+        ">
+          $
+          {
+            tratamientos.reduce(
+              (
+                total,
+                tratamiento
+              ) =>
+                total +
+                Number(
+                  tratamiento.pendiente || 0
+                ),
+              0
+            )
+          }
+        </h3>
+
+        <p className="
+          text-sm
+          text-slate-500
+          mt-1
+        ">
+          Por cobrar
+        </p>
+
+      </div>
+
+      <div className="
+        w-12
+        h-12
+        rounded-2xl
+        bg-rose-50
+        flex
+        items-center
+        justify-center
+        text-rose-600
+        font-bold
+        text-xl
+      ">
+        $
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
       <div className="
         bg-white
@@ -4184,54 +4606,247 @@ comision_banco:
 
           )
 
-          :
+                    :
 
           (
 
             <div className="
               h-full
-              flex
-              items-center
-              justify-center
               bg-white
               rounded-3xl
               shadow-xl
               p-6
+              overflow-y-auto
             ">
 
               <div className="
-                max-w-md
-                w-full
+                max-w-5xl
+                mx-auto
               ">
 
-                <QRCodePaciente />
+                <div className="
+                  mb-8
+                ">
 
-                <a
+                  <p className="
+                    text-sm
+                    font-semibold
+                    text-teal-600
+                    mb-2
+                  ">
+                    PACIENTES
+                  </p>
 
-                  href="/#/registro-paciente"
-
-                  target="_blank"
-
-                  rel="noopener noreferrer"
-
-                  className="
-                    block
-                    mt-6
-                    w-full
-                    bg-teal-600
-                    hover:bg-teal-700
-                    text-white
-                    py-4
-                    rounded-2xl
+                  <h2 className="
+                    text-3xl
                     font-bold
-                    text-lg
-                    text-center
-                  "
-                >
+                    text-slate-800
+                  ">
+                    Expedientes de Pacientes
+                  </h2>
 
-                  Abrir Formulario
+                  <p className="
+                    text-slate-500
+                    mt-3
+                    max-w-2xl
+                  ">
+                    Selecciona un paciente de la lista
+                    para consultar su información clínica,
+                    tratamientos, citas e historial.
+                  </p>
 
-                </a>
+                </div>
+
+                <div className="
+                  grid
+                  grid-cols-1
+                  md:grid-cols-3
+                  gap-4
+                  mb-8
+                ">
+
+                  <div className="
+                    bg-slate-50
+                    border
+                    border-slate-200
+                    rounded-2xl
+                    p-5
+                  ">
+
+                    <p className="
+                      text-sm
+                      text-slate-500
+                    ">
+                      Pacientes registrados
+                    </p>
+
+                    <p className="
+                      text-3xl
+                      font-bold
+                      text-slate-800
+                      mt-2
+                    ">
+                      {pacientes.length}
+                    </p>
+
+                  </div>
+
+                  <div className="
+                    bg-slate-50
+                    border
+                    border-slate-200
+                    rounded-2xl
+                    p-5
+                  ">
+
+                    <p className="
+                      text-sm
+                      text-slate-500
+                    ">
+                      Expedientes
+                    </p>
+
+                    <p className="
+                      text-lg
+                      font-bold
+                      text-teal-700
+                      mt-2
+                    ">
+                      Acceso rápido
+                    </p>
+
+                  </div>
+
+                  <div className="
+                    bg-slate-50
+                    border
+                    border-slate-200
+                    rounded-2xl
+                    p-5
+                  ">
+
+                    <p className="
+                      text-sm
+                      text-slate-500
+                    ">
+                      Nuevo paciente
+                    </p>
+
+                    <p className="
+                      text-lg
+                      font-bold
+                      text-slate-800
+                      mt-2
+                    ">
+                      Registro digital
+                    </p>
+
+                  </div>
+
+                </div>
+
+                <div className="
+                  grid
+                  grid-cols-1
+                  xl:grid-cols-2
+                  gap-6
+                ">
+
+                  <div className="
+                    border
+                    border-slate-200
+                    rounded-3xl
+                    p-6
+                  ">
+
+                    <h3 className="
+                      text-xl
+                      font-bold
+                      text-slate-800
+                    ">
+                      Consulta un expediente
+                    </h3>
+
+                    <p className="
+                      text-sm
+                      text-slate-500
+                      mt-3
+                    ">
+                      Utiliza el buscador o selecciona
+                      un paciente de la columna izquierda
+                      para abrir su expediente completo.
+                    </p>
+
+                  </div>
+
+                  <div className="
+                    border
+                    border-slate-200
+                    rounded-3xl
+                    p-6
+                  ">
+
+                    <p className="
+                      text-xs
+                      font-semibold
+                      text-teal-600
+                      mb-2
+                    ">
+                      REGISTRO DE PACIENTES
+                    </p>
+
+                    <h3 className="
+                      text-xl
+                      font-bold
+                      text-slate-800
+                    ">
+                      Formulario mediante QR
+                    </h3>
+
+                    <p className="
+                      text-sm
+                      text-slate-500
+                      mt-2
+                    ">
+                      El paciente puede escanear el
+                      código y completar su información
+                      desde su teléfono.
+                    </p>
+
+                    <div className="
+                      max-w-[260px]
+                      mx-auto
+                      mt-6
+                    ">
+
+                      <QRCodePaciente />
+
+                    </div>
+
+                    <a
+                      href="/#/registro-paciente"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="
+                        block
+                        mt-5
+                        w-full
+                        bg-teal-600
+                        hover:bg-teal-700
+                        text-white
+                        py-3
+                        rounded-xl
+                        font-semibold
+                        text-sm
+                        text-center
+                      "
+                    >
+                      Abrir formulario de registro
+                    </a>
+
+                  </div>
+
+                </div>
 
               </div>
 

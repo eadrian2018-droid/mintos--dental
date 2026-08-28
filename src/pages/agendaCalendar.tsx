@@ -1,53 +1,66 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+} from "react-router-dom";
 
-import FullCalendar from "@fullcalendar/react";
+import FullCalendar
+  from "@fullcalendar/react";
 
-import dayGridPlugin from "@fullcalendar/daygrid";
+import dayGridPlugin
+  from "@fullcalendar/daygrid";
 
-import timeGridPlugin from "@fullcalendar/timegrid";
+import timeGridPlugin
+  from "@fullcalendar/timegrid";
 
-import interactionPlugin from "@fullcalendar/interaction";
+import interactionPlugin
+  from "@fullcalendar/interaction";
 
-import Modal from "react-modal";
+import Modal
+  from "react-modal";
 
-import Select from "react-select";
+import Select
+  from "react-select";
 
-import { supabase } from "../lib/supabase";
+import {
+  CalendarDays,
+  Circle,
+} from "lucide-react";
+
+import {
+  supabase,
+} from "../lib/supabase";
+
+import {
+  useAuth,
+} from "../context/AuthContext";
+
+import {
+  registrarBitacora,
+} from "../lib/registrarBitacora";
+
+import "./AgendaCalendar.css";
 
 type Evento = {
-
   id: string;
-
   title: string;
-
   start: string;
-
   end: string;
-
   backgroundColor?: string;
-
   borderColor?: string;
-
   extendedProps?: {
-
     estado?: string;
-
     doctor?: string;
-
     paciente_id?: number;
-
   };
-
 };
 
 type Paciente = {
-
   id: number;
-
   nombre: string;
-
 };
 
 Modal.setAppElement("#root");
@@ -57,95 +70,133 @@ export default function AgendaCalendar() {
   const navigate =
     useNavigate();
 
-  const [eventos,
-    setEventos] =
-    useState<Evento[]>([]);
+  const {
+    permisos,
+  } = useAuth();
 
-  const [pacientes,
-    setPacientes] =
-    useState<Paciente[]>([]);
+  const puedeEditarCitas =
+    permisos?.editar_citas === true;
 
-  const [modalOpen,
-    setModalOpen] =
-    useState(false);
+  const [
+    eventos,
+    setEventos,
+  ] = useState<Evento[]>([]);
 
-  const [modoCrear,
-    setModoCrear] =
-    useState(false);
+  const [
+    pacientes,
+    setPacientes,
+  ] = useState<Paciente[]>([]);
 
-  const [eventoSeleccionado,
-    setEventoSeleccionado] =
-    useState<any>(null);
+  const [
+    modalOpen,
+    setModalOpen,
+  ] = useState(false);
 
-  const [pacienteId,
-    setPacienteId] =
-    useState<number | null>(null);
+  const [
+    modoCrear,
+    setModoCrear,
+  ] = useState(false);
 
-  const [nombreManual,
-    setNombreManual] =
-    useState("");
+  const [
+    eventoSeleccionado,
+    setEventoSeleccionado,
+  ] = useState<any>(null);
 
-  const [estado,
-    setEstado] =
-    useState("pendiente");
+  const [
+    pacienteId,
+    setPacienteId,
+  ] = useState<number | null>(
+    null
+  );
 
-  const [doctor,
-    setDoctor] =
-    useState("Dr. Edgar");
+  const [
+    nombreManual,
+    setNombreManual,
+  ] = useState("");
 
-  const [inicioNuevo,
-    setInicioNuevo] =
-    useState<any>(null);
+  const [
+    estado,
+    setEstado,
+  ] = useState("pendiente");
 
-  const [finNuevo,
-    setFinNuevo] =
-    useState<any>(null);
+  const [
+    doctor,
+    setDoctor,
+  ] = useState("Dr. Edgar");
+
+  const [
+    inicioNuevo,
+    setInicioNuevo,
+  ] = useState<any>(null);
+
+  const [
+    finNuevo,
+    setFinNuevo,
+  ] = useState<any>(null);
 
   useEffect(() => {
 
     cargarCitas();
-
     cargarPacientes();
 
   }, []);
 
   function colorEstado(
-    estado: string
+    estadoActual: string
   ) {
 
-    if (estado === "confirmada")
-      return "#16a34a";
+    if (
+      estadoActual ===
+      "confirmada"
+    ) {
 
-    if (estado === "cancelada")
-      return "#dc2626";
+      return "#22c55e";
 
-    if (estado === "tratamiento")
-      return "#2563eb";
+    }
 
-    return "#eab308";
+    if (
+      estadoActual ===
+      "cancelada"
+    ) {
+
+      return "#ef4444";
+
+    }
+
+    if (
+      estadoActual ===
+      "tratamiento"
+    ) {
+
+      return "#3b82f6";
+
+    }
+
+    return "#f59e0b";
 
   }
 
   async function cargarPacientes() {
 
-    const { data } =
-
-      await supabase
-
-        .from("pacientes")
-
-        .select("id, nombre")
-
-        .order(
-          "nombre",
-          {
-            ascending: true,
-          }
-        );
+    const {
+      data,
+    } = await supabase
+      .from("pacientes")
+      .select(
+        "id, nombre"
+      )
+      .order(
+        "nombre",
+        {
+          ascending: true,
+        }
+      );
 
     if (data) {
 
-      setPacientes(data);
+      setPacientes(
+        data
+      );
 
     }
 
@@ -153,68 +204,79 @@ export default function AgendaCalendar() {
 
   async function cargarCitas() {
 
-    const { data } =
+    const {
+      data,
+    } = await supabase
+      .from("citas")
+      .select("*")
+      .order(
+        "inicio",
+        {
+          ascending: true,
+        }
+      );
 
-      await supabase
+    if (!data) {
 
-        .from("citas")
-
-        .select("*")
-
-        .order(
-          "inicio",
-          {
-            ascending: true,
-          }
-        );
-
-    if (!data)
       return;
 
+    }
+
     const eventosFormateados =
+      data.map(
+        (cita) => ({
 
-      data.map((cita)=>({
+          id:
+            String(
+              cita.id
+            ),
 
-        id:
-          String(cita.id),
+          title:
+            `${
+              cita.paciente ||
+              "Paciente"
+            } - ${
+              cita.doctor ||
+              "Doctor"
+            }`,
 
-        title:
-          `${cita.paciente || "Paciente"} - ${cita.doctor || "Doctor"}`,
+          start:
+            new Date(
+              cita.inicio
+            ).toISOString(),
 
-        start:
-          new Date(
-            cita.inicio
-          ).toISOString(),
+          end:
+            new Date(
+              cita.fin
+            ).toISOString(),
 
-        end:
-          new Date(
-            cita.fin
-          ).toISOString(),
+          backgroundColor:
+            colorEstado(
+              cita.estado ||
+              "pendiente"
+            ),
 
-        backgroundColor:
-          colorEstado(
-            cita.estado || "pendiente"
-          ),
+          borderColor:
+            colorEstado(
+              cita.estado ||
+              "pendiente"
+            ),
 
-        borderColor:
-          colorEstado(
-            cita.estado || "pendiente"
-          ),
+          extendedProps: {
 
-        extendedProps: {
+            estado:
+              cita.estado,
 
-          estado:
-            cita.estado,
+            doctor:
+              cita.doctor,
 
-          doctor:
-            cita.doctor,
+            paciente_id:
+              cita.paciente_id,
 
-          paciente_id:
-            cita.paciente_id,
+          },
 
-        },
-
-      }));
+        })
+      );
 
     setEventos(
       eventosFormateados
@@ -226,7 +288,9 @@ export default function AgendaCalendar() {
     info: any
   ) {
 
-    setModoCrear(true);
+    setModoCrear(
+      true
+    );
 
     setInicioNuevo(
       info.start
@@ -236,9 +300,13 @@ export default function AgendaCalendar() {
       info.end
     );
 
-    setPacienteId(null);
+    setPacienteId(
+      null
+    );
 
-    setNombreManual("");
+    setNombreManual(
+      ""
+    );
 
     setDoctor(
       "Dr. Edgar"
@@ -248,63 +316,111 @@ export default function AgendaCalendar() {
       "pendiente"
     );
 
-    setModalOpen(true);
+    setModalOpen(
+      true
+    );
 
   }
 
   async function guardarNuevaCita() {
 
     let nombreFinal =
-      nombreManual;
+      nombreManual.trim();
 
     if (pacienteId) {
 
       const paciente =
         pacientes.find(
-          (p)=>
-            p.id === pacienteId
+          (p) =>
+            p.id ===
+            pacienteId
         );
 
       nombreFinal =
-        paciente?.nombre || "";
+        paciente?.nombre ||
+        "";
+
     }
 
-    if (!nombreFinal)
+    if (!nombreFinal) {
+
       return;
 
-    await supabase
+    }
 
+    const inicio =
+      new Date(
+        inicioNuevo
+      ).toISOString();
+
+    const fin =
+      new Date(
+        finNuevo
+      ).toISOString();
+
+    const {
+      data,
+      error,
+    } = await supabase
       .from("citas")
-
       .insert([
-
         {
-
           paciente:
             nombreFinal,
 
           paciente_id:
             pacienteId,
 
-          inicio:
-            new Date(
-              inicioNuevo
-            ).toISOString(),
+          inicio,
 
-          fin:
-            new Date(
-              finNuevo
-            ).toISOString(),
+          fin,
 
           estado,
 
           doctor,
-
         },
+      ])
+      .select("id")
+      .single();
 
-      ]);
+    if (error) {
 
-    setModalOpen(false);
+      console.error(
+        "Error creando cita:",
+        error
+      );
+
+      alert(
+        "No se pudo crear la cita."
+      );
+
+      return;
+
+    }
+
+    await registrarBitacora({
+      accion:
+        "Crear cita",
+
+      modulo:
+        "Agenda",
+
+      detalle:
+        `Paciente: ${nombreFinal} | Doctor: ${doctor} | Estado: ${estado} | Inicio: ${
+          new Date(
+            inicio
+          ).toLocaleString(
+            "es-MX"
+          )
+        } | Cita ID: ${
+          data?.id ||
+          ""
+        }`,
+    });
+
+    setModalOpen(
+      false
+    );
 
     cargarCitas();
 
@@ -314,28 +430,72 @@ export default function AgendaCalendar() {
     info: any
   ) {
 
-    await supabase
+    const inicio =
+      new Date(
+        info.event.start
+      ).toISOString();
 
+    const fin =
+      new Date(
+        info.event.end
+      ).toISOString();
+
+    const {
+      error,
+    } = await supabase
       .from("citas")
-
       .update({
-
-        inicio:
-          new Date(
-            info.event.start
-          ).toISOString(),
-
-        fin:
-          new Date(
-            info.event.end
-          ).toISOString(),
-
+        inicio,
+        fin,
       })
-
       .eq(
         "id",
         info.event.id
       );
+
+    if (error) {
+
+      console.error(
+        "Error moviendo cita:",
+        error
+      );
+
+      alert(
+        "No se pudo actualizar el horario de la cita."
+      );
+
+      info.revert();
+
+      return;
+
+    }
+
+    await registrarBitacora({
+      accion:
+        "Cambiar horario de cita",
+
+      modulo:
+        "Agenda",
+
+      detalle:
+        `Cita ID: ${info.event.id} | Paciente: ${
+          info.event.title
+            ?.split(" - ")[0] ||
+          "Paciente"
+        } | Nuevo inicio: ${
+          new Date(
+            inicio
+          ).toLocaleString(
+            "es-MX"
+          )
+        } | Nuevo fin: ${
+          new Date(
+            fin
+          ).toLocaleString(
+            "es-MX"
+          )
+        }`,
+    });
 
     cargarCitas();
 
@@ -345,14 +505,15 @@ export default function AgendaCalendar() {
     info: any
   ) {
 
-    setModoCrear(false);
+    setModoCrear(
+      false
+    );
 
     setEventoSeleccionado(
       info.event
     );
 
     const nombrePaciente =
-
       info.event.title
         .split(" - ")[0];
 
@@ -361,49 +522,95 @@ export default function AgendaCalendar() {
     );
 
     setEstado(
-
-      info.event.extendedProps
+      info.event
+        .extendedProps
         ?.estado ||
-
       "pendiente"
-
     );
 
     setDoctor(
-
-      info.event.extendedProps
+      info.event
+        .extendedProps
         ?.doctor ||
-
       "Dr. Edgar"
-
     );
 
     setPacienteId(
-
-      info.event.extendedProps
+      info.event
+        .extendedProps
         ?.paciente_id ||
-
       null
-
     );
 
-    setModalOpen(true);
+    setModalOpen(
+      true
+    );
 
   }
 
   async function guardarCambios() {
 
-    if (!eventoSeleccionado)
+    if (
+      !eventoSeleccionado
+    ) {
+
       return;
 
-    await supabase
+    }
 
+    let nombreFinal =
+      nombreManual.trim();
+
+    if (pacienteId) {
+
+      const paciente =
+        pacientes.find(
+          (p) =>
+            p.id ===
+            pacienteId
+        );
+
+      nombreFinal =
+        paciente?.nombre ||
+        nombreFinal;
+
+    }
+
+    if (!nombreFinal) {
+
+      alert(
+        "Ingresa el nombre del paciente."
+      );
+
+      return;
+
+    }
+
+    const estadoAnterior =
+      eventoSeleccionado
+        .extendedProps
+        ?.estado ||
+      "pendiente";
+
+    const doctorAnterior =
+      eventoSeleccionado
+        .extendedProps
+        ?.doctor ||
+      "";
+
+    const pacienteAnterior =
+      eventoSeleccionado
+        .title
+        ?.split(" - ")[0] ||
+      "";
+
+    const {
+      error,
+    } = await supabase
       .from("citas")
-
       .update({
-
         paciente:
-          nombreManual,
+          nombreFinal,
 
         paciente_id:
           pacienteId,
@@ -411,15 +618,87 @@ export default function AgendaCalendar() {
         estado,
 
         doctor,
-
       })
-
       .eq(
         "id",
         eventoSeleccionado.id
       );
 
-    setModalOpen(false);
+    if (error) {
+
+      console.error(
+        "Error actualizando cita:",
+        error
+      );
+
+      alert(
+        "No se pudieron guardar los cambios."
+      );
+
+      return;
+
+    }
+
+    const cambios: string[] =
+      [];
+
+    if (
+      pacienteAnterior !==
+      nombreFinal
+    ) {
+
+      cambios.push(
+        `Paciente: ${pacienteAnterior} → ${nombreFinal}`
+      );
+
+    }
+
+    if (
+      doctorAnterior !==
+      doctor
+    ) {
+
+      cambios.push(
+        `Doctor: ${doctorAnterior} → ${doctor}`
+      );
+
+    }
+
+    if (
+      estadoAnterior !==
+      estado
+    ) {
+
+      cambios.push(
+        `Estado: ${estadoAnterior} → ${estado}`
+      );
+
+    }
+
+    await registrarBitacora({
+      accion:
+        "Editar cita",
+
+      modulo:
+        "Agenda",
+
+      detalle:
+        cambios.length > 0
+          ? `Cita ID: ${
+              eventoSeleccionado.id
+            } | ${
+              cambios.join(
+                " | "
+              )
+            }`
+          : `Cita ID: ${
+              eventoSeleccionado.id
+            } | Guardada sin cambios visibles`,
+    });
+
+    setModalOpen(
+      false
+    );
 
     cargarCitas();
 
@@ -427,21 +706,85 @@ export default function AgendaCalendar() {
 
   async function eliminarCita() {
 
-    if (!eventoSeleccionado)
+    if (
+      !eventoSeleccionado
+    ) {
+
       return;
 
-    await supabase
+    }
 
-      .from("citas")
-
-      .delete()
-
-      .eq(
-        "id",
-        eventoSeleccionado.id
+    const confirmar =
+      window.confirm(
+        "¿Seguro que quieres eliminar esta cita?"
       );
 
-    setModalOpen(false);
+    if (!confirmar) {
+
+      return;
+
+    }
+
+    const nombrePaciente =
+      eventoSeleccionado
+        .title
+        ?.split(" - ")[0] ||
+      "Paciente";
+
+    const doctorCita =
+      eventoSeleccionado
+        .extendedProps
+        ?.doctor ||
+      "Doctor";
+
+    const estadoCita =
+      eventoSeleccionado
+        .extendedProps
+        ?.estado ||
+      "pendiente";
+
+    const citaId =
+      eventoSeleccionado.id;
+
+    const {
+      error,
+    } = await supabase
+      .from("citas")
+      .delete()
+      .eq(
+        "id",
+        citaId
+      );
+
+    if (error) {
+
+      console.error(
+        "Error eliminando cita:",
+        error
+      );
+
+      alert(
+        "No se pudo eliminar la cita."
+      );
+
+      return;
+
+    }
+
+    await registrarBitacora({
+      accion:
+        "Eliminar cita",
+
+      modulo:
+        "Agenda",
+
+      detalle:
+        `Cita ID: ${citaId} | Paciente: ${nombrePaciente} | Doctor: ${doctorCita} | Estado: ${estadoCita}`,
+    });
+
+    setModalOpen(
+      false
+    );
 
     cargarCitas();
 
@@ -459,7 +802,9 @@ export default function AgendaCalendar() {
 
     }
 
-    setModalOpen(false);
+    setModalOpen(
+      false
+    );
 
     navigate(
       `/paciente/${pacienteId}`
@@ -468,116 +813,276 @@ export default function AgendaCalendar() {
   }
 
   const opcionesPacientes =
+    pacientes.map(
+      (p) => ({
+        value:
+          p.id,
 
-    pacientes.map((p)=>({
-
-      value: p.id,
-
-      label: p.nombre,
-
-    }));
+        label:
+          p.nombre,
+      })
+    );
 
   return (
 
-    <div className="
-      space-y-6
-    ">
+    <div
+      className="agenda-page"
+    >
 
-      <div>
+      <div
+        className="agenda-top"
+      >
 
-        <h1 className="
-          text-5xl
-          font-bold
-          text-gray-800
-        ">
-          Agenda y Citas
-        </h1>
+        <div
+          className="agenda-heading"
+        >
+
+          <div
+            className="agenda-heading-icon"
+          >
+
+            <CalendarDays
+              size={24}
+            />
+
+          </div>
+
+          <div>
+
+            <h1>
+              Agenda
+            </h1>
+
+            <p>
+              Administra citas y horarios
+              de tus pacientes
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          className="agenda-status-legend"
+        >
+
+          <div
+            className="agenda-status-item"
+          >
+
+            <Circle
+              size={10}
+              fill="#f59e0b"
+              stroke="#f59e0b"
+            />
+
+            Pendiente
+
+          </div>
+
+          <div
+            className="agenda-status-item"
+          >
+
+            <Circle
+              size={10}
+              fill="#22c55e"
+              stroke="#22c55e"
+            />
+
+            Confirmada
+
+          </div>
+
+          <div
+            className="agenda-status-item"
+          >
+
+            <Circle
+              size={10}
+              fill="#3b82f6"
+              stroke="#3b82f6"
+            />
+
+            Tratamiento
+
+          </div>
+
+          <div
+            className="agenda-status-item"
+          >
+
+            <Circle
+              size={10}
+              fill="#ef4444"
+              stroke="#ef4444"
+            />
+
+            Cancelada
+
+          </div>
+
+        </div>
 
       </div>
 
-      <div className="
-        bg-white
-        rounded-3xl
-        shadow-xl
-        p-6
-      ">
+      <div
+        className="agenda-calendar-card"
+      >
 
         <FullCalendar
 
           plugins={[
-
             dayGridPlugin,
-
             timeGridPlugin,
-
             interactionPlugin,
-
           ]}
 
-          initialView="timeGridWeek"
+          initialView=
+            "timeGridWeek"
 
-          selectable
+          locale="es"
 
-          editable
+          firstDay={1}
+
+          headerToolbar={{
+            left:
+              "prev,next today",
+
+            center:
+              "title",
+
+            right:
+              "timeGridDay,timeGridWeek,dayGridMonth",
+          }}
+
+          buttonText={{
+            today:
+              "Hoy",
+
+            month:
+              "Mes",
+
+            week:
+              "Semana",
+
+            day:
+              "Día",
+          }}
+
+          selectable={
+            puedeEditarCitas
+          }
+
+          editable={
+            puedeEditarCitas
+          }
+
+          selectMirror
+
+          nowIndicator
 
           events={
             eventos
           }
 
           select={
-            abrirCrearCita
+            puedeEditarCitas
+              ? abrirCrearCita
+              : undefined
           }
 
           eventDrop={
-            moverCita
+            puedeEditarCitas
+              ? moverCita
+              : undefined
           }
 
           eventResize={
-            moverCita
+            puedeEditarCitas
+              ? moverCita
+              : undefined
           }
 
           eventClick={
             abrirModal
           }
 
-          height="80vh"
+          height=
+            "calc(100vh - 245px)"
 
-          slotMinTime="08:00:00"
+          slotMinTime=
+            "08:00:00"
 
-          slotMaxTime="20:00:00"
+          slotMaxTime=
+            "20:30:00"
 
-          slotDuration="00:15:00"
+          slotDuration=
+            "00:30:00"
 
-          snapDuration="00:15:00"
+          snapDuration=
+            "00:15:00"
 
-          slotLabelInterval="01:00"
+          slotLabelInterval=
+            "01:00"
 
           slotLabelFormat={{
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
+            hour:
+              "numeric",
+
+            minute:
+              "2-digit",
+
+            hour12:
+              true,
           }}
 
-          allDaySlot={false}
+          eventTimeFormat={{
+            hour:
+              "numeric",
 
-          dayHeaderClassNames={() => [
-            "bg-gray-100",
-            "text-gray-700",
-            "font-bold",
+            minute:
+              "2-digit",
+
+            hour12:
+              true,
+          }}
+
+          dayHeaderFormat={{
+            weekday:
+              "short",
+
+            day:
+              "numeric",
+
+            month:
+              "short",
+          }}
+
+          allDaySlot={
+            false
+          }
+
+          hiddenDays={[
+            0,
           ]}
 
-          slotLaneClassNames={() => [
-            "bg-blue-50/40",
-            "border-gray-200",
-          ]}
+          expandRows
 
-          slotLabelClassNames={() => [
-            "bg-gray-100",
-            "text-gray-700",
-            "font-bold",
-            "border-r",
-            "border-gray-300",
-          ]}
+          stickyHeaderDates
+
+          eventDisplay=
+            "block"
+
+          eventShortHeight={
+            24
+          }
+
+          slotEventOverlap={
+            false
+          }
+
+          dayMaxEvents
 
         />
 
@@ -585,76 +1090,79 @@ export default function AgendaCalendar() {
 
       <Modal
 
-        isOpen={modalOpen}
-
-        onRequestClose={()=>
-          setModalOpen(false)
+        isOpen={
+          modalOpen
         }
 
-        style={{
+        onRequestClose={() =>
+          setModalOpen(
+            false
+          )
+        }
 
-          overlay: {
+        className=
+          "agenda-modal"
 
-            backgroundColor:
-              "rgba(0,0,0,0.5)",
+        overlayClassName=
+          "agenda-modal-overlay"
 
-            zIndex: 9999,
-
-            display: "flex",
-
-            alignItems: "center",
-
-            justifyContent: "center",
-
-          },
-
-          content: {
-
-            position: "relative",
-
-            inset: "unset",
-
-            width: "500px",
-
-            borderRadius: "24px",
-
-            padding: "40px",
-
-            border: "none",
-
-          },
-
-        }}
       >
 
-        <h2 className="
-          text-3xl
-          font-bold
-          mb-6
-        ">
-
-          {
-
-            modoCrear
-
-            ? "Nueva Cita"
-
-            : "Editar Cita"
-
-          }
-
-        </h2>
-
-        <div className="space-y-5">
+        <div
+          className="agenda-modal-header"
+        >
 
           <div>
 
-            <label className="
-              block
-              mb-2
-              font-semibold
-            ">
-              Buscar Paciente Existente
+            <span
+              className="agenda-modal-eyebrow"
+            >
+
+              {
+                modoCrear
+                  ? "NUEVA CITA"
+                  : "DETALLES DE CITA"
+              }
+
+            </span>
+
+            <h2>
+
+              {
+                modoCrear
+                  ? "Agendar paciente"
+                  : "Editar cita"
+              }
+
+            </h2>
+
+          </div>
+
+          <button
+            type="button"
+            className=
+              "agenda-modal-close"
+            onClick={() =>
+              setModalOpen(
+                false
+              )
+            }
+          >
+            ×
+          </button>
+
+        </div>
+
+        <div
+          className="agenda-modal-body"
+        >
+
+          <div
+            className="agenda-field"
+          >
+
+            <label>
+              Buscar paciente existente
             </label>
 
             <Select
@@ -663,17 +1171,34 @@ export default function AgendaCalendar() {
                 opcionesPacientes
               }
 
-              placeholder="
-Buscar paciente...
-              "
+              placeholder=
+                "Buscar paciente..."
 
               isClearable
 
-              onChange={(option:any)=>{
+              isDisabled={
+                !puedeEditarCitas
+              }
+
+              value={
+                pacienteId
+                  ? opcionesPacientes.find(
+                      (option) =>
+                        option.value ===
+                        pacienteId
+                    ) || null
+                  : null
+              }
+
+              onChange={(
+                option: any
+              ) => {
 
                 if (!option) {
 
-                  setPacienteId(null);
+                  setPacienteId(
+                    null
+                  );
 
                   return;
 
@@ -685,225 +1210,280 @@ Buscar paciente...
 
                 const paciente =
                   pacientes.find(
-                    (p)=>
-                      p.id === option.value
+                    (p) =>
+                      p.id ===
+                      option.value
                   );
 
                 setNombreManual(
-                  paciente?.nombre || ""
+                  paciente?.nombre ||
+                  ""
                 );
 
               }}
+
+              classNamePrefix=
+                "agenda-select"
 
             />
 
           </div>
 
-          <div>
+          <div
+            className="agenda-divider"
+          >
 
-            <label className="
-              block
-              mb-2
-              font-semibold
-            ">
-              O escribir nuevo paciente
+            <span>
+              O
+            </span>
+
+          </div>
+
+          <div
+            className="agenda-field"
+          >
+
+            <label>
+              Nombre del paciente
             </label>
 
             <input
 
-              value={nombreManual}
+              value={
+                nombreManual
+              }
 
-              onChange={(e)=>
+              disabled={
+                !puedeEditarCitas
+              }
+
+              onChange={(e) =>
                 setNombreManual(
                   e.target.value
                 )
               }
 
-              className="
-                w-full
-                border
-                rounded-xl
-                p-4
-              "
-
-              placeholder="
-Nombre nuevo paciente
-              "
+              placeholder=
+                "Nombre del paciente"
 
             />
 
           </div>
 
-          <select
-
-            value={doctor}
-
-            onChange={(e)=>
-              setDoctor(
-                e.target.value
-              )
-            }
-
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
+          <div
+            className="agenda-modal-grid"
           >
 
-            <option>
-              Dr. Edgar
-            </option>
+            <div
+              className="agenda-field"
+            >
 
-            <option>
-              Dra. Maria
-            </option>
+              <label>
+                Doctor
+              </label>
 
-            <option>
-              Dr. Juan
-            </option>
+              <select
 
-          </select>
+                value={
+                  doctor
+                }
 
-          <select
+                disabled={
+                  !puedeEditarCitas
+                }
 
-            value={estado}
+                onChange={(e) =>
+                  setDoctor(
+                    e.target.value
+                  )
+                }
 
-            onChange={(e)=>
-              setEstado(
-                e.target.value
-              )
-            }
+              >
 
-            className="
-              w-full
-              border
-              rounded-xl
-              p-4
-            "
-          >
+                <option>
+                  Dr. Edgar
+                </option>
 
-            <option value="pendiente">
-              Pendiente
-            </option>
+                <option>
+                  Dra. Maria
+                </option>
 
-            <option value="confirmada">
-              Confirmada
-            </option>
+                <option>
+                  Dr. Juan
+                </option>
 
-            <option value="tratamiento">
-              Tratamiento
-            </option>
+              </select>
 
-            <option value="cancelada">
-              Cancelada
-            </option>
+            </div>
 
-          </select>
+            <div
+              className="agenda-field"
+            >
 
-          <div className="
-            flex
-            flex-wrap
-            gap-4
-            pt-4
-          ">
+              <label>
+                Estado
+              </label>
 
-            {
+              <select
 
-              modoCrear
+                value={
+                  estado
+                }
 
+                disabled={
+                  !puedeEditarCitas
+                }
+
+                onChange={(e) =>
+                  setEstado(
+                    e.target.value
+                  )
+                }
+
+              >
+
+                <option
+                  value="pendiente"
+                >
+                  Pendiente
+                </option>
+
+                <option
+                  value="confirmada"
+                >
+                  Confirmada
+                </option>
+
+                <option
+                  value="tratamiento"
+                >
+                  Tratamiento
+                </option>
+
+                <option
+                  value="cancelada"
+                >
+                  Cancelada
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div
+          className="agenda-modal-footer"
+        >
+
+          {
+            modoCrear
               ? (
 
-                <button
+                puedeEditarCitas && (
 
-                  onClick={
-                    guardarNuevaCita
-                  }
+                  <button
 
-                  className="
-                    bg-teal-600
-                    hover:bg-teal-700
-                    text-white
-                    px-6
-                    py-3
-                    rounded-xl
-                    font-bold
-                  "
-                >
-                  Crear Cita
-                </button>
+                    onClick={
+                      guardarNuevaCita
+                    }
+
+                    className=
+                      "agenda-btn agenda-btn-primary"
+
+                  >
+                    Crear cita
+                  </button>
+
+                )
 
               )
-
               : (
 
                 <>
 
-                  <button
+                  {
+                    puedeEditarCitas && (
 
-                    onClick={
-                      guardarCambios
-                    }
+                      <button
 
-                    className="
-                      bg-teal-600
-                      hover:bg-teal-700
-                      text-white
-                      px-6
-                      py-3
-                      rounded-xl
-                      font-bold
-                    "
-                  >
-                    Guardar
-                  </button>
+                        onClick={
+                          guardarCambios
+                        }
 
-                  <button
+                        className=
+                          "agenda-btn agenda-btn-primary"
 
-                    onClick={
-                      abrirExpediente
-                    }
+                      >
+                        Guardar
+                      </button>
 
-                    className="
-                      bg-blue-600
-                      hover:bg-blue-700
-                      text-white
-                      px-6
-                      py-3
-                      rounded-xl
-                      font-bold
-                    "
-                  >
-                    Abrir Expediente
-                  </button>
+                    )
+                  }
 
-                  <button
+                  {
+                    permisos
+                      ?.ver_expediente ===
+                      true && (
 
-                    onClick={
-                      eliminarCita
-                    }
+                      <button
 
-                    className="
-                      bg-red-600
-                      hover:bg-red-700
-                      text-white
-                      px-6
-                      py-3
-                      rounded-xl
-                      font-bold
-                    "
-                  >
-                    Eliminar
-                  </button>
+                        onClick={
+                          abrirExpediente
+                        }
+
+                        className=
+                          "agenda-btn agenda-btn-secondary"
+
+                      >
+                        Abrir expediente
+                      </button>
+
+                    )
+                  }
+
+                  {
+                    puedeEditarCitas && (
+
+                      <button
+
+                        onClick={
+                          eliminarCita
+                        }
+
+                        className=
+                          "agenda-btn agenda-btn-danger"
+
+                      >
+                        Eliminar
+                      </button>
+
+                    )
+                  }
 
                 </>
 
               )
+          }
 
+          <button
+
+            type="button"
+
+            onClick={() =>
+              setModalOpen(
+                false
+              )
             }
 
-          </div>
+            className=
+              "agenda-btn agenda-btn-neutral"
+
+          >
+            Cerrar
+          </button>
 
         </div>
 

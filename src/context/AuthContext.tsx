@@ -21,6 +21,36 @@ type RolUsuario =
   | "doctor"
   | "recepcionista";
 
+export type PermisosUsuario = {
+  ver_agenda: boolean;
+  editar_citas: boolean;
+
+  ver_pacientes: boolean;
+  editar_pacientes: boolean;
+
+  ver_expediente: boolean;
+  agregar_notas_clinicas: boolean;
+
+  crear_tratamientos: boolean;
+  cambiar_estado_tratamientos: boolean;
+  anular_tratamientos: boolean;
+
+  registrar_cobros: boolean;
+  registrar_gastos: boolean;
+  anular_cobros: boolean;
+  anular_gastos: boolean;
+
+  ver_resumen_financiero: boolean;
+  ver_utilidades: boolean;
+  ver_comisiones: boolean;
+
+  configurar_precios_costos: boolean;
+  configurar_comisiones: boolean;
+
+  administrar_usuarios: boolean;
+  ver_bitacora: boolean;
+};
+
 type PerfilUsuario = {
   id: string;
   nombre: string;
@@ -34,8 +64,10 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   perfil: PerfilUsuario | null;
+  permisos: PermisosUsuario | null;
   loading: boolean;
   recargarPerfil: () => Promise<void>;
+  recargarPermisos: () => Promise<void>;
 };
 
 const AuthContext =
@@ -69,6 +101,13 @@ export function AuthProvider({
     perfil,
     setPerfil,
   ] = useState<PerfilUsuario | null>(
+    null
+  );
+
+  const [
+    permisos,
+    setPermisos,
+  ] = useState<PermisosUsuario | null>(
     null
   );
 
@@ -133,6 +172,76 @@ export function AuthProvider({
     }
   }
 
+  async function obtenerPermisos(
+    usuario: User | null
+  ): Promise<PermisosUsuario | null> {
+
+    if (!usuario) {
+      return null;
+    }
+
+    try {
+
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("permisos_usuarios")
+        .select(`
+          ver_agenda,
+          editar_citas,
+          ver_pacientes,
+          editar_pacientes,
+          ver_expediente,
+          agregar_notas_clinicas,
+          crear_tratamientos,
+          cambiar_estado_tratamientos,
+          anular_tratamientos,
+          registrar_cobros,
+          registrar_gastos,
+          anular_cobros,
+          anular_gastos,
+          ver_resumen_financiero,
+          ver_utilidades,
+          ver_comisiones,
+          configurar_precios_costos,
+          configurar_comisiones,
+          administrar_usuarios,
+          ver_bitacora
+        `)
+        .eq(
+          "usuario_id",
+          usuario.id
+        )
+        .maybeSingle();
+
+      if (error) {
+
+        console.error(
+          "Error cargando permisos:",
+          error
+        );
+
+        return null;
+      }
+
+      if (!data) {
+        return null;
+      }
+
+      return data as PermisosUsuario;
+
+    } catch (error) {
+
+      console.error(
+        "Error inesperado cargando permisos:",
+        error
+      );
+
+      return null;
+    }
+  }
+
   async function cargarPerfil(
     usuario: User | null
   ) {
@@ -144,6 +253,20 @@ export function AuthProvider({
 
     setPerfil(
       perfilNuevo
+    );
+  }
+
+  async function cargarPermisos(
+    usuario: User | null
+  ) {
+
+    const permisosNuevos =
+      await obtenerPermisos(
+        usuario
+      );
+
+    setPermisos(
+      permisosNuevos
     );
   }
 
@@ -159,6 +282,22 @@ export function AuthProvider({
     }
 
     await cargarPerfil(
+      user
+    );
+  }
+
+  async function recargarPermisos() {
+
+    if (!user) {
+
+      setPermisos(
+        null
+      );
+
+      return;
+    }
+
+    await cargarPermisos(
       user
     );
   }
@@ -209,10 +348,17 @@ export function AuthProvider({
           usuarioActual
         );
 
-        const perfilActual =
-          await obtenerPerfil(
+        const [
+          perfilActual,
+          permisosActuales,
+        ] = await Promise.all([
+          obtenerPerfil(
             usuarioActual
-          );
+          ),
+          obtenerPermisos(
+            usuarioActual
+          ),
+        ]);
 
         if (!montado) {
           return;
@@ -220,6 +366,10 @@ export function AuthProvider({
 
         setPerfil(
           perfilActual
+        );
+
+        setPermisos(
+          permisosActuales
         );
 
       } catch (error) {
@@ -240,6 +390,10 @@ export function AuthProvider({
           );
 
           setPerfil(
+            null
+          );
+
+          setPermisos(
             null
           );
         }
@@ -283,6 +437,10 @@ export function AuthProvider({
             null
           );
 
+          setPermisos(
+            null
+          );
+
           setSession(
             nuevaSession
           );
@@ -294,10 +452,17 @@ export function AuthProvider({
           setTimeout(
             async () => {
 
-              const perfilNuevo =
-                await obtenerPerfil(
+              const [
+                perfilNuevo,
+                permisosNuevos,
+              ] = await Promise.all([
+                obtenerPerfil(
                   nuevoUsuario
-                );
+                ),
+                obtenerPermisos(
+                  nuevoUsuario
+                ),
+              ]);
 
               if (!montado) {
                 return;
@@ -305,6 +470,10 @@ export function AuthProvider({
 
               setPerfil(
                 perfilNuevo
+              );
+
+              setPermisos(
+                permisosNuevos
               );
 
               setLoading(
@@ -335,8 +504,10 @@ export function AuthProvider({
         session,
         user,
         perfil,
+        permisos,
         loading,
         recargarPerfil,
+        recargarPermisos,
       }}
     >
       {children}

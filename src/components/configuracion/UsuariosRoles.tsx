@@ -8,6 +8,8 @@ import {
 
 import { supabase } from "../../lib/supabase";
 
+import AdministrarUsuario from "./AdministrarUsuario";
+
 type Perfil = {
 
   id: string;
@@ -146,6 +148,13 @@ export default function UsuariosRoles() {
     cargarDoctores();
 
   }, []);
+
+  const [
+  usuarioAdministrar,
+  setUsuarioAdministrar,
+] = useState<Perfil | null>(
+  null
+);
 
   async function cargarPerfiles() {
 
@@ -802,19 +811,22 @@ export default function UsuariosRoles() {
 
                             <td className="p-3">
 
-                              <button
-                                type="button"
-                                className="
-                                  text-teal-700
-                                  hover:underline
-                                  font-semibold
-                                  text-sm
-                                "
-                              >
-
-                                Administrar
-
-                              </button>
+                       <button
+  type="button"
+  onClick={() =>
+    setUsuarioAdministrar(
+      perfil
+    )
+  }
+  className="
+    text-teal-700
+    hover:underline
+    font-semibold
+    text-sm
+  "
+>
+  Administrar
+</button>
 
                             </td>
 
@@ -1171,6 +1183,29 @@ export default function UsuariosRoles() {
         )
 
       }
+
+      {
+  usuarioAdministrar && (
+
+    <AdministrarUsuario
+      perfil={
+        usuarioAdministrar
+      }
+      doctores={
+        doctores
+      }
+      onCerrar={() =>
+        setUsuarioAdministrar(
+          null
+        )
+      }
+      onGuardado={
+        cargarPerfiles
+      }
+    />
+
+  )
+}
 
     </>
 

@@ -1,205 +1,74 @@
+import {
+  useSearchParams,
+} from "react-router-dom";
+
 import UsuariosRoles
   from "../components/configuracion/UsuariosRoles";
 
+import DoctoresConfig
+  from "../components/configuracion/DoctoresConfig";
+
+import ClinicaConfig
+  from "../components/configuracion/ClinicaConfig";
+
+import SeguridadConfig
+  from "../components/configuracion/SeguridadConfig";
+
+import BitacoraConfig
+  from "../components/configuracion/BitacoraConfig";
+
+type Seccion =
+  | "usuarios"
+  | "doctores"
+  | "seguridad"
+  | "bitacora"
+  | "clinica";
+
 export default function Configuracion() {
+
+  const [
+    searchParams,
+  ] = useSearchParams();
+
+  const seccion =
+    (
+      searchParams.get("seccion") ||
+      "usuarios"
+    ) as Seccion;
 
   return (
 
-    <div
-      className="
-        space-y-5
-      "
-    >
+    <div className="space-y-5">
 
-      <div
-        className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
-          p-5
-        "
-      >
+      {
+        seccion === "usuarios" && (
+          <UsuariosRoles />
+        )
+      }
 
-        <h1
-          className="
-            text-2xl
-            font-bold
-            text-slate-800
-          "
-        >
+      {
+        seccion === "doctores" && (
+          <DoctoresConfig />
+        )
+      }
 
-          Configuración
+      {
+        seccion === "clinica" && (
+          <ClinicaConfig />
+        )
+      }
 
-        </h1>
+      {
+        seccion === "seguridad" && (
+          <SeguridadConfig />
+        )
+      }
 
-        <p
-          className="
-            text-sm
-            text-slate-500
-            mt-1
-          "
-        >
-
-          Administración y configuración general de MintOS.
-
-        </p>
-
-      </div>
-
-      <div
-        className="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          xl:grid-cols-3
-          gap-4
-        "
-      >
-
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-slate-200
-            p-5
-          "
-        >
-
-          <h2
-            className="
-              font-bold
-              text-slate-800
-            "
-          >
-
-            Usuarios y Roles
-
-          </h2>
-
-          <p
-            className="
-              text-sm
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Administra usuarios, roles, doctores y accesos al sistema.
-
-          </p>
-
-        </div>
-
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-slate-200
-            p-5
-          "
-        >
-
-          <h2
-            className="
-              font-bold
-              text-slate-800
-            "
-          >
-
-            Seguridad
-
-          </h2>
-
-          <p
-            className="
-              text-sm
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Configuración de sesiones y seguridad del sistema.
-
-          </p>
-
-        </div>
-
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-slate-200
-            p-5
-          "
-        >
-
-          <h2
-            className="
-              font-bold
-              text-slate-800
-            "
-          >
-
-            Bitácora
-
-          </h2>
-
-          <p
-            className="
-              text-sm
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Historial de accesos y actividad de los usuarios.
-
-          </p>
-
-        </div>
-
-        <div
-          className="
-            bg-white
-            rounded-2xl
-            border
-            border-slate-200
-            p-5
-          "
-        >
-
-          <h2
-            className="
-              font-bold
-              text-slate-800
-            "
-          >
-
-            Clínica
-
-          </h2>
-
-          <p
-            className="
-              text-sm
-              text-slate-500
-              mt-2
-            "
-          >
-
-            Información y preferencias generales del consultorio.
-
-          </p>
-
-        </div>
-
-      </div>
-
-            <UsuariosRoles />
+      {
+        seccion === "bitacora" && (
+          <BitacoraConfig />
+        )
+      }
 
     </div>
 

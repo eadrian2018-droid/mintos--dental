@@ -42,6 +42,8 @@ export default function App() {
 
     perfil,
 
+    permisos,
+
     loading,
 
   } = useAuth();
@@ -205,30 +207,56 @@ export default function App() {
   }
 
   if (
-  session &&
-  perfil &&
-  !perfil.password_configurado
-) {
+    session &&
+    perfil &&
+    !perfil.password_configurado
+  ) {
 
-  return (
+    return (
 
-    <Routes>
+      <Routes>
 
-      <Route
+        <Route
 
-        path="*"
+          path="*"
 
-        element={
-          <ResetPassword />
-        }
+          element={
+            <ResetPassword />
+          }
 
-      />
+        />
 
-    </Routes>
+      </Routes>
 
-  );
+    );
 
-}
+  }
+
+  const puedeVerFinanzas =
+
+    permisos?.registrar_cobros === true ||
+
+    permisos?.registrar_gastos === true ||
+
+    permisos?.anular_cobros === true ||
+
+    permisos?.anular_gastos === true ||
+
+    permisos?.ver_resumen_financiero === true ||
+
+    permisos?.ver_utilidades === true ||
+
+    permisos?.ver_comisiones === true;
+
+  const puedeVerConfiguracion =
+
+    permisos?.configurar_precios_costos === true ||
+
+    permisos?.configurar_comisiones === true ||
+
+    permisos?.administrar_usuarios === true ||
+
+    permisos?.ver_bitacora === true;
 
   return (
 
@@ -247,11 +275,14 @@ export default function App() {
       />
 
       <Route
-  path="/accept-invite"
-  element={
-    <AcceptInvite />
-  }
-/>
+
+        path="/accept-invite"
+
+        element={
+          <AcceptInvite />
+        }
+
+      />
 
       <Route
 
@@ -307,7 +338,20 @@ export default function App() {
                 path="/agenda"
 
                 element={
-                  <AgendaCalendar />
+
+                  permisos?.ver_agenda === true
+
+                    ? (
+                      <AgendaCalendar />
+                    )
+
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
+
                 }
 
               />
@@ -317,7 +361,20 @@ export default function App() {
                 path="/pacientes"
 
                 element={
-                  <Pacientes />
+
+                  permisos?.ver_pacientes === true
+
+                    ? (
+                      <Pacientes />
+                    )
+
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
+
                 }
 
               />
@@ -327,7 +384,20 @@ export default function App() {
                 path="/paciente/:id"
 
                 element={
-                  <PacienteDetalle />
+
+                  permisos?.ver_expediente === true
+
+                    ? (
+                      <PacienteDetalle />
+                    )
+
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
+
                 }
 
               />
@@ -337,51 +407,69 @@ export default function App() {
                 path="/qr-pacientes"
 
                 element={
-                  <QRCodePaciente />
+
+                  permisos?.editar_pacientes === true
+
+                    ? (
+                      <QRCodePaciente />
+                    )
+
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
+
                 }
 
               />
-<Route
 
-  path="/finanzas"
+              <Route
 
-  element={
+                path="/finanzas"
 
-    perfil?.rol === "admin"
+                element={
 
-      ? <Finanzas />
+                  puedeVerFinanzas
 
-      : (
-        <Navigate
-          to="/dashboard"
-          replace
-        />
-      )
+                    ? (
+                      <Finanzas />
+                    )
 
-  }
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
 
-/>
+                }
 
-<Route
+              />
 
-  path="/configuracion"
+              <Route
 
-  element={
+                path="/configuracion"
 
-    perfil?.rol === "admin"
+                element={
 
-      ? <Configuracion />
+                  puedeVerConfiguracion
 
-      : (
-        <Navigate
-          to="/dashboard"
-          replace
-        />
-      )
+                    ? (
+                      <Configuracion />
+                    )
 
-  }
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
 
-/>
+                }
+
+              />
 
             </Route>
 
