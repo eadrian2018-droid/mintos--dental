@@ -321,70 +321,70 @@ export default function Odontograma({
     Guardar aplica todos los
     cambios del modal.
   */
-async function guardarModal() {
+  async function guardarModal() {
 
-  if (
-    dienteSeleccionado ===
-    null
-  ) {
+    if (
+      dienteSeleccionado ===
+      null
+    ) {
 
-    return;
-
-  }
-
-  const nuevosEstados = {
-
-    ...estadoDientes,
-
-    [dienteSeleccionado]:
-      estadoTemporal,
-
-  };
-
-  const nuevasObservaciones = {
-
-    ...observacionesDientes,
-
-    [dienteSeleccionado]:
-      observacionTemporal,
-
-  };
-
-  if (onGuardar) {
-
-    const guardado =
-      await onGuardar(
-        nuevosEstados,
-        nuevasObservaciones
-      );
-
-    if (!guardado) {
       return;
+
     }
 
+    const nuevosEstados = {
+
+      ...estadoDientes,
+
+      [dienteSeleccionado]:
+        estadoTemporal,
+
+    };
+
+    const nuevasObservaciones = {
+
+      ...observacionesDientes,
+
+      [dienteSeleccionado]:
+        observacionTemporal,
+
+    };
+
+    if (onGuardar) {
+
+      const guardado =
+        await onGuardar(
+          nuevosEstados,
+          nuevasObservaciones
+        );
+
+      if (!guardado) {
+        return;
+      }
+
+    }
+
+    setEstadoDientes(
+      nuevosEstados
+    );
+
+    setObservacionesDientes(
+      nuevasObservaciones
+    );
+
+    setModalAbierto(
+      false
+    );
+
+    setEstadoTemporal(
+      {}
+    );
+
+    setObservacionTemporal(
+      ""
+    );
+
   }
-
-  setEstadoDientes(
-    nuevosEstados
-  );
-
-  setObservacionesDientes(
-    nuevasObservaciones
-  );
-
-  setModalAbierto(
-    false
-  );
-
-  setEstadoTemporal(
-    {}
-  );
-
-  setObservacionTemporal(
-    ""
-  );
-
-}
 
   function eliminarTratamientoZona(
     numero: number,
@@ -589,7 +589,7 @@ async function guardarModal() {
 
       El diente completo abre
       el modal.
-     */
+    */
     const propsDiente = {
 
       colores,
@@ -701,8 +701,8 @@ async function guardarModal() {
 
           ${
             seleccionado
-              ? "bg-teal-50 ring-1 ring-teal-200"
-              : "hover:bg-slate-50"
+              ? "bg-[var(--mint-primary-soft)] ring-1 ring-[var(--mint-border-primary)]"
+              : "hover:bg-[var(--mint-bg-soft)]"
           }
         `}
 
@@ -716,12 +716,14 @@ async function guardarModal() {
 
         {componente}
 
-        <span className="
-          text-[9px]
-          font-bold
-          mt-1
-          text-slate-700
-        ">
+        <span
+          className="
+            text-[9px]
+            font-bold
+            mt-1
+            mint-text-primary
+          "
+        >
 
           {numero}
 
@@ -742,45 +744,51 @@ async function guardarModal() {
 
   return (
 
-    <div className="
-      space-y-4
-    ">
+    <div
+      className="
+        space-y-4
+      "
+    >
 
-      <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
-        shadow-sm
-        p-5
-      ">
+      <div
+        className="
+          mint-card
+          p-5
+        "
+      >
 
         <div>
 
-          <p className="
-            text-xs
-            font-semibold
-            uppercase
-            tracking-wide
-            text-teal-600
-          ">
+          <p
+            className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wide
+              mint-text-brand
+            "
+          >
             Expediente Clínico
           </p>
 
-          <h2 className="
-            text-xl
-            font-bold
-            text-slate-800
-            mt-1
-          ">
+          <h2
+            className="
+              text-xl
+              font-bold
+              mint-text-primary
+              mt-1
+            "
+          >
             Odontograma
           </h2>
 
-          <p className="
-            text-sm
-            text-slate-500
-            mt-1
-          ">
+          <p
+            className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            "
+          >
             Selecciona un diente
             para registrar o consultar
             sus hallazgos clínicos.
@@ -790,47 +798,53 @@ async function guardarModal() {
 
       </div>
 
-      <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
-        shadow-sm
-        p-5
-      ">
+      <div
+        className="
+          mint-card
+          p-5
+        "
+      >
 
-        <div className="
-          flex
-          items-center
-          justify-between
-          mb-4
-        ">
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            mb-4
+          "
+        >
 
-          <h3 className="
-            text-sm
-            font-bold
-            uppercase
-            tracking-wide
-            text-teal-700
-          ">
+          <h3
+            className="
+              text-sm
+              font-bold
+              uppercase
+              tracking-wide
+              mint-text-brand
+            "
+          >
             Maxilar Superior
           </h3>
 
-          <span className="
-            text-xs
-            text-slate-400
-          ">
+          <span
+            className="
+              text-xs
+              mint-text-muted
+            "
+          >
             18 — 28
           </span>
 
         </div>
 
-        <div className="
-          flex
-          justify-center
-          gap-[2px]
-          flex-wrap
-        ">
+        <div
+          className="
+            flex
+            justify-center
+            gap-[2px]
+            flex-wrap
+          "
+        >
 
           {
             superiores.map(
@@ -842,47 +856,53 @@ async function guardarModal() {
 
       </div>
 
-      <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
-        shadow-sm
-        p-5
-      ">
+      <div
+        className="
+          mint-card
+          p-5
+        "
+      >
 
-        <div className="
-          flex
-          items-center
-          justify-between
-          mb-4
-        ">
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            mb-4
+          "
+        >
 
-          <h3 className="
-            text-sm
-            font-bold
-            uppercase
-            tracking-wide
-            text-teal-700
-          ">
+          <h3
+            className="
+              text-sm
+              font-bold
+              uppercase
+              tracking-wide
+              mint-text-brand
+            "
+          >
             Maxilar Inferior
           </h3>
 
-          <span className="
-            text-xs
-            text-slate-400
-          ">
+          <span
+            className="
+              text-xs
+              mint-text-muted
+            "
+          >
             48 — 38
           </span>
 
         </div>
 
-        <div className="
-          flex
-          justify-center
-          gap-[2px]
-          flex-wrap
-        ">
+        <div
+          className="
+            flex
+            justify-center
+            gap-[2px]
+            flex-wrap
+          "
+        >
 
           {
             inferiores.map(
@@ -894,60 +914,63 @@ async function guardarModal() {
 
       </div>
 
-            <div className="
-        grid
-        grid-cols-1
-        xl:grid-cols-[0.9fr_1.1fr]
-        gap-4
-      ">
+            <div
+        className="
+          grid
+          grid-cols-1
+          xl:grid-cols-[0.9fr_1.1fr]
+          gap-4
+        "
+      >
 
-        <div className="
-          bg-white
-          border
-          border-slate-200
-          rounded-3xl
-          shadow-sm
-          p-5
-        ">
+        <div
+          className="
+            mint-card
+            p-5
+          "
+        >
 
-          <div className="
-            flex
-            items-center
-            justify-between
-            gap-3
-            mb-4
-          ">
+          <div
+            className="
+              flex
+              items-center
+              justify-between
+              gap-3
+              mb-4
+            "
+          >
 
             <div>
 
-              <h3 className="
-                text-lg
-                font-bold
-                text-slate-800
-              ">
+              <h3
+                className="
+                  text-lg
+                  font-bold
+                  mint-text-primary
+                "
+              >
                 Hallazgos
               </h3>
 
-              <p className="
-                text-sm
-                text-slate-500
-                mt-1
-              ">
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                  mt-1
+                "
+              >
                 Dientes con tratamientos
                 u observaciones registradas.
               </p>
 
             </div>
 
-            <span className="
-              bg-slate-100
-              text-slate-600
-              rounded-full
-              px-3
-              py-1
-              text-xs
-              font-semibold
-            ">
+            <span
+              className="
+                mint-badge
+                mint-badge-muted
+              "
+            >
 
               {
                 dientesConHallazgos.length
@@ -963,28 +986,35 @@ async function guardarModal() {
 
               ? (
 
-                <div className="
-                  border
-                  border-dashed
-                  border-slate-200
-                  rounded-2xl
-                  p-7
-                  text-center
-                ">
+                <div
+                  className="
+                    mint-empty
+                    border
+                    border-dashed
+                    border-[var(--mint-border)]
+                    rounded-2xl
+                    p-7
+                    text-center
+                  "
+                >
 
-                  <p className="
-                    text-sm
-                    font-semibold
-                    text-slate-600
-                  ">
+                  <p
+                    className="
+                      text-sm
+                      font-semibold
+                      mint-text-secondary
+                    "
+                  >
                     Sin hallazgos
                   </p>
 
-                  <p className="
-                    text-xs
-                    text-slate-400
-                    mt-1
-                  ">
+                  <p
+                    className="
+                      text-xs
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
                     Selecciona un diente
                     del odontograma para comenzar.
                   </p>
@@ -995,14 +1025,16 @@ async function guardarModal() {
 
               : (
 
-                <div className="
-                  grid
-                  grid-cols-2
-                  sm:grid-cols-3
-                  lg:grid-cols-4
-                  xl:grid-cols-2
-                  gap-2
-                ">
+                <div
+                  className="
+                    grid
+                    grid-cols-2
+                    sm:grid-cols-3
+                    lg:grid-cols-4
+                    xl:grid-cols-2
+                    gap-2
+                  "
+                >
 
                   {
                     dientesConHallazgos.map(
@@ -1041,40 +1073,42 @@ async function guardarModal() {
 
                               ${
                                 seleccionado
-                                  ? "border-teal-500 bg-teal-50"
-                                  : "border-slate-200 bg-white hover:bg-slate-50"
+                                  ? "border-[var(--mint-primary)] bg-[var(--mint-primary-soft)]"
+                                  : "border-[var(--mint-border)] bg-[var(--mint-bg-card)] hover:bg-[var(--mint-bg-soft)]"
                               }
                             `}
 
                           >
 
-                            <div className="
-                              flex
-                              items-center
-                              justify-between
-                              gap-2
-                            ">
+                            <div
+                              className="
+                                flex
+                                items-center
+                                justify-between
+                                gap-2
+                              "
+                            >
 
-                              <span className="
-                                text-base
-                                font-bold
-                                text-slate-800
-                              ">
+                              <span
+                                className="
+                                  text-base
+                                  font-bold
+                                  mint-text-primary
+                                "
+                              >
                                 {numero}
                               </span>
 
                               {
                                 cantidad > 0 && (
 
-                                  <span className="
-                                    bg-teal-100
-                                    text-teal-700
-                                    rounded-full
-                                    px-2
-                                    py-0.5
-                                    text-[10px]
-                                    font-bold
-                                  ">
+                                  <span
+                                    className="
+                                      mint-badge
+                                      mint-badge-primary
+                                      text-[10px]
+                                    "
+                                  >
 
                                     {cantidad}
 
@@ -1085,12 +1119,14 @@ async function guardarModal() {
 
                             </div>
 
-                            <p className="
-                              text-xs
-                              text-slate-500
-                              mt-1
-                              truncate
-                            ">
+                            <p
+                              className="
+                                text-xs
+                                mint-text-secondary
+                                mt-1
+                                truncate
+                              "
+                            >
 
                               {
                                 cantidad > 0
@@ -1119,14 +1155,12 @@ async function guardarModal() {
 
         </div>
 
-        <div className="
-          bg-white
-          border
-          border-slate-200
-          rounded-3xl
-          shadow-sm
-          p-5
-        ">
+        <div
+          className="
+            mint-card
+            p-5
+          "
+        >
 
           {
             dienteSeleccionado ===
@@ -1134,46 +1168,54 @@ async function guardarModal() {
 
               ? (
 
-                <div className="
-                  h-full
-                  min-h-[220px]
-                  flex
-                  items-center
-                  justify-center
-                  text-center
-                ">
+                <div
+                  className="
+                    h-full
+                    min-h-[220px]
+                    flex
+                    items-center
+                    justify-center
+                    text-center
+                  "
+                >
 
                   <div>
 
-                    <div className="
-                      w-12
-                      h-12
-                      rounded-2xl
-                      bg-slate-100
-                      text-slate-500
-                      flex
-                      items-center
-                      justify-center
-                      mx-auto
-                      font-bold
-                    ">
+                    <div
+                      className="
+                        w-12
+                        h-12
+                        rounded-2xl
+                        bg-[var(--mint-bg-muted)]
+                        mint-text-secondary
+                        flex
+                        items-center
+                        justify-center
+                        mx-auto
+                        font-bold
+                      "
+                    >
                       #
                     </div>
 
-                    <p className="
-                      text-sm
-                      font-semibold
-                      text-slate-700
-                      mt-3
-                    ">
+                    <p
+                      className="
+                        text-sm
+                        font-semibold
+                        mint-text-primary
+                        mt-3
+                      "
+                    >
                       Selecciona un diente
                     </p>
 
-                    <p className="
-                      text-xs
-                      text-slate-400
-                      mt-1
-                    ">
+                    <p
+                      className="
+                        text-xs
+                        mint-text-muted
+                        mt-1
+                      "
+                    >
                       Aquí podrás consultar
                       sus hallazgos registrados.
                     </p>
@@ -1188,32 +1230,38 @@ async function guardarModal() {
 
                 <div>
 
-                  <div className="
-                    flex
-                    items-start
-                    justify-between
-                    gap-4
-                    mb-5
-                  ">
+                  <div
+                    className="
+                      flex
+                      items-start
+                      justify-between
+                      gap-4
+                      mb-5
+                    "
+                  >
 
                     <div>
 
-                      <p className="
-                        text-xs
-                        font-semibold
-                        uppercase
-                        tracking-wide
-                        text-teal-600
-                      ">
+                      <p
+                        className="
+                          text-xs
+                          font-semibold
+                          uppercase
+                          tracking-wide
+                          mint-text-brand
+                        "
+                      >
                         Detalle
                       </p>
 
-                      <h3 className="
-                        text-xl
-                        font-bold
-                        text-slate-800
-                        mt-1
-                      ">
+                      <h3
+                        className="
+                          text-xl
+                          font-bold
+                          mint-text-primary
+                          mt-1
+                        "
+                      >
                         Diente {
                           dienteSeleccionado
                         }
@@ -1232,16 +1280,9 @@ async function guardarModal() {
                       }
 
                       className="
-                        border
-                        border-rose-200
-                        text-rose-600
-                        hover:bg-rose-50
-                        px-3
-                        py-2
-                        rounded-xl
-                        text-xs
-                        font-semibold
-                        transition
+                        mint-btn
+                        mint-btn-danger
+                        mint-btn-sm
                       "
 
                     >
@@ -1250,9 +1291,11 @@ async function guardarModal() {
 
                   </div>
 
-                  <div className="
-                    space-y-3
-                  ">
+                  <div
+                    className="
+                      space-y-3
+                    "
+                  >
 
                     {
                       (
@@ -1286,28 +1329,33 @@ async function guardarModal() {
                               key={zona}
                               className="
                                 border
-                                border-slate-200
+                                border-[var(--mint-border)]
                                 rounded-2xl
                                 p-3
+                                bg-[var(--mint-bg-card)]
                               "
                             >
 
-                              <p className="
-                                text-xs
-                                font-bold
-                                uppercase
-                                tracking-wide
-                                text-slate-500
-                                mb-2
-                              ">
+                              <p
+                                className="
+                                  text-xs
+                                  font-bold
+                                  uppercase
+                                  tracking-wide
+                                  mint-text-secondary
+                                  mb-2
+                                "
+                              >
                                 {zona}
                               </p>
 
-                              <div className="
-                                flex
-                                flex-wrap
-                                gap-2
-                              ">
+                              <div
+                                className="
+                                  flex
+                                  flex-wrap
+                                  gap-2
+                                "
+                              >
 
                                 {
                                   lista.map(
@@ -1341,9 +1389,11 @@ async function guardarModal() {
 
                                       >
 
-                                        <span className="
-                                          capitalize
-                                        ">
+                                        <span
+                                          className="
+                                            capitalize
+                                          "
+                                        >
                                           {t}
                                         </span>
 
@@ -1396,16 +1446,18 @@ async function guardarModal() {
                         zonasSeleccionadas
                       ) && (
 
-                        <div className="
-                          bg-slate-50
-                          border
-                          border-dashed
-                          border-slate-200
-                          rounded-2xl
-                          p-4
-                          text-sm
-                          text-slate-400
-                        ">
+                        <div
+                          className="
+                            bg-[var(--mint-bg-soft)]
+                            border
+                            border-dashed
+                            border-[var(--mint-border)]
+                            rounded-2xl
+                            p-4
+                            text-sm
+                            mint-text-muted
+                          "
+                        >
                           Este diente no tiene
                           tratamientos registrados.
                         </div>
@@ -1415,17 +1467,19 @@ async function guardarModal() {
 
                   </div>
 
-                  <div className="
-                    mt-5
-                  ">
+                  <div
+                    className="
+                      mt-5
+                    "
+                  >
 
-                    <label className="
-                      block
-                      text-sm
-                      font-semibold
-                      text-slate-700
-                      mb-2
-                    ">
+                    <label
+                      className="
+                        mint-label
+                        block
+                        mb-2
+                      "
+                    >
                       Observación clínica
                     </label>
 
@@ -1449,16 +1503,12 @@ async function guardarModal() {
                       }
 
                       className="
-                        border
-                        border-slate-300
-                        rounded-2xl
+                        mint-input
                         p-3
                         w-full
                         min-h-[100px]
                         resize-y
                         text-sm
-                        outline-none
-                        focus:border-teal-500
                       "
 
                       placeholder="Agregar observación clínica..."
@@ -1476,18 +1526,17 @@ async function guardarModal() {
 
       </div>
 
-      {
+            {
         modalAbierto &&
         dienteSeleccionado !==
         null && (
 
           <div
             className="
+              mint-modal-backdrop
               fixed
               inset-0
               z-[100]
-              bg-slate-900/40
-              backdrop-blur-[2px]
               flex
               items-center
               justify-center
@@ -1508,61 +1557,67 @@ async function guardarModal() {
             }}
           >
 
-            <div className="
-              bg-white
-              w-full
-              max-w-3xl
-              max-h-[90vh]
-              overflow-y-auto
-              rounded-3xl
-              shadow-2xl
-              border
-              border-slate-200
-            ">
+            <div
+              className="
+                mint-modal
+                w-full
+                max-w-3xl
+                max-h-[90vh]
+                overflow-y-auto
+              "
+            >
 
-              <div className="
-                sticky
-                top-0
-                z-10
-                bg-white
-                border-b
-                border-slate-100
-                px-6
-                py-5
-                flex
-                items-start
-                justify-between
-                gap-4
-              ">
+              <div
+                className="
+                  sticky
+                  top-0
+                  z-10
+                  bg-[var(--mint-bg-card)]
+                  border-b
+                  border-[var(--mint-border)]
+                  px-6
+                  py-5
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                "
+              >
 
                 <div>
 
-                  <p className="
-                    text-xs
-                    font-semibold
-                    uppercase
-                    tracking-wide
-                    text-teal-600
-                  ">
+                  <p
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-brand
+                    "
+                  >
                     Registrar hallazgo
                   </p>
 
-                  <h3 className="
-                    text-2xl
-                    font-bold
-                    text-slate-800
-                    mt-1
-                  ">
+                  <h3
+                    className="
+                      text-2xl
+                      font-bold
+                      mint-text-primary
+                      mt-1
+                    "
+                  >
                     Diente {
                       dienteSeleccionado
                     }
                   </h3>
 
-                  <p className="
-                    text-sm
-                    text-slate-500
-                    mt-1
-                  ">
+                  <p
+                    className="
+                      text-sm
+                      mint-text-secondary
+                      mt-1
+                    "
+                  >
                     Selecciona el tratamiento
                     y después la zona.
                   </p>
@@ -1575,18 +1630,16 @@ async function guardarModal() {
                     cerrarModal
                   }
                   className="
+                    mint-btn
+                    mint-btn-neutral
                     w-9
                     h-9
-                    rounded-xl
-                    bg-slate-100
-                    hover:bg-slate-200
-                    text-slate-500
+                    p-0
                     flex
                     items-center
                     justify-center
                     text-xl
                     font-semibold
-                    transition
                   "
                 >
                   ×
@@ -1594,36 +1647,44 @@ async function guardarModal() {
 
               </div>
 
-              <div className="
-                p-6
-                space-y-6
-              ">
+              <div
+                className="
+                  p-6
+                  space-y-6
+                "
+              >
 
                 <div>
 
-                  <div className="
-                    flex
-                    items-center
-                    justify-between
-                    gap-3
-                    mb-3
-                  ">
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-3
+                      mb-3
+                    "
+                  >
 
                     <div>
 
-                      <p className="
-                        text-sm
-                        font-bold
-                        text-slate-800
-                      ">
+                      <p
+                        className="
+                          text-sm
+                          font-bold
+                          mint-text-primary
+                        "
+                      >
                         1. Tratamiento
                       </p>
 
-                      <p className="
-                        text-xs
-                        text-slate-500
-                        mt-0.5
-                      ">
+                      <p
+                        className="
+                          text-xs
+                          mint-text-secondary
+                          mt-0.5
+                        "
+                      >
                         Selecciona el hallazgo
                         que deseas registrar.
                       </p>
@@ -1641,9 +1702,9 @@ async function guardarModal() {
                         text-xs
                         font-semibold
                         border
-                        border-slate-200
-                        bg-slate-50
-                        text-slate-700
+                        border-[var(--mint-border)]
+                        bg-[var(--mint-bg-soft)]
+                        mint-text-primary
                       "
                     >
 
@@ -1661,9 +1722,11 @@ async function guardarModal() {
                         }}
                       />
 
-                      <span className="
-                        capitalize
-                      ">
+                      <span
+                        className="
+                          capitalize
+                        "
+                      >
                         {tratamiento}
                       </span>
 
@@ -1671,13 +1734,15 @@ async function guardarModal() {
 
                   </div>
 
-                  <div className="
-                    grid
-                    grid-cols-2
-                    sm:grid-cols-3
-                    md:grid-cols-4
-                    gap-2
-                  ">
+                  <div
+                    className="
+                      grid
+                      grid-cols-2
+                      sm:grid-cols-3
+                      md:grid-cols-4
+                      gap-2
+                    "
+                  >
 
                     {
                       Object.keys(
@@ -1718,8 +1783,8 @@ async function guardarModal() {
 
                                 ${
                                   activo
-                                    ? "border-teal-500 bg-teal-50 text-teal-800 ring-1 ring-teal-100"
-                                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                    ? "border-[var(--mint-primary)] bg-[var(--mint-primary-soft)] text-[var(--mint-primary)] ring-1 ring-[var(--mint-border-primary)]"
+                                    : "border-[var(--mint-border)] bg-[var(--mint-bg-card)] text-[var(--mint-text-secondary)] hover:bg-[var(--mint-bg-soft)]"
                                 }
                               `}
 
@@ -1742,10 +1807,12 @@ async function guardarModal() {
                                 }}
                               />
 
-                              <span className="
-                                capitalize
-                                truncate
-                              ">
+                              <span
+                                className="
+                                  capitalize
+                                  truncate
+                                "
+                              >
                                 {t}
                               </span>
 
@@ -1761,36 +1828,44 @@ async function guardarModal() {
 
                 </div>
 
-                <div className="
-                  border-t
-                  border-slate-100
-                  pt-5
-                ">
+                <div
+                  className="
+                    border-t
+                    border-[var(--mint-border)]
+                    pt-5
+                  "
+                >
 
-                  <p className="
-                    text-sm
-                    font-bold
-                    text-slate-800
-                  ">
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
                     2. Zona
                   </p>
 
-                  <p className="
-                    text-xs
-                    text-slate-500
-                    mt-0.5
-                    mb-3
-                  ">
+                  <p
+                    className="
+                      text-xs
+                      mint-text-secondary
+                      mt-0.5
+                      mb-3
+                    "
+                  >
                     Toca una zona para agregar
                     el tratamiento seleccionado.
                   </p>
 
-                  <div className="
-                    grid
-                    grid-cols-2
-                    sm:grid-cols-4
-                    gap-2
-                  ">
+                  <div
+                    className="
+                      grid
+                      grid-cols-2
+                      sm:grid-cols-4
+                      gap-2
+                    "
+                  >
 
                     {
                       (
@@ -1840,8 +1915,8 @@ async function guardarModal() {
 
                                 ${
                                   seleccionado
-                                    ? "border-teal-500 bg-teal-50 text-teal-700"
-                                    : "border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50/50"
+                                    ? "border-[var(--mint-primary)] bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
+                                    : "border-[var(--mint-border)] bg-[var(--mint-bg-card)] text-[var(--mint-text-secondary)] hover:border-[var(--mint-border-primary)] hover:bg-[var(--mint-primary-soft)]"
                                 }
                               `}
 
@@ -1859,35 +1934,43 @@ async function guardarModal() {
 
                 </div>
 
-                <div className="
-                  border-t
-                  border-slate-100
-                  pt-5
-                ">
+                <div
+                  className="
+                    border-t
+                    border-[var(--mint-border)]
+                    pt-5
+                  "
+                >
 
-                  <div className="
-                    flex
-                    items-center
-                    justify-between
-                    gap-3
-                    mb-3
-                  ">
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-3
+                      mb-3
+                    "
+                  >
 
                     <div>
 
-                      <p className="
-                        text-sm
-                        font-bold
-                        text-slate-800
-                      ">
+                      <p
+                        className="
+                          text-sm
+                          font-bold
+                          mint-text-primary
+                        "
+                      >
                         Hallazgos del diente
                       </p>
 
-                      <p className="
-                        text-xs
-                        text-slate-500
-                        mt-0.5
-                      ">
+                      <p
+                        className="
+                          text-xs
+                          mint-text-secondary
+                          mt-0.5
+                        "
+                      >
                         Puedes quitar un hallazgo
                         únicamente con ×.
                       </p>
@@ -1896,9 +1979,11 @@ async function guardarModal() {
 
                   </div>
 
-                  <div className="
-                    space-y-2
-                  ">
+                  <div
+                    className="
+                      space-y-2
+                    "
+                  >
 
                     {
                       (
@@ -1931,30 +2016,34 @@ async function guardarModal() {
                             <div
                               key={zona}
                               className="
-                                bg-slate-50
+                                bg-[var(--mint-bg-soft)]
                                 border
-                                border-slate-200
+                                border-[var(--mint-border)]
                                 rounded-2xl
                                 p-3
                               "
                             >
 
-                              <p className="
-                                text-[10px]
-                                font-bold
-                                uppercase
-                                tracking-wide
-                                text-slate-500
-                                mb-2
-                              ">
+                              <p
+                                className="
+                                  text-[10px]
+                                  font-bold
+                                  uppercase
+                                  tracking-wide
+                                  mint-text-secondary
+                                  mb-2
+                                "
+                              >
                                 {zona}
                               </p>
 
-                              <div className="
-                                flex
-                                flex-wrap
-                                gap-2
-                              ">
+                              <div
+                                className="
+                                  flex
+                                  flex-wrap
+                                  gap-2
+                                "
+                              >
 
                                 {
                                   lista.map(
@@ -1984,9 +2073,11 @@ async function guardarModal() {
                                         }}
                                       >
 
-                                        <span className="
-                                          capitalize
-                                        ">
+                                        <span
+                                          className="
+                                            capitalize
+                                          "
+                                        >
                                           {t}
                                         </span>
 
@@ -2034,19 +2125,24 @@ async function guardarModal() {
                         estadoTemporal
                       ) && (
 
-                        <div className="
-                          border
-                          border-dashed
-                          border-slate-200
-                          rounded-2xl
-                          p-4
-                          text-center
-                        ">
+                        <div
+                          className="
+                            mint-empty
+                            border
+                            border-dashed
+                            border-[var(--mint-border)]
+                            rounded-2xl
+                            p-4
+                            text-center
+                          "
+                        >
 
-                          <p className="
-                            text-sm
-                            text-slate-400
-                          ">
+                          <p
+                            className="
+                              text-sm
+                              mint-text-muted
+                            "
+                          >
                             Todavía no hay hallazgos
                             seleccionados.
                           </p>
@@ -2060,19 +2156,21 @@ async function guardarModal() {
 
                 </div>
 
-                <div className="
-                  border-t
-                  border-slate-100
-                  pt-5
-                ">
+                <div
+                  className="
+                    border-t
+                    border-[var(--mint-border)]
+                    pt-5
+                  "
+                >
 
-                  <label className="
-                    block
-                    text-sm
-                    font-bold
-                    text-slate-800
-                    mb-2
-                  ">
+                  <label
+                    className="
+                      mint-label
+                      block
+                      mb-2
+                    "
+                  >
                     Observación clínica
                   </label>
 
@@ -2089,16 +2187,12 @@ async function guardarModal() {
                     }
 
                     className="
-                      border
-                      border-slate-300
-                      rounded-2xl
+                      mint-input
                       p-3
                       w-full
                       min-h-[90px]
                       resize-y
                       text-sm
-                      outline-none
-                      focus:border-teal-500
                     "
 
                     placeholder="Agregar observación clínica..."
@@ -2109,19 +2203,21 @@ async function guardarModal() {
 
               </div>
 
-              <div className="
-                sticky
-                bottom-0
-                bg-white
-                border-t
-                border-slate-100
-                px-6
-                py-4
-                flex
-                items-center
-                justify-end
-                gap-3
-              ">
+              <div
+                className="
+                  sticky
+                  bottom-0
+                  bg-[var(--mint-bg-card)]
+                  border-t
+                  border-[var(--mint-border)]
+                  px-6
+                  py-4
+                  flex
+                  items-center
+                  justify-end
+                  gap-3
+                "
+              >
 
                 <button
 
@@ -2132,16 +2228,9 @@ async function guardarModal() {
                   }
 
                   className="
-                    border
-                    border-slate-300
-                    text-slate-700
-                    hover:bg-slate-50
-                    px-5
-                    py-2.5
-                    rounded-xl
-                    text-sm
-                    font-semibold
-                    transition
+                    mint-btn
+                    mint-btn-neutral
+                    mint-btn-md
                   "
 
                 >
@@ -2157,16 +2246,9 @@ async function guardarModal() {
                   }
 
                   className="
-                    bg-teal-600
-                    hover:bg-teal-700
-                    text-white
-                    px-6
-                    py-2.5
-                    rounded-xl
-                    text-sm
-                    font-bold
-                    transition
-                    shadow-sm
+                    mint-btn
+                    mint-btn-primary
+                    mint-btn-md
                   "
 
                 >
