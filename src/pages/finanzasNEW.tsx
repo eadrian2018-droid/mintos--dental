@@ -183,9 +183,7 @@ export default function Finanzas() {
       <div
         className="
           w-40
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-4
           h-fit
         "
@@ -195,6 +193,7 @@ export default function Finanzas() {
           className="
             font-bold
             text-lg
+            mint-text-primary
             mb-4
           "
         >
@@ -221,15 +220,26 @@ export default function Finanzas() {
               p-3
               rounded-xl
               text-left
+              font-medium
+              text-sm
               transition
 
               ${
                 seccionActiva ===
                 "resumen"
 
-                  ? "bg-teal-600 text-white"
+                  ? `
+                      bg-[var(--mint-primary)]
+                      text-[var(--mint-text-on-primary)]
+                      shadow-sm
+                    `
 
-                  : "bg-slate-100"
+                  : `
+                      bg-[var(--mint-bg-soft)]
+                      mint-text-secondary
+                      hover:bg-[var(--mint-bg-muted)]
+                      hover:text-[var(--mint-text-primary)]
+                    `
               }
             `}
           >
@@ -248,15 +258,26 @@ export default function Finanzas() {
               p-3
               rounded-xl
               text-left
+              font-medium
+              text-sm
               transition
 
               ${
                 seccionActiva ===
                 "gastos"
 
-                  ? "bg-teal-600 text-white"
+                  ? `
+                      bg-[var(--mint-primary)]
+                      text-[var(--mint-text-on-primary)]
+                      shadow-sm
+                    `
 
-                  : "bg-slate-100"
+                  : `
+                      bg-[var(--mint-bg-soft)]
+                      mint-text-secondary
+                      hover:bg-[var(--mint-bg-muted)]
+                      hover:text-[var(--mint-text-primary)]
+                    `
               }
             `}
           >
@@ -275,15 +296,26 @@ export default function Finanzas() {
               p-3
               rounded-xl
               text-left
+              font-medium
+              text-sm
               transition
 
               ${
                 seccionActiva ===
                 "comisiones"
 
-                  ? "bg-teal-600 text-white"
+                  ? `
+                      bg-[var(--mint-primary)]
+                      text-[var(--mint-text-on-primary)]
+                      shadow-sm
+                    `
 
-                  : "bg-slate-100"
+                  : `
+                      bg-[var(--mint-bg-soft)]
+                      mint-text-secondary
+                      hover:bg-[var(--mint-bg-muted)]
+                      hover:text-[var(--mint-text-primary)]
+                    `
               }
             `}
           >
@@ -302,15 +334,26 @@ export default function Finanzas() {
               p-3
               rounded-xl
               text-left
+              font-medium
+              text-sm
               transition
 
               ${
                 seccionActiva ===
                 "configuracion"
 
-                  ? "bg-teal-600 text-white"
+                  ? `
+                      bg-[var(--mint-primary)]
+                      text-[var(--mint-text-on-primary)]
+                      shadow-sm
+                    `
 
-                  : "bg-slate-100"
+                  : `
+                      bg-[var(--mint-bg-soft)]
+                      mint-text-secondary
+                      hover:bg-[var(--mint-bg-muted)]
+                      hover:text-[var(--mint-text-primary)]
+                    `
               }
             `}
           >
@@ -326,6 +369,7 @@ export default function Finanzas() {
       <div
         className="
           flex-1
+          min-w-0
         "
       >
 
@@ -333,7 +377,7 @@ export default function Finanzas() {
           className="
             text-4xl
             font-bold
-            text-slate-800
+            mint-text-primary
             mb-8
           "
         >
@@ -354,19 +398,19 @@ export default function Finanzas() {
           "
         >
 
-      <select
-  value={periodo}
-  onChange={(e) => {
-    setPeriodo(
-      e.target.value as PeriodoFinanzas
-    );
-  }}
+          <select
+            value={periodo}
+            onChange={(e) => {
+              setPeriodo(
+                e.target.value as PeriodoFinanzas
+              );
+            }}
             className="
-              border
-              rounded-xl
+              mint-input
               px-4
               py-2
-              bg-white
+              w-auto
+              min-w-[160px]
             "
           >
 
@@ -401,7 +445,8 @@ export default function Finanzas() {
         <div
           className="
             mb-6
-            text-slate-600
+            text-sm
+            mint-text-secondary
           "
         >
 
@@ -590,80 +635,81 @@ export default function Finanzas() {
 
           />
         }
-{
-  seccionActiva ===
-  "configuracion"
 
-  &&
+        {
+          seccionActiva ===
+          "configuracion"
 
-  <ConfiguracionFinanzas
+          &&
 
-    doctores={
-      doctores
-    }
+          <ConfiguracionFinanzas
 
-    catalogoTratamientos={
-      catalogoTratamientos
-    }
+            doctores={
+              doctores
+            }
 
-    configuracionPagos={
-      configuracionPagos
-    }
+            catalogoTratamientos={
+              catalogoTratamientos
+            }
 
-    actualizarConfiguracionPago={
-      actualizarConfiguracionPago
-    }
+            configuracionPagos={
+              configuracionPagos
+            }
 
-    actualizarTratamientoCatalogo={
-      actualizarTratamientoCatalogo
-    }
+            actualizarConfiguracionPago={
+              actualizarConfiguracionPago
+            }
 
-    nombreDoctor={
-      nombreDoctor
-    }
+            actualizarTratamientoCatalogo={
+              actualizarTratamientoCatalogo
+            }
 
-    setNombreDoctor={
-      setNombreDoctor
-    }
+            nombreDoctor={
+              nombreDoctor
+            }
 
-    especialidadDoctor={
-      especialidadDoctor
-    }
+            setNombreDoctor={
+              setNombreDoctor
+            }
 
-    setEspecialidadDoctor={
-      setEspecialidadDoctor
-    }
+            especialidadDoctor={
+              especialidadDoctor
+            }
 
-    porcentajeDoctor={
-      porcentajeDoctor
-    }
+            setEspecialidadDoctor={
+              setEspecialidadDoctor
+            }
 
-    setPorcentajeDoctor={
-      setPorcentajeDoctor
-    }
+            porcentajeDoctor={
+              porcentajeDoctor
+            }
 
-    guardarDoctor={
-      guardarDoctor
-    }
+            setPorcentajeDoctor={
+              setPorcentajeDoctor
+            }
 
-    actualizarDoctor={
-      actualizarDoctor
-    }
+            guardarDoctor={
+              guardarDoctor
+            }
 
-    setDoctorDetalle={
-      setDoctorDetalle
-    }
+            actualizarDoctor={
+              actualizarDoctor
+            }
 
-    guardarTratamientoCatalogo={
-      guardarTratamientoCatalogo
-    }
+            setDoctorDetalle={
+              setDoctorDetalle
+            }
 
-    cambiarEstadoTratamientoCatalogo={
-      cambiarEstadoTratamientoCatalogo
-    }
+            guardarTratamientoCatalogo={
+              guardarTratamientoCatalogo
+            }
 
-  />
-}
+            cambiarEstadoTratamientoCatalogo={
+              cambiarEstadoTratamientoCatalogo
+            }
+
+          />
+        }
 
         {
           seccionActiva ===

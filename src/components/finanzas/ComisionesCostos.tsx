@@ -40,9 +40,7 @@ export default function ComisionesCostos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -51,6 +49,7 @@ export default function ComisionesCostos({
           className="
             text-2xl
             font-bold
+            mint-text-primary
           "
         >
 
@@ -60,7 +59,7 @@ export default function ComisionesCostos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mt-2
           "
         >
@@ -84,16 +83,16 @@ export default function ComisionesCostos({
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-primary
             p-6
           "
         >
 
           <p
             className="
-              text-slate-500
+              text-sm
+              font-medium
+              mint-text-secondary
             "
           >
 
@@ -106,6 +105,7 @@ export default function ComisionesCostos({
               text-3xl
               font-bold
               mt-2
+              text-[var(--mint-primary)]
             "
           >
 
@@ -117,16 +117,16 @@ export default function ComisionesCostos({
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-accent
             p-6
           "
         >
 
           <p
             className="
-              text-slate-500
+              text-sm
+              font-medium
+              mint-text-secondary
             "
           >
 
@@ -139,6 +139,7 @@ export default function ComisionesCostos({
               text-3xl
               font-bold
               mt-2
+              mint-text-accent
             "
           >
 
@@ -155,9 +156,7 @@ export default function ComisionesCostos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -166,6 +165,7 @@ export default function ComisionesCostos({
           className="
             text-xl
             font-bold
+            mint-text-primary
             mb-2
           "
         >
@@ -176,7 +176,7 @@ export default function ComisionesCostos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mb-6
           "
         >
@@ -195,19 +195,19 @@ export default function ComisionesCostos({
 
           <table
             className="
+              mint-table
               w-full
               text-sm
             "
           >
 
-            <thead>
+            <thead
+              className="
+                mint-table-head
+              "
+            >
 
-              <tr
-                className="
-                  border-b
-                  border-slate-200
-                "
-              >
+              <tr>
 
                 <th
                   className="
@@ -258,14 +258,15 @@ export default function ComisionesCostos({
                         doctor.id
                       }
                       className="
-                        border-b
-                        border-slate-100
+                        mint-table-row
                       "
                     >
 
                       <td
                         className="
                           p-3
+                          font-semibold
+                          mint-text-primary
                         "
                       >
 
@@ -278,6 +279,7 @@ export default function ComisionesCostos({
                       <td
                         className="
                           p-3
+                          mint-text-secondary
                         "
                       >
 
@@ -291,14 +293,22 @@ export default function ComisionesCostos({
                       <td
                         className="
                           p-3
-                          font-semibold
                         "
                       >
 
-                        {
-                          doctor
-                            .porcentaje
-                        }%
+                        <span
+                          className="
+                            mint-badge
+                            mint-badge-accent
+                          "
+                        >
+
+                          {
+                            doctor
+                              .porcentaje
+                          }%
+
+                        </span>
 
                       </td>
 
@@ -319,9 +329,7 @@ export default function ComisionesCostos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -330,6 +338,7 @@ export default function ComisionesCostos({
           className="
             text-xl
             font-bold
+            mint-text-primary
             mb-2
           "
         >
@@ -340,7 +349,7 @@ export default function ComisionesCostos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mb-6
           "
         >
@@ -360,19 +369,19 @@ export default function ComisionesCostos({
 
           <table
             className="
+              mint-table
               w-full
               text-sm
             "
           >
 
-            <thead>
+            <thead
+              className="
+                mint-table-head
+              "
+            >
 
-              <tr
-                className="
-                  border-b
-                  border-slate-200
-                "
-              >
+              <tr>
 
                 <th
                   className="
@@ -458,14 +467,15 @@ export default function ComisionesCostos({
                             tratamiento.id
                           }
                           className="
-                            border-b
-                            border-slate-100
+                            mint-table-row
                           "
                         >
 
                           <td
                             className="
                               p-3
+                              font-semibold
+                              mint-text-primary
                             "
                           >
 
@@ -482,23 +492,33 @@ export default function ComisionesCostos({
                             "
                           >
 
-                            {
-                              tratamiento
-                                .categoria
-                            }
+                            <span
+                              className="
+                                mint-badge
+                                mint-badge-muted
+                              "
+                            >
+
+                              {
+                                tratamiento
+                                  .categoria
+                              }
+
+                            </span>
 
                           </td>
 
                           <td
                             className="
                               p-3
+                              mint-text-secondary
                             "
                           >
 
                             {
                               doctor
                                 ?.nombre
-                                ||
+                              ||
                               "Sin asignar"
                             }
 
@@ -508,6 +528,7 @@ export default function ComisionesCostos({
                             className="
                               p-3
                               font-semibold
+                              text-[var(--mint-danger)]
                             "
                           >
 
@@ -528,6 +549,7 @@ export default function ComisionesCostos({
                             className="
                               p-3
                               font-semibold
+                              text-[var(--mint-danger)]
                             "
                           >
 
@@ -566,7 +588,7 @@ export default function ComisionesCostos({
                     className="
                       p-6
                       text-center
-                      text-slate-500
+                      mint-text-muted
                     "
                   >
 
@@ -589,9 +611,9 @@ export default function ComisionesCostos({
 
       <div
         className="
-          bg-slate-50
+          bg-[var(--mint-bg-soft)]
           border
-          border-slate-200
+          border-[var(--mint-border)]
           rounded-2xl
           p-6
         "
@@ -601,6 +623,7 @@ export default function ComisionesCostos({
           className="
             font-bold
             text-lg
+            mint-text-primary
             mb-3
           "
         >
@@ -611,7 +634,7 @@ export default function ComisionesCostos({
 
         <p
           className="
-            text-slate-600
+            mint-text-secondary
             leading-7
           "
         >

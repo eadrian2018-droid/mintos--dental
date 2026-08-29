@@ -457,9 +457,9 @@ export default function AdministrarUsuario({
 
     <div
       className="
+        mint-modal-backdrop
         fixed
         inset-0
-        bg-black/50
         z-50
         flex
         items-center
@@ -470,9 +470,7 @@ export default function AdministrarUsuario({
 
       <div
         className="
-          bg-white
-          rounded-2xl
-          shadow-xl
+          mint-modal
           w-full
           max-w-4xl
           max-h-[90vh]
@@ -484,7 +482,7 @@ export default function AdministrarUsuario({
           className="
             p-5
             border-b
-            border-slate-200
+            border-[var(--mint-border)]
           "
         >
 
@@ -492,7 +490,7 @@ export default function AdministrarUsuario({
             className="
               text-xl
               font-bold
-              text-slate-800
+              mint-text-primary
             "
           >
             Administrar usuario
@@ -501,7 +499,7 @@ export default function AdministrarUsuario({
           <p
             className="
               text-sm
-              text-slate-500
+              mint-text-secondary
               mt-1
             "
           >
@@ -520,10 +518,10 @@ export default function AdministrarUsuario({
                   mb-5
                   p-3
                   rounded-xl
-                  bg-red-50
+                  bg-[var(--mint-danger-bg)]
                   border
-                  border-red-200
-                  text-red-700
+                  border-[var(--mint-danger-border)]
+                  text-[var(--mint-danger)]
                   text-sm
                 "
               >
@@ -547,10 +545,8 @@ export default function AdministrarUsuario({
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -567,10 +563,8 @@ export default function AdministrarUsuario({
                   )
                 }
                 className="
+                  mint-input
                   w-full
-                  border
-                  border-slate-300
-                  rounded-xl
                   p-3
                 "
               />
@@ -581,10 +575,8 @@ export default function AdministrarUsuario({
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -615,10 +607,8 @@ export default function AdministrarUsuario({
 
                 }}
                 className="
+                  mint-input
                   w-full
-                  border
-                  border-slate-300
-                  rounded-xl
                   p-3
                 "
               >
@@ -646,10 +636,8 @@ export default function AdministrarUsuario({
 
                   <label
                     className="
+                      mint-label
                       block
-                      text-sm
-                      font-semibold
-                      text-slate-700
                       mb-2
                     "
                   >
@@ -665,10 +653,8 @@ export default function AdministrarUsuario({
                       )
                     }
                     className="
+                      mint-input
                       w-full
-                      border
-                      border-slate-300
-                      rounded-xl
                       p-3
                     "
                   >
@@ -712,11 +698,14 @@ export default function AdministrarUsuario({
                   items-center
                   gap-3
                   border
-                  border-slate-200
+                  border-[var(--mint-border)]
                   rounded-xl
                   p-3
                   w-full
                   cursor-pointer
+                  bg-[var(--mint-bg-soft)]
+                  transition
+                  hover:border-[var(--mint-border-strong)]
                 "
               >
 
@@ -735,7 +724,7 @@ export default function AdministrarUsuario({
                   className="
                     text-sm
                     font-semibold
-                    text-slate-700
+                    mint-text-primary
                   "
                 >
                   Usuario activo
@@ -750,7 +739,7 @@ export default function AdministrarUsuario({
           <div
             className="
               border-t
-              border-slate-200
+              border-[var(--mint-border)]
               pt-6
             "
           >
@@ -759,7 +748,7 @@ export default function AdministrarUsuario({
               className="
                 text-lg
                 font-bold
-                text-slate-800
+                mint-text-primary
                 mb-1
               "
             >
@@ -769,7 +758,7 @@ export default function AdministrarUsuario({
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mb-5
               "
             >
@@ -784,7 +773,7 @@ export default function AdministrarUsuario({
                   <p
                     className="
                       text-sm
-                      text-slate-500
+                      mint-text-secondary
                     "
                   >
                     Cargando permisos...
@@ -810,9 +799,7 @@ export default function AdministrarUsuario({
                           <div
                             key={grupo.titulo}
                             className="
-                              border
-                              border-slate-200
-                              rounded-2xl
+                              mint-card
                               p-4
                             "
                           >
@@ -820,7 +807,7 @@ export default function AdministrarUsuario({
                             <h5
                               className="
                                 font-bold
-                                text-slate-800
+                                mint-text-primary
                                 mb-3
                               "
                             >
@@ -847,7 +834,7 @@ export default function AdministrarUsuario({
                                         items-center
                                         gap-3
                                         text-sm
-                                        text-slate-700
+                                        mint-text-secondary
                                         cursor-pointer
                                       "
                                     >
@@ -898,7 +885,7 @@ export default function AdministrarUsuario({
           className="
             p-5
             border-t
-            border-slate-200
+            border-[var(--mint-border)]
             flex
             justify-end
             gap-3
@@ -910,11 +897,8 @@ export default function AdministrarUsuario({
             onClick={onCerrar}
             disabled={guardando}
             className="
-              px-4
-              py-2
-              border
-              border-slate-300
-              rounded-xl
+              mint-btn
+              mint-btn-neutral
               disabled:opacity-50
             "
           >
@@ -929,13 +913,8 @@ export default function AdministrarUsuario({
               loading
             }
             className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-5
-              py-2
-              rounded-xl
-              font-semibold
+              mint-btn
+              mint-btn-primary
               disabled:opacity-50
             "
           >

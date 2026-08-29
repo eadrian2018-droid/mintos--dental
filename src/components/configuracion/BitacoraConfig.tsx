@@ -195,10 +195,7 @@ export default function BitacoraConfig() {
 
       <div
         className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
+          mint-card
           p-6
         "
       >
@@ -209,7 +206,7 @@ export default function BitacoraConfig() {
             items-center
             gap-2
             text-sm
-            text-slate-500
+            mint-text-secondary
           "
         >
 
@@ -232,10 +229,7 @@ export default function BitacoraConfig() {
 
     <div
       className="
-        bg-white
-        rounded-2xl
-        border
-        border-slate-200
+        mint-card
         overflow-hidden
       "
     >
@@ -250,7 +244,7 @@ export default function BitacoraConfig() {
           gap-4
           p-6
           border-b
-          border-slate-200
+          border-[var(--mint-border)]
         "
       >
 
@@ -267,8 +261,10 @@ export default function BitacoraConfig() {
               w-11
               h-11
               rounded-xl
-              bg-teal-50
-              text-teal-700
+              bg-[var(--mint-primary-soft)]
+              text-[var(--mint-primary)]
+              border
+              border-[var(--mint-border-primary)]
               flex
               items-center
               justify-center
@@ -288,7 +284,7 @@ export default function BitacoraConfig() {
               className="
                 text-xl
                 font-bold
-                text-slate-800
+                mint-text-primary
               "
             >
               Bitácora
@@ -297,7 +293,7 @@ export default function BitacoraConfig() {
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -331,7 +327,7 @@ export default function BitacoraConfig() {
                 left-3
                 top-1/2
                 -translate-y-1/2
-                text-slate-400
+                mint-text-muted
               "
             />
 
@@ -347,19 +343,12 @@ export default function BitacoraConfig() {
               }
               placeholder="Buscar actividad..."
               className="
+                mint-input
                 w-full
                 sm:w-64
                 pl-9
                 pr-3
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                text-sm
-                outline-none
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             />
 
@@ -378,7 +367,7 @@ export default function BitacoraConfig() {
                 left-3
                 top-1/2
                 -translate-y-1/2
-                text-slate-400
+                mint-text-muted
                 pointer-events-none
               "
             />
@@ -393,18 +382,10 @@ export default function BitacoraConfig() {
                 )
               }
               className="
+                mint-input
                 pl-9
                 pr-8
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                bg-white
-                text-sm
-                outline-none
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             >
 
@@ -450,9 +431,9 @@ export default function BitacoraConfig() {
 
           <thead
             className="
-              bg-slate-50
+              bg-[var(--mint-bg-soft)]
               border-b
-              border-slate-200
+              border-[var(--mint-border)]
             "
           >
 
@@ -467,7 +448,7 @@ export default function BitacoraConfig() {
                   font-bold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
                 Fecha
@@ -482,7 +463,7 @@ export default function BitacoraConfig() {
                   font-bold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
                 Usuario
@@ -497,7 +478,7 @@ export default function BitacoraConfig() {
                   font-bold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
                 Módulo
@@ -512,7 +493,7 @@ export default function BitacoraConfig() {
                   font-bold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
                 Acción
@@ -527,7 +508,7 @@ export default function BitacoraConfig() {
                   font-bold
                   uppercase
                   tracking-wide
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
                 Detalle
@@ -540,7 +521,7 @@ export default function BitacoraConfig() {
           <tbody
             className="
               divide-y
-              divide-slate-100
+              divide-[var(--mint-border)]
             "
           >
 
@@ -557,7 +538,7 @@ export default function BitacoraConfig() {
                         py-12
                         text-center
                         text-sm
-                        text-slate-400
+                        mint-text-muted
                       "
                     >
 
@@ -578,8 +559,8 @@ export default function BitacoraConfig() {
                           registro.id
                         }
                         className="
-                          hover:bg-slate-50/70
-                          transition
+                          hover:bg-[var(--mint-bg-soft)]
+                          transition-colors
                         "
                       >
 
@@ -588,7 +569,7 @@ export default function BitacoraConfig() {
                             px-5
                             py-4
                             text-sm
-                            text-slate-600
+                            mint-text-secondary
                             whitespace-nowrap
                           "
                         >
@@ -604,7 +585,7 @@ export default function BitacoraConfig() {
                             <CalendarDays
                               size={15}
                               className="
-                                text-slate-400
+                                mint-text-muted
                               "
                             />
 
@@ -636,7 +617,7 @@ export default function BitacoraConfig() {
                             <UserRound
                               size={16}
                               className="
-                                text-slate-400
+                                mint-text-muted
                                 mt-0.5
                               "
                             />
@@ -647,7 +628,7 @@ export default function BitacoraConfig() {
                                 className="
                                   text-sm
                                   font-semibold
-                                  text-slate-700
+                                  mint-text-primary
                                 "
                               >
                                 {
@@ -662,7 +643,7 @@ export default function BitacoraConfig() {
                                   <p
                                     className="
                                       text-xs
-                                      text-slate-400
+                                      mint-text-muted
                                       mt-0.5
                                     "
                                   >
@@ -689,14 +670,11 @@ export default function BitacoraConfig() {
 
                           <span
                             className="
+                              mint-badge
+                              mint-badge-muted
                               inline-flex
                               px-2.5
                               py-1
-                              rounded-full
-                              bg-slate-100
-                              text-slate-600
-                              text-xs
-                              font-semibold
                             "
                           >
                             {
@@ -713,7 +691,7 @@ export default function BitacoraConfig() {
                             py-4
                             text-sm
                             font-medium
-                            text-slate-700
+                            mint-text-primary
                           "
                         >
                           {
@@ -727,7 +705,7 @@ export default function BitacoraConfig() {
                             px-5
                             py-4
                             text-sm
-                            text-slate-500
+                            mint-text-secondary
                             max-w-md
                           "
                         >

@@ -294,10 +294,7 @@ export default function ClinicaConfig() {
     return (
       <div
         className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
+          mint-card
           p-6
         "
       >
@@ -305,7 +302,7 @@ export default function ClinicaConfig() {
         <p
           className="
             text-sm
-            text-slate-500
+            mint-text-secondary
           "
         >
           Cargando información...
@@ -320,10 +317,7 @@ export default function ClinicaConfig() {
 
     <div
       className="
-        bg-white
-        rounded-2xl
-        border
-        border-slate-200
+        mint-card
         overflow-hidden
       "
     >
@@ -336,7 +330,7 @@ export default function ClinicaConfig() {
           gap-4
           p-6
           border-b
-          border-slate-200
+          border-[var(--mint-border)]
         "
       >
 
@@ -353,8 +347,10 @@ export default function ClinicaConfig() {
               w-11
               h-11
               rounded-xl
-              bg-teal-50
-              text-teal-700
+              bg-[var(--mint-primary-soft)]
+              text-[var(--mint-primary)]
+              border
+              border-[var(--mint-border-primary)]
               flex
               items-center
               justify-center
@@ -374,7 +370,7 @@ export default function ClinicaConfig() {
               className="
                 text-xl
                 font-bold
-                text-slate-800
+                mint-text-primary
               "
             >
               Clínica
@@ -383,7 +379,7 @@ export default function ClinicaConfig() {
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -404,19 +400,16 @@ export default function ClinicaConfig() {
             guardando
           }
           className="
+            mint-btn
+            mint-btn-primary
             inline-flex
             items-center
             gap-2
             px-4
             py-2.5
-            rounded-xl
-            bg-teal-600
-            text-white
             text-sm
-            font-semibold
-            hover:bg-teal-700
             disabled:opacity-50
-            transition
+            disabled:cursor-not-allowed
           "
         >
 
@@ -454,10 +447,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -477,17 +468,10 @@ export default function ClinicaConfig() {
               }
               placeholder="Ej. Dra. Marlene Group"
               className="
+                mint-input
                 w-full
                 px-3
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                text-sm
-                outline-none
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             />
 
@@ -506,10 +490,8 @@ export default function ClinicaConfig() {
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -528,7 +510,7 @@ export default function ClinicaConfig() {
                     absolute
                     left-3
                     top-3
-                    text-slate-400
+                    mint-text-muted
                   "
                 />
 
@@ -545,18 +527,11 @@ export default function ClinicaConfig() {
                   }
                   placeholder="653 000 0000"
                   className="
+                    mint-input
                     w-full
                     pl-9
                     pr-3
                     py-2.5
-                    rounded-xl
-                    border
-                    border-slate-300
-                    text-sm
-                    outline-none
-                    focus:ring-2
-                    focus:ring-teal-100
-                    focus:border-teal-500
                   "
                 />
 
@@ -568,10 +543,8 @@ export default function ClinicaConfig() {
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -591,24 +564,17 @@ export default function ClinicaConfig() {
                 }
                 placeholder="526530000000"
                 className="
+                  mint-input
                   w-full
                   px-3
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  text-sm
-                  outline-none
-                  focus:ring-2
-                  focus:ring-teal-100
-                  focus:border-teal-500
                 "
               />
 
               <p
                 className="
                   text-[11px]
-                  text-slate-400
+                  mint-text-muted
                   mt-1
                 "
               >
@@ -624,10 +590,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -646,7 +610,7 @@ export default function ClinicaConfig() {
                   absolute
                   left-3
                   top-3
-                  text-slate-400
+                  mint-text-muted
                 "
               />
 
@@ -663,18 +627,11 @@ export default function ClinicaConfig() {
                 }
                 placeholder="correo@clinica.com"
                 className="
+                  mint-input
                   w-full
                   pl-9
                   pr-3
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  text-sm
-                  outline-none
-                  focus:ring-2
-                  focus:ring-teal-100
-                  focus:border-teal-500
                 "
               />
 
@@ -686,10 +643,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -708,7 +663,7 @@ export default function ClinicaConfig() {
                   absolute
                   left-3
                   top-3
-                  text-slate-400
+                  mint-text-muted
                 "
               />
 
@@ -725,18 +680,11 @@ export default function ClinicaConfig() {
                 }
                 placeholder="Calle, número y colonia"
                 className="
+                  mint-input
                   w-full
                   pl-9
                   pr-3
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  text-sm
-                  outline-none
-                  focus:ring-2
-                  focus:ring-teal-100
-                  focus:border-teal-500
                 "
               />
 
@@ -765,10 +713,8 @@ export default function ClinicaConfig() {
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -788,17 +734,10 @@ export default function ClinicaConfig() {
                 }
                 placeholder="San Luis Río Colorado"
                 className="
+                  mint-input
                   w-full
                   px-3
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  text-sm
-                  outline-none
-                  focus:ring-2
-                  focus:ring-teal-100
-                  focus:border-teal-500
                 "
               />
 
@@ -808,10 +747,8 @@ export default function ClinicaConfig() {
 
               <label
                 className="
+                  mint-label
                   block
-                  text-sm
-                  font-semibold
-                  text-slate-700
                   mb-2
                 "
               >
@@ -831,17 +768,10 @@ export default function ClinicaConfig() {
                 }
                 placeholder="Sonora"
                 className="
+                  mint-input
                   w-full
                   px-3
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  text-sm
-                  outline-none
-                  focus:ring-2
-                  focus:ring-teal-100
-                  focus:border-teal-500
                 "
               />
 
@@ -853,10 +783,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -875,17 +803,10 @@ export default function ClinicaConfig() {
                 )
               }
               className="
+                mint-input
                 w-full
                 px-3
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                text-sm
-                outline-none
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             />
 
@@ -895,10 +816,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -920,18 +839,11 @@ export default function ClinicaConfig() {
               }
               rows={4}
               className="
+                mint-input
                 w-full
                 px-3
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                text-sm
-                outline-none
                 resize-none
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             />
 
@@ -941,10 +853,8 @@ export default function ClinicaConfig() {
 
             <label
               className="
+                mint-label
                 block
-                text-sm
-                font-semibold
-                text-slate-700
                 mb-2
               "
             >
@@ -962,18 +872,10 @@ export default function ClinicaConfig() {
                 )
               }
               className="
+                mint-input
                 w-full
                 px-3
                 py-2.5
-                rounded-xl
-                border
-                border-slate-300
-                text-sm
-                outline-none
-                bg-white
-                focus:ring-2
-                focus:ring-teal-100
-                focus:border-teal-500
               "
             >
 

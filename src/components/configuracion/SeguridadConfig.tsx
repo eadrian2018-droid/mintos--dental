@@ -273,10 +273,7 @@ export default function SeguridadConfig() {
 
       <div
         className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
+          mint-card
           p-6
         "
       >
@@ -287,7 +284,7 @@ export default function SeguridadConfig() {
             items-center
             gap-2
             text-sm
-            text-slate-500
+            mint-text-secondary
           "
         >
 
@@ -316,10 +313,7 @@ export default function SeguridadConfig() {
 
       <div
         className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
+          mint-card
           overflow-hidden
         "
       >
@@ -331,7 +325,7 @@ export default function SeguridadConfig() {
             gap-3
             p-6
             border-b
-            border-slate-200
+            border-[var(--mint-border)]
           "
         >
 
@@ -340,8 +334,10 @@ export default function SeguridadConfig() {
               w-11
               h-11
               rounded-xl
-              bg-teal-50
-              text-teal-700
+              bg-[var(--mint-primary-soft)]
+              text-[var(--mint-primary)]
+              border
+              border-[var(--mint-border-primary)]
               flex
               items-center
               justify-center
@@ -361,7 +357,7 @@ export default function SeguridadConfig() {
               className="
                 text-xl
                 font-bold
-                text-slate-800
+                mint-text-primary
               "
             >
               Seguridad
@@ -370,7 +366,7 @@ export default function SeguridadConfig() {
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -391,9 +387,7 @@ export default function SeguridadConfig() {
 
           <div
             className="
-              border
-              border-slate-200
-              rounded-2xl
+              mint-card
               p-5
             "
           >
@@ -420,8 +414,8 @@ export default function SeguridadConfig() {
                     w-10
                     h-10
                     rounded-xl
-                    bg-slate-100
-                    text-slate-600
+                    bg-[var(--mint-bg-muted)]
+                    mint-text-secondary
                     flex
                     items-center
                     justify-center
@@ -440,7 +434,7 @@ export default function SeguridadConfig() {
                   <h2
                     className="
                       font-bold
-                      text-slate-800
+                      mint-text-primary
                     "
                   >
                     Sesión actual
@@ -449,7 +443,7 @@ export default function SeguridadConfig() {
                   <p
                     className="
                       text-sm
-                      text-slate-500
+                      mint-text-secondary
                       mt-1
                     "
                   >
@@ -462,7 +456,7 @@ export default function SeguridadConfig() {
                       <p
                         className="
                           text-xs
-                          text-slate-400
+                          mint-text-muted
                           mt-2
                         "
                       >
@@ -481,16 +475,13 @@ export default function SeguridadConfig() {
 
               <div
                 className="
+                  mint-badge
+                  mint-badge-success
                   inline-flex
                   items-center
                   gap-1.5
                   px-3
                   py-1.5
-                  rounded-full
-                  bg-emerald-50
-                  text-emerald-700
-                  text-xs
-                  font-semibold
                 "
               >
 
@@ -508,9 +499,7 @@ export default function SeguridadConfig() {
 
           <div
             className="
-              border
-              border-slate-200
-              rounded-2xl
+              mint-card
               p-5
             "
           >
@@ -539,8 +528,10 @@ export default function SeguridadConfig() {
                     w-10
                     h-10
                     rounded-xl
-                    bg-amber-50
-                    text-amber-700
+                    bg-[var(--mint-warning-bg)]
+                    text-[var(--mint-warning)]
+                    border
+                    border-[var(--mint-warning-border)]
                     flex
                     items-center
                     justify-center
@@ -559,7 +550,7 @@ export default function SeguridadConfig() {
                   <h2
                     className="
                       font-bold
-                      text-slate-800
+                      mint-text-primary
                     "
                   >
                     Otras sesiones
@@ -568,7 +559,7 @@ export default function SeguridadConfig() {
                   <p
                     className="
                       text-sm
-                      text-slate-500
+                      mint-text-secondary
                       mt-1
                       max-w-xl
                     "
@@ -592,6 +583,8 @@ export default function SeguridadConfig() {
                   cerrandoSesiones
                 }
                 className="
+                  mint-btn
+                  mint-btn-neutral
                   flex-shrink-0
                   inline-flex
                   items-center
@@ -599,16 +592,9 @@ export default function SeguridadConfig() {
                   gap-2
                   px-4
                   py-2.5
-                  rounded-xl
-                  border
-                  border-slate-300
-                  bg-white
-                  text-slate-700
                   text-sm
-                  font-semibold
-                  hover:bg-slate-50
                   disabled:opacity-50
-                  transition
+                  disabled:cursor-not-allowed
                 "
               >
 
@@ -637,9 +623,7 @@ export default function SeguridadConfig() {
 
           <div
             className="
-              border
-              border-slate-200
-              rounded-2xl
+              mint-card
               p-5
             "
           >
@@ -658,8 +642,10 @@ export default function SeguridadConfig() {
                   w-10
                   h-10
                   rounded-xl
-                  bg-teal-50
-                  text-teal-700
+                  bg-[var(--mint-primary-soft)]
+                  text-[var(--mint-primary)]
+                  border
+                  border-[var(--mint-border-primary)]
                   flex
                   items-center
                   justify-center
@@ -678,7 +664,7 @@ export default function SeguridadConfig() {
                 <h2
                   className="
                     font-bold
-                    text-slate-800
+                    mint-text-primary
                   "
                 >
                   Cambiar contraseña
@@ -687,7 +673,7 @@ export default function SeguridadConfig() {
                 <p
                   className="
                     text-sm
-                    text-slate-500
+                    mint-text-secondary
                     mt-1
                   "
                 >
@@ -712,10 +698,8 @@ export default function SeguridadConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -744,18 +728,11 @@ export default function SeguridadConfig() {
                     }
                     placeholder="Mínimo 8 caracteres"
                     className="
+                      mint-input
                       w-full
                       px-3
                       pr-11
                       py-2.5
-                      rounded-xl
-                      border
-                      border-slate-300
-                      text-sm
-                      outline-none
-                      focus:ring-2
-                      focus:ring-teal-100
-                      focus:border-teal-500
                     "
                   />
 
@@ -771,8 +748,9 @@ export default function SeguridadConfig() {
                       right-3
                       top-1/2
                       -translate-y-1/2
-                      text-slate-400
-                      hover:text-slate-700
+                      mint-text-muted
+                      hover:text-[var(--mint-text-primary)]
+                      transition-colors
                     "
                   >
 
@@ -800,10 +778,8 @@ export default function SeguridadConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -832,18 +808,11 @@ export default function SeguridadConfig() {
                     }
                     placeholder="Repite la contraseña"
                     className="
+                      mint-input
                       w-full
                       px-3
                       pr-11
                       py-2.5
-                      rounded-xl
-                      border
-                      border-slate-300
-                      text-sm
-                      outline-none
-                      focus:ring-2
-                      focus:ring-teal-100
-                      focus:border-teal-500
                     "
                   />
 
@@ -859,8 +828,9 @@ export default function SeguridadConfig() {
                       right-3
                       top-1/2
                       -translate-y-1/2
-                      text-slate-400
-                      hover:text-slate-700
+                      mint-text-muted
+                      hover:text-[var(--mint-text-primary)]
+                      transition-colors
                     "
                   >
 
@@ -903,20 +873,17 @@ export default function SeguridadConfig() {
                   guardandoPassword
                 }
                 className="
+                  mint-btn
+                  mint-btn-primary
                   inline-flex
                   items-center
                   justify-center
                   gap-2
                   px-4
                   py-2.5
-                  rounded-xl
-                  bg-teal-600
-                  text-white
                   text-sm
-                  font-semibold
-                  hover:bg-teal-700
                   disabled:opacity-50
-                  transition
+                  disabled:cursor-not-allowed
                 "
               >
 

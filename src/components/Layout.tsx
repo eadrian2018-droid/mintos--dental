@@ -122,14 +122,14 @@ export default function Layout() {
       ${
         activo
           ? `
-            bg-teal-600
-            text-white
-            shadow-sm
-          `
+              bg-[var(--mint-primary)]
+              text-[var(--mint-text-on-primary)]
+              shadow-sm
+            `
           : `
-            text-slate-700
-            hover:bg-slate-100
-          `
+              mint-text-secondary
+              hover:bg-[var(--mint-bg-soft)]
+            `
       }
     `;
 
@@ -172,15 +172,15 @@ export default function Layout() {
       ${
         activo
           ? `
-            bg-teal-50
-            text-teal-700
-            font-semibold
-          `
+              bg-[var(--mint-primary-soft)]
+              text-[var(--mint-primary)]
+              font-semibold
+            `
           : `
-            text-slate-500
-            hover:bg-slate-50
-            hover:text-slate-800
-          `
+              mint-text-muted
+              hover:bg-[var(--mint-bg-soft)]
+              hover:text-[var(--mint-text-primary)]
+            `
       }
     `;
 
@@ -343,7 +343,7 @@ export default function Layout() {
       className="
         flex
         h-screen
-        bg-slate-100
+        bg-[var(--mint-bg-app)]
         overflow-hidden
       "
     >
@@ -353,9 +353,9 @@ export default function Layout() {
           width: "210px",
         }}
         className="
-          bg-white
+          bg-[var(--mint-bg-card)]
           border-r
-          border-slate-200
+          border-[var(--mint-border)]
           p-3
           flex
           flex-col
@@ -375,7 +375,7 @@ export default function Layout() {
             className="
               text-2xl
               font-bold
-              text-teal-600
+              text-[var(--mint-primary)]
             "
           >
 
@@ -388,7 +388,7 @@ export default function Layout() {
               text-[10px]
               uppercase
               tracking-wider
-              text-slate-400
+              mint-text-muted
               mt-1
             "
           >
@@ -481,13 +481,13 @@ export default function Layout() {
                         "pacientes"
                       )
                         ? `
-                          text-teal-700
-                          bg-teal-50
-                        `
+                            text-[var(--mint-primary)]
+                            bg-[var(--mint-primary-soft)]
+                          `
                         : `
-                          text-slate-700
-                          hover:bg-slate-100
-                        `
+                            mint-text-secondary
+                            hover:bg-[var(--mint-bg-soft)]
+                          `
                     }
                   `}
                 >
@@ -536,7 +536,7 @@ export default function Layout() {
                         mb-2
                         pl-3
                         border-l
-                        border-slate-200
+                        border-[var(--mint-border)]
                         space-y-1
                       "
                     >
@@ -554,18 +554,18 @@ export default function Layout() {
 
                       </Link>
 
-           <div
-  className="
-    px-3
-    py-2
-    text-[13px]
-    text-slate-400
-  "
->
+                      <div
+                        className="
+                          px-3
+                          py-2
+                          text-[13px]
+                          mint-text-muted
+                        "
+                      >
 
-  Presupuestos
+                        Presupuestos
 
-</div>
+                      </div>
 
                     </div>
 
@@ -607,13 +607,13 @@ export default function Layout() {
                         "finanzas"
                       )
                         ? `
-                          text-teal-700
-                          bg-teal-50
-                        `
+                            text-[var(--mint-primary)]
+                            bg-[var(--mint-primary-soft)]
+                          `
                         : `
-                          text-slate-700
-                          hover:bg-slate-100
-                        `
+                            mint-text-secondary
+                            hover:bg-[var(--mint-bg-soft)]
+                          `
                     }
                   `}
                 >
@@ -662,7 +662,7 @@ export default function Layout() {
                         mb-2
                         pl-3
                         border-l
-                        border-slate-200
+                        border-[var(--mint-border)]
                         space-y-1
                       "
                     >
@@ -685,7 +685,7 @@ export default function Layout() {
                           px-3
                           py-2
                           text-[13px]
-                          text-slate-400
+                          mint-text-muted
                         "
                       >
 
@@ -698,7 +698,7 @@ export default function Layout() {
                           px-3
                           py-2
                           text-[13px]
-                          text-slate-400
+                          mint-text-muted
                         "
                       >
 
@@ -711,7 +711,7 @@ export default function Layout() {
                           px-3
                           py-2
                           text-[13px]
-                          text-slate-400
+                          mint-text-muted
                         "
                       >
 
@@ -759,13 +759,13 @@ export default function Layout() {
                         "configuracion"
                       )
                         ? `
-                          text-teal-700
-                          bg-teal-50
-                        `
+                            text-[var(--mint-primary)]
+                            bg-[var(--mint-primary-soft)]
+                          `
                         : `
-                          text-slate-700
-                          hover:bg-slate-100
-                        `
+                            mint-text-secondary
+                            hover:bg-[var(--mint-bg-soft)]
+                          `
                     }
                   `}
                 >
@@ -814,7 +814,7 @@ export default function Layout() {
                         mb-2
                         pl-3
                         border-l
-                        border-slate-200
+                        border-[var(--mint-border)]
                         space-y-1
                       "
                     >
@@ -936,7 +936,7 @@ export default function Layout() {
             mt-auto
             pt-4
             border-t
-            border-slate-200
+            border-[var(--mint-border)]
           "
         >
 
@@ -951,7 +951,7 @@ export default function Layout() {
               className="
                 text-sm
                 font-bold
-                text-slate-800
+                mint-text-primary
                 truncate
               "
             >
@@ -966,7 +966,7 @@ export default function Layout() {
             <p
               className="
                 text-xs
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -992,8 +992,8 @@ export default function Layout() {
               rounded-lg
               font-semibold
               text-sm
-              text-red-600
-              hover:bg-red-50
+              text-[var(--mint-danger)]
+              hover:bg-[var(--mint-danger-bg)]
               transition
             "
           >
@@ -1007,7 +1007,7 @@ export default function Layout() {
               mt-3
               px-3
               text-[10px]
-              text-slate-400
+              mint-text-muted
             "
           >
 
@@ -1024,6 +1024,7 @@ export default function Layout() {
           flex-1
           overflow-y-auto
           p-3
+          bg-[var(--mint-bg-app)]
         "
       >
 

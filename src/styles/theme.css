@@ -16,10 +16,10 @@
      BACKGROUNDS
   ============================== */
 
-  --mint-bg-app: #f8fafc;
+  --mint-bg-app: #eef3f6;
   --mint-bg-card: #ffffff;
-  --mint-bg-soft: #f8fafc;
-  --mint-bg-muted: #f1f5f9;
+  --mint-bg-soft: #f6f9fa;
+  --mint-bg-muted: #eaf1f3;
   --mint-bg-elevated: #ffffff;
 
 
@@ -600,7 +600,7 @@ textarea {
   min-height:
     var(--mint-control-md);
 
-  display:
+      display:
     inline-flex;
 
   align-items:
@@ -1156,4 +1156,128 @@ textarea.mint-input {
 [data-theme="dark"] textarea {
   color-scheme:
     dark;
+}
+
+/* =================================
+   ACTION BUTTONS
+================================= */
+
+.mint-btn-action {
+  background:
+    var(--mint-info);
+
+  color:
+    #ffffff;
+
+  border:
+    1px solid var(--mint-info);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-btn-action:hover:not(:disabled) {
+  background:
+    #1d4ed8;
+
+  border-color:
+    #1d4ed8;
+}
+
+
+.mint-btn-action-soft {
+  background:
+    var(--mint-info-bg);
+
+  color:
+    var(--mint-info);
+
+  border:
+    1px solid var(--mint-info-border);
+}
+
+
+.mint-btn-action-soft:hover:not(:disabled) {
+  background:
+    #dbeafe;
+
+  border-color:
+    #93c5fd;
+}
+
+
+.mint-btn-neutral {
+  background:
+    var(--mint-bg-muted);
+
+  color:
+    var(--mint-text-secondary);
+
+  border:
+    1px solid var(--mint-border);
+}
+
+
+.mint-btn-neutral:hover:not(:disabled) {
+  background:
+    var(--mint-bg-soft);
+
+  border-color:
+    var(--mint-border-strong);
+
+  color:
+    var(--mint-text-primary);
+}
+/* =================================
+   ACCENT / HIGHLIGHT
+================================= */
+
+:root {
+  --mint-accent-soft: #fdf8ee;
+  --mint-accent-border: #ead6ad;
+  --mint-accent-strong: #a97832;
+}
+
+
+[data-theme="dark"] {
+  --mint-accent-soft: #302719;
+  --mint-accent-border: #66502c;
+  --mint-accent-strong: #e2b96f;
+}
+
+
+.mint-card-accent {
+  background:
+    var(--mint-accent-soft);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-accent-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-text-accent {
+  color:
+    var(--mint-accent-strong);
+}
+
+
+.mint-badge-accent {
+  background:
+    var(--mint-accent-soft);
+
+  color:
+    var(--mint-accent-strong);
+
+  border:
+    1px solid var(--mint-accent-border);
 }

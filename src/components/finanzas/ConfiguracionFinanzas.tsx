@@ -22,7 +22,7 @@ import type {
 import ComisionesCostos
   from "./ComisionesCostos";
 
-  import ConfiguracionPagos
+import ConfiguracionPagos
   from "./ConfiguracionPagos";
 
 import type {
@@ -42,7 +42,7 @@ type ConfiguracionFinanzasProps = {
   catalogoTratamientos:
     TratamientoCatalogo[];
 
-      configuracionPagos:
+  configuracionPagos:
     ConfiguracionPago[];
 
   actualizarConfiguracionPago:
@@ -175,9 +175,7 @@ export default function ConfiguracionFinanzas({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-4
         "
       >
@@ -197,18 +195,15 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-xl
-              transition
+              mint-tab
 
               ${
                 seccion ===
                 "tratamientos"
 
-                  ? "bg-teal-600 text-white"
+                  ? "mint-tab-active"
 
-                  : "bg-slate-100"
+                  : ""
               }
             `}
           >
@@ -224,18 +219,15 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-xl
-              transition
+              mint-tab
 
               ${
                 seccion ===
                 "doctores"
 
-                  ? "bg-teal-600 text-white"
+                  ? "mint-tab-active"
 
-                  : "bg-slate-100"
+                  : ""
               }
             `}
           >
@@ -251,18 +243,15 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-xl
-              transition
+              mint-tab
 
               ${
                 seccion ===
                 "comisiones"
 
-                  ? "bg-teal-600 text-white"
+                  ? "mint-tab-active"
 
-                  : "bg-slate-100"
+                  : ""
               }
             `}
           >
@@ -278,18 +267,15 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              px-4
-              py-2
-              rounded-xl
-              transition
+              mint-tab
 
               ${
                 seccion ===
                 "pagos"
 
-                  ? "bg-teal-600 text-white"
+                  ? "mint-tab-active"
 
-                  : "bg-slate-100"
+                  : ""
               }
             `}
           >
@@ -385,42 +371,42 @@ export default function ConfiguracionFinanzas({
       }
 
       {
-  seccion ===
-  "comisiones"
+        seccion ===
+        "comisiones"
 
-  &&
+        &&
 
-  <ComisionesCostos
+        <ComisionesCostos
 
-    doctores={
-      doctores
-    }
+          doctores={
+            doctores
+          }
 
-    catalogoTratamientos={
-      catalogoTratamientos
-    }
+          catalogoTratamientos={
+            catalogoTratamientos
+          }
 
-  />
-}
+        />
+      }
 
       {
-  seccion ===
-  "pagos"
+        seccion ===
+        "pagos"
 
-  &&
+        &&
 
-  <ConfiguracionPagos
+        <ConfiguracionPagos
 
-    configuracionPagos={
-      configuracionPagos
-    }
+          configuracionPagos={
+            configuracionPagos
+          }
 
-    actualizarConfiguracionPago={
-      actualizarConfiguracionPago
-    }
+          actualizarConfiguracionPago={
+            actualizarConfiguracionPago
+          }
 
-  />
-}
+        />
+      }
 
     </div>
 

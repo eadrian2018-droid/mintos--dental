@@ -47,9 +47,7 @@ export default function Comisiones({
 
     <div
       className="
-        bg-white
-        rounded-3xl
-        shadow-lg
+        mint-card
         p-6
         mb-6
       "
@@ -59,6 +57,7 @@ export default function Comisiones({
         className="
           text-2xl
           font-bold
+          mint-text-primary
           mb-6
         "
       >
@@ -75,19 +74,19 @@ export default function Comisiones({
 
         <table
           className="
+            mint-table
             w-full
             text-sm
           "
         >
 
-          <thead>
+          <thead
+            className="
+              mint-table-head
+            "
+          >
 
-            <tr
-              className="
-                border-b
-                border-slate-200
-              "
-            >
+            <tr>
 
               <th className="p-3 text-left">
                 Doctor
@@ -182,12 +181,17 @@ export default function Comisiones({
                     <tr
                       key={doctor.id}
                       className="
-                        border-b
-                        border-slate-100
+                        mint-table-row
                       "
                     >
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          font-semibold
+                          mint-text-primary
+                        "
+                      >
 
                         {doctor.nombre}
 
@@ -195,17 +199,37 @@ export default function Comisiones({
 
                       <td className="p-3">
 
-                        {doctor.porcentaje}%
+                        <span
+                          className="
+                            mint-badge
+                            mint-badge-accent
+                          "
+                        >
+
+                          {doctor.porcentaje}%
+
+                        </span>
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          mint-text-secondary
+                        "
+                      >
 
                         {tratamientosDoctor.length}
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          font-medium
+                          text-[var(--mint-info)]
+                        "
+                      >
 
                         $
 
@@ -217,7 +241,7 @@ export default function Comisiones({
                         className="
                           p-3
                           font-bold
-                          text-green-600
+                          text-[var(--mint-success)]
                         "
                       >
 
@@ -242,13 +266,9 @@ export default function Comisiones({
 
                           }}
                           className="
-                            bg-blue-500
-                            hover:bg-blue-600
-                            text-white
-                            px-3
-                            py-1
-                            rounded-lg
-                            text-sm
+                            mint-btn
+                            mint-btn-action
+                            mint-btn-sm
                           "
                         >
 

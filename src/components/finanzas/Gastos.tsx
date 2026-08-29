@@ -102,9 +102,7 @@ export default function Gastos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -113,6 +111,7 @@ export default function Gastos({
           className="
             text-2xl
             font-bold
+            mint-text-primary
           "
         >
 
@@ -122,7 +121,7 @@ export default function Gastos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mt-1
           "
         >
@@ -143,13 +142,18 @@ export default function Gastos({
 
         <div
           className="
-            bg-slate-50
-            rounded-2xl
+            mint-card-danger
             p-4
           "
         >
 
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
 
             Total Gastos
 
@@ -159,7 +163,8 @@ export default function Gastos({
             className="
               text-2xl
               font-bold
-              text-red-600
+              text-[var(--mint-danger)]
+              mt-1
             "
           >
 
@@ -173,13 +178,18 @@ export default function Gastos({
 
         <div
           className="
-            bg-slate-50
-            rounded-2xl
+            mint-card-accent
             p-4
           "
         >
 
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
 
             Cantidad de Gastos
 
@@ -189,6 +199,8 @@ export default function Gastos({
             className="
               text-2xl
               font-bold
+              mint-text-accent
+              mt-1
             "
           >
 
@@ -200,347 +212,382 @@ export default function Gastos({
 
       </div>
 
-      <h3
-        className="
-          text-xl
-          font-bold
-        "
-      >
-
-        Nuevo Gasto
-
-      </h3>
-
       <div
         className="
-          grid
-          md:grid-cols-2
-          gap-4
+          mint-card
+          p-6
         "
       >
 
-        <input
-          type="date"
-          value={fechaGasto}
-          onChange={(e) =>
-            setFechaGasto(
-              e.target.value
-            )
-          }
+        <h3
           className="
-            border
-            rounded-xl
-            p-3
-          "
-        />
-
-        <input
-          type="text"
-          placeholder="Concepto"
-          value={conceptoGasto}
-          onChange={(e) =>
-            setConceptoGasto(
-              e.target.value
-            )
-          }
-          className="
-            border
-            rounded-xl
-            p-3
-          "
-        />
-
-        <select
-          value={categoriaGasto}
-          onChange={(e) =>
-            setCategoriaGasto(
-              e.target.value
-            )
-          }
-          className="
-            border
-            rounded-xl
-            p-3
+            text-xl
+            font-bold
+            mint-text-primary
+            mb-4
           "
         >
 
-          <option value="">
+          Nuevo Gasto
 
-            Seleccionar categoría
+        </h3>
 
-          </option>
-
-          <option value="Material Dental">
-
-            Material Dental
-
-          </option>
-
-          <option value="Limpieza">
-
-            Limpieza
-
-          </option>
-
-          <option value="Laboratorio">
-
-            Laboratorio
-
-          </option>
-
-          <option value="Especialistas">
-
-            Especialistas
-
-          </option>
-
-          <option value="Nómina">
-
-            Nómina
-
-          </option>
-
-          <option value="Servicios">
-
-            Servicios
-
-          </option>
-
-          <option value="Marketing">
-
-            Marketing
-
-          </option>
-
-          <option value="Otros">
-
-            Otros
-
-          </option>
-
-        </select>
-
-        <input
-          type="number"
-          placeholder="Monto"
-          value={montoGasto}
-          onChange={(e) =>
-            setMontoGasto(
-              e.target.value
-            )
-          }
+        <div
           className="
-            border
-            rounded-xl
-            p-3
-          "
-        />
-
-        <textarea
-          placeholder="Notas"
-          value={notasGasto}
-          onChange={(e) =>
-            setNotasGasto(
-              e.target.value
-            )
-          }
-          className="
-            border
-            rounded-xl
-            p-3
-            md:col-span-2
-          "
-        />
-
-        <button
-          onClick={guardarGasto}
-          className="
-            bg-teal-600
-            text-white
-            px-4
-            py-3
-            rounded-xl
-            md:col-span-2
+            grid
+            md:grid-cols-2
+            gap-4
           "
         >
 
-          Guardar gasto
+          <input
+            type="date"
+            value={fechaGasto}
+            onChange={(e) =>
+              setFechaGasto(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              w-full
+              p-3
+            "
+          />
 
-        </button>
+          <input
+            type="text"
+            placeholder="Concepto"
+            value={conceptoGasto}
+            onChange={(e) =>
+              setConceptoGasto(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              w-full
+              p-3
+            "
+          />
+
+          <select
+            value={categoriaGasto}
+            onChange={(e) =>
+              setCategoriaGasto(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              w-full
+              p-3
+            "
+          >
+
+            <option value="">
+
+              Seleccionar categoría
+
+            </option>
+
+            <option value="Material Dental">
+
+              Material Dental
+
+            </option>
+
+            <option value="Limpieza">
+
+              Limpieza
+
+            </option>
+
+            <option value="Laboratorio">
+
+              Laboratorio
+
+            </option>
+
+            <option value="Especialistas">
+
+              Especialistas
+
+            </option>
+
+            <option value="Nómina">
+
+              Nómina
+
+            </option>
+
+            <option value="Servicios">
+
+              Servicios
+
+            </option>
+
+            <option value="Marketing">
+
+              Marketing
+
+            </option>
+
+            <option value="Otros">
+
+              Otros
+
+            </option>
+
+          </select>
+
+          <input
+            type="number"
+            placeholder="Monto"
+            value={montoGasto}
+            onChange={(e) =>
+              setMontoGasto(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              w-full
+              p-3
+            "
+          />
+
+          <textarea
+            placeholder="Notas"
+            value={notasGasto}
+            onChange={(e) =>
+              setNotasGasto(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              w-full
+              p-3
+              md:col-span-2
+              min-h-[110px]
+              resize-y
+            "
+          />
+
+          <button
+            onClick={guardarGasto}
+            className="
+              mint-btn
+              mint-btn-primary
+              md:col-span-2
+              justify-center
+            "
+          >
+
+            Guardar gasto
+
+          </button>
+
+        </div>
 
       </div>
 
-      <h3
-        className="
-          text-xl
-          font-bold
-          mt-8
-          mb-2
-        "
-      >
-
-        Historial de Gastos
-
-      </h3>
-
-      <p
-        className="
-          text-slate-600
-          mb-4
-        "
-      >
-
-        Total de registros:
-
-        <strong>
-
-          {" "}
-
-          {gastosFiltrados.length}
-
-        </strong>
-
-      </p>
-
       <div
         className="
-          overflow-x-auto
+          mint-card
+          p-6
         "
       >
 
-        <table
+        <h3
           className="
-            w-full
-            text-sm
+            text-xl
+            font-bold
+            mint-text-primary
+            mb-2
           "
         >
 
-          <thead>
+          Historial de Gastos
 
-            <tr
+        </h3>
+
+        <p
+          className="
+            mint-text-secondary
+            mb-4
+          "
+        >
+
+          Total de registros:
+
+          <strong
+            className="
+              mint-text-primary
+            "
+          >
+
+            {" "}
+
+            {gastosFiltrados.length}
+
+          </strong>
+
+        </p>
+
+        <div
+          className="
+            overflow-x-auto
+          "
+        >
+
+          <table
+            className="
+              mint-table
+              w-full
+              text-sm
+            "
+          >
+
+            <thead
               className="
-                border-b
-                border-slate-200
+                mint-table-head
               "
             >
 
-              <th className="p-3 text-left">
+              <tr>
 
-                Fecha
+                <th className="p-3 text-left">
 
-              </th>
+                  Fecha
 
-              <th className="p-3 text-left">
+                </th>
 
-                Concepto
+                <th className="p-3 text-left">
 
-              </th>
+                  Concepto
 
-              <th className="p-3 text-left">
+                </th>
 
-                Categoría
+                <th className="p-3 text-left">
 
-              </th>
+                  Categoría
 
-              <th className="p-3 text-left">
+                </th>
 
-                Monto
+                <th className="p-3 text-left">
 
-              </th>
+                  Monto
 
-              <th className="p-3 text-left">
+                </th>
 
-                Acción
+                <th className="p-3 text-left">
 
-              </th>
+                  Acción
 
-            </tr>
+                </th>
 
-          </thead>
+              </tr>
 
-          <tbody>
+            </thead>
 
-            {
+            <tbody>
 
-              gastosFiltrados.map(
-                (gasto) => (
+              {
 
-                  <tr
-                    key={gasto.id}
-                    className="
-                      border-b
-                      border-slate-100
-                    "
-                  >
+                gastosFiltrados.map(
+                  (gasto) => (
 
-                    <td className="p-3">
+                    <tr
+                      key={gasto.id}
+                      className="
+                        mint-table-row
+                      "
+                    >
 
-                      {gasto.fecha}
+                      <td className="p-3">
 
-                    </td>
+                        {gasto.fecha}
 
-                    <td className="p-3">
+                      </td>
 
-                      {gasto.concepto}
+                      <td className="p-3">
 
-                    </td>
+                        {gasto.concepto}
 
-                    <td className="p-3">
+                      </td>
 
-                      {gasto.categoria}
+                      <td className="p-3">
 
-                    </td>
+                        <span
+                          className="
+                            mint-badge
+                            mint-badge-muted
+                          "
+                        >
 
-                    <td className="p-3">
+                          {gasto.categoria}
 
-                      $
+                        </span>
 
-                      {Number(
-                        gasto.monto
-                      ).toLocaleString()}
+                      </td>
 
-                    </td>
-
-                    <td className="p-3">
-
-                      <button
-                        onClick={() =>
-                          eliminarGasto(
-                            gasto.id
-                          )
-                        }
+                      <td
                         className="
-                          bg-red-600
-                          text-white
-                          px-3
-                          py-1
-                          rounded-lg
+                          p-3
+                          font-semibold
+                          text-[var(--mint-danger)]
                         "
                       >
 
-                        Eliminar
+                        $
 
-                      </button>
+                        {Number(
+                          gasto.monto
+                        ).toLocaleString()}
 
-                    </td>
+                      </td>
 
-                  </tr>
+                      <td className="p-3">
 
+                        <button
+                          onClick={() =>
+                            eliminarGasto(
+                              gasto.id
+                            )
+                          }
+                          className="
+                            mint-btn
+                            mint-btn-danger
+                            mint-btn-sm
+                          "
+                        >
+
+                          Eliminar
+
+                        </button>
+
+                      </td>
+
+                    </tr>
+
+                  )
                 )
-              )
 
-            }
+              }
 
-          </tbody>
+            </tbody>
 
-        </table>
+          </table>
+
+        </div>
 
       </div>
 
       <div
         className="
-          bg-slate-50
-          rounded-2xl
+          mint-card
           p-6
           mt-6
         "
@@ -550,6 +597,7 @@ export default function Gastos({
           className="
             text-xl
             font-bold
+            mint-text-primary
             mb-4
           "
         >
@@ -575,13 +623,19 @@ export default function Gastos({
                 className="
                   flex
                   justify-between
-                  py-2
+                  items-center
+                  py-3
                   border-b
-                  border-slate-200
+                  border-[var(--mint-border)]
+                  last:border-b-0
                 "
               >
 
-                <span>
+                <span
+                  className="
+                    mint-text-secondary
+                  "
+                >
 
                   {categoria}
 
@@ -590,6 +644,7 @@ export default function Gastos({
                 <span
                   className="
                     font-semibold
+                    mint-text-primary
                   "
                 >
 

@@ -306,9 +306,7 @@ export default function CatalogoTratamientos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -317,6 +315,7 @@ export default function CatalogoTratamientos({
           className="
             text-2xl
             font-bold
+            mint-text-primary
           "
         >
 
@@ -326,7 +325,7 @@ export default function CatalogoTratamientos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mt-1
           "
         >
@@ -340,9 +339,7 @@ export default function CatalogoTratamientos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -361,6 +358,7 @@ export default function CatalogoTratamientos({
             className="
               text-xl
               font-bold
+              mint-text-primary
             "
           >
 
@@ -387,12 +385,9 @@ export default function CatalogoTratamientos({
                 limpiarFormulario
               }
               className="
-                bg-slate-200
-                hover:bg-slate-300
-                text-slate-700
-                px-4
-                py-2
-                rounded-xl
+                mint-btn
+                mint-btn-neutral
+                mint-btn-md
               "
             >
 
@@ -421,8 +416,8 @@ export default function CatalogoTratamientos({
               )
             }
             className="
-              border
-              rounded-xl
+              mint-input
+              w-full
               p-3
             "
           />
@@ -437,8 +432,8 @@ export default function CatalogoTratamientos({
               )
             }
             className="
-              border
-              rounded-xl
+              mint-input
+              w-full
               p-3
             "
           />
@@ -447,8 +442,8 @@ export default function CatalogoTratamientos({
             value={tipo}
             onChange={(e) => {
 
-        const nuevoTipo =
-  e.target.value as TipoTratamiento;
+              const nuevoTipo =
+                e.target.value as TipoTratamiento;
 
               setTipo(
                 nuevoTipo
@@ -475,8 +470,8 @@ export default function CatalogoTratamientos({
 
             }}
             className="
-              border
-              rounded-xl
+              mint-input
+              w-full
               p-3
             "
           >
@@ -505,8 +500,8 @@ export default function CatalogoTratamientos({
               )
             }
             className="
-              border
-              rounded-xl
+              mint-input
+              w-full
               p-3
             "
           />
@@ -521,8 +516,8 @@ export default function CatalogoTratamientos({
               )
             }
             className="
-              border
-              rounded-xl
+              mint-input
+              w-full
               p-3
             "
           />
@@ -547,8 +542,8 @@ export default function CatalogoTratamientos({
                   )
                 }
                 className="
-                  border
-                  rounded-xl
+                  mint-input
+                  w-full
                   p-3
                 "
               />
@@ -565,8 +560,8 @@ export default function CatalogoTratamientos({
                   )
                 }
                 className="
-                  border
-                  rounded-xl
+                  mint-input
+                  w-full
                   p-3
                 "
               />
@@ -579,8 +574,8 @@ export default function CatalogoTratamientos({
                   )
                 }
                 className="
-                  border
-                  rounded-xl
+                  mint-input
+                  w-full
                   p-3
                   md:col-span-2
                 "
@@ -623,13 +618,10 @@ export default function CatalogoTratamientos({
               guardar
             }
             className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
-              px-4
-              py-3
-              rounded-xl
+              mint-btn
+              mint-btn-primary
               md:col-span-2
+              justify-center
             "
           >
 
@@ -650,9 +642,7 @@ export default function CatalogoTratamientos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -661,6 +651,7 @@ export default function CatalogoTratamientos({
           className="
             text-xl
             font-bold
+            mint-text-primary
             mb-6
           "
         >
@@ -677,19 +668,19 @@ export default function CatalogoTratamientos({
 
           <table
             className="
+              mint-table
               w-full
               text-sm
             "
           >
 
-            <thead>
+            <thead
+              className="
+                mint-table-head
+              "
+            >
 
-              <tr
-                className="
-                  border-b
-                  border-slate-200
-                "
-              >
+              <tr>
 
                 <th className="p-3 text-left">
 
@@ -760,12 +751,17 @@ export default function CatalogoTratamientos({
                         tratamiento.id
                       }
                       className="
-                        border-b
-                        border-slate-100
+                        mint-table-row
                       "
                     >
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          font-semibold
+                          mint-text-primary
+                        "
+                      >
 
                         {
                           tratamiento.nombre
@@ -775,26 +771,58 @@ export default function CatalogoTratamientos({
 
                       <td className="p-3">
 
-                        {
-                          tratamiento.categoria
-                        }
+                        <span
+                          className="
+                            mint-badge
+                            mint-badge-muted
+                          "
+                        >
+
+                          {
+                            tratamiento.categoria
+                          }
+
+                        </span>
 
                       </td>
 
                       <td className="p-3">
 
-                        {
-                          tratamiento.tipo ===
-                          "clinica"
+                        <span
+                          className={`
+                            mint-badge
 
-                            ? "Clínica"
+                            ${
+                              tratamiento.tipo ===
+                              "clinica"
 
-                            : "Especialista"
-                        }
+                                ? "mint-badge-primary"
+
+                                : "mint-badge-accent"
+                            }
+                          `}
+                        >
+
+                          {
+                            tratamiento.tipo ===
+                            "clinica"
+
+                              ? "Clínica"
+
+                              : "Especialista"
+                          }
+
+                        </span>
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          font-medium
+                          mint-text-primary
+                        "
+                      >
 
                         $
 
@@ -808,7 +836,13 @@ export default function CatalogoTratamientos({
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          font-medium
+                          mint-text-primary
+                        "
+                      >
 
                         $
 
@@ -822,7 +856,12 @@ export default function CatalogoTratamientos({
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          mint-text-secondary
+                        "
+                      >
 
                         {
                           tratamiento.tipo ===
@@ -839,7 +878,12 @@ export default function CatalogoTratamientos({
 
                       </td>
 
-                      <td className="p-3">
+                      <td
+                        className="
+                          p-3
+                          mint-text-secondary
+                        "
+                      >
 
                         {
                           tratamiento.tipo ===
@@ -860,19 +904,14 @@ export default function CatalogoTratamientos({
 
                         <span
                           className={`
-                            inline-flex
-                            px-3
-                            py-1
-                            rounded-full
-                            text-xs
-                            font-semibold
+                            mint-badge
 
                             ${
                               tratamiento.activo
 
-                                ? "bg-green-100 text-green-700"
+                                ? "mint-badge-success"
 
-                                : "bg-slate-200 text-slate-600"
+                                : "mint-badge-muted"
                             }
                           `}
                         >
@@ -904,12 +943,9 @@ export default function CatalogoTratamientos({
                               )
                             }
                             className="
-                              bg-blue-500
-                              hover:bg-blue-600
-                              text-white
-                              px-3
-                              py-1
-                              rounded-lg
+                              mint-btn
+                              mint-btn-action
+                              mint-btn-sm
                             "
                           >
 
@@ -925,12 +961,9 @@ export default function CatalogoTratamientos({
                               )
                             }
                             className="
-                              bg-slate-700
-                              hover:bg-slate-800
-                              text-white
-                              px-3
-                              py-1
-                              rounded-lg
+                              mint-btn
+                              mint-btn-neutral
+                              mint-btn-sm
                             "
                           >
 

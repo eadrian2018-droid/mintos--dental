@@ -392,10 +392,7 @@ export default function DoctoresConfig() {
 
     <div
       className="
-        bg-white
-        rounded-2xl
-        border
-        border-slate-200
+        mint-card
         overflow-hidden
       "
     >
@@ -408,7 +405,7 @@ export default function DoctoresConfig() {
           gap-4
           p-5
           border-b
-          border-slate-200
+          border-[var(--mint-border)]
         "
       >
 
@@ -418,7 +415,7 @@ export default function DoctoresConfig() {
             className="
               text-lg
               font-bold
-              text-slate-800
+              mint-text-primary
             "
           >
 
@@ -429,7 +426,7 @@ export default function DoctoresConfig() {
           <p
             className="
               text-sm
-              text-slate-500
+              mint-text-secondary
               mt-1
             "
           >
@@ -448,17 +445,14 @@ export default function DoctoresConfig() {
             abrirNuevoDoctor
           }
           className="
+            mint-btn
+            mint-btn-primary
             inline-flex
             items-center
             gap-2
-            bg-teal-600
-            hover:bg-teal-700
-            text-white
             px-4
             py-2.5
-            rounded-xl
             text-sm
-            font-bold
           "
         >
 
@@ -473,14 +467,15 @@ export default function DoctoresConfig() {
       </div>
 
       {
+
         mostrarFormulario && (
 
           <div
             className="
               p-5
-              bg-slate-50
+              bg-[var(--mint-bg-soft)]
               border-b
-              border-slate-200
+              border-[var(--mint-border)]
             "
           >
 
@@ -496,7 +491,7 @@ export default function DoctoresConfig() {
               <h3
                 className="
                   font-bold
-                  text-slate-800
+                  mint-text-primary
                 "
               >
 
@@ -516,8 +511,9 @@ export default function DoctoresConfig() {
                   cancelarFormulario
                 }
                 className="
-                  text-slate-400
-                  hover:text-slate-700
+                  mint-btn
+                  mint-btn-ghost
+                  p-2
                 "
               >
 
@@ -543,10 +539,8 @@ export default function DoctoresConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -572,15 +566,10 @@ export default function DoctoresConfig() {
                     Dr. Nombre
                   "
                   className="
+                    mint-input
                     w-full
-                    border
-                    border-slate-300
-                    rounded-xl
                     px-3
                     py-2.5
-                    bg-white
-                    outline-none
-                    focus:border-teal-600
                   "
                 />
 
@@ -590,10 +579,8 @@ export default function DoctoresConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -619,15 +606,10 @@ export default function DoctoresConfig() {
                     General
                   "
                   className="
+                    mint-input
                     w-full
-                    border
-                    border-slate-300
-                    rounded-xl
                     px-3
                     py-2.5
-                    bg-white
-                    outline-none
-                    focus:border-teal-600
                   "
                 />
 
@@ -637,10 +619,8 @@ export default function DoctoresConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -666,15 +646,10 @@ export default function DoctoresConfig() {
                   }
                   placeholder="30"
                   className="
+                    mint-input
                     w-full
-                    border
-                    border-slate-300
-                    rounded-xl
                     px-3
                     py-2.5
-                    bg-white
-                    outline-none
-                    focus:border-teal-600
                   "
                 />
 
@@ -684,10 +659,8 @@ export default function DoctoresConfig() {
 
                 <label
                   className="
+                    mint-label
                     block
-                    text-sm
-                    font-semibold
-                    text-slate-700
                     mb-2
                   "
                 >
@@ -713,15 +686,10 @@ export default function DoctoresConfig() {
                     526531234567
                   "
                   className="
+                    mint-input
                     w-full
-                    border
-                    border-slate-300
-                    rounded-xl
                     px-3
                     py-2.5
-                    bg-white
-                    outline-none
-                    focus:border-teal-600
                   "
                 />
 
@@ -746,7 +714,7 @@ export default function DoctoresConfig() {
                   gap-2
                   text-sm
                   font-semibold
-                  text-slate-700
+                  mint-text-secondary
                   cursor-pointer
                 "
               >
@@ -767,7 +735,7 @@ export default function DoctoresConfig() {
                   className="
                     w-4
                     h-4
-                    accent-teal-600
+                    accent-[var(--mint-primary)]
                   "
                 />
 
@@ -788,14 +756,10 @@ export default function DoctoresConfig() {
                     cancelarFormulario
                   }
                   className="
+                    mint-btn
+                    mint-btn-neutral
                     px-4
                     py-2.5
-                    rounded-xl
-                    bg-white
-                    border
-                    border-slate-300
-                    text-slate-600
-                    font-semibold
                     text-sm
                   "
                 >
@@ -813,18 +777,16 @@ export default function DoctoresConfig() {
                     guardarDoctor
                   }
                   className="
+                    mint-btn
+                    mint-btn-primary
                     inline-flex
                     items-center
                     gap-2
                     px-4
                     py-2.5
-                    rounded-xl
-                    bg-teal-600
-                    hover:bg-teal-700
-                    disabled:opacity-50
-                    text-white
-                    font-bold
                     text-sm
+                    disabled:opacity-50
+                    disabled:cursor-not-allowed
                   "
                 >
 
@@ -833,11 +795,13 @@ export default function DoctoresConfig() {
                   />
 
                   {
+
                     guardando
 
                       ? "Guardando..."
 
                       : "Guardar"
+
                   }
 
                 </button>
@@ -849,9 +813,10 @@ export default function DoctoresConfig() {
           </div>
 
         )
+
       }
 
-      <div
+            <div
         className="
           overflow-x-auto
         "
@@ -866,8 +831,8 @@ export default function DoctoresConfig() {
 
           <thead
             className="
-              bg-slate-50
-              text-slate-500
+              bg-[var(--mint-bg-soft)]
+              mint-text-secondary
             "
           >
 
@@ -943,14 +908,10 @@ export default function DoctoresConfig() {
 
           </thead>
 
-          <tbody
-            className="
-              divide-y
-              divide-slate-100
-            "
-          >
+          <tbody>
 
             {
+
               cargando ? (
 
                 <tr>
@@ -961,7 +922,7 @@ export default function DoctoresConfig() {
                       px-5
                       py-8
                       text-center
-                      text-slate-500
+                      mint-text-secondary
                     "
                   >
 
@@ -981,7 +942,7 @@ export default function DoctoresConfig() {
                       px-5
                       py-8
                       text-center
-                      text-slate-500
+                      mint-text-secondary
                     "
                   >
 
@@ -1001,7 +962,10 @@ export default function DoctoresConfig() {
                         doctor.id
                       }
                       className="
-                        hover:bg-slate-50
+                        border-t
+                        border-[var(--mint-border)]
+                        hover:bg-[var(--mint-bg-soft)]
+                        transition-colors
                       "
                     >
 
@@ -1010,7 +974,7 @@ export default function DoctoresConfig() {
                           px-5
                           py-4
                           font-bold
-                          text-slate-800
+                          mint-text-primary
                         "
                       >
 
@@ -1024,7 +988,7 @@ export default function DoctoresConfig() {
                         className="
                           px-5
                           py-4
-                          text-slate-600
+                          mint-text-secondary
                         "
                       >
 
@@ -1039,7 +1003,7 @@ export default function DoctoresConfig() {
                         className="
                           px-5
                           py-4
-                          text-slate-600
+                          mint-text-secondary
                         "
                       >
 
@@ -1056,7 +1020,7 @@ export default function DoctoresConfig() {
                           py-4
                           text-center
                           font-semibold
-                          text-slate-700
+                          mint-text-primary
                         "
                       >
 
@@ -1082,23 +1046,13 @@ export default function DoctoresConfig() {
                             )
                           }
                           className={`
-                            inline-flex
-                            px-3
-                            py-1
-                            rounded-full
-                            text-xs
-                            font-bold
+                            mint-badge
+                            cursor-pointer
 
                             ${
                               doctor.activo
-                                ? `
-                                  bg-emerald-100
-                                  text-emerald-700
-                                `
-                                : `
-                                  bg-slate-200
-                                  text-slate-600
-                                `
+                                ? "mint-badge-success"
+                                : "mint-badge-muted"
                             }
                           `}
                         >
@@ -1129,12 +1083,14 @@ export default function DoctoresConfig() {
                             )
                           }
                           className="
+                            mint-btn
+                            mint-btn-action-soft
                             inline-flex
                             items-center
                             gap-2
-                            text-teal-700
-                            hover:text-teal-900
-                            font-semibold
+                            px-3
+                            py-2
+                            text-sm
                           "
                         >
 

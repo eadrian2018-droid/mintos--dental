@@ -1726,13 +1726,13 @@ const pacientesFiltrados =
           w-16
           h-16
           rounded-2xl
-          bg-[var(--mint-primary-light)]
+          bg-[var(--mint-accent-soft)]
           flex
           items-center
           justify-center
           text-2xl
           font-bold
-          text-[var(--mint-primary)]
+         mint-text-accent
           shrink-0
         ">
 
@@ -2055,10 +2055,10 @@ const pacientesFiltrados =
       gap-4
     ">
 
-      <div className="
-        mint-card-primary
-        p-5
-      ">
+     <div className="
+  mint-card-accent
+  p-5
+">
 
         <div className="
           flex

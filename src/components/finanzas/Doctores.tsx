@@ -166,9 +166,7 @@ export default function Doctores({
 
     <div
       className="
-        bg-white
-        rounded-3xl
-        shadow-lg
+        mint-card
         p-6
       "
     >
@@ -188,6 +186,7 @@ export default function Doctores({
             className="
               text-2xl
               font-bold
+              mint-text-primary
             "
           >
 
@@ -203,7 +202,7 @@ export default function Doctores({
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -238,8 +237,8 @@ export default function Doctores({
             )
           }
           className="
-            border
-            rounded-xl
+            mint-input
+            w-full
             p-3
           "
         />
@@ -254,8 +253,8 @@ export default function Doctores({
             )
           }
           className="
-            border
-            rounded-xl
+            mint-input
+            w-full
             p-3
           "
         />
@@ -270,8 +269,8 @@ export default function Doctores({
             )
           }
           className="
-            border
-            rounded-xl
+            mint-input
+            w-full
             p-3
           "
         />
@@ -297,12 +296,9 @@ export default function Doctores({
                 guardarCambios
               }
               className="
-                bg-teal-600
-                hover:bg-teal-700
-                text-white
-                px-4
-                py-3
-                rounded-xl
+                mint-btn
+                mint-btn-primary
+                mint-btn-md
               "
             >
 
@@ -319,12 +315,9 @@ export default function Doctores({
                 guardarDoctor
               }
               className="
-                bg-teal-600
-                hover:bg-teal-700
-                text-white
-                px-4
-                py-3
-                rounded-xl
+                mint-btn
+                mint-btn-primary
+                mint-btn-md
               "
             >
 
@@ -345,12 +338,9 @@ export default function Doctores({
               cancelarEdicion
             }
             className="
-              bg-slate-200
-              hover:bg-slate-300
-              text-slate-700
-              px-4
-              py-3
-              rounded-xl
+              mint-btn
+              mint-btn-neutral
+              mint-btn-md
             "
           >
 
@@ -370,19 +360,19 @@ export default function Doctores({
 
         <table
           className="
+            mint-table
             w-full
             text-sm
           "
         >
 
-          <thead>
+          <thead
+            className="
+              mint-table-head
+            "
+          >
 
-            <tr
-              className="
-                border-b
-                border-slate-200
-              "
-            >
+            <tr>
 
               <th className="p-3 text-left">
 
@@ -422,18 +412,28 @@ export default function Doctores({
                   <tr
                     key={doctor.id}
                     className="
-                      border-b
-                      border-slate-100
+                      mint-table-row
                     "
                   >
 
-                    <td className="p-3">
+                    <td
+                      className="
+                        p-3
+                        font-semibold
+                        mint-text-primary
+                      "
+                    >
 
                       {doctor.nombre}
 
                     </td>
 
-                    <td className="p-3">
+                    <td
+                      className="
+                        p-3
+                        mint-text-secondary
+                      "
+                    >
 
                       {doctor.especialidad}
 
@@ -441,7 +441,16 @@ export default function Doctores({
 
                     <td className="p-3">
 
-                      {doctor.porcentaje}%
+                      <span
+                        className="
+                          mint-badge
+                          mint-badge-accent
+                        "
+                      >
+
+                        {doctor.porcentaje}%
+
+                      </span>
 
                     </td>
 
@@ -462,12 +471,9 @@ export default function Doctores({
                             )
                           }
                           className="
-                            bg-amber-500
-                            hover:bg-amber-600
-                            text-white
-                            px-3
-                            py-1
-                            rounded-lg
+                            mint-btn
+                            mint-btn-neutral
+                            mint-btn-sm
                           "
                         >
 
@@ -482,12 +488,9 @@ export default function Doctores({
                             )
                           }
                           className="
-                            bg-blue-500
-                            hover:bg-blue-600
-                            text-white
-                            px-3
-                            py-1
-                            rounded-lg
+                            mint-btn
+                            mint-btn-action
+                            mint-btn-sm
                           "
                         >
 

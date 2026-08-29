@@ -80,9 +80,7 @@ export default function ConfiguracionPagos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -91,6 +89,7 @@ export default function ConfiguracionPagos({
           className="
             text-2xl
             font-bold
+            mint-text-primary
           "
         >
 
@@ -100,7 +99,7 @@ export default function ConfiguracionPagos({
 
         <p
           className="
-            text-slate-500
+            mint-text-secondary
             mt-2
           "
         >
@@ -115,9 +114,7 @@ export default function ConfiguracionPagos({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
@@ -130,19 +127,19 @@ export default function ConfiguracionPagos({
 
           <table
             className="
+              mint-table
               w-full
               text-sm
             "
           >
 
-            <thead>
+            <thead
+              className="
+                mint-table-head
+              "
+            >
 
-              <tr
-                className="
-                  border-b
-                  border-slate-200
-                "
-              >
+              <tr>
 
                 <th
                   className="
@@ -213,8 +210,7 @@ export default function ConfiguracionPagos({
                         pago.id
                       }
                       className="
-                        border-b
-                        border-slate-100
+                        mint-table-row
                       "
                     >
 
@@ -222,6 +218,7 @@ export default function ConfiguracionPagos({
                         className="
                           p-3
                           font-semibold
+                          mint-text-primary
                         "
                       >
 
@@ -259,7 +256,10 @@ export default function ConfiguracionPagos({
                           className="
                             h-5
                             w-5
-                            accent-teal-600
+                            accent-[var(--mint-primary)]
+                            cursor-pointer
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
                           "
                         />
 
@@ -294,7 +294,10 @@ export default function ConfiguracionPagos({
                           className="
                             h-5
                             w-5
-                            accent-teal-600
+                            accent-[var(--mint-primary)]
+                            cursor-pointer
+                            disabled:cursor-not-allowed
+                            disabled:opacity-50
                           "
                         />
 
@@ -334,13 +337,12 @@ export default function ConfiguracionPagos({
                             )
                           }
                           className="
+                            mint-input
                             w-28
-                            border
-                            rounded-xl
                             px-3
                             py-2
-                            disabled:bg-slate-100
-                            disabled:text-slate-400
+                            disabled:opacity-50
+                            disabled:cursor-not-allowed
                           "
                         />
 
@@ -380,13 +382,12 @@ export default function ConfiguracionPagos({
                             )
                           }
                           className="
+                            mint-input
                             w-28
-                            border
-                            rounded-xl
                             px-3
                             py-2
-                            disabled:bg-slate-100
-                            disabled:text-slate-400
+                            disabled:opacity-50
+                            disabled:cursor-not-allowed
                           "
                         />
 
@@ -405,7 +406,8 @@ export default function ConfiguracionPagos({
                             ? (
                               <span
                                 className="
-                                  text-slate-500
+                                  mint-badge
+                                  mint-badge-info
                                 "
                               >
                                 Guardando...
@@ -417,12 +419,8 @@ export default function ConfiguracionPagos({
                               ? (
                                 <span
                                   className="
-                                    bg-green-100
-                                    text-green-700
-                                    px-3
-                                    py-1
-                                    rounded-full
-                                    font-semibold
+                                    mint-badge
+                                    mint-badge-success
                                   "
                                 >
                                   Activo
@@ -432,12 +430,8 @@ export default function ConfiguracionPagos({
                               : (
                                 <span
                                   className="
-                                    bg-slate-100
-                                    text-slate-500
-                                    px-3
-                                    py-1
-                                    rounded-full
-                                    font-semibold
+                                    mint-badge
+                                    mint-badge-muted
                                   "
                                 >
                                   Inactivo
@@ -463,9 +457,9 @@ export default function ConfiguracionPagos({
 
       <div
         className="
-          bg-slate-50
+          bg-[var(--mint-bg-soft)]
           border
-          border-slate-200
+          border-[var(--mint-border)]
           rounded-2xl
           p-6
         "
@@ -475,6 +469,7 @@ export default function ConfiguracionPagos({
           className="
             text-lg
             font-bold
+            mint-text-primary
             mb-2
           "
         >
@@ -485,7 +480,7 @@ export default function ConfiguracionPagos({
 
         <p
           className="
-            text-slate-600
+            mint-text-secondary
             leading-7
           "
         >

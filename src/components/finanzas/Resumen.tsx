@@ -43,7 +43,14 @@ export default function Resumen({
 }: ResumenProps) {
   return (
     <>
-      <h2 className="text-xl font-bold mb-4">
+      <h2
+        className="
+          text-xl
+          font-bold
+          mint-text-primary
+          mb-4
+        "
+      >
         Resumen Financiero
       </h2>
 
@@ -59,64 +66,101 @@ export default function Resumen({
       >
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-primary
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Ingresos
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2
+            className="
+              text-3xl
+              font-bold
+              mt-2
+              text-[var(--mint-primary)]
+            "
+          >
             ${ingresos.toLocaleString()}
           </h2>
         </div>
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-success
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Cobrado
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2
+            className="
+              text-3xl
+              font-bold
+              mt-2
+              text-[var(--mint-success)]
+            "
+          >
             ${cobrado.toLocaleString()}
           </h2>
         </div>
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-danger
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Pendiente
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
+          <h2
+            className="
+              text-3xl
+              font-bold
+              mt-2
+              text-[var(--mint-danger)]
+            "
+          >
             ${pendiente.toLocaleString()}
           </h2>
         </div>
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-success
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Ganancia Neta
           </p>
 
@@ -125,19 +169,26 @@ export default function Resumen({
               text-3xl
               font-bold
               mt-2
-              text-green-600
+              text-[var(--mint-success)]
             "
           >
             ${gananciaNeta.toLocaleString()}
           </h2>
         </div>
 
-        <div className="md:col-span-4 mt-2 mb-2">
+        <div
+          className="
+            md:col-span-2
+            lg:col-span-4
+            mt-2
+            mb-2
+          "
+        >
           <h2
             className="
               text-xl
               font-bold
-              text-slate-700
+              mint-text-primary
             "
           >
             Indicadores Operativos
@@ -146,30 +197,45 @@ export default function Resumen({
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-accent
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Tratamientos
           </p>
 
-          <h2 className="text-3xl font-bold mt-2">
-          {tratamientosFiltrados.length}
+          <h2
+            className="
+              text-3xl
+              font-bold
+              mt-2
+              mint-text-accent
+            "
+          >
+            {tratamientosFiltrados.length}
           </h2>
         </div>
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-danger
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Gastos
           </p>
 
@@ -178,7 +244,7 @@ export default function Resumen({
               text-3xl
               font-bold
               mt-2
-              text-red-600
+              text-[var(--mint-danger)]
             "
           >
             ${totalGastos.toLocaleString()}
@@ -187,13 +253,17 @@ export default function Resumen({
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-info
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Base Clínica
           </p>
 
@@ -202,7 +272,7 @@ export default function Resumen({
               text-3xl
               font-bold
               mt-2
-              text-blue-600
+              text-[var(--mint-info)]
             "
           >
             ${totalBaseClinica.toLocaleString()}
@@ -211,13 +281,17 @@ export default function Resumen({
 
         <div
           className="
-            bg-white
-            rounded-3xl
-            shadow-lg
+            mint-card-warning
             p-6
           "
         >
-          <p className="text-slate-500">
+          <p
+            className="
+              text-sm
+              font-medium
+              mint-text-secondary
+            "
+          >
             Comisiones Doctores
           </p>
 
@@ -226,7 +300,7 @@ export default function Resumen({
               text-3xl
               font-bold
               mt-2
-              text-orange-600
+              text-[var(--mint-warning)]
             "
           >
             ${totalComisionesDoctor.toLocaleString()}
@@ -236,21 +310,28 @@ export default function Resumen({
 
       <div
         className="
-          bg-white
-          rounded-3xl
-          shadow-lg
+          mint-card
           p-6
         "
       >
         <div
           className="
-            bg-slate-50
+            bg-[var(--mint-bg-soft)]
+            border
+            border-[var(--mint-border)]
             rounded-2xl
             p-6
             mb-6
           "
         >
-          <h3 className="text-xl font-bold mb-4">
+          <h3
+            className="
+              text-xl
+              font-bold
+              mint-text-primary
+              mb-4
+            "
+          >
             Corte de Caja
           </h3>
 
@@ -262,7 +343,12 @@ export default function Resumen({
             "
           >
             <div>
-              <p className="text-slate-500">
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                "
+              >
                 Caja MXN
               </p>
 
@@ -270,7 +356,7 @@ export default function Resumen({
                 className="
                   text-2xl
                   font-bold
-                  text-green-600
+                  text-[var(--mint-success)]
                 "
               >
                 ${cajaMXN.toLocaleString()}
@@ -278,7 +364,12 @@ export default function Resumen({
             </div>
 
             <div>
-              <p className="text-slate-500">
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                "
+              >
                 Caja USD
               </p>
 
@@ -286,7 +377,7 @@ export default function Resumen({
                 className="
                   text-2xl
                   font-bold
-                  text-blue-600
+                  text-[var(--mint-info)]
                 "
               >
                 ${cajaUSD.toLocaleString()}
@@ -294,40 +385,74 @@ export default function Resumen({
             </div>
 
             <div>
-              <p className="text-slate-500">
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                "
+              >
                 Tarjetas
               </p>
 
-              <p className="text-2xl font-bold">
+              <p
+                className="
+                  text-2xl
+                  font-bold
+                  mint-text-primary
+                "
+              >
                 ${totalTarjeta.toLocaleString()}
               </p>
             </div>
 
             <div>
-              <p className="text-slate-500">
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                "
+              >
                 Transferencias
               </p>
 
-              <p className="text-2xl font-bold">
+              <p
+                className="
+                  text-2xl
+                  font-bold
+                  mint-text-primary
+                "
+              >
                 ${totalTransferencia.toLocaleString()}
               </p>
             </div>
           </div>
         </div>
 
-        <h2 className="text-2xl font-bold mb-6">
+        <h2
+          className="
+            text-2xl
+            font-bold
+            mint-text-primary
+            mb-6
+          "
+        >
           Movimientos
         </h2>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr
-                className="
-                  border-b
-                  border-slate-200
-                "
-              >
+          <table
+            className="
+              mint-table
+              w-full
+              text-sm
+            "
+          >
+            <thead
+              className="
+                mint-table-head
+              "
+            >
+              <tr>
                 <th className="p-3 text-left">
                   Fecha
                 </th>
@@ -367,8 +492,7 @@ export default function Resumen({
                   <tr
                     key={item.id}
                     className="
-                      border-b
-                      border-slate-100
+                      mint-table-row
                     "
                   >
                     <td className="p-3">
@@ -390,14 +514,26 @@ export default function Resumen({
                       ).toLocaleString()}
                     </td>
 
-                    <td className="p-3">
+                    <td
+                      className="
+                        p-3
+                        text-[var(--mint-success)]
+                        font-medium
+                      "
+                    >
                       $
                       {Number(
                         item.pago || 0
                       ).toLocaleString()}
                     </td>
 
-                    <td className="p-3">
+                    <td
+                      className="
+                        p-3
+                        text-[var(--mint-danger)]
+                        font-medium
+                      "
+                    >
                       $
                       {Number(
                         item.resta || 0
@@ -409,10 +545,11 @@ export default function Resumen({
 
               <tr
                 className="
-                  bg-slate-50
+                  bg-[var(--mint-bg-soft)]
                   font-bold
                   border-t-2
-                  border-slate-300
+                  border-[var(--mint-border-strong)]
+                  mint-text-primary
                 "
               >
                 <td
@@ -426,11 +563,21 @@ export default function Resumen({
                   ${ingresos.toLocaleString()}
                 </td>
 
-                <td className="p-3">
+                <td
+                  className="
+                    p-3
+                    text-[var(--mint-success)]
+                  "
+                >
                   ${cobrado.toLocaleString()}
                 </td>
 
-                <td className="p-3">
+                <td
+                  className="
+                    p-3
+                    text-[var(--mint-danger)]
+                  "
+                >
                   ${pendiente.toLocaleString()}
                 </td>
               </tr>

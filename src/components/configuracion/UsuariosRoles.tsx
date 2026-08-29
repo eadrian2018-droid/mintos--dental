@@ -150,11 +150,11 @@ export default function UsuariosRoles() {
   }, []);
 
   const [
-  usuarioAdministrar,
-  setUsuarioAdministrar,
-] = useState<Perfil | null>(
-  null
-);
+    usuarioAdministrar,
+    setUsuarioAdministrar,
+  ] = useState<Perfil | null>(
+    null
+  );
 
   async function cargarPerfiles() {
 
@@ -560,10 +560,7 @@ export default function UsuariosRoles() {
 
       <div
         className="
-          bg-white
-          rounded-2xl
-          border
-          border-slate-200
+          mint-card
           overflow-hidden
         "
       >
@@ -572,7 +569,7 @@ export default function UsuariosRoles() {
           className="
             p-5
             border-b
-            border-slate-200
+            border-[var(--mint-border)]
             flex
             items-center
             justify-between
@@ -586,7 +583,7 @@ export default function UsuariosRoles() {
               className="
                 text-lg
                 font-bold
-                text-slate-800
+                mint-text-primary
               "
             >
 
@@ -597,7 +594,7 @@ export default function UsuariosRoles() {
             <p
               className="
                 text-sm
-                text-slate-500
+                mint-text-secondary
                 mt-1
               "
             >
@@ -626,13 +623,10 @@ export default function UsuariosRoles() {
 
             }}
             className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
+              mint-btn
+              mint-btn-primary
               px-4
               py-2
-              rounded-xl
-              font-semibold
               text-sm
             "
           >
@@ -652,11 +646,7 @@ export default function UsuariosRoles() {
                 mx-5
                 mt-4
                 p-3
-                rounded-xl
-                bg-green-50
-                border
-                border-green-200
-                text-green-700
+                mint-card-success
                 text-sm
                 font-medium
               "
@@ -680,7 +670,7 @@ export default function UsuariosRoles() {
                 className="
                   p-6
                   text-sm
-                  text-slate-500
+                  mint-text-secondary
                 "
               >
 
@@ -707,8 +697,8 @@ export default function UsuariosRoles() {
 
                   <thead
                     className="
-                      bg-slate-50
-                      text-slate-500
+                      bg-[var(--mint-bg-soft)]
+                      mint-text-secondary
                     "
                   >
 
@@ -749,7 +739,9 @@ export default function UsuariosRoles() {
                             }
                             className="
                               border-t
-                              border-slate-100
+                              border-[var(--mint-border)]
+                              hover:bg-[var(--mint-bg-soft)]
+                              transition-colors
                             "
                           >
 
@@ -757,7 +749,7 @@ export default function UsuariosRoles() {
                               className="
                                 p-3
                                 font-semibold
-                                text-slate-800
+                                mint-text-primary
                               "
                             >
 
@@ -767,7 +759,12 @@ export default function UsuariosRoles() {
 
                             </td>
 
-                            <td className="p-3">
+                            <td
+                              className="
+                                p-3
+                                mint-text-secondary
+                              "
+                            >
 
                               {
                                 nombreRol(
@@ -781,18 +778,14 @@ export default function UsuariosRoles() {
 
                               <span
                                 className={`
-                                  px-2
-                                  py-1
-                                  rounded-full
-                                  text-xs
-                                  font-semibold
+                                  mint-badge
 
                                   ${
                                     perfil.activo
 
-                                      ? "bg-green-100 text-green-700"
+                                      ? "mint-badge-success"
 
-                                      : "bg-slate-200 text-slate-600"
+                                      : "mint-badge-muted"
                                   }
                                 `}
                               >
@@ -811,22 +804,23 @@ export default function UsuariosRoles() {
 
                             <td className="p-3">
 
-                       <button
-  type="button"
-  onClick={() =>
-    setUsuarioAdministrar(
-      perfil
-    )
-  }
-  className="
-    text-teal-700
-    hover:underline
-    font-semibold
-    text-sm
-  "
->
-  Administrar
-</button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setUsuarioAdministrar(
+                                    perfil
+                                  )
+                                }
+                                className="
+                                  mint-btn
+                                  mint-btn-action-soft
+                                  px-3
+                                  py-2
+                                  text-sm
+                                "
+                              >
+                                Administrar
+                              </button>
 
                             </td>
 
@@ -849,7 +843,7 @@ export default function UsuariosRoles() {
 
       </div>
 
-      {
+            {
 
         mostrarNuevoUsuario && (
 
@@ -868,9 +862,7 @@ export default function UsuariosRoles() {
 
             <div
               className="
-                bg-white
-                rounded-2xl
-                shadow-xl
+                mint-card
                 w-full
                 max-w-lg
                 p-5
@@ -881,7 +873,7 @@ export default function UsuariosRoles() {
                 className="
                   text-xl
                   font-bold
-                  text-slate-800
+                  mint-text-primary
                   mb-5
                 "
               >
@@ -904,11 +896,7 @@ export default function UsuariosRoles() {
                     <div
                       className="
                         p-3
-                        rounded-xl
-                        bg-red-50
-                        border
-                        border-red-200
-                        text-red-700
+                        mint-card-danger
                         text-sm
                       "
                     >
@@ -936,11 +924,11 @@ export default function UsuariosRoles() {
                     )
                   }
                   className="
-                    border
-                    border-slate-300
-                    rounded-xl
+                    mint-input
+                    w-full
                     p-3
-                    disabled:bg-slate-100
+                    disabled:opacity-60
+                    disabled:cursor-not-allowed
                   "
                 />
 
@@ -959,11 +947,11 @@ export default function UsuariosRoles() {
                     )
                   }
                   className="
-                    border
-                    border-slate-300
-                    rounded-xl
+                    mint-input
+                    w-full
                     p-3
-                    disabled:bg-slate-100
+                    disabled:opacity-60
+                    disabled:cursor-not-allowed
                   "
                 />
 
@@ -996,11 +984,11 @@ export default function UsuariosRoles() {
 
                   }}
                   className="
-                    border
-                    border-slate-300
-                    rounded-xl
+                    mint-input
+                    w-full
                     p-3
-                    disabled:bg-slate-100
+                    disabled:opacity-60
+                    disabled:cursor-not-allowed
                   "
                 >
 
@@ -1038,11 +1026,11 @@ export default function UsuariosRoles() {
                       )
                     }
                     className="
-                      border
-                      border-slate-300
-                      rounded-xl
+                      mint-input
+                      w-full
                       p-3
-                      disabled:bg-slate-100
+                      disabled:opacity-60
+                      disabled:cursor-not-allowed
                     "
                   >
 
@@ -1087,7 +1075,7 @@ export default function UsuariosRoles() {
                     items-center
                     gap-2
                     text-sm
-                    text-slate-700
+                    mint-text-secondary
                   "
                 >
 
@@ -1130,11 +1118,10 @@ export default function UsuariosRoles() {
                     creandoUsuario
                   }
                   className="
+                    mint-btn
+                    mint-btn-neutral
                     px-4
                     py-2
-                    border
-                    border-slate-300
-                    rounded-xl
                     disabled:opacity-50
                   "
                 >
@@ -1152,24 +1139,23 @@ export default function UsuariosRoles() {
                     creandoUsuario
                   }
                   className="
-                    bg-teal-600
-                    hover:bg-teal-700
-                    text-white
+                    mint-btn
+                    mint-btn-primary
                     px-4
                     py-2
-                    rounded-xl
-                    font-semibold
                     disabled:opacity-50
                     disabled:cursor-not-allowed
                   "
                 >
 
                   {
+
                     creandoUsuario
 
                       ? "Creando..."
 
                       : "Crear usuario"
+
                   }
 
                 </button>
@@ -1185,27 +1171,29 @@ export default function UsuariosRoles() {
       }
 
       {
-  usuarioAdministrar && (
 
-    <AdministrarUsuario
-      perfil={
-        usuarioAdministrar
-      }
-      doctores={
-        doctores
-      }
-      onCerrar={() =>
-        setUsuarioAdministrar(
-          null
+        usuarioAdministrar && (
+
+          <AdministrarUsuario
+            perfil={
+              usuarioAdministrar
+            }
+            doctores={
+              doctores
+            }
+            onCerrar={() =>
+              setUsuarioAdministrar(
+                null
+              )
+            }
+            onGuardado={
+              cargarPerfiles
+            }
+          />
+
         )
-      }
-      onGuardado={
-        cargarPerfiles
-      }
-    />
 
-  )
-}
+      }
 
     </>
 
