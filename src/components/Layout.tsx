@@ -554,44 +554,18 @@ export default function Layout() {
 
                       </Link>
 
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          text-slate-400
-                        "
-                      >
+           <div
+  className="
+    px-3
+    py-2
+    text-[13px]
+    text-slate-400
+  "
+>
 
-                        Historial clínico
+  Presupuestos
 
-                      </div>
-
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          text-slate-400
-                        "
-                      >
-
-                        Odontogramas
-
-                      </div>
-
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          text-slate-400
-                        "
-                      >
-
-                        Presupuestos
-
-                      </div>
+</div>
 
                     </div>
 

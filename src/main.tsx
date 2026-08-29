@@ -10,7 +10,11 @@ import App from "./App";
 
 import "./index.css";
 
-import { AuthProvider } from "./context/AuthContext";
+import "./styles/theme.css";
+
+import {
+  AuthProvider,
+} from "./context/AuthContext";
 
 ReactDOM.createRoot(
   document.getElementById("root")!

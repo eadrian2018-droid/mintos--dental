@@ -54,6 +54,11 @@ export default function Pacientes() {
     setBusqueda] =
     useState("");
 
+    const [
+  mostrarQR,
+  setMostrarQR,
+] = useState(false);
+
   const [pacientes,
     setPacientes] =
     useState<Paciente[]>([]);
@@ -737,32 +742,42 @@ else {
     if (!pacienteAbierto?.id)
       return;
 
-    const { error } =
-      await supabase
+const {
+  data,
+  error,
+} =
+  await supabase
+    .from("pacientes")
+    .update({
+      observaciones_dientes: {
+     dientes:
+  observacionesDientes,
 
-        .from("pacientes")
+estados:
+  estadoDientes,
 
-        .update({
+        imagen:
+          imagenPreview,
+      },
+    })
+    .eq(
+      "id",
+      pacienteAbierto.id
+    )
+    .select(
+      "id, observaciones_dientes"
+    )
+    .single();
 
-          observaciones_dientes: {
+console.log(
+  "ODONTOGRAMA GUARDADO:",
+  data
+);
 
-            dientes:
-              observacionesDientes,
-
-            estados:
-              estadoDientes,
-
-            imagen:
-              imagenPreview,
-
-          },
-
-        })
-
-        .eq(
-          "id",
-          pacienteAbierto.id
-        );
+console.log(
+  "ERROR ODONTOGRAMA:",
+  error
+);
 
     if (error) {
 
@@ -1334,16 +1349,6 @@ comision_banco:
 
 }
 
-  function obtenerDoctor(
-  doctorId: number
-) {
-
-  return doctores.find(
-    (d: any) =>
-      d.id === doctorId
-  );
-
-}
 const pacientesFiltrados =
   pacientes.filter((p) => {
 
@@ -1382,31 +1387,27 @@ const pacientesFiltrados =
 
   return (
 
-    <div className="
-      h-[calc(100vh-90px)]
-      flex
-      gap-3
-    ">
+<div className="
+  min-h-[calc(100vh-32px)]
+  flex
+  flex-col
+  gap-3
+">
 
-      <div
+<div
   className="
-    w-[280px]
-    min-w-[280px]
-    bg-white
-    border
-    border-slate-200
-    rounded-2xl
-    overflow-hidden
-    flex
-    flex-col
+    mint-card
+    p-4
   "
 >
 
   <div
     className="
-      p-4
-      border-b
-      border-slate-200
+      flex
+      flex-col
+      xl:flex-row
+      xl:items-center
+      gap-4
     "
   >
 
@@ -1415,327 +1416,274 @@ const pacientesFiltrados =
         flex
         items-center
         justify-between
-        gap-3
-        mb-4
+        gap-4
+        shrink-0
       "
     >
 
       <div>
 
-        <h1
-          className="
-            text-lg
-            font-bold
-            text-slate-800
-          "
-        >
-          Pacientes
-        </h1>
-
         <p
           className="
             text-xs
-            text-slate-500
+            font-semibold
+            uppercase
+            tracking-wide
+            mint-text-brand
+          "
+        >
+          Pacientes
+        </p>
+
+        <p
+          className="
+            text-sm
+            font-bold
+            mint-text-primary
             mt-1
           "
         >
-          {pacientes.length}
-          {" "}
-          pacientes registrados
+          {pacientes.length} registrados
         </p>
 
       </div>
 
-      <a
-        href="/qr-pacientes"
+      <button
+        type="button"
+        onClick={() =>
+          setMostrarQR(true)
+        }
         className="
-          bg-teal-600
-          hover:bg-teal-700
-          text-white
-          px-3
+          mint-btn
+          mint-btn-primary
+          px-4
           py-2
-          rounded-xl
-          font-semibold
-          text-xs
-          transition
-          shrink-0
+          text-sm
         "
       >
         + QR
-      </a>
+      </button>
 
     </div>
 
-    <input
-      value={busqueda}
-      onChange={(e) =>
-        setBusqueda(
-          e.target.value
-        )
-      }
-      placeholder="Buscar paciente..."
+    <div
       className="
-        w-full
-        border
-        border-slate-200
-        bg-slate-50
-        rounded-xl
-        px-3
-        py-2.5
-        text-sm
-        outline-none
-        focus:ring-2
-        focus:ring-teal-100
-        focus:border-teal-500
-        transition
+        xl:w-[320px]
+        shrink-0
       "
-    />
+    >
 
-  </div>
+      <input
+        value={busqueda}
+        onChange={(e) =>
+          setBusqueda(
+            e.target.value
+          )
+        }
+        placeholder="Buscar por nombre, teléfono, correo o ID..."
+        className="
+          mint-input
+          w-full
+          px-4
+          py-2.5
+          text-sm
+        "
+      />
 
-  <div
-    className="
-      flex-1
-      overflow-y-auto
-      p-3
-    "
-  >
+    </div>
 
-    {
-      pacientesFiltrados.length === 0
+    <div
+      className="
+        flex-1
+        min-w-0
+      "
+    >
 
-        ? (
+      {
+        pacientesFiltrados.length === 0
 
-          <div
-            className="
-              text-center
-              py-10
-              px-4
-            "
-          >
+          ? (
 
             <div
               className="
-                w-12
-                h-12
-                rounded-full
-                bg-slate-100
+                mint-card
+                h-[54px]
                 flex
                 items-center
                 justify-center
-                mx-auto
-                mb-3
-                text-lg
-                font-bold
-                text-slate-400
-              "
-            >
-              ?
-            </div>
-
-            <p
-              className="
                 text-sm
-                font-semibold
-                text-slate-600
+                mint-text-muted
               "
             >
               Sin resultados
-            </p>
+            </div>
 
-            <p
+          )
+
+          : (
+
+            <div
               className="
-                text-xs
-                text-slate-400
-                mt-1
+                flex
+                gap-2
+                overflow-x-auto
+                pb-1
               "
             >
-              No encontramos pacientes
-              con esa búsqueda.
-            </p>
 
-          </div>
+              {
+                pacientesFiltrados.map(
+                  (p) => {
 
-        )
+                    const seleccionado =
+                      pacienteAbierto?.id ===
+                      p.id;
 
-        : (
+                    return (
 
-          <div
-            className="
-              space-y-2
-            "
-          >
-
-            {
-              pacientesFiltrados.map(
-                (p) => {
-
-                  const seleccionado =
-                    pacienteAbierto?.id ===
-                    p.id;
-
-                  return (
-
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() =>
-                        abrirPaciente(p)
-                      }
-                      className={`
-                        w-full
-                        text-left
-                        rounded-xl
-                        border
-                        p-3
-                        transition-all
-
-                        ${
-                          seleccionado
-
-                            ? `
-                              border-teal-500
-                              bg-teal-50
-                              shadow-sm
-                            `
-
-                            : `
-                              border-transparent
-                              bg-white
-                              hover:bg-slate-50
-                              hover:border-slate-200
-                            `
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() =>
+                          abrirPaciente(p)
                         }
-                      `}
-                    >
+                        className={`
+                          shrink-0
+                          min-w-[180px]
+                          max-w-[220px]
+                          text-left
+                          px-3
+                          py-2.5
+                          transition-all
 
-                      <div
-                        className="
-                          flex
-                          items-center
-                          gap-3
-                        "
+                          ${
+                            seleccionado
+                              ? "mint-card-primary"
+                              : "mint-card"
+                          }
+                        `}
                       >
 
                         <div
-                          className={`
-                            w-10
-                            h-10
-                            rounded-full
+                          className="
                             flex
                             items-center
-                            justify-center
-                            shrink-0
-                            font-bold
-                            text-sm
-
-                            ${
-                              seleccionado
-
-                                ? `
-                                  bg-teal-600
-                                  text-white
-                                `
-
-                                : `
-                                  bg-slate-100
-                                  text-slate-600
-                                `
-                            }
-                          `}
-                        >
-
-                          {
-                            p.nombre
-                              ?.charAt(0)
-                              ?.toUpperCase()
-                          }
-
-                        </div>
-
-                        <div
-                          className="
-                            min-w-0
-                            flex-1
+                            gap-3
                           "
                         >
 
                           <div
-                            className="
+                            className={`
+                              w-9
+                              h-9
+                              rounded-full
                               flex
                               items-center
-                              justify-between
-                              gap-2
-                            "
+                              justify-center
+                              shrink-0
+                              font-bold
+                              text-sm
+
+                              ${
+                                seleccionado
+                                  ? "mint-btn-primary"
+                                  : "mint-card mint-text-secondary"
+                              }
+                            `}
                           >
 
-                            <h3
-                              className={`
-                                text-sm
-                                font-semibold
-                                truncate
-
-                                ${
-                                  seleccionado
-                                    ? "text-teal-800"
-                                    : "text-slate-800"
-                                }
-                              `}
-                            >
-                              {p.nombre}
-                            </h3>
-
-                            <span
-                              className="
-                                text-[10px]
-                                text-slate-400
-                                shrink-0
-                              "
-                            >
-                              #{p.id}
-                            </span>
+                            {
+                              p.nombre
+                                ?.charAt(0)
+                                ?.toUpperCase()
+                            }
 
                           </div>
 
-                          <p
+                          <div
                             className="
-                              text-xs
-                              text-slate-500
-                              truncate
-                              mt-1
+                              min-w-0
+                              flex-1
                             "
                           >
-                            {
-                              p.telefono ||
-                              "Sin teléfono"
-                            }
-                          </p>
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                justify-between
+                                gap-2
+                              "
+                            >
+
+                              <h3
+                                className={`
+                                  text-sm
+                                  font-semibold
+                                  truncate
+
+                                  ${
+                                    seleccionado
+                                      ? "mint-text-brand"
+                                      : "mint-text-primary"
+                                  }
+                                `}
+                              >
+                                {p.nombre}
+                              </h3>
+
+                              <span
+                                className="
+                                  text-[10px]
+                                  mint-text-muted
+                                  shrink-0
+                                "
+                              >
+                                #{p.id}
+                              </span>
+
+                            </div>
+
+                            <p
+                              className="
+                                text-xs
+                                mint-text-secondary
+                                truncate
+                                mt-1
+                              "
+                            >
+                              {
+                                p.telefono ||
+                                "Sin teléfono"
+                              }
+                            </p>
+
+                          </div>
 
                         </div>
 
-                      </div>
+                      </button>
 
-                    </button>
+                    );
 
-                  );
+                  }
+                )
+              }
 
-                }
-              )
-            }
+            </div>
 
-          </div>
+          )
+      }
 
-        )
-    }
+    </div>
 
   </div>
 
 </div>
 
-      <div className="
-        flex-1
-        overflow-y-auto
-      ">
+   <div className="
+  flex-1
+">
 
         {
 
@@ -1744,9 +1692,7 @@ const pacientesFiltrados =
             <div
               id="pdf-area"
               className="
-                bg-white
-                rounded-3xl
-                shadow-xl
+                mint-card
                 p-4
               "
             >
@@ -1756,12 +1702,8 @@ const pacientesFiltrados =
 ">
 
   <div className="
-    bg-white
-    border
-    border-slate-200
-    rounded-3xl
+    mint-card
     p-5
-    shadow-sm
   ">
 
     <div className="
@@ -1784,13 +1726,13 @@ const pacientesFiltrados =
           w-16
           h-16
           rounded-2xl
-          bg-teal-100
+          bg-[var(--mint-primary-light)]
           flex
           items-center
           justify-center
           text-2xl
           font-bold
-          text-teal-700
+          text-[var(--mint-primary)]
           shrink-0
         ">
 
@@ -1816,7 +1758,7 @@ const pacientesFiltrados =
               text-2xl
               lg:text-3xl
               font-bold
-              text-slate-800
+              mint-text-primary
             ">
 
               {pacienteAbierto.nombre}
@@ -1824,10 +1766,10 @@ const pacientesFiltrados =
             </h2>
 
             <span className="
-              bg-teal-50
-              text-teal-700
+              bg-[var(--mint-primary-soft)]
+              text-[var(--mint-primary)]
               border
-              border-teal-100
+              border-[var(--mint-border-primary)]
               px-3
               py-1
               rounded-full
@@ -1849,13 +1791,13 @@ const pacientesFiltrados =
             gap-y-2
             mt-3
             text-sm
-            text-slate-500
+            mint-text-secondary
           ">
 
             <span>
 
               <strong className="
-                text-slate-700
+                mint-text-primary
                 font-semibold
               ">
                 Edad:
@@ -1870,7 +1812,7 @@ const pacientesFiltrados =
             <span>
 
               <strong className="
-                text-slate-700
+                mint-text-primary
                 font-semibold
               ">
                 Sexo:
@@ -1885,7 +1827,7 @@ const pacientesFiltrados =
             <span>
 
               <strong className="
-                text-slate-700
+                mint-text-primary
                 font-semibold
               ">
                 Tel:
@@ -1900,7 +1842,7 @@ const pacientesFiltrados =
             <span>
 
               <strong className="
-                text-slate-700
+                mint-text-primary
                 font-semibold
               ">
                 Correo:
@@ -1919,9 +1861,9 @@ const pacientesFiltrados =
       </div>
 
       <div className="
-        bg-slate-50
+        bg-[var(--mint-bg-soft)]
         border
-        border-slate-200
+        border-[var(--mint-border)]
         rounded-2xl
         px-4
         py-3
@@ -1934,7 +1876,7 @@ const pacientesFiltrados =
           uppercase
           tracking-wide
           font-semibold
-          text-slate-400
+          mint-text-muted
         ">
           Próxima cita
         </p>
@@ -1942,7 +1884,7 @@ const pacientesFiltrados =
         <p className="
           text-sm
           font-bold
-          text-slate-800
+          mint-text-primary
           mt-1
         ">
 
@@ -1970,7 +1912,7 @@ const pacientesFiltrados =
 
             <p className="
               text-xs
-              text-teal-600
+              mint-text-brand
               font-semibold
               mt-1
             ">
@@ -2000,81 +1942,31 @@ const pacientesFiltrados =
 
 </div>
 
-                <div className="
-                  flex
-                  gap-2
-                ">
-
-                  <button
-                    onClick={
-                      guardarExpediente
-                    }
-                    className="
-                      bg-teal-600
-                      hover:bg-teal-700
-                      text-white
-                      px-4
-                      py-2
-                      rounded-xl
-                      font-bold
-                      text-sm
-                    "
-                  >
-
-                    Guardar
-
-                  </button>
-
-                  <button
-                    onClick={
-                      generarPDF
-                    }
-                    className="
-                      bg-blue-600
-                      hover:bg-blue-700
-                      text-white
-                      px-4
-                      py-2
-                      rounded-xl
-                      font-bold
-                      text-sm
-                    "
-                  >
-
-                    PDF
-
-                  </button>
-
-                </div>
-
-        <div className="
+<div className="
   mb-6
-  border-b
-  border-slate-200
 ">
 
   <div className="
     flex
     flex-wrap
-    gap-1
+    gap-2
   ">
 
     <button
+      type="button"
       onClick={() =>
         setTabActiva("general")
       }
       className={`
+        mint-tab
         px-5
-        py-3
+        py-2.5
         text-sm
-        font-semibold
-        border-b-2
-        transition-colors
 
         ${
           tabActiva === "general"
-            ? "border-teal-600 text-teal-700"
-            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+            ? "mint-tab-active"
+            : ""
         }
       `}
     >
@@ -2082,21 +1974,20 @@ const pacientesFiltrados =
     </button>
 
     <button
+      type="button"
       onClick={() =>
         setTabActiva("expediente")
       }
       className={`
+        mint-tab
         px-5
-        py-3
+        py-2.5
         text-sm
-        font-semibold
-        border-b-2
-        transition-colors
 
         ${
           tabActiva === "expediente"
-            ? "border-teal-600 text-teal-700"
-            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+            ? "mint-tab-active"
+            : ""
         }
       `}
     >
@@ -2104,21 +1995,20 @@ const pacientesFiltrados =
     </button>
 
     <button
+      type="button"
       onClick={() =>
         setTabActiva("historial")
       }
       className={`
+        mint-tab
         px-5
-        py-3
+        py-2.5
         text-sm
-        font-semibold
-        border-b-2
-        transition-colors
 
         ${
           tabActiva === "historial"
-            ? "border-teal-600 text-teal-700"
-            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+            ? "mint-tab-active"
+            : ""
         }
       `}
     >
@@ -2126,21 +2016,20 @@ const pacientesFiltrados =
     </button>
 
     <button
+      type="button"
       onClick={() =>
         setTabActiva("citas")
       }
       className={`
+        mint-tab
         px-5
-        py-3
+        py-2.5
         text-sm
-        font-semibold
-        border-b-2
-        transition-colors
 
         ${
           tabActiva === "citas"
-            ? "border-teal-600 text-teal-700"
-            : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+            ? "mint-tab-active"
+            : ""
         }
       `}
     >
@@ -2159,244 +2048,229 @@ const pacientesFiltrados =
       space-y-6
     ">
 
-   <div className="
-  grid
-  grid-cols-1
-  md:grid-cols-3
-  gap-4
-">
-
-  <div className="
-    bg-white
-    border
-    border-slate-200
-    rounded-2xl
-    p-5
-    shadow-sm
-  ">
-
     <div className="
-      flex
-      items-center
-      justify-between
+      grid
+      grid-cols-1
+      md:grid-cols-3
       gap-4
     ">
 
-      <div>
+      <div className="
+        mint-card-primary
+        p-5
+      ">
 
-        <p className="
-          text-xs
-          font-semibold
-          uppercase
-          tracking-wide
-          text-slate-400
+        <div className="
+          flex
+          items-center
+          justify-between
+          gap-4
         ">
-          Tratamientos
-        </p>
 
-        <h3 className="
-          text-3xl
-          font-bold
-          text-slate-800
-          mt-2
-        ">
-          {tratamientos.length}
-        </h3>
+          <div>
 
-        <p className="
-          text-sm
-          text-slate-500
-          mt-1
-        ">
-          Registrados
-        </p>
+            <p className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wide
+              mint-text-muted
+            ">
+              Tratamientos
+            </p>
+
+            <h3 className="
+              text-3xl
+              font-bold
+              mint-text-primary
+              mt-2
+            ">
+              {tratamientos.length}
+            </h3>
+
+            <p className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            ">
+              Registrados
+            </p>
+
+          </div>
+
+          <div className="
+            w-12
+            h-12
+            rounded-2xl
+            bg-[var(--mint-primary-light)]
+            flex
+            items-center
+            justify-center
+            text-[var(--mint-primary)]
+            font-bold
+            text-lg
+          ">
+            #
+          </div>
+
+        </div>
 
       </div>
 
       <div className="
-        w-12
-        h-12
-        rounded-2xl
-        bg-slate-100
-        flex
-        items-center
-        justify-center
-        text-slate-600
-        font-bold
-        text-lg
+        mint-card-success
+        p-5
       ">
-        #
+
+        <div className="
+          flex
+          items-center
+          justify-between
+          gap-4
+        ">
+
+          <div>
+
+            <p className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wide
+              mint-text-muted
+            ">
+              Total Pagado
+            </p>
+
+            <h3 className="
+              text-3xl
+              font-bold
+              text-[var(--mint-success)]
+              mt-2
+            ">
+              $
+              {
+                tratamientos.reduce(
+                  (
+                    total,
+                    tratamiento
+                  ) =>
+                    total +
+                    Number(
+                      tratamiento.pagado || 0
+                    ),
+                  0
+                )
+              }
+            </h3>
+
+            <p className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            ">
+              Pagos recibidos
+            </p>
+
+          </div>
+
+          <div className="
+            w-12
+            h-12
+            rounded-2xl
+            bg-[var(--mint-success-bg)]
+            flex
+            items-center
+            justify-center
+            text-[var(--mint-success)]
+            font-bold
+            text-xl
+          ">
+            $
+          </div>
+
+        </div>
+
+      </div>
+
+      <div className="
+        mint-card-danger
+        p-5
+      ">
+
+        <div className="
+          flex
+          items-center
+          justify-between
+          gap-4
+        ">
+
+          <div>
+
+            <p className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-wide
+              mint-text-muted
+            ">
+              Saldo Pendiente
+            </p>
+
+            <h3 className="
+              text-3xl
+              font-bold
+              text-[var(--mint-danger)]
+              mt-2
+            ">
+              $
+              {
+                tratamientos.reduce(
+                  (
+                    total,
+                    tratamiento
+                  ) =>
+                    total +
+                    Number(
+                      tratamiento.pendiente || 0
+                    ),
+                  0
+                )
+              }
+            </h3>
+
+            <p className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            ">
+              Por cobrar
+            </p>
+
+          </div>
+
+          <div className="
+            w-12
+            h-12
+            rounded-2xl
+            bg-[var(--mint-danger-bg)]
+            flex
+            items-center
+            justify-center
+            text-[var(--mint-danger)]
+            font-bold
+            text-xl
+          ">
+            $
+          </div>
+
+        </div>
+
       </div>
 
     </div>
 
-  </div>
-
-  <div className="
-    bg-white
-    border
-    border-emerald-200
-    rounded-2xl
-    p-5
-    shadow-sm
-  ">
-
-    <div className="
-      flex
-      items-center
-      justify-between
-      gap-4
-    ">
-
-      <div>
-
-        <p className="
-          text-xs
-          font-semibold
-          uppercase
-          tracking-wide
-          text-slate-400
-        ">
-          Total Pagado
-        </p>
-
-        <h3 className="
-          text-3xl
-          font-bold
-          text-emerald-600
-          mt-2
-        ">
-          $
-          {
-            tratamientos.reduce(
-              (
-                total,
-                tratamiento
-              ) =>
-                total +
-                Number(
-                  tratamiento.pagado || 0
-                ),
-              0
-            )
-          }
-        </h3>
-
-        <p className="
-          text-sm
-          text-slate-500
-          mt-1
-        ">
-          Pagos recibidos
-        </p>
-
-      </div>
-
       <div className="
-        w-12
-        h-12
-        rounded-2xl
-        bg-emerald-50
-        flex
-        items-center
-        justify-center
-        text-emerald-600
-        font-bold
-        text-xl
-      ">
-        $
-      </div>
-
-    </div>
-
-  </div>
-
-  <div className="
-    bg-white
-    border
-    border-rose-200
-    rounded-2xl
-    p-5
-    shadow-sm
-  ">
-
-    <div className="
-      flex
-      items-center
-      justify-between
-      gap-4
-    ">
-
-      <div>
-
-        <p className="
-          text-xs
-          font-semibold
-          uppercase
-          tracking-wide
-          text-slate-400
-        ">
-          Saldo Pendiente
-        </p>
-
-        <h3 className="
-          text-3xl
-          font-bold
-          text-rose-600
-          mt-2
-        ">
-          $
-          {
-            tratamientos.reduce(
-              (
-                total,
-                tratamiento
-              ) =>
-                total +
-                Number(
-                  tratamiento.pendiente || 0
-                ),
-              0
-            )
-          }
-        </h3>
-
-        <p className="
-          text-sm
-          text-slate-500
-          mt-1
-        ">
-          Por cobrar
-        </p>
-
-      </div>
-
-      <div className="
-        w-12
-        h-12
-        rounded-2xl
-        bg-rose-50
-        flex
-        items-center
-        justify-center
-        text-rose-600
-        font-bold
-        text-xl
-      ">
-        $
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-      <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
+        mint-card
         overflow-hidden
       ">
 
@@ -2406,1018 +2280,876 @@ const pacientesFiltrados =
           justify-between
           p-5
           border-b
-          border-slate-200
+          border-[var(--mint-border)]
         ">
 
           <h3 className="
             text-xl
             font-bold
-            text-slate-800
+            mint-text-primary
           ">
 
             Tratamientos
 
           </h3>
 
- <button
-  onClick={() =>
-    setMostrarModalTratamiento(
-      true
-    )
-  }
-  className="
-    bg-teal-600
-    hover:bg-teal-700
-    text-white
-    px-4
-    py-2
-    rounded-xl
-    font-semibold
-  "
->
+          <button
+            onClick={() =>
+              setMostrarModalTratamiento(
+                true
+              )
+            }
+            className="
+              mint-btn
+              mint-btn-primary
+              px-4
+              py-2
+              text-sm
+            "
+          >
 
-  + Agregar
+            + Agregar
 
-</button>
+          </button>
 
         </div>
 
-        <table className="
-          w-full
+        <div className="
+          overflow-x-auto
         ">
 
-          <thead>
-
-            <tr className="
-              bg-slate-50
-            ">
-
-              <th className="p-4 text-left">
-                Fecha
-              </th>
-
-              <th className="p-4 text-left">
-                Doctor
-              </th>
-
-              <th className="p-4 text-left">
-  Método
-</th>
-
-<th className="p-4 text-left">
-  Moneda
-</th>
-
-<th className="p-4 text-left">
-  Lab
-</th>
-
-<th className="p-4 text-left">
-  Esp
-</th>
-
-<th className="p-4 text-left">
-  Banco
-</th>
-
-
-              <th className="p-4 text-left">
-                Tratamiento
-              </th>
-
-              <th className="p-4 text-left">
-                Total
-              </th>
-
-              <th className="p-4 text-left">
-                Pagado
-              </th>
-
-              <th className="p-4 text-left">
-                Pendiente
-              </th>
-
-              <th className="p-4 text-left">
-  Estado
-</th>
-
-<th className="p-4 text-left">
-  Base Clínica
-</th>
-
-<th className="p-4 text-left">
-  Comisión Dr
-</th>
-
-<th className="p-4 text-left">
-  Utilidad Clínica
-</th>
-
-<th className="p-4 text-left">
-  Notas
-</th>
-
-<th className="p-4 text-left">
-  Acciones
-</th>
-            </tr>
-
-          </thead>
-
-          <tbody>
-
-  {
-
-    tratamientos.length === 0
-
-    ?
-
-    (
-
-      <tr>
-
-        <td
-          colSpan={15}
-          className="
-            text-center
-            p-10
-            text-slate-400
-          "
-        >
-
-          No hay tratamientos registrados
-
-        </td>
-
-      </tr>
-
-    )
-
-    :
-
-    (
-
-      tratamientos.map(
-
-        (
-          tratamiento,
-          index
-        ) => (
-
-          <tr
-            key={index}
-            className="
-              border-t
-              border-slate-200
-            "
-          >
-
-            <td className="
-              p-4
-            ">
-
-              {
-                tratamiento.fecha
-              }
-
-            </td>
-
-            <td className="
-  p-4
-">
-
-  {
-
-    tratamiento.doctor ||
-
-    "-"
-
-  }
-
-</td>
-
-<td className="
-  p-4
-">
-
-  {
-
-    tratamiento.metodo_pago ||
-
-    "-"
-
-  }
-
-</td>
-
-<td className="
-  p-4
-">
-
-  {
-
-    tratamiento.moneda ||
-
-    "-"
-
-  }
-
-</td>
-
-<td className="
-  p-4
-">
-
-  $
-
-  {
-
-    tratamiento.laboratorio ||
-
-    0
-
-  }
-
-</td>
-
-<td className="
-  p-4
-">
-
-  $
-
-  {
-
-    tratamiento.especialista ||
-
-    0
-
-  }
-
-</td>
-
-<td className="
-  p-4
-">
-
-  $
-
-  {
-
-    tratamiento.comision_banco ||
-
-    0
-
-  }
-
-</td>
-
-
-
-            <td className="
-              p-4
-            ">
-
-              {
-                tratamiento.tratamiento
-              }
-
-            </td>
-
-            <td className="
-              p-4
-            ">
-
-              $
-              {
-                tratamiento.total
-              }
-
-            </td>
-
-            <td className="
-              p-4
-            ">
-
-              $
-              {
-                tratamiento.pagado
-              }
-
-            </td>
-
-            <td className="
-              p-4
-            ">
-
-              $
-              {
-                tratamiento.pendiente
-              }
-
-            </td>
-<td
-  className="
-    p-4
-  "
->
-
-  {
-    tratamiento.estado ===
-    "Finalizado"
-
-      ? (
-
-        <span
-          className="
-            bg-green-100
-            text-green-700
-            px-3
-            py-1
-            rounded-full
-            text-xs
-            font-semibold
-          "
-        >
-
-          Finalizado
-
-        </span>
-
-      )
-
-      : tratamiento.estado ===
-        "En proceso"
-
-        ? (
-
-          <span
-            className="
-              bg-blue-100
-              text-blue-700
-              px-3
-              py-1
-              rounded-full
-              text-xs
-              font-semibold
-            "
-          >
-
-            En proceso
-
-          </span>
-
-        )
-
-        : tratamiento.estado ===
-          "Confirmado"
-
-          ? (
-
-            <span
-              className="
-                bg-teal-100
-                text-teal-700
-                px-3
-                py-1
-                rounded-full
-                text-xs
-                font-semibold
-              "
-            >
-
-              Confirmado
-
-            </span>
-
-          )
-
-          : tratamiento.estado ===
-            "Cancelado"
-
-            ? (
-
-              <span
-                className="
-                  bg-slate-200
-                  text-slate-600
-                  px-3
-                  py-1
-                  rounded-full
+          <table className="
+            w-full
+            min-w-[900px]
+          ">
+
+            <thead>
+
+              <tr className="
+                bg-[var(--mint-bg-soft)]
+                border-b
+                border-[var(--mint-border)]
+              ">
+
+                <th className="
+                  p-4
+                  text-left
                   text-xs
                   font-semibold
-                "
-              >
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Fecha
+                </th>
 
-                Cancelado
-
-              </span>
-
-            )
-
-            : (
-
-              <span
-                className="
-                  bg-yellow-100
-                  text-yellow-700
-                  px-3
-                  py-1
-                  rounded-full
+                <th className="
+                  p-4
+                  text-left
                   text-xs
                   font-semibold
-                "
-              >
-
-                Pendiente
-
-              </span>
-
-            )
-  }
-
-</td>
-
-<td className="
-  p-4
-  font-semibold
-  text-blue-600
-">
-
-  $
-
-  {
-
-    (
-
-      Number(
-        tratamiento.pagado || 0
-      )
-
-      -
-
-      Number(
-        tratamiento.laboratorio || 0
-      )
-
-      -
-
-      Number(
-        tratamiento.especialista || 0
-      )
-
-      -
-
-      Number(
-        tratamiento.comision_banco || 0
-      )
-
-    ).toLocaleString()
-
-  }
-
-</td>
-
-<td className="
-  p-4
-  font-semibold
-  text-orange-600
-">
-
-  $
-
-  {
-
-    (
-
-      (
-
-        Number(
-          tratamiento.pagado || 0
-        )
-
-        -
-
-        Number(
-          tratamiento.laboratorio || 0
-        )
-
-        -
-
-        Number(
-          tratamiento.especialista || 0
-        )
-
-        -
-
-        Number(
-          tratamiento.comision_banco || 0
-        )
-
-      )
-
-      *
-
-      (
-
-        Number(
-
-          obtenerDoctor(
-            tratamiento.doctor_id
-          )?.porcentaje || 0
-
-        )
-
-        / 100
-
-      )
-
-    ).toLocaleString()
-
-  }
-
-</td>
-
-<td className="
-  p-4
-  font-semibold
-  text-green-600
-">
-
-  Próximamente
-
-</td>
-
-<td className="
-  p-4
-  max-w-[250px]
-">
-
-  {
-
-    tratamiento.notas ||
-
-    "-"
-
-  }
-
-</td>
-
-
-
-<td className="
-  p-4
-">
-
-  <div className="
-    flex
-    gap-2
-  ">
-
-    <select
-  value={
-    tratamiento.estado ||
-    "Pendiente"
-  }
-  onChange={(e) =>
-    actualizarEstadoTratamiento(
-      tratamiento.id,
-      e.target.value
-    )
-  }
-  className="
-    border
-    border-slate-300
-    rounded-lg
-    px-2
-    py-1
-    text-sm
-  "
->
-
-  <option value="Pendiente">
-    Pendiente
-  </option>
-
-  <option value="Confirmado">
-    Confirmado
-  </option>
-
-  <option value="En proceso">
-    En proceso
-  </option>
-
-  <option value="Finalizado">
-    Finalizado
-  </option>
-
-  <option value="Cancelado">
-    Cancelado
-  </option>
-
-</select>
-
-    <button
-      onClick={() => {
-
-        setNuevoTratamiento(
-          tratamiento
-        );
-
-        setEditandoIndex(
-          index
-        );
-
-        setMostrarModalTratamiento(
-          true
-        );
-
-      }}
-      className="
-        bg-blue-500
-        hover:bg-blue-600
-        text-white
-        px-3
-        py-1
-        rounded-lg
-        text-sm
-      "
-    >
-
-      Editar
-
-    </button>
-
-    <button
-  onClick={async () => {
-
-    const tratamientoEliminar =
-      tratamientos[index];
-
-    if (
-      tratamientoEliminar?.id
-    ) {
-
-      await supabase
-
-        .from(
-          "tratamientos"
-        )
-
-        .delete()
-
-        .eq(
-          "id",
-          tratamientoEliminar.id
-        );
-
-    }
-
-    setTratamientos(
-
-      tratamientos.filter(
-        (_,
-        i) =>
-          i !== index
-      )
-
-    );
-
-  }}
-  className="
-    bg-red-500
-    hover:bg-red-600
-    text-white
-    px-3
-    py-1
-    rounded-lg
-    text-sm
-  "
->
-
-  Eliminar
-
-</button>
-
-  </div>
-
-</td>
-
-          </tr>
-
-        )
-
-      )
-
-    )
-
-  }
-
-</tbody>
-
-        </table>
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Tratamiento
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Doctor
+                </th>
+
+                <th className="
+                  p-4
+                  text-right
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Total
+                </th>
+
+                <th className="
+                  p-4
+                  text-right
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Pagado
+                </th>
+
+                <th className="
+                  p-4
+                  text-right
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Pendiente
+                </th>
+
+                <th className="
+                  p-4
+                  text-left
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Estado
+                </th>
+
+                <th className="
+                  p-4
+                  text-right
+                  text-xs
+                  font-semibold
+                  uppercase
+                  tracking-wide
+                  mint-text-secondary
+                ">
+                  Acciones
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {
+
+                tratamientos.length === 0
+
+                  ? (
+
+                    <tr>
+
+                      <td
+                        colSpan={8}
+                        className="
+                          text-center
+                          p-10
+                          mint-text-muted
+                        "
+                      >
+                        No hay tratamientos registrados
+                      </td>
+
+                    </tr>
+
+                  )
+
+                  : (
+
+                    tratamientos.map(
+                      (
+                        tratamiento,
+                        index
+                      ) => (
+
+                        <tr
+                          key={
+                            tratamiento.id ||
+                            index
+                          }
+                          className="
+                            border-b
+                            border-[var(--mint-border)]
+                            hover:bg-[var(--mint-bg-soft)]
+                            transition-colors
+                          "
+                        >
+
+                          <td className="
+                            p-4
+                            text-sm
+                            mint-text-secondary
+                            whitespace-nowrap
+                          ">
+
+                            {
+                              tratamiento.fecha ||
+                              "-"
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                          ">
+
+                            <p className="
+                              font-semibold
+                              mint-text-primary
+                            ">
+                              {
+                                tratamiento.tratamiento ||
+                                "-"
+                              }
+                            </p>
+
+                            {
+                              tratamiento.notas && (
+
+                                <p className="
+                                  text-xs
+                                  mint-text-muted
+                                  mt-1
+                                  max-w-[260px]
+                                  truncate
+                                ">
+                                  {tratamiento.notas}
+                                </p>
+
+                              )
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                            text-sm
+                            mint-text-secondary
+                            whitespace-nowrap
+                          ">
+
+                            {
+                              tratamiento.doctor ||
+                              "-"
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                            text-right
+                            text-sm
+                            font-semibold
+                            mint-text-primary
+                            whitespace-nowrap
+                          ">
+
+                            $
+                            {
+                              Number(
+                                tratamiento.total || 0
+                              ).toLocaleString()
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                            text-right
+                            text-sm
+                            font-semibold
+                            text-[var(--mint-success)]
+                            whitespace-nowrap
+                          ">
+
+                            $
+                            {
+                              Number(
+                                tratamiento.pagado || 0
+                              ).toLocaleString()
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                            text-right
+                            text-sm
+                            font-semibold
+                            text-[var(--mint-danger)]
+                            whitespace-nowrap
+                          ">
+
+                            $
+                            {
+                              Number(
+                                tratamiento.pendiente || 0
+                              ).toLocaleString()
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                          ">
+
+                            {
+                              tratamiento.estado ===
+                              "Finalizado"
+
+                                ? (
+
+                                  <span className="
+                                    inline-flex
+                                    bg-[var(--mint-success-bg)]
+                                    text-[var(--mint-success)]
+                                    border
+                                    border-[var(--mint-success-border)]
+                                    px-3
+                                    py-1
+                                    rounded-full
+                                    text-xs
+                                    font-semibold
+                                    whitespace-nowrap
+                                  ">
+                                    Finalizado
+                                  </span>
+
+                                )
+
+                                : tratamiento.estado ===
+                                  "En proceso"
+
+                                  ? (
+
+                                    <span className="
+                                      inline-flex
+                                      bg-[var(--mint-info-bg)]
+                                      text-[var(--mint-info)]
+                                      border
+                                      border-[var(--mint-info-border)]
+                                      px-3
+                                      py-1
+                                      rounded-full
+                                      text-xs
+                                      font-semibold
+                                      whitespace-nowrap
+                                    ">
+                                      En proceso
+                                    </span>
+
+                                  )
+
+                                  : tratamiento.estado ===
+                                    "Confirmado"
+
+                                    ? (
+
+                                      <span className="
+                                        inline-flex
+                                        bg-[var(--mint-primary-soft)]
+                                        text-[var(--mint-primary)]
+                                        border
+                                        border-[var(--mint-border-primary)]
+                                        px-3
+                                        py-1
+                                        rounded-full
+                                        text-xs
+                                        font-semibold
+                                        whitespace-nowrap
+                                      ">
+                                        Confirmado
+                                      </span>
+
+                                    )
+
+                                    : tratamiento.estado ===
+                                      "Cancelado"
+
+                                      ? (
+
+                                        <span className="
+                                          inline-flex
+                                          bg-[var(--mint-bg-muted)]
+                                          text-[var(--mint-text-secondary)]
+                                          border
+                                          border-[var(--mint-border)]
+                                          px-3
+                                          py-1
+                                          rounded-full
+                                          text-xs
+                                          font-semibold
+                                          whitespace-nowrap
+                                        ">
+                                          Cancelado
+                                        </span>
+
+                                      )
+
+                                      : (
+
+                                        <span className="
+                                          inline-flex
+                                          bg-[var(--mint-warning-bg)]
+                                          text-[var(--mint-warning)]
+                                          border
+                                          border-[var(--mint-warning-border)]
+                                          px-3
+                                          py-1
+                                          rounded-full
+                                          text-xs
+                                          font-semibold
+                                          whitespace-nowrap
+                                        ">
+                                          Pendiente
+                                        </span>
+
+                                      )
+                            }
+
+                          </td>
+
+                          <td className="
+                            p-4
+                          ">
+
+                            <div className="
+                              flex
+                              justify-end
+                              items-center
+                              gap-2
+                            ">
+
+                              <select
+                                value={
+                                  tratamiento.estado ||
+                                  "Pendiente"
+                                }
+                                onChange={(e) =>
+                                  actualizarEstadoTratamiento(
+                                    tratamiento.id,
+                                    e.target.value
+                                  )
+                                }
+                                className="
+                                  mint-input
+                                  px-3
+                                  py-2
+                                  text-xs
+                                "
+                              >
+
+                                <option value="Pendiente">
+                                  Pendiente
+                                </option>
+
+                                <option value="Confirmado">
+                                  Confirmado
+                                </option>
+
+                                <option value="En proceso">
+                                  En proceso
+                                </option>
+
+                                <option value="Finalizado">
+                                  Finalizado
+                                </option>
+
+                                <option value="Cancelado">
+                                  Cancelado
+                                </option>
+
+                              </select>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+
+                                  setNuevoTratamiento(
+                                    tratamiento
+                                  );
+
+                                  setEditandoIndex(
+                                    index
+                                  );
+
+                                  setMostrarModalTratamiento(
+                                    true
+                                  );
+
+                                }}
+                                className="
+                                  mint-btn
+                                  mint-btn-secondary
+                                  px-3
+                                  py-2
+                                  text-xs
+                                "
+                              >
+                                Editar
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={async () => {
+
+                                  const tratamientoEliminar =
+                                    tratamientos[index];
+
+                                  if (
+                                    tratamientoEliminar?.id
+                                  ) {
+
+                                    await supabase
+                                      .from(
+                                        "tratamientos"
+                                      )
+                                      .delete()
+                                      .eq(
+                                        "id",
+                                        tratamientoEliminar.id
+                                      );
+
+                                  }
+
+                                  setTratamientos(
+
+                                    tratamientos.filter(
+                                      (
+                                        _,
+                                        i
+                                      ) =>
+                                        i !== index
+                                    )
+
+                                  );
+
+                                }}
+                                className="
+                                  mint-btn
+                                  mint-btn-danger
+                                  px-3
+                                  py-2
+                                  text-xs
+                                "
+                              >
+                                Eliminar
+                              </button>
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )
+
+                  )
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 
-    <div
-  className="
-    bg-white
-    border
-    border-slate-200
-    rounded-3xl
-    p-5
-  "
->
-
-  <div
-    className="
-      flex
-      items-center
-      justify-between
-      mb-5
-    "
-  >
-
-    <div>
-
-      <h3
+      <div
         className="
-          text-lg
-          font-bold
-          text-slate-800
+          mint-card
+          p-5
         "
       >
 
-        Evolución Clínica
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            mb-5
+          "
+        >
 
-      </h3>
+          <div>
 
-      <p
-        className="
-          text-sm
-          text-slate-500
-          mt-1
-        "
-      >
-
-        Historial de notas y observaciones clínicas del paciente.
-
-      </p>
-
-    </div>
-
-  </div>
-
-  <div
-    className="
-      grid
-      gap-3
-      mb-6
-    "
-  >
-
-    <select
-      value={
-        doctorNotaId
-      }
-      onChange={(e) =>
-        setDoctorNotaId(
-          e.target.value
-        )
-      }
-      className="
-        border
-        border-slate-300
-        rounded-xl
-        p-3
-        w-full
-      "
-    >
-
-      <option value="">
-
-        Seleccionar Doctor
-
-      </option>
-
-      {
-        doctores.map(
-          (
-            doctor: any
-          ) => (
-
-            <option
-              key={
-                doctor.id
-              }
-              value={
-                doctor.id
-              }
+            <h3
+              className="
+                text-lg
+                font-bold
+                mint-text-primary
+              "
             >
 
-              {doctor.nombre}
+              Evolución Clínica
+
+            </h3>
+
+            <p
+              className="
+                text-sm
+                mint-text-secondary
+                mt-1
+              "
+            >
+
+              Historial de notas y observaciones clínicas del paciente.
+
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          className="
+            grid
+            gap-3
+            mb-6
+          "
+        >
+
+          <select
+            value={
+              doctorNotaId
+            }
+            onChange={(e) =>
+              setDoctorNotaId(
+                e.target.value
+              )
+            }
+            className="
+              mint-input
+              p-3
+              w-full
+            "
+          >
+
+            <option value="">
+
+              Seleccionar Doctor
 
             </option>
 
-          )
-        )
-      }
-
-    </select>
-
-    <textarea
-      value={
-        nuevaNotaClinica
-      }
-      onChange={(e) =>
-        setNuevaNotaClinica(
-          e.target.value
-        )
-      }
-      placeholder="Agregar nueva nota clínica..."
-      className="
-        w-full
-        border
-        border-slate-300
-        rounded-xl
-        p-3
-        min-h-[120px]
-        resize-y
-      "
-    />
-
-    <div
-      className="
-        flex
-        justify-end
-      "
-    >
-
-      <button
-        type="button"
-        onClick={
-          guardarNotaClinica
-        }
-        className="
-          bg-teal-600
-          hover:bg-teal-700
-          text-white
-          px-4
-          py-2
-          rounded-xl
-          font-semibold
-        "
-      >
-
-        Guardar Nota Clínica
-
-      </button>
-
-    </div>
-
-  </div>
-
-  <div
-    className="
-      border-t
-      border-slate-200
-      pt-5
-    "
-  >
-
-    <h4
-      className="
-        font-bold
-        text-slate-800
-        mb-4
-      "
-    >
-
-      Historial
-
-    </h4>
-
-    {
-
-      notasClinicas.length === 0
-
-        ? (
-
-          <div
-            className="
-              bg-slate-50
-              rounded-xl
-              p-5
-              text-sm
-              text-slate-500
-            "
-          >
-
-            No hay notas clínicas registradas.
-
-          </div>
-
-        )
-
-        : (
-
-          <div
-            className="
-              space-y-3
-            "
-          >
-
             {
-
-              notasClinicas.map(
+              doctores.map(
                 (
-                  nota: any
+                  doctor: any
                 ) => (
 
-                  <div
+                  <option
                     key={
-                      nota.id
+                      doctor.id
                     }
-                    className="
-                      border
-                      border-slate-200
-                      rounded-2xl
-                      p-4
-                    "
+                    value={
+                      doctor.id
+                    }
                   >
 
-                    <div
-                      className="
-                        flex
-                        items-center
-                        justify-between
-                        gap-4
-                        mb-3
-                      "
-                    >
+                    {doctor.nombre}
 
-                      <span
-                        className="
-                          font-semibold
-                          text-slate-800
-                        "
-                      >
-
-                        {
-                          nota.doctor_nombre
-                        }
-
-                      </span>
-
-                      <span
-                        className="
-                          text-xs
-                          text-slate-500
-                        "
-                      >
-
-                        {
-                          new Date(
-                            nota.created_at
-                          ).toLocaleString(
-                            "es-MX"
-                          )
-                        }
-
-                      </span>
-
-                    </div>
-
-                    <p
-                      className="
-                        text-sm
-                        text-slate-700
-                        whitespace-pre-wrap
-                      "
-                    >
-
-                      {
-                        nota.nota
-                      }
-
-                    </p>
-
-                  </div>
+                  </option>
 
                 )
               )
-
             }
+
+          </select>
+
+          <textarea
+            value={
+              nuevaNotaClinica
+            }
+            onChange={(e) =>
+              setNuevaNotaClinica(
+                e.target.value
+              )
+            }
+            placeholder="Agregar nueva nota clínica..."
+            className="
+              mint-input
+              w-full
+              p-3
+              min-h-[120px]
+              resize-y
+            "
+          />
+
+          <div
+            className="
+              flex
+              justify-end
+            "
+          >
+
+            <button
+              type="button"
+              onClick={
+                guardarNotaClinica
+              }
+              className="
+                mint-btn
+                mint-btn-primary
+                px-5
+                py-2.5
+                text-sm
+              "
+            >
+
+              Guardar Nota Clínica
+
+            </button>
 
           </div>
 
-        )
+        </div>
 
-    }
+        <div
+          className="
+            border-t
+            border-[var(--mint-border)]
+            pt-5
+          "
+        >
 
-  </div>
+          <h4
+            className="
+              font-bold
+              mint-text-primary
+              mb-4
+            "
+          >
 
-</div>
+            Historial
+
+          </h4>
+
+          {
+
+            notasClinicas.length === 0
+
+              ? (
+
+                <div
+                  className="
+                    bg-[var(--mint-bg-soft)]
+                    rounded-xl
+                    p-5
+                    text-sm
+                    mint-text-secondary
+                  "
+                >
+
+                  No hay notas clínicas registradas.
+
+                </div>
+
+              )
+
+              : (
+
+                <div
+                  className="
+                    space-y-3
+                  "
+                >
+
+                  {
+
+                    notasClinicas.map(
+                      (
+                        nota: any
+                      ) => (
+
+                        <div
+                          key={
+                            nota.id
+                          }
+                          className="
+                            bg-[var(--mint-bg-card)]
+                            border
+                            border-[var(--mint-border)]
+                            rounded-2xl
+                            p-4
+                          "
+                        >
+
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                              gap-4
+                              mb-3
+                            "
+                          >
+
+                            <span
+                              className="
+                                font-semibold
+                                mint-text-primary
+                              "
+                            >
+
+                              {
+                                nota.doctor_nombre
+                              }
+
+                            </span>
+
+                            <span
+                              className="
+                                text-xs
+                                mint-text-secondary
+                              "
+                            >
+
+                              {
+                                new Date(
+                                  nota.created_at
+                                ).toLocaleString(
+                                  "es-MX"
+                                )
+                              }
+
+                            </span>
+
+                          </div>
+
+                          <p
+                            className="
+                              text-sm
+                              mint-text-primary
+                              whitespace-pre-wrap
+                            "
+                          >
+
+                            {
+                              nota.nota
+                            }
+
+                          </p>
+
+                        </div>
+
+                      )
+                    )
+
+                  }
+
+                </div>
+
+              )
+
+          }
+
+        </div>
+
+      </div>
 
     </div>
 
@@ -3441,8 +3173,7 @@ const pacientesFiltrados =
 
       <div
         className="
-          bg-white
-          rounded-3xl
+          mint-card
           p-6
           w-full
           max-w-xl
@@ -3453,6 +3184,7 @@ const pacientesFiltrados =
           className="
             text-2xl
             font-bold
+            mint-text-primary
             mb-2
           "
         >
@@ -3464,7 +3196,7 @@ const pacientesFiltrados =
         <p
           className="
             text-sm
-            text-slate-500
+            mint-text-secondary
             mb-5
           "
         >
@@ -3487,7 +3219,7 @@ const pacientesFiltrados =
                 block
                 text-sm
                 font-semibold
-                text-slate-700
+                mint-text-primary
                 mb-2
               "
             >
@@ -3509,8 +3241,7 @@ const pacientesFiltrados =
                 })
               }
               className="
-                border
-                rounded-xl
+                mint-input
                 p-3
                 w-full
               "
@@ -3525,7 +3256,7 @@ const pacientesFiltrados =
                 block
                 text-sm
                 font-semibold
-                text-slate-700
+                mint-text-primary
                 mb-2
               "
             >
@@ -3552,8 +3283,7 @@ const pacientesFiltrados =
 
               }}
               className="
-                border
-                rounded-xl
+                mint-input
                 p-3
                 w-full
               "
@@ -3601,7 +3331,7 @@ const pacientesFiltrados =
                 block
                 text-sm
                 font-semibold
-                text-slate-700
+                mint-text-primary
                 mb-2
               "
             >
@@ -3644,8 +3374,7 @@ const pacientesFiltrados =
 
               }}
               className="
-                border
-                rounded-xl
+                mint-input
                 p-3
                 w-full
               "
@@ -3691,7 +3420,7 @@ const pacientesFiltrados =
                 block
                 text-sm
                 font-semibold
-                text-slate-700
+                mint-text-primary
                 mb-2
               "
             >
@@ -3700,42 +3429,41 @@ const pacientesFiltrados =
 
             </label>
 
-     <select
-  value={
-    nuevoTratamiento.estado ||
-    "Pendiente"
-  }
-  onChange={(e) =>
-    setNuevoTratamiento({
+            <select
+              value={
+                nuevoTratamiento.estado ||
+                "Pendiente"
+              }
+              onChange={(e) =>
+                setNuevoTratamiento({
 
-      ...nuevoTratamiento,
+                  ...nuevoTratamiento,
 
-      estado:
-        e.target.value,
+                  estado:
+                    e.target.value,
 
-    })
-  }
-  className="
-    border
-    rounded-xl
-    p-3
-    w-full
-  "
-  disabled
->
+                })
+              }
+              className="
+                mint-input
+                p-3
+                w-full
+              "
+              disabled
+            >
 
-  <option value="Pendiente">
+              <option value="Pendiente">
 
-    Pendiente
+                Pendiente
 
-  </option>
+              </option>
 
-</select>
+            </select>
 
             <p
               className="
                 text-xs
-                text-slate-400
+                mint-text-muted
                 mt-1
               "
             >
@@ -3753,7 +3481,7 @@ const pacientesFiltrados =
                 block
                 text-sm
                 font-semibold
-                text-slate-700
+                mint-text-primary
                 mb-2
               "
             >
@@ -3778,8 +3506,7 @@ const pacientesFiltrados =
                 })
               }
               className="
-                border
-                rounded-xl
+                mint-input
                 p-3
                 min-h-[120px]
                 w-full
@@ -3818,10 +3545,11 @@ const pacientesFiltrados =
 
             }}
             className="
+              mint-btn
+              mint-btn-secondary
               px-4
               py-2
-              border
-              rounded-xl
+              text-sm
             "
           >
 
@@ -3835,13 +3563,11 @@ const pacientesFiltrados =
               guardarTratamiento
             }
             className="
-              bg-teal-600
-              hover:bg-teal-700
-              text-white
+              mint-btn
+              mint-btn-primary
               px-4
               py-2
-              rounded-xl
-              font-semibold
+              text-sm
             "
           >
 
@@ -3872,8 +3598,7 @@ const pacientesFiltrados =
     ">
 
       <div className="
-        bg-white
-        rounded-3xl
+        mint-card
         p-6
         w-full
         max-w-xl
@@ -3882,6 +3607,7 @@ const pacientesFiltrados =
         <h2 className="
           text-2xl
           font-bold
+          mint-text-primary
           mb-5
         ">
 
@@ -3907,8 +3633,7 @@ const pacientesFiltrados =
       })
     }
     className="
-      border
-      rounded-xl
+      mint-input
       p-3
     "
   />
@@ -3926,8 +3651,7 @@ const pacientesFiltrados =
       })
     }
     className="
-      border
-      rounded-xl
+      mint-input
       p-3
     "
   />
@@ -3945,8 +3669,7 @@ const pacientesFiltrados =
       })
     }
     className="
-      border
-      rounded-xl
+      mint-input
       p-3
     "
   />
@@ -3966,8 +3689,7 @@ const pacientesFiltrados =
     }
 
     className="
-      border
-      rounded-xl
+      mint-input
       p-3
     "
 
@@ -4006,8 +3728,7 @@ const pacientesFiltrados =
     }
 
     className="
-      border
-      rounded-xl
+      mint-input
       p-3
     "
 
@@ -4019,47 +3740,56 @@ const pacientesFiltrados =
 
 </div>
 
-        <button
+        <div className="
+          flex
+          justify-end
+          gap-3
+          mt-6
+        ">
 
-          onClick={() =>
-            setMostrarModalCita(
-              false
-            )
-          }
+          <button
 
-          className="
-            bg-red-500
-            text-white
-            px-4
-            py-2
-            rounded-xl
-          "
+            onClick={() =>
+              setMostrarModalCita(
+                false
+              )
+            }
 
-        >
+            className="
+              mint-btn
+              mint-btn-danger
+              px-4
+              py-2
+              text-sm
+            "
 
-          Cancelar
+          >
 
-        </button>
+            Cancelar
 
-        <button
+          </button>
 
- onClick={
-  guardarCitaPaciente
-}
+          <button
 
-  className="
-    bg-teal-600
-    text-white
-    px-4
-    py-2
-    rounded-xl
-  "
+            onClick={
+              guardarCitaPaciente
+            }
 
->
+            className="
+              mint-btn
+              mint-btn-primary
+              px-4
+              py-2
+              text-sm
+            "
 
-  Guardar
+          >
 
-</button>
+            Guardar
+
+          </button>
+
+        </div>
 
       </div>
 
@@ -4072,20 +3802,101 @@ const pacientesFiltrados =
   tabActiva ===
   "expediente" && (
 
-    <Odontograma
-      observacionesDientes={
-        observacionesDientes
-      }
-      setObservacionesDientes={
-        setObservacionesDientes
-      }
-      estadoDientes={
-        estadoDientes
-      }
-      setEstadoDientes={
-        setEstadoDientes
-      }
-    />
+<Odontograma
+  observacionesDientes={
+    observacionesDientes
+  }
+  setObservacionesDientes={
+    setObservacionesDientes
+  }
+  estadoDientes={
+    estadoDientes
+  }
+  setEstadoDientes={
+    setEstadoDientes
+  }
+  onGuardar={async (
+    nuevosEstados,
+    nuevasObservaciones
+  ) => {
+
+    if (!pacienteAbierto?.id) {
+      return false;
+    }
+
+    const { error } =
+      await supabase
+        .from("pacientes")
+        .update({
+          observaciones_dientes: {
+            dientes:
+              nuevasObservaciones,
+
+            estados:
+              nuevosEstados,
+
+            imagen:
+              imagenPreview,
+          },
+        })
+        .eq(
+          "id",
+          pacienteAbierto.id
+        );
+
+    if (error) {
+
+      console.error(
+        "Error guardando odontograma:",
+        error
+      );
+
+      alert(
+        "Error guardando odontograma"
+      );
+
+      return false;
+    }
+
+    setPacienteAbierto({
+      ...pacienteAbierto,
+
+      observaciones_dientes: {
+        dientes:
+          nuevasObservaciones,
+
+        estados:
+          nuevosEstados,
+
+        imagen:
+          imagenPreview,
+      },
+    });
+
+    setPacientes(
+      pacientes.map((p) =>
+        p.id === pacienteAbierto.id
+          ? {
+              ...p,
+
+              observaciones_dientes: {
+                dientes:
+                  nuevasObservaciones,
+
+                estados:
+                  nuevosEstados,
+
+                imagen:
+                  imagenPreview,
+              },
+            }
+          : p
+      )
+    );
+
+    return true;
+  }}
+/>
 
   )
 }
@@ -4099,10 +3910,7 @@ const pacientesFiltrados =
     ">
 
       <div className="
-        bg-white
-        border
-        border-slate-200
-        rounded-3xl
+        mint-card
         p-6
       ">
 
@@ -4110,7 +3918,7 @@ const pacientesFiltrados =
           text-2xl
           font-bold
           mb-6
-          text-slate-800
+          mint-text-primary
         ">
 
           Historial Médico
@@ -4124,19 +3932,24 @@ const pacientesFiltrados =
           gap-4
         ">
 
-
-
-          
-
           <div className="
-            bg-slate-50
+            bg-[var(--mint-bg-soft)]
+            border
+            border-[var(--mint-border)]
             rounded-2xl
             p-4
           ">
-            <p className="text-sm text-slate-500">
+            <p className="
+              text-sm
+              mint-text-secondary
+            ">
               Fuma
             </p>
-            <p className="font-bold">
+
+            <p className="
+              font-bold
+              mint-text-primary
+            ">
               {
                 pacienteAbierto
                   ?.historial_clinico
@@ -4150,14 +3963,23 @@ const pacientesFiltrados =
           </div>
 
           <div className="
-            bg-slate-50
+            bg-[var(--mint-bg-soft)]
+            border
+            border-[var(--mint-border)]
             rounded-2xl
             p-4
           ">
-            <p className="text-sm text-slate-500">
+            <p className="
+              text-sm
+              mint-text-secondary
+            ">
               Consume Alcohol
             </p>
-            <p className="font-bold">
+
+            <p className="
+              font-bold
+              mint-text-primary
+            ">
               {
                 pacienteAbierto
                   ?.historial_clinico
@@ -4171,14 +3993,23 @@ const pacientesFiltrados =
           </div>
 
           <div className="
-            bg-slate-50
+            bg-[var(--mint-bg-soft)]
+            border
+            border-[var(--mint-border)]
             rounded-2xl
             p-4
           ">
-            <p className="text-sm text-slate-500">
+            <p className="
+              text-sm
+              mint-text-secondary
+            ">
               Embarazo
             </p>
-            <p className="font-bold">
+
+            <p className="
+              font-bold
+              mint-text-primary
+            ">
               {
                 pacienteAbierto
                   ?.historial_clinico
@@ -4192,14 +4023,23 @@ const pacientesFiltrados =
           </div>
 
           <div className="
-            bg-slate-50
+            bg-[var(--mint-primary-soft)]
+            border
+            border-[var(--mint-border-primary)]
             rounded-2xl
             p-4
           ">
-            <p className="text-sm text-slate-500">
+            <p className="
+              text-sm
+              mint-text-secondary
+            ">
               Consentimiento
             </p>
-            <p className="font-bold">
+
+            <p className="
+              font-bold
+              mint-text-primary
+            ">
               {
                 pacienteAbierto
                   ?.historial_clinico
@@ -4219,21 +4059,23 @@ const pacientesFiltrados =
           space-y-4
         ">
 
-          
-
           <div>
+
             <p className="
               text-sm
-              text-slate-500
+              mint-text-secondary
               mb-1
             ">
               Alergias
             </p>
 
             <div className="
-              bg-slate-50
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
               rounded-2xl
               p-4
+              mint-text-primary
             ">
               {
                 pacienteAbierto
@@ -4241,21 +4083,26 @@ const pacientesFiltrados =
                   ?.alergias || "-"
               }
             </div>
+
           </div>
 
           <div>
+
             <p className="
               text-sm
-              text-slate-500
+              mint-text-secondary
               mb-1
             ">
               Enfermedades
             </p>
 
             <div className="
-              bg-slate-50
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
               rounded-2xl
               p-4
+              mint-text-primary
             ">
               {
                 pacienteAbierto
@@ -4263,21 +4110,26 @@ const pacientesFiltrados =
                   ?.enfermedades || "-"
               }
             </div>
+
           </div>
 
           <div>
+
             <p className="
               text-sm
-              text-slate-500
+              mint-text-secondary
               mb-1
             ">
               Medicamentos
             </p>
 
             <div className="
-              bg-slate-50
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
               rounded-2xl
               p-4
+              mint-text-primary
             ">
               {
                 pacienteAbierto
@@ -4285,6 +4137,7 @@ const pacientesFiltrados =
                   ?.medicamentos || "-"
               }
             </div>
+
           </div>
 
         </div>
@@ -4301,10 +4154,7 @@ const pacientesFiltrados =
   "citas" && (
 
     <div className="
-      bg-white
-      border
-      border-slate-200
-      rounded-3xl
+      mint-card
       p-6
     ">
 
@@ -4318,6 +4168,7 @@ const pacientesFiltrados =
   <h3 className="
     text-2xl
     font-bold
+    mint-text-primary
   ">
 
     Citas
@@ -4339,13 +4190,11 @@ const pacientesFiltrados =
 }}
 
     className="
-      bg-teal-600
-      hover:bg-teal-700
-      text-white
+      mint-btn
+      mint-btn-primary
       px-4
       py-2
-      rounded-xl
-      font-semibold
+      text-sm
     "
 
   >
@@ -4356,188 +4205,236 @@ const pacientesFiltrados =
 
 </div>
 
-      <table className="
-        w-full
+      <div className="
+        overflow-x-auto
       ">
 
-        <thead>
+        <table className="
+          w-full
+        ">
 
-          <tr className="
-            border-b
-            border-slate-200
-          ">
+          <thead>
 
-            <th className="p-3 text-left">
-              Fecha
-            </th>
+            <tr className="
+              bg-[var(--mint-bg-soft)]
+              border-b
+              border-[var(--mint-border)]
+            ">
 
-            <th className="p-3 text-left">
-              Hora
-            </th>
+              <th className="
+                p-3
+                text-left
+                text-sm
+                font-semibold
+                mint-text-secondary
+              ">
+                Fecha
+              </th>
 
-            <th className="p-3 text-left">
-              Estado
-            </th>
+              <th className="
+                p-3
+                text-left
+                text-sm
+                font-semibold
+                mint-text-secondary
+              ">
+                Hora
+              </th>
 
-            <th className="p-3 text-left">
-              Doctor
-            </th>
+              <th className="
+                p-3
+                text-left
+                text-sm
+                font-semibold
+                mint-text-secondary
+              ">
+                Estado
+              </th>
 
-            <th className="p-3 text-left">
-  Acciones
-</th>
+              <th className="
+                p-3
+                text-left
+                text-sm
+                font-semibold
+                mint-text-secondary
+              ">
+                Doctor
+              </th>
 
-          </tr>
+              <th className="
+                p-3
+                text-left
+                text-sm
+                font-semibold
+                mint-text-secondary
+              ">
+                Acciones
+              </th>
 
-        </thead>
+            </tr>
 
-        <tbody>
+          </thead>
 
-          {
+          <tbody>
 
-            citas.length === 0
+            {
 
-              ? (
+              citas.length === 0
 
-                <tr>
+                ? (
 
-                  <td
-                    colSpan={4}
-                    className="
-                      p-6
-                      text-center
-                      text-slate-500
-                    "
-                  >
+                  <tr>
 
-                    No hay citas registradas
+                    <td
+                      colSpan={4}
+                      className="
+                        p-6
+                        text-center
+                        mint-text-secondary
+                      "
+                    >
 
-                  </td>
-
-                </tr>
-
-              )
-
-              : citas.map(
-                (cita: any) => (
-
-                  <tr
-                    key={cita.id}
-                    className="
-                      border-b
-                      border-slate-100
-                    "
-                  >
-
-                    <td className="p-3">
-
-                      {
-                        new Date(
-  cita.inicio
-).toLocaleDateString(
-  "es-MX"
-)
-                      }
-
-                    </td>
-
-                    <td className="p-3">
-
-                      {
-                        new Date(
-                          cita.inicio
-                        ).toLocaleTimeString(
-                          [],
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )
-                      }
+                      No hay citas registradas
 
                     </td>
-
-                    <td className="p-3">
-
-                      {cita.estado}
-
-                    </td>
-
-                    <td className="p-3">
-
-                      {cita.doctor}
-
-                    </td>
-
-                    <td className="p-3">
-
-  <div className="
-    flex
-    gap-2
-  ">
-
-    <button
-
-      onClick={() =>
-        editarCita(
-          cita
-        )
-      }
-
-      className="
-        bg-blue-500
-        hover:bg-blue-600
-        text-white
-        px-3
-        py-1
-        rounded-lg
-        text-sm
-      "
-
-    >
-
-      Editar
-
-    </button>
-
-    <button
-
-      onClick={() =>
-        eliminarCita(
-          cita.id
-        )
-      }
-
-      className="
-        bg-red-500
-        hover:bg-red-600
-        text-white
-        px-3
-        py-1
-        rounded-lg
-        text-sm
-      "
-
-    >
-
-      Eliminar
-
-    </button>
-
-  </div>
-
-</td>
 
                   </tr>
 
                 )
-              )
 
-          }
+                : citas.map(
 
-        </tbody>
+                                    (cita: any) => (
 
-      </table>
+                    <tr
+                      key={cita.id}
+                      className="
+                        border-b
+                        border-[var(--mint-border)]
+                        hover:bg-[var(--mint-bg-soft)]
+                        transition-colors
+                      "
+                    >
+
+                      <td className="
+                        p-3
+                        mint-text-primary
+                      ">
+
+                        {
+                          new Date(
+                            cita.inicio
+                          ).toLocaleDateString(
+                            "es-MX"
+                          )
+                        }
+
+                      </td>
+
+                      <td className="
+                        p-3
+                        mint-text-primary
+                      ">
+
+                        {
+                          new Date(
+                            cita.inicio
+                          ).toLocaleTimeString(
+                            [],
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }
+                          )
+                        }
+
+                      </td>
+
+                      <td className="
+                        p-3
+                        mint-text-secondary
+                      ">
+
+                        {cita.estado}
+
+                      </td>
+
+                      <td className="
+                        p-3
+                        mint-text-primary
+                      ">
+
+                        {cita.doctor}
+
+                      </td>
+
+                      <td className="p-3">
+
+                        <div className="
+                          flex
+                          gap-2
+                        ">
+
+                          <button
+
+                            onClick={() =>
+                              editarCita(
+                                cita
+                              )
+                            }
+
+                            className="
+                              mint-btn
+                              mint-btn-secondary
+                              px-3
+                              py-1
+                              text-sm
+                            "
+
+                          >
+
+                            Editar
+
+                          </button>
+
+                          <button
+
+                            onClick={() =>
+                              eliminarCita(
+                                cita.id
+                              )
+                            }
+
+                            className="
+                              mint-btn
+                              mint-btn-danger
+                              px-3
+                              py-1
+                              text-sm
+                            "
+
+                          >
+
+                            Eliminar
+
+                          </button>
+
+                        </div>
+
+                      </td>
+
+                    </tr>
+
+                  )
+                )
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
 
@@ -4546,7 +4443,9 @@ const pacientesFiltrados =
 
               <div className="
                 mt-8
-                bg-slate-50
+                bg-[var(--mint-bg-soft)]
+                border
+                border-[var(--mint-border)]
                 rounded-3xl
                 p-4
               ">
@@ -4555,7 +4454,7 @@ const pacientesFiltrados =
                   text-lg
                   font-bold
                   mb-4
-                  text-slate-800
+                  mint-text-primary
                 ">
 
                   Radiografías / Fotos
@@ -4578,6 +4477,12 @@ const pacientesFiltrados =
                     );
 
                   }}
+                  className="
+                    mint-input
+                    w-full
+                    p-2
+                    text-sm
+                  "
                 />
 
                 {
@@ -4592,7 +4497,7 @@ const pacientesFiltrados =
                         rounded-2xl
                         max-h-[500px]
                         border
-                        border-slate-200
+                        border-[var(--mint-border)]
                       "
                     />
 
@@ -4602,247 +4507,142 @@ const pacientesFiltrados =
 
               </div>
 
+              <div className="
+                mt-8
+                pt-5
+                border-t
+                border-[var(--mint-border)]
+                flex
+                justify-end
+                gap-3
+              ">
+
+                <button
+                  type="button"
+                  onClick={
+                    generarPDF
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-secondary
+                    px-5
+                    py-2.5
+                    text-sm
+                  "
+                >
+                  PDF
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    guardarExpediente
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    px-6
+                    py-2.5
+                    text-sm
+                  "
+                >
+                  Guardar
+                </button>
+
+              </div>
+
             </div>
 
           )
 
                     :
 
-          (
+                   (
 
             <div className="
               h-full
-              bg-white
-              rounded-3xl
-              shadow-xl
+              mint-card
               p-6
-              overflow-y-auto
             ">
 
               <div className="
-                max-w-5xl
+                h-full
+                max-w-4xl
                 mx-auto
+                flex
+                flex-col
               ">
 
-                <div className="
-                  mb-8
-                ">
+                <div>
 
                   <p className="
-                    text-sm
+                    text-xs
                     font-semibold
-                    text-teal-600
-                    mb-2
+                    uppercase
+                    tracking-wide
+                    mint-text-brand
                   ">
-                    PACIENTES
+                    Pacientes
                   </p>
 
                   <h2 className="
-                    text-3xl
+                    text-2xl
                     font-bold
-                    text-slate-800
+                    mint-text-primary
+                    mt-1
                   ">
                     Expedientes de Pacientes
                   </h2>
 
                   <p className="
-                    text-slate-500
-                    mt-3
-                    max-w-2xl
+                    text-sm
+                    mint-text-secondary
+                    mt-2
                   ">
-                    Selecciona un paciente de la lista
-                    para consultar su información clínica,
-                    tratamientos, citas e historial.
+                    Selecciona un paciente de la barra superior
+                    para consultar su expediente.
                   </p>
 
                 </div>
 
                 <div className="
-                  grid
-                  grid-cols-1
-                  md:grid-cols-3
-                  gap-4
-                  mb-8
+                  flex-1
+                  flex
+                  items-center
+                  justify-center
+                  min-h-[250px]
                 ">
 
                   <div className="
-                    bg-slate-50
-                    border
-                    border-slate-200
-                    rounded-2xl
-                    p-5
+                    w-full
+                    max-w-[360px]
+                    text-center
                   ">
 
                     <p className="
                       text-sm
-                      text-slate-500
-                    ">
-                      Pacientes registrados
-                    </p>
-
-                    <p className="
-                      text-3xl
-                      font-bold
-                      text-slate-800
-                      mt-2
-                    ">
-                      {pacientes.length}
-                    </p>
-
-                  </div>
-
-                  <div className="
-                    bg-slate-50
-                    border
-                    border-slate-200
-                    rounded-2xl
-                    p-5
-                  ">
-
-                    <p className="
-                      text-sm
-                      text-slate-500
-                    ">
-                      Expedientes
-                    </p>
-
-                    <p className="
-                      text-lg
-                      font-bold
-                      text-teal-700
-                      mt-2
-                    ">
-                      Acceso rápido
-                    </p>
-
-                  </div>
-
-                  <div className="
-                    bg-slate-50
-                    border
-                    border-slate-200
-                    rounded-2xl
-                    p-5
-                  ">
-
-                    <p className="
-                      text-sm
-                      text-slate-500
-                    ">
-                      Nuevo paciente
-                    </p>
-
-                    <p className="
-                      text-lg
-                      font-bold
-                      text-slate-800
-                      mt-2
-                    ">
-                      Registro digital
-                    </p>
-
-                  </div>
-
-                </div>
-
-                <div className="
-                  grid
-                  grid-cols-1
-                  xl:grid-cols-2
-                  gap-6
-                ">
-
-                  <div className="
-                    border
-                    border-slate-200
-                    rounded-3xl
-                    p-6
-                  ">
-
-                    <h3 className="
-                      text-xl
-                      font-bold
-                      text-slate-800
-                    ">
-                      Consulta un expediente
-                    </h3>
-
-                    <p className="
-                      text-sm
-                      text-slate-500
-                      mt-3
-                    ">
-                      Utiliza el buscador o selecciona
-                      un paciente de la columna izquierda
-                      para abrir su expediente completo.
-                    </p>
-
-                  </div>
-
-                  <div className="
-                    border
-                    border-slate-200
-                    rounded-3xl
-                    p-6
-                  ">
-
-                    <p className="
-                      text-xs
                       font-semibold
-                      text-teal-600
+                      mint-text-brand
                       mb-2
                     ">
-                      REGISTRO DE PACIENTES
+                      Registro de pacientes
                     </p>
-
-                    <h3 className="
-                      text-xl
-                      font-bold
-                      text-slate-800
-                    ">
-                      Formulario mediante QR
-                    </h3>
 
                     <p className="
                       text-sm
-                      text-slate-500
-                      mt-2
+                      mint-text-secondary
+                      mb-4
                     ">
-                      El paciente puede escanear el
-                      código y completar su información
-                      desde su teléfono.
+                      Escanea el código para abrir el formulario
+                      de registro desde un teléfono.
                     </p>
 
                     <div className="
-                      max-w-[260px]
+                      max-w-[340px]
                       mx-auto
-                      mt-6
                     ">
-
                       <QRCodePaciente />
-
                     </div>
-
-                    <a
-                      href="/#/registro-paciente"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="
-                        block
-                        mt-5
-                        w-full
-                        bg-teal-600
-                        hover:bg-teal-700
-                        text-white
-                        py-3
-                        rounded-xl
-                        font-semibold
-                        text-sm
-                        text-center
-                      "
-                    >
-                      Abrir formulario de registro
-                    </a>
 
                   </div>
 
@@ -4853,10 +4653,121 @@ const pacientesFiltrados =
             </div>
 
           )
-
         }
 
       </div>
+
+      {
+        mostrarQR && (
+
+          <div
+            className="
+              fixed
+              inset-0
+              z-50
+              bg-black/40
+              flex
+              items-center
+              justify-center
+              p-4
+            "
+            onClick={() =>
+              setMostrarQR(false)
+            }
+          >
+
+            <div
+              className="
+                mint-card
+                w-full
+                max-w-md
+                p-6
+                relative
+              "
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+
+              <button
+                type="button"
+                onClick={() =>
+                  setMostrarQR(false)
+                }
+                className="
+                  mint-btn
+                  mint-btn-secondary
+                  absolute
+                  top-4
+                  right-4
+                  w-9
+                  h-9
+                  rounded-full
+                  p-0
+                  font-bold
+                "
+              >
+                ×
+              </button>
+
+              <div
+                className="
+                  text-center
+                "
+              >
+
+                <p
+                  className="
+                    text-xs
+                    font-semibold
+                    uppercase
+                    tracking-wide
+                    mint-text-brand
+                  "
+                >
+                  Registro de pacientes
+                </p>
+
+                <h2
+                  className="
+                    text-2xl
+                    font-bold
+                    mint-text-primary
+                    mt-2
+                  "
+                >
+                  Código QR
+                </h2>
+
+                <p
+                  className="
+                    text-sm
+                    mint-text-secondary
+                    mt-2
+                  "
+                >
+                  Escanea este código desde un teléfono
+                  para abrir el formulario de registro.
+                </p>
+
+                <div
+                  className="
+                    max-w-[260px]
+                    mx-auto
+                    mt-6
+                  "
+                >
+                  <QRCodePaciente />
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
     </div>
 

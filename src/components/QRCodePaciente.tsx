@@ -1,7 +1,6 @@
 export default function QRCodePaciente() {
 
   const urlFormulario =
-
     "https://mintos-dental.vercel.app/#/registro-paciente";
 
   return (
@@ -73,11 +72,10 @@ export default function QRCodePaciente() {
         >
 
           <img
-
-            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(urlFormulario)}`}
-
-            alt="QR"
-
+            src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(
+              urlFormulario
+            )}`}
+            alt="Código QR para registro de paciente"
             className="
               rounded-2xl
             "
@@ -85,20 +83,10 @@ export default function QRCodePaciente() {
 
         </div>
 
-        <button
-
-          onClick={() => {
-
-            navigator.clipboard.writeText(
-              urlFormulario
-            );
-
-            alert(
-              "Link copiado"
-            );
-
-          }}
-
+        <a
+          href={urlFormulario}
+          target="_blank"
+          rel="noopener noreferrer"
           className="
             mt-6
             bg-teal-600
@@ -111,12 +99,11 @@ export default function QRCodePaciente() {
             transition-all
             text-sm
             w-full
+            text-center
           "
         >
-
-          Copiar Link
-
-        </button>
+          Abrir formulario
+        </a>
 
       </div>
 

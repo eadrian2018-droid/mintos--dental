@@ -1,0 +1,1159 @@
+:root {
+  /* ==============================
+     MINT OS — BRAND
+  ============================== */
+
+  --mint-primary: #0f766e;
+  --mint-primary-hover: #115e59;
+  --mint-primary-light: #ccfbf1;
+  --mint-primary-soft: #f0fdfa;
+
+  --mint-secondary: #134e4a;
+  --mint-accent: #c59d5f;
+
+
+  /* ==============================
+     BACKGROUNDS
+  ============================== */
+
+  --mint-bg-app: #f8fafc;
+  --mint-bg-card: #ffffff;
+  --mint-bg-soft: #f8fafc;
+  --mint-bg-muted: #f1f5f9;
+  --mint-bg-elevated: #ffffff;
+
+
+  /* ==============================
+     TEXT
+  ============================== */
+
+  --mint-text-primary: #1e293b;
+  --mint-text-secondary: #475569;
+  --mint-text-muted: #94a3b8;
+  --mint-text-on-primary: #ffffff;
+
+
+  /* ==============================
+     BORDERS
+  ============================== */
+
+  --mint-border: #e2e8f0;
+  --mint-border-strong: #cbd5e1;
+  --mint-border-primary: #99f6e4;
+
+
+  /* ==============================
+     STATUS COLORS
+  ============================== */
+
+  --mint-success: #059669;
+  --mint-success-bg: #ecfdf5;
+  --mint-success-border: #a7f3d0;
+
+  --mint-warning: #d97706;
+  --mint-warning-bg: #fffbeb;
+  --mint-warning-border: #fde68a;
+
+  --mint-danger: #e11d48;
+  --mint-danger-bg: #fff1f2;
+  --mint-danger-border: #fecdd3;
+
+  --mint-info: #2563eb;
+  --mint-info-bg: #eff6ff;
+  --mint-info-border: #bfdbfe;
+
+
+  /* ==============================
+     TYPOGRAPHY
+  ============================== */
+
+  --mint-font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  --mint-font-xs: 12px;
+  --mint-font-sm: 14px;
+  --mint-font-md: 16px;
+  --mint-font-lg: 18px;
+  --mint-font-xl: 24px;
+  --mint-font-2xl: 30px;
+
+  --mint-font-normal: 400;
+  --mint-font-medium: 500;
+  --mint-font-semibold: 600;
+  --mint-font-bold: 700;
+
+
+  /* ==============================
+     CONTROL SIZES
+  ============================== */
+
+  --mint-control-sm: 34px;
+  --mint-control-md: 40px;
+  --mint-control-lg: 46px;
+
+  --mint-input-padding-x: 14px;
+  --mint-input-padding-y: 10px;
+
+  --mint-button-padding-x: 16px;
+  --mint-button-padding-y: 10px;
+
+
+  /* ==============================
+     SHAPE
+  ============================== */
+
+  --mint-radius-sm: 10px;
+  --mint-radius-md: 14px;
+  --mint-radius-lg: 18px;
+  --mint-radius-xl: 24px;
+
+
+  /* ==============================
+     SHADOWS
+  ============================== */
+
+  --mint-shadow-sm:
+    0 1px 2px rgba(15, 23, 42, 0.05);
+
+  --mint-shadow-md:
+    0 4px 14px rgba(15, 23, 42, 0.07);
+
+  --mint-shadow-lg:
+    0 10px 30px rgba(15, 23, 42, 0.10);
+
+  --mint-shadow-modal:
+    0 24px 60px rgba(15, 23, 42, 0.18);
+
+
+  /* ==============================
+     SPACING
+  ============================== */
+
+  --mint-space-xs: 4px;
+  --mint-space-sm: 8px;
+  --mint-space-md: 16px;
+  --mint-space-lg: 24px;
+  --mint-space-xl: 32px;
+
+
+  /* ==============================
+     TRANSITIONS
+  ============================== */
+
+  --mint-transition:
+    160ms ease;
+}
+
+
+/* =================================
+   DARK MODE
+================================= */
+
+[data-theme="dark"] {
+  --mint-primary: #14b8a6;
+  --mint-primary-hover: #2dd4bf;
+  --mint-primary-light: #134e4a;
+  --mint-primary-soft: #042f2e;
+
+  --mint-secondary: #99f6e4;
+
+  --mint-bg-app: #0f172a;
+  --mint-bg-card: #111827;
+  --mint-bg-soft: #1e293b;
+  --mint-bg-muted: #334155;
+  --mint-bg-elevated: #172033;
+
+  --mint-text-primary: #f8fafc;
+  --mint-text-secondary: #cbd5e1;
+  --mint-text-muted: #94a3b8;
+
+  --mint-border: #334155;
+  --mint-border-strong: #475569;
+  --mint-border-primary: #115e59;
+
+  --mint-success-bg: #052e24;
+  --mint-success-border: #065f46;
+
+  --mint-warning-bg: #451a03;
+  --mint-warning-border: #92400e;
+
+  --mint-danger-bg: #4c0519;
+  --mint-danger-border: #9f1239;
+
+  --mint-info-bg: #172554;
+  --mint-info-border: #1d4ed8;
+}
+
+
+/* =================================
+   RESET / BASE APP
+================================= */
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+html {
+  background:
+    var(--mint-bg-app);
+}
+
+body {
+  margin: 0;
+
+  background:
+    var(--mint-bg-app);
+
+  color:
+    var(--mint-text-primary);
+
+  font-family:
+    var(--mint-font-family);
+
+  font-size:
+    var(--mint-font-sm);
+
+  transition:
+    background var(--mint-transition),
+    color var(--mint-transition);
+}
+
+button,
+input,
+select,
+textarea {
+  font:
+    inherit;
+}
+
+button,
+input,
+select,
+textarea {
+  transition:
+    background var(--mint-transition),
+    color var(--mint-transition),
+    border-color var(--mint-transition),
+    box-shadow var(--mint-transition);
+}
+
+::selection {
+  background:
+    var(--mint-primary-light);
+
+  color:
+    var(--mint-secondary);
+}
+
+
+/* =================================
+   SCROLLBAR
+================================= */
+
+* {
+  scrollbar-width:
+    thin;
+
+  scrollbar-color:
+    var(--mint-border-strong)
+    transparent;
+}
+
+*::-webkit-scrollbar {
+  width:
+    8px;
+
+  height:
+    8px;
+}
+
+*::-webkit-scrollbar-track {
+  background:
+    transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background:
+    var(--mint-border-strong);
+
+  border-radius:
+    999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background:
+    var(--mint-text-muted);
+}
+
+
+/* =================================
+   CARDS
+================================= */
+
+.mint-card {
+  background:
+    var(--mint-bg-card);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-card-primary {
+  background:
+    var(--mint-primary-soft);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-border-primary);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-card-success {
+  background:
+    var(--mint-success-bg);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-success-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-card-warning {
+  background:
+    var(--mint-warning-bg);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-warning-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-card-danger {
+  background:
+    var(--mint-danger-bg);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-danger-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+.mint-card-info {
+  background:
+    var(--mint-info-bg);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-info-border);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  box-shadow:
+    var(--mint-shadow-sm);
+}
+
+
+/* =================================
+   BUTTONS
+================================= */
+
+.mint-btn {
+  min-height:
+    var(--mint-control-md);
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    8px;
+
+  border-radius:
+    var(--mint-radius-md);
+
+  font-weight:
+    var(--mint-font-semibold);
+
+  line-height:
+    1;
+
+  cursor:
+    pointer;
+
+  user-select:
+    none;
+
+  transition:
+    var(--mint-transition);
+}
+
+
+.mint-btn:disabled {
+  opacity:
+    0.55;
+
+  cursor:
+    not-allowed;
+}
+
+
+.mint-btn-primary {
+  background:
+    var(--mint-primary);
+
+  color:
+    var(--mint-text-on-primary);
+
+  border:
+    1px solid var(--mint-primary);
+}
+
+
+.mint-btn-primary:hover:not(:disabled) {
+  background:
+    var(--mint-primary-hover);
+
+  border-color:
+    var(--mint-primary-hover);
+}
+
+
+.mint-btn-secondary {
+  background:
+    var(--mint-primary-soft);
+
+  color:
+    var(--mint-secondary);
+
+  border:
+    1px solid var(--mint-border-primary);
+}
+
+
+.mint-btn-secondary:hover:not(:disabled) {
+  background:
+    var(--mint-primary-light);
+}
+
+
+.mint-btn-danger {
+  background:
+    var(--mint-danger-bg);
+
+  color:
+    var(--mint-danger);
+
+  border:
+    1px solid var(--mint-danger-border);
+}
+
+
+.mint-btn-danger:hover:not(:disabled) {
+  filter:
+    brightness(0.97);
+}
+
+
+.mint-btn-success {
+  background:
+    var(--mint-success-bg);
+
+  color:
+    var(--mint-success);
+
+  border:
+    1px solid var(--mint-success-border);
+}
+
+
+.mint-btn-success:hover:not(:disabled) {
+  filter:
+    brightness(0.97);
+}
+
+
+.mint-btn-ghost {
+  background:
+    transparent;
+
+  color:
+    var(--mint-text-secondary);
+
+  border:
+    1px solid transparent;
+}
+
+
+.mint-btn-ghost:hover:not(:disabled) {
+  background:
+    var(--mint-bg-muted);
+
+  color:
+    var(--mint-text-primary);
+}
+
+
+/* =================================
+   BUTTON SIZES
+================================= */
+
+.mint-btn-sm {
+  min-height:
+    var(--mint-control-sm);
+
+  padding:
+    6px 12px;
+
+  font-size:
+    var(--mint-font-xs);
+}
+
+
+.mint-btn-md {
+  min-height:
+    var(--mint-control-md);
+
+  padding:
+    var(--mint-button-padding-y)
+    var(--mint-button-padding-x);
+
+  font-size:
+    var(--mint-font-sm);
+}
+
+
+.mint-btn-lg {
+  min-height:
+    var(--mint-control-lg);
+
+  padding:
+    12px 20px;
+
+  font-size:
+    var(--mint-font-md);
+}
+
+
+/* =================================
+   TABS
+================================= */
+
+.mint-tab {
+  min-height:
+    var(--mint-control-md);
+
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  background:
+    var(--mint-primary-soft);
+
+  color:
+    var(--mint-secondary);
+
+  border:
+    1px solid var(--mint-border-primary);
+
+  border-radius:
+    var(--mint-radius-md);
+
+  font-weight:
+    var(--mint-font-semibold);
+
+  transition:
+    var(--mint-transition);
+}
+
+
+.mint-tab:hover {
+  background:
+    var(--mint-primary-light);
+
+  border-color:
+    var(--mint-primary);
+}
+
+
+.mint-tab-active {
+  background:
+    var(--mint-primary);
+
+  color:
+    var(--mint-text-on-primary);
+
+  border-color:
+    var(--mint-primary);
+
+  box-shadow:
+    var(--mint-shadow-md);
+}
+
+
+/* =================================
+   INPUTS
+================================= */
+
+.mint-input {
+  min-height:
+    var(--mint-control-md);
+
+  background:
+    var(--mint-bg-card);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-border);
+
+  border-radius:
+    var(--mint-radius-md);
+
+  transition:
+    var(--mint-transition);
+}
+
+
+.mint-input::placeholder {
+  color:
+    var(--mint-text-muted);
+}
+
+
+.mint-input:hover:not(:disabled) {
+  border-color:
+    var(--mint-border-strong);
+}
+
+
+.mint-input:focus {
+  outline:
+    none;
+
+  border-color:
+    var(--mint-primary);
+
+  box-shadow:
+    0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+
+
+.mint-input:disabled {
+  background:
+    var(--mint-bg-muted);
+
+  color:
+    var(--mint-text-muted);
+
+  cursor:
+    not-allowed;
+}
+
+
+textarea.mint-input {
+  min-height:
+    100px;
+}
+
+
+/* =================================
+   LABELS
+================================= */
+
+.mint-label {
+  display:
+    block;
+
+  margin-bottom:
+    6px;
+
+  color:
+    var(--mint-text-primary);
+
+  font-size:
+    var(--mint-font-sm);
+
+  font-weight:
+    var(--mint-font-semibold);
+}
+
+
+/* =================================
+   TABLES
+================================= */
+
+.mint-table {
+  width:
+    100%;
+
+  border-collapse:
+    collapse;
+
+  color:
+    var(--mint-text-primary);
+}
+
+
+.mint-table-head {
+  background:
+    var(--mint-bg-soft);
+
+  color:
+    var(--mint-text-secondary);
+
+  border-bottom:
+    1px solid var(--mint-border);
+}
+
+
+.mint-table-head th {
+  padding:
+    14px 16px;
+
+  font-size:
+    var(--mint-font-xs);
+
+  font-weight:
+    var(--mint-font-semibold);
+
+  text-transform:
+    uppercase;
+
+  letter-spacing:
+    0.04em;
+}
+
+
+.mint-table-row {
+  border-bottom:
+    1px solid var(--mint-border);
+
+  transition:
+    background var(--mint-transition);
+}
+
+
+.mint-table-row:hover {
+  background:
+    var(--mint-bg-soft);
+}
+
+
+.mint-table-cell {
+  padding:
+    14px 16px;
+
+  color:
+    var(--mint-text-secondary);
+
+  font-size:
+    var(--mint-font-sm);
+}
+
+
+/* =================================
+   BADGES
+================================= */
+
+.mint-badge {
+  display:
+    inline-flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  gap:
+    6px;
+
+  padding:
+    5px 10px;
+
+  border-radius:
+    999px;
+
+  font-size:
+    var(--mint-font-xs);
+
+  font-weight:
+    var(--mint-font-semibold);
+
+  white-space:
+    nowrap;
+}
+
+
+.mint-badge-primary {
+  background:
+    var(--mint-primary-soft);
+
+  color:
+    var(--mint-primary);
+
+  border:
+    1px solid var(--mint-border-primary);
+}
+
+
+.mint-badge-success {
+  background:
+    var(--mint-success-bg);
+
+  color:
+    var(--mint-success);
+
+  border:
+    1px solid var(--mint-success-border);
+}
+
+
+.mint-badge-warning {
+  background:
+    var(--mint-warning-bg);
+
+  color:
+    var(--mint-warning);
+
+  border:
+    1px solid var(--mint-warning-border);
+}
+
+
+.mint-badge-danger {
+  background:
+    var(--mint-danger-bg);
+
+  color:
+    var(--mint-danger);
+
+  border:
+    1px solid var(--mint-danger-border);
+}
+
+
+.mint-badge-info {
+  background:
+    var(--mint-info-bg);
+
+  color:
+    var(--mint-info);
+
+  border:
+    1px solid var(--mint-info-border);
+}
+
+
+.mint-badge-muted {
+  background:
+    var(--mint-bg-muted);
+
+  color:
+    var(--mint-text-secondary);
+
+  border:
+    1px solid var(--mint-border);
+}
+
+
+/* =================================
+   MODALS
+================================= */
+
+.mint-modal-backdrop {
+  position:
+    fixed;
+
+  inset:
+    0;
+
+  z-index:
+    50;
+
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    16px;
+
+  background:
+    rgba(15, 23, 42, 0.48);
+
+  backdrop-filter:
+    blur(3px);
+}
+
+
+.mint-modal {
+  width:
+    100%;
+
+  max-height:
+    calc(100vh - 32px);
+
+  overflow-y:
+    auto;
+
+  background:
+    var(--mint-bg-card);
+
+  color:
+    var(--mint-text-primary);
+
+  border:
+    1px solid var(--mint-border);
+
+  border-radius:
+    var(--mint-radius-xl);
+
+  box-shadow:
+    var(--mint-shadow-modal);
+}
+
+
+/* =================================
+   SECTION HEADERS
+================================= */
+
+.mint-section-title {
+  color:
+    var(--mint-text-primary);
+
+  font-size:
+    var(--mint-font-xl);
+
+  font-weight:
+    var(--mint-font-bold);
+}
+
+
+.mint-section-subtitle {
+  margin-top:
+    4px;
+
+  color:
+    var(--mint-text-secondary);
+
+  font-size:
+    var(--mint-font-sm);
+}
+
+
+/* =================================
+   DIVIDERS
+================================= */
+
+.mint-divider {
+  border-top:
+    1px solid var(--mint-border);
+}
+
+
+/* =================================
+   EMPTY STATES
+================================= */
+
+.mint-empty {
+  display:
+    flex;
+
+  align-items:
+    center;
+
+  justify-content:
+    center;
+
+  padding:
+    24px;
+
+  background:
+    var(--mint-bg-soft);
+
+  color:
+    var(--mint-text-muted);
+
+  border:
+    1px dashed var(--mint-border-strong);
+
+  border-radius:
+    var(--mint-radius-lg);
+
+  text-align:
+    center;
+}
+
+
+/* =================================
+   TEXT HELPERS
+================================= */
+
+.mint-text-primary {
+  color:
+    var(--mint-text-primary);
+}
+
+
+.mint-text-secondary {
+  color:
+    var(--mint-text-secondary);
+}
+
+
+.mint-text-muted {
+  color:
+    var(--mint-text-muted);
+}
+
+
+.mint-text-brand {
+  color:
+    var(--mint-primary);
+}
+
+
+.mint-text-success {
+  color:
+    var(--mint-success);
+}
+
+
+.mint-text-warning {
+  color:
+    var(--mint-warning);
+}
+
+
+.mint-text-danger {
+  color:
+    var(--mint-danger);
+}
+
+
+.mint-text-info {
+  color:
+    var(--mint-info);
+}
+
+
+/* =================================
+   BACKGROUND HELPERS
+================================= */
+
+.mint-bg-app {
+  background:
+    var(--mint-bg-app);
+}
+
+
+.mint-bg-card {
+  background:
+    var(--mint-bg-card);
+}
+
+
+.mint-bg-soft {
+  background:
+    var(--mint-bg-soft);
+}
+
+
+.mint-bg-muted {
+  background:
+    var(--mint-bg-muted);
+}
+
+
+/* =================================
+   FOCUS
+================================= */
+
+.mint-focus:focus-visible {
+  outline:
+    none;
+
+  box-shadow:
+    0 0 0 3px rgba(15, 118, 110, 0.18);
+}
+
+
+/* =================================
+   DARK MODE NATIVE CONTROLS
+================================= */
+
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
+  color-scheme:
+    dark;
+}
