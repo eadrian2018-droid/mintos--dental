@@ -202,6 +202,28 @@ const [
   doctorNotaId,
   setDoctorNotaId,
 ] = useState("");
+
+const [
+  mostrarModalCobro,
+  setMostrarModalCobro,
+] = useState(false);
+
+const [
+  tratamientoCobro,
+  setTratamientoCobro,
+] = useState<any>(null);
+
+const [
+  nuevoCobro,
+  setNuevoCobro,
+] = useState({
+  metodo_pago: "",
+  moneda: "MXN",
+  monto: "",
+  laboratorio: "",
+  especialista: "",
+  comision_banco: "",
+});
     
 useEffect(() => {
 
@@ -879,6 +901,359 @@ console.log(
 
   }
 
+  function abrirModalCobro(
+  tratamiento: any
+) {
+
+  setTratamientoCobro(
+    tratamiento
+  );
+
+  setNuevoCobro({
+
+    metodo_pago:
+      tratamiento.metodo_pago ||
+      "",
+
+    moneda:
+      tratamiento.moneda ||
+      "MXN",
+
+    monto: "",
+
+    laboratorio:
+      String(
+        tratamiento.laboratorio ||
+        ""
+      ),
+
+    especialista:
+      String(
+        tratamiento.especialista ||
+        ""
+      ),
+
+    comision_banco:
+      String(
+        tratamiento.comision_banco ||
+        ""
+      ),
+
+  });
+
+  setMostrarModalCobro(
+    true
+  );
+
+}
+
+
+async function registrarCobro() {
+
+  if (
+    !tratamientoCobro?.id
+  ) {
+
+    return;
+
+  }
+
+  const montoCobro =
+    Number(
+      nuevoCobro.monto || 0
+    );
+
+  if (
+    montoCobro <= 0
+  ) {
+
+    alert(
+      "Ingresa un monto válido."
+    );
+
+    return;
+
+  }
+
+  if (
+    !nuevoCobro.metodo_pago
+  ) {
+
+    alert(
+      "Selecciona un método de pago."
+    );
+
+    return;
+
+  }
+
+  if (
+    !nuevoCobro.moneda
+  ) {
+
+    alert(
+      "Selecciona una moneda."
+    );
+
+    return;
+
+  }
+
+  const totalTratamiento =
+    Number(
+      tratamientoCobro.total || 0
+    );
+
+  const pagadoAnterior =
+    Number(
+      tratamientoCobro.pagado || 0
+    );
+
+  const nuevoTotalPagado =
+    pagadoAnterior +
+    montoCobro;
+
+  if (
+    totalTratamiento > 0 &&
+    nuevoTotalPagado >
+      totalTratamiento
+  ) {
+
+    alert(
+      "El cobro supera el saldo pendiente del tratamiento."
+    );
+
+    return;
+
+  }
+
+  const nuevoPendiente =
+    Math.max(
+      totalTratamiento -
+        nuevoTotalPagado,
+      0
+    );
+
+    const {
+  data: configuracionPago,
+  error: errorConfiguracionPago,
+} = await supabase
+  .from(
+    "configuracion_pagos"
+  )
+  .select("*")
+  .eq(
+    "metodo",
+    nuevoCobro.metodo_pago
+  )
+  .eq(
+    "activo",
+    true
+  )
+  .maybeSingle();
+
+if (
+  errorConfiguracionPago
+) {
+
+  console.error(
+    "Error cargando configuración de pago:",
+    errorConfiguracionPago
+  );
+
+}
+
+let comisionBancoCobro = 0;
+
+if (
+  configuracionPago?.aplica_comision
+) {
+
+  const porcentajeComision =
+    Number(
+      configuracionPago
+        .comision_porcentaje || 0
+    );
+
+  const porcentajeIVA =
+    Number(
+      configuracionPago
+        .iva_comision_porcentaje || 0
+    );
+
+  const comisionBase =
+    montoCobro *
+    (
+      porcentajeComision /
+      100
+    );
+
+  const ivaComision =
+    comisionBase *
+    (
+      porcentajeIVA /
+      100
+    );
+
+  comisionBancoCobro =
+    comisionBase +
+    ivaComision;
+
+}
+
+const comisionBancoAnterior =
+  Number(
+    tratamientoCobro
+      .comision_banco || 0
+  );
+
+const nuevaComisionBanco =
+  comisionBancoAnterior +
+  comisionBancoCobro;
+
+  const {
+    error,
+  } = await supabase
+
+    .from(
+      "tratamientos"
+    )
+
+    .update({
+
+      metodo_pago:
+        nuevoCobro.metodo_pago,
+
+      moneda:
+        nuevoCobro.moneda,
+
+      laboratorio:
+        Number(
+          nuevoCobro.laboratorio ||
+          0
+        ),
+
+      especialista:
+        Number(
+          nuevoCobro.especialista ||
+          0
+        ),
+
+  comision_banco:
+  nuevaComisionBanco,
+
+      pago:
+        nuevoTotalPagado,
+
+      resta:
+        nuevoPendiente,
+
+      pendiente:
+        nuevoPendiente > 0,
+
+    })
+
+    .eq(
+      "id",
+      tratamientoCobro.id
+    );
+
+  if (error) {
+
+    console.error(
+      error
+    );
+
+    alert(
+      "Error registrando el cobro."
+    );
+
+    return;
+
+  }
+
+  setTratamientos(
+
+    tratamientos.map(
+      (
+        tratamiento
+      ) =>
+
+        tratamiento.id ===
+        tratamientoCobro.id
+
+          ? {
+
+              ...tratamiento,
+
+              metodo_pago:
+                nuevoCobro.metodo_pago,
+
+              moneda:
+                nuevoCobro.moneda,
+
+              laboratorio:
+                Number(
+                  nuevoCobro.laboratorio ||
+                  0
+                ),
+
+              especialista:
+                Number(
+                  nuevoCobro.especialista ||
+                  0
+                ),
+
+              comision_banco:
+                Number(
+                  nuevoCobro.comision_banco ||
+                  0
+                ),
+
+              pagado:
+                nuevoTotalPagado,
+
+              pendiente:
+                nuevoPendiente,
+
+            }
+
+          : tratamiento
+
+    )
+
+  );
+
+  setMostrarModalCobro(
+    false
+  );
+
+  setTratamientoCobro(
+    null
+  );
+
+  setNuevoCobro({
+
+    metodo_pago: "",
+
+    moneda: "MXN",
+
+    monto: "",
+
+    laboratorio: "",
+
+    especialista: "",
+
+    comision_banco: "",
+
+  });
+
+  alert(
+    "Cobro registrado correctamente."
+  );
+
+}
+
 async function guardarTratamiento() {
 
   if (
@@ -903,27 +1278,73 @@ async function guardarTratamiento() {
 
   }
 
-  const nuevo = {
+const tratamientoCatalogoSeleccionado =
+  catalogoTratamientos.find(
+    (tratamiento: any) =>
+      tratamiento.nombre ===
+      nuevoTratamiento.tratamiento
+  );
 
-    ...nuevoTratamiento,
+const totalTratamiento =
+  tratamientoCatalogoSeleccionado
+    ? Number(
+        tratamientoCatalogoSeleccionado
+          .precio_mxn || 0
+      )
+    : Number(
+        nuevoTratamiento.total || 0
+      );
 
-    metodo_pago: "",
+const pagadoTratamiento =
+  Number(
+    nuevoTratamiento.pagado || 0
+  );
 
-    moneda: "",
+const pendienteTratamiento =
+  Math.max(
+    totalTratamiento -
+      pagadoTratamiento,
+    0
+  );
 
-    laboratorio: "",
+const nuevo = {
 
-    especialista: "",
+  ...nuevoTratamiento,
 
-    comision_banco: "",
+  metodo_pago:
+    nuevoTratamiento.metodo_pago ||
+    "",
 
-    total: "",
+  moneda:
+    nuevoTratamiento.moneda ||
+    "MXN",
 
-    pagado: "",
+  laboratorio:
+    nuevoTratamiento.laboratorio ||
+    "0",
 
-    pendiente: 0,
+  especialista:
+    nuevoTratamiento.especialista ||
+    "0",
 
-  };
+  comision_banco:
+    nuevoTratamiento.comision_banco ||
+    "0",
+
+  total:
+    String(
+      totalTratamiento
+    ),
+
+  pagado:
+    String(
+      pagadoTratamiento
+    ),
+
+  pendiente:
+    pendienteTratamiento,
+
+};
 
   if (
     editandoIndex !== null
@@ -1027,6 +1448,47 @@ notas:
 estado:
   nuevo.estado ||
   "Pendiente",
+
+metodo_pago:
+  nuevo.metodo_pago,
+
+moneda:
+  nuevo.moneda,
+
+laboratorio:
+  Number(
+    nuevo.laboratorio || 0
+  ),
+
+especialista:
+  Number(
+    nuevo.especialista || 0
+  ),
+
+comision_banco:
+  Number(
+    nuevo.comision_banco || 0
+  ),
+
+total:
+  Number(
+    nuevo.total || 0
+  ),
+
+pago:
+  Number(
+    nuevo.pagado || 0
+  ),
+
+resta:
+  Number(
+    nuevo.pendiente || 0
+  ),
+
+pendiente:
+  Number(
+    nuevo.pendiente || 0
+  ) > 0,
 
 notas:
   nuevo.notas || "",
@@ -2764,6 +3226,24 @@ const pacientesFiltrados =
                               </select>
 
                               <button
+  type="button"
+  onClick={() =>
+    abrirModalCobro(
+      tratamiento
+    )
+  }
+  className="
+    mint-btn
+    mint-btn-action
+    px-3
+    py-2
+    text-xs
+  "
+>
+  Registrar cobro
+</button>
+
+                              <button
                                 type="button"
                                 onClick={() => {
 
@@ -3272,16 +3752,80 @@ const pacientesFiltrados =
               }
               onChange={(e) => {
 
-                setNuevoTratamiento({
+  const tratamientoSeleccionado =
+    catalogoTratamientos.find(
+      (tratamiento: any) =>
+        tratamiento.nombre ===
+        e.target.value
+    );
 
-                  ...nuevoTratamiento,
+  if (
+    !tratamientoSeleccionado
+  ) {
 
-                  tratamiento:
-                    e.target.value,
+    setNuevoTratamiento({
 
-                });
+      ...nuevoTratamiento,
 
-              }}
+      tratamiento:
+        e.target.value,
+
+      moneda: "MXN",
+
+      total: "",
+
+      pagado: "",
+
+      laboratorio: "",
+
+      especialista: "",
+
+      comision_banco: "",
+
+    });
+
+    return;
+
+  }
+
+  setNuevoTratamiento({
+
+    ...nuevoTratamiento,
+
+    tratamiento:
+      tratamientoSeleccionado.nombre,
+
+    moneda: "MXN",
+
+    total:
+      String(
+        Number(
+          tratamientoSeleccionado
+            .precio_mxn || 0
+        )
+      ),
+
+    pagado: "0",
+
+    laboratorio: "",
+
+    especialista:
+      tratamientoSeleccionado.tipo ===
+      "especialista"
+        ? String(
+            Number(
+              tratamientoSeleccionado
+                .costo_especialista_mxn ||
+                0
+            )
+          )
+        : "0",
+
+    comision_banco: "0",
+
+  });
+
+}}
               className="
                 mint-input
                 p-3
@@ -3581,6 +4125,466 @@ const pacientesFiltrados =
 
     </div>
 
+  )
+}
+
+{
+  mostrarModalCobro && (
+    <div
+      className="
+        fixed
+        inset-0
+        bg-black/50
+        flex
+        items-center
+        justify-center
+        z-50
+      "
+    >
+      <div
+        className="
+          mint-card
+          p-6
+          w-full
+          max-w-xl
+        "
+      >
+        <h2
+          className="
+            text-2xl
+            font-bold
+            mint-text-primary
+            mb-2
+          "
+        >
+          Registrar cobro
+        </h2>
+
+        <p
+          className="
+            text-sm
+            mint-text-secondary
+            mb-5
+          "
+        >
+          {
+            tratamientoCobro
+              ?.tratamiento
+          }
+        </p>
+
+        <div
+          className="
+            grid
+            gap-4
+          "
+        >
+
+          <div>
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+              Método de pago
+            </label>
+
+            <select
+              value={
+                nuevoCobro
+                  .metodo_pago
+              }
+              onChange={(e) =>
+                setNuevoCobro({
+                  ...nuevoCobro,
+                  metodo_pago:
+                    e.target.value,
+                })
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+            >
+              <option value="">
+                Seleccionar método
+              </option>
+
+              <option value="Efectivo">
+                Efectivo
+              </option>
+
+              <option value="Tarjeta">
+                Tarjeta
+              </option>
+
+              <option value="Transferencia">
+                Transferencia
+              </option>
+
+              <option value="Cheque">
+                Cheque
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+              Moneda
+            </label>
+
+            <select
+              value={
+                nuevoCobro.moneda
+              }
+              onChange={(e) =>
+                setNuevoCobro({
+                  ...nuevoCobro,
+                  moneda:
+                    e.target.value,
+                })
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+            >
+              <option value="MXN">
+                MXN
+              </option>
+
+              <option value="USD">
+                USD
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+              Monto del cobro
+            </label>
+
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={
+                nuevoCobro.monto
+              }
+              onChange={(e) =>
+                setNuevoCobro({
+                  ...nuevoCobro,
+                  monto:
+                    e.target.value,
+                })
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+              placeholder="0.00"
+            />
+          </div>
+
+          <div
+            className="
+              grid
+              grid-cols-1
+              md:grid-cols-3
+              gap-3
+            "
+          >
+
+            <div>
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Laboratorio
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  nuevoCobro
+                    .laboratorio
+                }
+                onChange={(e) =>
+                  setNuevoCobro({
+                    ...nuevoCobro,
+                    laboratorio:
+                      e.target.value,
+                  })
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+            </div>
+
+            <div>
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Especialista
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  nuevoCobro
+                    .especialista
+                }
+                onChange={(e) =>
+                  setNuevoCobro({
+                    ...nuevoCobro,
+                    especialista:
+                      e.target.value,
+                  })
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+            </div>
+
+            <div>
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Comisión banco
+              </label>
+
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={
+                  nuevoCobro
+                    .comision_banco
+                }
+                onChange={(e) =>
+                  setNuevoCobro({
+                    ...nuevoCobro,
+                    comision_banco:
+                      e.target.value,
+                  })
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+            </div>
+
+          </div>
+
+          <div
+            className="
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
+              rounded-2xl
+              p-4
+            "
+          >
+            <div
+              className="
+                flex
+                justify-between
+                text-sm
+                mb-2
+              "
+            >
+              <span
+                className="
+                  mint-text-secondary
+                "
+              >
+                Total tratamiento
+              </span>
+
+              <strong
+                className="
+                  mint-text-primary
+                "
+              >
+                $
+                {
+                  Number(
+                    tratamientoCobro
+                      ?.total || 0
+                  ).toLocaleString()
+                }
+              </strong>
+            </div>
+
+            <div
+              className="
+                flex
+                justify-between
+                text-sm
+                mb-2
+              "
+            >
+              <span
+                className="
+                  mint-text-secondary
+                "
+              >
+                Pagado
+              </span>
+
+              <strong
+                className="
+                  text-[var(--mint-success)]
+                "
+              >
+                $
+                {
+                  Number(
+                    tratamientoCobro
+                      ?.pagado || 0
+                  ).toLocaleString()
+                }
+              </strong>
+            </div>
+
+            <div
+              className="
+                flex
+                justify-between
+                text-sm
+              "
+            >
+              <span
+                className="
+                  mint-text-secondary
+                "
+              >
+                Pendiente
+              </span>
+
+              <strong
+                className="
+                  text-[var(--mint-danger)]
+                "
+              >
+                $
+                {
+                  Number(
+                    tratamientoCobro
+                      ?.pendiente || 0
+                  ).toLocaleString()
+                }
+              </strong>
+            </div>
+          </div>
+
+        </div>
+
+        <div
+          className="
+            flex
+            justify-end
+            gap-3
+            mt-6
+          "
+        >
+
+          <button
+            type="button"
+            onClick={() => {
+
+              setMostrarModalCobro(
+                false
+              );
+
+              setTratamientoCobro(
+                null
+              );
+
+            }}
+            className="
+              mint-btn
+              mint-btn-neutral
+              px-4
+              py-2
+              text-sm
+            "
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            onClick={
+              registrarCobro
+            }
+            className="
+              mint-btn
+              mint-btn-primary
+              px-4
+              py-2
+              text-sm
+            "
+          >
+            Registrar cobro
+          </button>
+
+        </div>
+
+      </div>
+    </div>
   )
 }
 
