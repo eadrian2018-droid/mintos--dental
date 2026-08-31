@@ -1,3 +1,7 @@
+import {
+  useState,
+} from "react";
+
 import type {
   Doctor,
 } from "../../types/Doctor";
@@ -13,6 +17,27 @@ type ComisionesCostosProps = {
   catalogoTratamientos:
     TratamientoCatalogo[];
 
+  guardarTratamientoCatalogo:
+    (
+      tratamiento:
+        Omit<
+          TratamientoCatalogo,
+          "id"
+        >
+    ) => Promise<void>;
+
+  actualizarTratamientoCatalogo:
+    (
+      id: number,
+      cambios:
+        Partial<
+          Omit<
+            TratamientoCatalogo,
+            "id"
+          >
+        >
+    ) => Promise<void>;
+
 };
 
 export default function ComisionesCostos({
@@ -20,6 +45,10 @@ export default function ComisionesCostos({
   doctores,
 
   catalogoTratamientos,
+
+  guardarTratamientoCatalogo,
+
+  actualizarTratamientoCatalogo,
 
 }: ComisionesCostosProps) {
 
@@ -29,6 +58,334 @@ export default function ComisionesCostos({
         tratamiento.tipo ===
         "especialista"
     );
+
+  const [
+    mostrarFormulario,
+    setMostrarFormulario,
+  ] = useState(false);
+
+  const [
+    tratamientoEditando,
+    setTratamientoEditando,
+  ] = useState<number | null>(
+    null
+  );
+
+  const [
+    nombre,
+    setNombre,
+  ] = useState("");
+
+  const [
+    categoria,
+    setCategoria,
+  ] = useState("");
+
+  const [
+    doctorId,
+    setDoctorId,
+  ] = useState("");
+
+  const [
+    precioMXN,
+    setPrecioMXN,
+  ] = useState("");
+
+  const [
+    precioUSD,
+    setPrecioUSD,
+  ] = useState("");
+
+  const [
+    costoMXN,
+    setCostoMXN,
+  ] = useState("");
+
+  const [
+    costoUSD,
+    setCostoUSD,
+  ] = useState("");
+
+  const [
+    guardando,
+    setGuardando,
+  ] = useState(false);
+
+  function limpiarFormulario() {
+
+    setNombre("");
+
+    setCategoria("");
+
+    setDoctorId("");
+
+    setPrecioMXN("");
+
+    setPrecioUSD("");
+
+    setCostoMXN("");
+
+    setCostoUSD("");
+
+    setTratamientoEditando(
+      null
+    );
+
+  }
+
+  function abrirNuevo() {
+
+    limpiarFormulario();
+
+    setMostrarFormulario(
+      true
+    );
+
+  }
+
+  function cancelarFormulario() {
+
+    limpiarFormulario();
+
+    setMostrarFormulario(
+      false
+    );
+
+  }
+
+  function iniciarEdicion(
+    tratamiento:
+      TratamientoCatalogo
+  ) {
+
+    setTratamientoEditando(
+      tratamiento.id
+    );
+
+    setNombre(
+      tratamiento.nombre || ""
+    );
+
+    setCategoria(
+      tratamiento.categoria || ""
+    );
+
+    setDoctorId(
+      tratamiento.doctor_id
+        ? String(
+            tratamiento.doctor_id
+          )
+        : ""
+    );
+
+    setPrecioMXN(
+      String(
+        tratamiento.precio_mxn
+        || 0
+      )
+    );
+
+    setPrecioUSD(
+      String(
+        tratamiento.precio_usd
+        || 0
+      )
+    );
+
+    setCostoMXN(
+      String(
+        tratamiento
+          .costo_especialista_mxn
+        || 0
+      )
+    );
+
+    setCostoUSD(
+      String(
+        tratamiento
+          .costo_especialista_usd
+        || 0
+      )
+    );
+
+    setMostrarFormulario(
+      true
+    );
+
+  }
+
+  async function guardar() {
+
+    if (!nombre.trim()) {
+
+      alert(
+        "Ingresa el nombre del tratamiento."
+      );
+
+      return;
+
+    }
+
+    if (!categoria.trim()) {
+
+      alert(
+        "Ingresa la categoría."
+      );
+
+      return;
+
+    }
+
+    if (!doctorId) {
+
+      alert(
+        "Selecciona un especialista."
+      );
+
+      return;
+
+    }
+
+    const valorPrecioMXN =
+      Number(
+        precioMXN || 0
+      );
+
+    const valorPrecioUSD =
+      Number(
+        precioUSD || 0
+      );
+
+    const valorCostoMXN =
+      Number(
+        costoMXN || 0
+      );
+
+    const valorCostoUSD =
+      Number(
+        costoUSD || 0
+      );
+
+    if (
+      valorPrecioMXN < 0 ||
+      valorPrecioUSD < 0 ||
+      valorCostoMXN < 0 ||
+      valorCostoUSD < 0
+    ) {
+
+      alert(
+        "Los precios y costos no pueden ser negativos."
+      );
+
+      return;
+
+    }
+
+    setGuardando(
+      true
+    );
+
+    try {
+
+      if (
+        tratamientoEditando !==
+        null
+      ) {
+
+        await actualizarTratamientoCatalogo(
+
+          tratamientoEditando,
+
+          {
+
+            nombre:
+              nombre.trim(),
+
+            categoria:
+              categoria.trim(),
+
+            tipo:
+              "especialista",
+
+            precio_mxn:
+              valorPrecioMXN,
+
+            precio_usd:
+              valorPrecioUSD,
+
+            costo_especialista_mxn:
+              valorCostoMXN,
+
+            costo_especialista_usd:
+              valorCostoUSD,
+
+            doctor_id:
+              Number(
+                doctorId
+              ),
+
+          }
+
+        );
+
+      } else {
+
+        await guardarTratamientoCatalogo({
+
+          nombre:
+            nombre.trim(),
+
+          categoria:
+            categoria.trim(),
+
+          tipo:
+            "especialista",
+
+          precio_mxn:
+            valorPrecioMXN,
+
+          precio_usd:
+            valorPrecioUSD,
+
+          costo_especialista_mxn:
+            valorCostoMXN,
+
+          costo_especialista_usd:
+            valorCostoUSD,
+
+          doctor_id:
+            Number(
+              doctorId
+            ),
+
+          activo: true,
+
+        });
+
+      }
+
+      cancelarFormulario();
+
+    } catch (error) {
+
+      console.error(
+        "Error guardando tratamiento de especialista:",
+        error
+      );
+
+      alert(
+        "No se pudo guardar el tratamiento de especialista."
+      );
+
+    } finally {
+
+      setGuardando(
+        false
+      );
+
+    }
+
+  }
 
   return (
 
@@ -215,9 +572,7 @@ export default function ComisionesCostos({
                     text-left
                   "
                 >
-
                   Doctor
-
                 </th>
 
                 <th
@@ -226,9 +581,7 @@ export default function ComisionesCostos({
                     text-left
                   "
                 >
-
                   Especialidad
-
                 </th>
 
                 <th
@@ -237,9 +590,7 @@ export default function ComisionesCostos({
                     text-left
                   "
                 >
-
                   Comisión
-
                 </th>
 
               </tr>
@@ -249,7 +600,6 @@ export default function ComisionesCostos({
             <tbody>
 
               {
-
                 doctores.map(
                   (doctor) => (
 
@@ -270,9 +620,7 @@ export default function ComisionesCostos({
                         "
                       >
 
-                        {
-                          doctor.nombre
-                        }
+                        {doctor.nombre}
 
                       </td>
 
@@ -284,8 +632,7 @@ export default function ComisionesCostos({
                       >
 
                         {
-                          doctor
-                            .especialidad
+                          doctor.especialidad
                         }
 
                       </td>
@@ -304,8 +651,7 @@ export default function ComisionesCostos({
                         >
 
                           {
-                            doctor
-                              .porcentaje
+                            doctor.porcentaje
                           }%
 
                         </span>
@@ -316,7 +662,6 @@ export default function ComisionesCostos({
 
                   )
                 )
-
               }
 
             </tbody>
@@ -334,32 +679,425 @@ export default function ComisionesCostos({
         "
       >
 
-        <h3
+        <div
           className="
-            text-xl
-            font-bold
-            mint-text-primary
-            mb-2
-          "
-        >
-
-          Costos de Especialistas
-
-        </h3>
-
-        <p
-          className="
-            mint-text-secondary
+            flex
+            flex-col
+            md:flex-row
+            md:items-center
+            md:justify-between
+            gap-4
             mb-6
           "
         >
 
-          Estos costos se descuentan
-          del pago del tratamiento
-          para calcular la base
-          real de la clínica.
+          <div>
 
-        </p>
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+                mb-2
+              "
+            >
+
+              Costos de Especialistas
+
+            </h3>
+
+            <p
+              className="
+                mint-text-secondary
+              "
+            >
+
+              Configura el precio
+              cobrado al paciente y
+              el costo real del
+              especialista.
+
+            </p>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={
+              abrirNuevo
+            }
+            className="
+              mint-btn
+              mint-btn-primary
+              px-4
+              py-3
+              whitespace-nowrap
+            "
+          >
+
+            + Agregar especialista
+
+          </button>
+
+        </div>
+
+        {
+          mostrarFormulario && (
+
+            <div
+              className="
+                bg-[var(--mint-bg-soft)]
+                border
+                border-[var(--mint-border)]
+                rounded-2xl
+                p-5
+                mb-6
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-3
+                  mb-5
+                "
+              >
+
+                <h4
+                  className="
+                    text-lg
+                    font-bold
+                    mint-text-primary
+                  "
+                >
+
+                  {
+                    tratamientoEditando !==
+                    null
+
+                      ? "Editar tratamiento especialista"
+
+                      : "Nuevo tratamiento especialista"
+                  }
+
+                </h4>
+
+              </div>
+
+              <div
+                className="
+                  grid
+                  md:grid-cols-2
+                  xl:grid-cols-3
+                  gap-4
+                "
+              >
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Tratamiento
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      nombre
+                    }
+                    onChange={(e) =>
+                      setNombre(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                    placeholder="Ej. Endodoncia"
+                  />
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Categoría
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      categoria
+                    }
+                    onChange={(e) =>
+                      setCategoria(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                    placeholder="Ej. Endodoncia"
+                  />
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Especialista
+                  </label>
+
+                  <select
+                    value={
+                      doctorId
+                    }
+                    onChange={(e) =>
+                      setDoctorId(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                  >
+
+                    <option value="">
+                      Seleccionar especialista
+                    </option>
+
+                    {
+                      doctores.map(
+                        (doctor) => (
+
+                          <option
+                            key={
+                              doctor.id
+                            }
+                            value={
+                              doctor.id
+                            }
+                          >
+
+                            {
+                              doctor.nombre
+                            }
+
+                            {
+                              doctor.especialidad
+                                ? ` - ${doctor.especialidad}`
+                                : ""
+                            }
+
+                          </option>
+
+                        )
+                      )
+                    }
+
+                  </select>
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Precio paciente MXN
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      precioMXN
+                    }
+                    onChange={(e) =>
+                      setPrecioMXN(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                  />
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Precio paciente USD
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      precioUSD
+                    }
+                    onChange={(e) =>
+                      setPrecioUSD(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                  />
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Costo especialista MXN
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      costoMXN
+                    }
+                    onChange={(e) =>
+                      setCostoMXN(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                  />
+
+                </div>
+
+                <div>
+
+                  <label
+                    className="
+                      mint-label
+                    "
+                  >
+                    Costo especialista USD
+                  </label>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      costoUSD
+                    }
+                    onChange={(e) =>
+                      setCostoUSD(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                    "
+                  />
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  flex
+                  justify-end
+                  gap-3
+                  mt-5
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={
+                    cancelarFormulario
+                  }
+                  disabled={
+                    guardando
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-secondary
+                    px-4
+                    py-2
+                  "
+                >
+
+                  Cancelar
+
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    guardar
+                  }
+                  disabled={
+                    guardando
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    px-4
+                    py-2
+                    disabled:opacity-50
+                    disabled:cursor-not-allowed
+                  "
+                >
+
+                  {
+                    guardando
+                      ? "Guardando..."
+                      : "Guardar"
+                  }
+
+                </button>
+
+              </div>
+
+            </div>
+
+          )
+        }
 
         <div
           className="
@@ -383,59 +1121,36 @@ export default function ComisionesCostos({
 
               <tr>
 
-                <th
-                  className="
-                    p-3
-                    text-left
-                  "
-                >
-
+                <th className="p-3 text-left">
                   Tratamiento
-
                 </th>
 
-                <th
-                  className="
-                    p-3
-                    text-left
-                  "
-                >
-
+                <th className="p-3 text-left">
                   Categoría
-
                 </th>
 
-                <th
-                  className="
-                    p-3
-                    text-left
-                  "
-                >
-
+                <th className="p-3 text-left">
                   Especialista
-
                 </th>
 
-                <th
-                  className="
-                    p-3
-                    text-left
-                  "
-                >
+                <th className="p-3 text-left">
+                  Precio MXN
+                </th>
 
+                <th className="p-3 text-left">
+                  Precio USD
+                </th>
+
+                <th className="p-3 text-left">
                   Costo MXN
-
                 </th>
 
-                <th
-                  className="
-                    p-3
-                    text-left
-                  "
-                >
-
+                <th className="p-3 text-left">
                   Costo USD
+                </th>
 
+                <th className="p-3 text-right">
+                  Acción
                 </th>
 
               </tr>
@@ -445,7 +1160,6 @@ export default function ComisionesCostos({
             <tbody>
 
               {
-
                 tratamientosEspecialistas
                   .map(
                     (
@@ -480,8 +1194,7 @@ export default function ComisionesCostos({
                           >
 
                             {
-                              tratamiento
-                                .nombre
+                              tratamiento.nombre
                             }
 
                           </td>
@@ -500,8 +1213,7 @@ export default function ComisionesCostos({
                             >
 
                               {
-                                tratamiento
-                                  .categoria
+                                tratamiento.categoria
                               }
 
                             </span>
@@ -516,10 +1228,48 @@ export default function ComisionesCostos({
                           >
 
                             {
-                              doctor
-                                ?.nombre
-                              ||
+                              doctor?.nombre ||
                               "Sin asignar"
+                            }
+
+                          </td>
+
+                          <td
+                            className="
+                              p-3
+                              font-semibold
+                              mint-text-primary
+                            "
+                          >
+
+                            $
+                            {
+                              Number(
+                                tratamiento
+                                  .precio_mxn
+                                || 0
+                              )
+                                .toLocaleString()
+                            }
+
+                          </td>
+
+                          <td
+                            className="
+                              p-3
+                              font-semibold
+                              mint-text-primary
+                            "
+                          >
+
+                            $
+                            {
+                              Number(
+                                tratamiento
+                                  .precio_usd
+                                || 0
+                              )
+                                .toLocaleString()
                             }
 
                           </td>
@@ -533,7 +1283,6 @@ export default function ComisionesCostos({
                           >
 
                             $
-
                             {
                               Number(
                                 tratamiento
@@ -554,7 +1303,6 @@ export default function ComisionesCostos({
                           >
 
                             $
-
                             {
                               Number(
                                 tratamiento
@@ -566,13 +1314,40 @@ export default function ComisionesCostos({
 
                           </td>
 
+                          <td
+                            className="
+                              p-3
+                              text-right
+                            "
+                          >
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                iniciarEdicion(
+                                  tratamiento
+                                )
+                              }
+                              className="
+                                mint-btn
+                                mint-btn-action
+                                px-3
+                                py-2
+                              "
+                            >
+
+                              Editar
+
+                            </button>
+
+                          </td>
+
                         </tr>
 
                       );
 
                     }
                   )
-
               }
 
               {
@@ -584,9 +1359,9 @@ export default function ComisionesCostos({
                 <tr>
 
                   <td
-                    colSpan={5}
+                    colSpan={8}
                     className="
-                      p-6
+                      p-8
                       text-center
                       mint-text-muted
                     "

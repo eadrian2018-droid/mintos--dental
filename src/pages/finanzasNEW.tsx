@@ -1,14 +1,25 @@
 import { useState } from "react";
 
-import Gastos from "../components/finanzas/Gastos";
-import Resumen from "../components/finanzas/Resumen";
-import Comisiones from "../components/finanzas/Comisiones";
-import DoctorDetalle from "../components/DoctorDetalle";
-import ConfiguracionFinanzas from "../components/finanzas/ConfiguracionFinanzas";
+import Gastos
+  from "../components/finanzas/Gastos";
 
-import usePeriodo from "../hooks/usePeriodo";
-import useIndicadores from "../hooks/useIndicadores";
-import useFinanzas from "../hooks/useFinanzas";
+import Resumen
+  from "../components/finanzas/Resumen";
+
+import Comisiones
+  from "../components/finanzas/Comisiones";
+
+import DoctorDetalle
+  from "../components/DoctorDetalle";
+
+import usePeriodo
+  from "../hooks/usePeriodo";
+
+import useIndicadores
+  from "../hooks/useIndicadores";
+
+import useFinanzas
+  from "../hooks/useFinanzas";
 
 import type {
   Doctor,
@@ -17,8 +28,7 @@ import type {
 type SeccionFinanzas =
   | "resumen"
   | "gastos"
-  | "comisiones"
-  | "configuracion";
+  | "comisiones";
 
 type PeriodoFinanzas =
   | "semana"
@@ -55,15 +65,6 @@ export default function Finanzas() {
 
     doctores,
 
-    nombreDoctor,
-    setNombreDoctor,
-
-    especialidadDoctor,
-    setEspecialidadDoctor,
-
-    porcentajeDoctor,
-    setPorcentajeDoctor,
-
     fechaGasto,
     setFechaGasto,
 
@@ -79,25 +80,9 @@ export default function Finanzas() {
     notasGasto,
     setNotasGasto,
 
-    guardarDoctor,
-
-    actualizarDoctor,
-
     guardarGasto,
 
     eliminarGasto,
-
-    catalogoTratamientos,
-
-    guardarTratamientoCatalogo,
-
-    actualizarTratamientoCatalogo,
-
-    cambiarEstadoTratamientoCatalogo,
-
-    configuracionPagos,
-
-    actualizarConfiguracionPago,
 
   } = finanzas;
 
@@ -321,44 +306,6 @@ export default function Finanzas() {
           >
 
             Comisiones
-
-          </button>
-
-          <button
-            onClick={() =>
-              setSeccionActiva(
-                "configuracion"
-              )
-            }
-            className={`
-              p-3
-              rounded-xl
-              text-left
-              font-medium
-              text-sm
-              transition
-
-              ${
-                seccionActiva ===
-                "configuracion"
-
-                  ? `
-                      bg-[var(--mint-primary)]
-                      text-[var(--mint-text-on-primary)]
-                      shadow-sm
-                    `
-
-                  : `
-                      bg-[var(--mint-bg-soft)]
-                      mint-text-secondary
-                      hover:bg-[var(--mint-bg-muted)]
-                      hover:text-[var(--mint-text-primary)]
-                    `
-              }
-            `}
-          >
-
-            Configuración
 
           </button>
 
@@ -631,81 +578,6 @@ export default function Finanzas() {
               setDoctorDetalle(
                 null
               )
-            }
-
-          />
-        }
-
-        {
-          seccionActiva ===
-          "configuracion"
-
-          &&
-
-          <ConfiguracionFinanzas
-
-            doctores={
-              doctores
-            }
-
-            catalogoTratamientos={
-              catalogoTratamientos
-            }
-
-            configuracionPagos={
-              configuracionPagos
-            }
-
-            actualizarConfiguracionPago={
-              actualizarConfiguracionPago
-            }
-
-            actualizarTratamientoCatalogo={
-              actualizarTratamientoCatalogo
-            }
-
-            nombreDoctor={
-              nombreDoctor
-            }
-
-            setNombreDoctor={
-              setNombreDoctor
-            }
-
-            especialidadDoctor={
-              especialidadDoctor
-            }
-
-            setEspecialidadDoctor={
-              setEspecialidadDoctor
-            }
-
-            porcentajeDoctor={
-              porcentajeDoctor
-            }
-
-            setPorcentajeDoctor={
-              setPorcentajeDoctor
-            }
-
-            guardarDoctor={
-              guardarDoctor
-            }
-
-            actualizarDoctor={
-              actualizarDoctor
-            }
-
-            setDoctorDetalle={
-              setDoctorDetalle
-            }
-
-            guardarTratamientoCatalogo={
-              guardarTratamientoCatalogo
-            }
-
-            cambiarEstadoTratamientoCatalogo={
-              cambiarEstadoTratamientoCatalogo
             }
 
           />

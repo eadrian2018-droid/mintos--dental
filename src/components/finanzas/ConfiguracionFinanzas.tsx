@@ -1,15 +1,10 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import CatalogoTratamientos
   from "./CatalogoTratamientos";
-
-import Doctores
-  from "./Doctores";
-
-import type {
-  Dispatch,
-  SetStateAction,
-} from "react";
 
 import type {
   Doctor,
@@ -29,11 +24,14 @@ import type {
   ConfiguracionPago,
 } from "../../types/ConfiguracionPago";
 
+import { supabase }
+  from "../../lib/supabase";
+
 type SeccionConfiguracion =
   | "tratamientos"
-  | "doctores"
   | "comisiones"
-  | "pagos";
+  | "pagos"
+  | "tipo_cambio";
 
 type ConfiguracionFinanzasProps = {
 
@@ -56,45 +54,6 @@ type ConfiguracionFinanzasProps = {
           >
         >
     ) => Promise<void>;
-
-  nombreDoctor: string;
-
-  setNombreDoctor:
-    Dispatch<
-      SetStateAction<string>
-    >;
-
-  especialidadDoctor: string;
-
-  setEspecialidadDoctor:
-    Dispatch<
-      SetStateAction<string>
-    >;
-
-  porcentajeDoctor: string;
-
-  setPorcentajeDoctor:
-    Dispatch<
-      SetStateAction<string>
-    >;
-
-  guardarDoctor:
-    () => Promise<void>;
-
-  actualizarDoctor:
-    (
-      id: number,
-      nombre: string,
-      especialidad: string,
-      porcentaje: number
-    ) => Promise<void>;
-
-  setDoctorDetalle:
-    Dispatch<
-      SetStateAction<
-        Doctor | null
-      >
-    >;
 
   guardarTratamientoCatalogo:
     (
@@ -135,21 +94,6 @@ export default function ConfiguracionFinanzas({
 
   actualizarConfiguracionPago,
 
-  nombreDoctor,
-  setNombreDoctor,
-
-  especialidadDoctor,
-  setEspecialidadDoctor,
-
-  porcentajeDoctor,
-  setPorcentajeDoctor,
-
-  guardarDoctor,
-
-  actualizarDoctor,
-
-  setDoctorDetalle,
-
   guardarTratamientoCatalogo,
 
   actualizarTratamientoCatalogo,
@@ -164,6 +108,164 @@ export default function ConfiguracionFinanzas({
   ] = useState<SeccionConfiguracion>(
     "tratamientos"
   );
+
+  const [
+    tipoCambio,
+    setTipoCambio,
+  ] = useState("");
+
+  const [
+    cargandoTipoCambio,
+    setCargandoTipoCambio,
+  ] = useState(true);
+
+  const [
+    guardandoTipoCambio,
+    setGuardandoTipoCambio,
+  ] = useState(false);
+
+  useEffect(() => {
+
+    cargarTipoCambio();
+
+  }, []);
+
+  async function cargarTipoCambio() {
+
+    setCargandoTipoCambio(
+      true
+    );
+
+    const {
+      data,
+      error,
+    } = await supabase
+
+      .from(
+        "configuracion_finanzas"
+      )
+
+      .select(
+        "valor"
+      )
+
+      .eq(
+        "clave",
+        "tipo_cambio_usd_mxn"
+      )
+
+      .maybeSingle();
+
+    if (error) {
+
+      console.error(
+        "Error cargando tipo de cambio:",
+        error
+      );
+
+      setCargandoTipoCambio(
+        false
+      );
+
+      return;
+
+    }
+
+    if (data) {
+
+      setTipoCambio(
+        String(
+          data.valor
+        )
+      );
+
+    }
+
+    setCargandoTipoCambio(
+      false
+    );
+
+  }
+
+  async function guardarTipoCambio() {
+
+    const valor =
+      Number(
+        tipoCambio
+      );
+
+    if (
+      !valor ||
+      valor <= 0
+    ) {
+
+      alert(
+        "Ingresa un tipo de cambio válido."
+      );
+
+      return;
+
+    }
+
+    setGuardandoTipoCambio(
+      true
+    );
+
+    const {
+      error,
+    } = await supabase
+
+      .from(
+        "configuracion_finanzas"
+      )
+
+      .update({
+
+        valor,
+
+        updated_at:
+          new Date()
+            .toISOString(),
+
+      })
+
+      .eq(
+        "clave",
+        "tipo_cambio_usd_mxn"
+      );
+
+    if (error) {
+
+      console.error(
+        "Error guardando tipo de cambio:",
+        error
+      );
+
+      alert(
+        "Error guardando el tipo de cambio."
+      );
+
+      setGuardandoTipoCambio(
+        false
+      );
+
+      return;
+
+    }
+
+    setTipoCambio(
+      valor.toFixed(2)
+    );
+
+    setGuardandoTipoCambio(
+      false
+    );
+
+    alert(
+      "Tipo de cambio actualizado correctamente."
+    );
+
+  }
 
   return (
 
@@ -215,30 +317,6 @@ export default function ConfiguracionFinanzas({
           <button
             onClick={() =>
               setSeccion(
-                "doctores"
-              )
-            }
-            className={`
-              mint-tab
-
-              ${
-                seccion ===
-                "doctores"
-
-                  ? "mint-tab-active"
-
-                  : ""
-              }
-            `}
-          >
-
-            Doctores
-
-          </button>
-
-          <button
-            onClick={() =>
-              setSeccion(
                 "comisiones"
               )
             }
@@ -284,6 +362,30 @@ export default function ConfiguracionFinanzas({
 
           </button>
 
+          <button
+            onClick={() =>
+              setSeccion(
+                "tipo_cambio"
+              )
+            }
+            className={`
+              mint-tab
+
+              ${
+                seccion ===
+                "tipo_cambio"
+
+                  ? "mint-tab-active"
+
+                  : ""
+              }
+            `}
+          >
+
+            Tipo de cambio
+
+          </button>
+
         </div>
 
       </div>
@@ -321,72 +423,29 @@ export default function ConfiguracionFinanzas({
 
       {
         seccion ===
-        "doctores"
-
-        &&
-
-        <Doctores
-
-          doctores={
-            doctores
-          }
-
-          nombreDoctor={
-            nombreDoctor
-          }
-
-          setNombreDoctor={
-            setNombreDoctor
-          }
-
-          especialidadDoctor={
-            especialidadDoctor
-          }
-
-          setEspecialidadDoctor={
-            setEspecialidadDoctor
-          }
-
-          porcentajeDoctor={
-            porcentajeDoctor
-          }
-
-          setPorcentajeDoctor={
-            setPorcentajeDoctor
-          }
-
-          guardarDoctor={
-            guardarDoctor
-          }
-
-          actualizarDoctor={
-            actualizarDoctor
-          }
-
-          setDoctorDetalle={
-            setDoctorDetalle
-          }
-
-        />
-      }
-
-      {
-        seccion ===
         "comisiones"
 
         &&
 
-        <ComisionesCostos
+<ComisionesCostos
 
-          doctores={
-            doctores
-          }
+  doctores={
+    doctores
+  }
 
-          catalogoTratamientos={
-            catalogoTratamientos
-          }
+  catalogoTratamientos={
+    catalogoTratamientos
+  }
 
-        />
+  guardarTratamientoCatalogo={
+    guardarTratamientoCatalogo
+  }
+
+  actualizarTratamientoCatalogo={
+    actualizarTratamientoCatalogo
+  }
+
+/>
       }
 
       {
@@ -406,6 +465,233 @@ export default function ConfiguracionFinanzas({
           }
 
         />
+      }
+
+      {
+        seccion ===
+        "tipo_cambio"
+
+        &&
+
+        <div
+          className="
+            mint-card
+            p-6
+          "
+        >
+
+          <h2
+            className="
+              text-2xl
+              font-bold
+              mint-text-primary
+            "
+          >
+            Tipo de cambio
+          </h2>
+
+          <p
+            className="
+              mint-text-secondary
+              mt-2
+            "
+          >
+            Configura el valor utilizado para convertir
+            dólares estadounidenses a pesos mexicanos.
+          </p>
+
+          <div
+            className="
+              mt-6
+              max-w-xl
+            "
+          >
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+              Dólar estadounidense
+            </label>
+
+            {
+              cargandoTipoCambio
+
+                ? (
+
+                  <div
+                    className="
+                      mint-card
+                      p-4
+                      mint-text-secondary
+                    "
+                  >
+                    Cargando tipo de cambio...
+                  </div>
+
+                )
+
+                : (
+
+                  <>
+
+                    <div
+                      className="
+                        flex
+                        flex-col
+                        sm:flex-row
+                        gap-3
+                        sm:items-end
+                      "
+                    >
+
+                      <div
+                        className="
+                          flex-1
+                        "
+                      >
+
+                        <p
+                          className="
+                            text-xs
+                            font-semibold
+                            mint-text-muted
+                            mb-2
+                          "
+                        >
+                          1 USD equivale a:
+                        </p>
+
+                        <div
+                          className="
+                            relative
+                          "
+                        >
+
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={
+                              tipoCambio
+                            }
+                            onChange={(e) =>
+                              setTipoCambio(
+                                e.target.value
+                              )
+                            }
+                            className="
+                              mint-input
+                              w-full
+                              p-3
+                              pr-16
+                              text-lg
+                              font-semibold
+                            "
+                          />
+
+                          <span
+                            className="
+                              absolute
+                              right-4
+                              top-1/2
+                              -translate-y-1/2
+                              text-sm
+                              font-semibold
+                              mint-text-secondary
+                            "
+                          >
+                            MXN
+                          </span>
+
+                        </div>
+
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={
+                          guardarTipoCambio
+                        }
+                        disabled={
+                          guardandoTipoCambio
+                        }
+                        className="
+                          mint-btn
+                          mint-btn-primary
+                          px-5
+                          py-3
+                          disabled:opacity-50
+                          disabled:cursor-not-allowed
+                        "
+                      >
+
+                        {
+                          guardandoTipoCambio
+
+                            ? "Guardando..."
+
+                            : "Guardar"
+                        }
+
+                      </button>
+
+                    </div>
+
+                    <div
+                      className="
+                        mt-5
+                        bg-[var(--mint-primary-soft)]
+                        border
+                        border-[var(--mint-border-primary)]
+                        rounded-2xl
+                        p-4
+                      "
+                    >
+
+                      <p
+                        className="
+                          text-xs
+                          uppercase
+                          tracking-wide
+                          font-semibold
+                          mint-text-muted
+                        "
+                      >
+                        Tipo de cambio actual
+                      </p>
+
+                      <p
+                        className="
+                          text-2xl
+                          font-bold
+                          mint-text-brand
+                          mt-1
+                        "
+                      >
+                        1 USD = $
+                        {
+                          Number(
+                            tipoCambio || 0
+                          ).toFixed(2)
+                        } MXN
+                      </p>
+
+                    </div>
+
+                  </>
+
+                )
+            }
+
+          </div>
+
+        </div>
       }
 
     </div>

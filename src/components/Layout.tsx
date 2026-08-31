@@ -306,6 +306,16 @@ export default function Layout() {
       ?.ver_bitacora ===
       true;
 
+  const puedeConfigurarFinanzas =
+
+    permisos
+      ?.configurar_precios_costos ===
+      true ||
+
+    permisos
+      ?.configurar_comisiones ===
+      true;
+
   async function cerrarSesion() {
 
     const {
@@ -729,7 +739,7 @@ export default function Layout() {
             )
           }
 
-          {
+                    {
             puedeVerConfiguracion && (
 
               <div>
@@ -882,6 +892,26 @@ export default function Layout() {
                         Clínica
 
                       </Link>
+
+                      {
+                        puedeConfigurarFinanzas && (
+
+                          <Link
+                            to="/configuracion?seccion=finanzas"
+                            className={
+                              submenuClasses(
+                                "/configuracion",
+                                "finanzas"
+                              )
+                            }
+                          >
+
+                            Finanzas
+
+                          </Link>
+
+                        )
+                      }
 
                       {
                         permisos

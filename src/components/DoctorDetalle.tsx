@@ -231,7 +231,13 @@ export default function DoctorDetalle({
 
                         {Number(
                           t.pago || 0
-                        ).toLocaleString()}
+                        ).toLocaleString(
+                          "es-MX",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
 
                       </td>
 
@@ -239,7 +245,13 @@ export default function DoctorDetalle({
 
                         $
 
-                        {baseClinica.toLocaleString()}
+                        {baseClinica.toLocaleString(
+                          "es-MX",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
 
                       </td>
 
@@ -253,7 +265,13 @@ export default function DoctorDetalle({
 
                         $
 
-                        {comision.toLocaleString()}
+                        {comision.toLocaleString(
+                          "es-MX",
+                          {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          }
+                        )}
 
                       </td>
 

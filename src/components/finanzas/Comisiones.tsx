@@ -233,7 +233,13 @@ export default function Comisiones({
 
                         $
 
-                        {baseClinica.toLocaleString()}
+                      {baseClinica.toLocaleString(
+  "es-MX",
+  {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }
+)}
 
                       </td>
 
@@ -247,7 +253,13 @@ export default function Comisiones({
 
                         $
 
-                        {comision.toLocaleString()}
+                {comision.toLocaleString(
+  "es-MX",
+  {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }
+)}
 
                       </td>
 

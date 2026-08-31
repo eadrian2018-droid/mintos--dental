@@ -224,6 +224,16 @@ const [
   especialista: "",
   comision_banco: "",
 });
+
+const [
+  configuracionPagosCobro,
+  setConfiguracionPagosCobro,
+] = useState<any[]>([]);
+
+const [
+  tipoCambioCobro,
+  setTipoCambioCobro,
+] = useState(0);
     
 useEffect(() => {
 
@@ -233,7 +243,44 @@ useEffect(() => {
 
   cargarCatalogoTratamientos();
 
+  cargarTipoCambio();
+
 }, []);
+
+async function cargarTipoCambio() {
+
+  const {
+    data,
+    error,
+  } = await supabase
+    .from(
+      "configuracion_finanzas"
+    )
+    .select("valor")
+    .eq(
+      "clave",
+      "tipo_cambio_usd_mxn"
+    )
+    .maybeSingle();
+
+  if (error) {
+
+    console.error(
+      "Error cargando tipo de cambio:",
+      error
+    );
+
+    return;
+
+  }
+
+  setTipoCambioCobro(
+    Number(
+      data?.valor || 0
+    )
+  );
+
+}
 
   async function cargarPacientes() {
 
@@ -901,9 +948,71 @@ console.log(
 
   }
 
-  function abrirModalCobro(
+async function abrirModalCobro(
   tratamiento: any
 ) {
+
+  const {
+  data: configuracionPagosData,
+  error: errorConfiguracionPagos,
+} = await supabase
+  .from(
+    "configuracion_pagos"
+  )
+  .select("*")
+  .eq(
+    "activo",
+    true
+  );
+
+if (
+  errorConfiguracionPagos
+) {
+
+  console.error(
+    "Error cargando configuración de pagos:",
+    errorConfiguracionPagos
+  );
+
+} else {
+
+  setConfiguracionPagosCobro(
+    configuracionPagosData ||
+    []
+  );
+
+}
+
+const {
+  data: tipoCambioData,
+  error: errorTipoCambio,
+} = await supabase
+  .from(
+    "configuracion_finanzas"
+  )
+  .select("valor")
+  .eq(
+    "clave",
+    "tipo_cambio_usd_mxn"
+  )
+  .maybeSingle();
+
+if (errorTipoCambio) {
+
+  console.error(
+    "Error cargando tipo de cambio:",
+    errorTipoCambio
+  );
+
+} else {
+
+  setTipoCambioCobro(
+    Number(
+      tipoCambioData?.valor || 0
+    )
+  );
+
+}
 
   setTratamientoCobro(
     tratamiento
@@ -919,7 +1028,14 @@ console.log(
       tratamiento.moneda ||
       "MXN",
 
-    monto: "",
+    monto:
+  String(
+    Number(
+      tratamiento.pendiente ||
+      tratamiento.total ||
+      0
+    )
+  ),
 
     laboratorio:
       String(
@@ -947,6 +1063,63 @@ console.log(
 
 }
 
+const configuracionPagoSeleccionada =
+  configuracionPagosCobro.find(
+    (configuracion: any) =>
+      configuracion.metodo ===
+      nuevoCobro.metodo_pago
+  );
+
+const montoCobroActual =
+  Number(
+    nuevoCobro.monto || 0
+  );
+
+const montoCobroActualMXN =
+  nuevoCobro.moneda === "USD"
+    ? montoCobroActual *
+      tipoCambioCobro
+    : montoCobroActual;
+
+const porcentajeComisionActual =
+  configuracionPagoSeleccionada
+    ?.aplica_comision
+      ? Number(
+          configuracionPagoSeleccionada
+            .comision_porcentaje || 0
+        )
+      : 0;
+
+const porcentajeIvaComisionActual =
+  configuracionPagoSeleccionada
+    ?.aplica_comision
+      ? Number(
+          configuracionPagoSeleccionada
+            .iva_comision_porcentaje || 0
+        )
+      : 0;
+
+const comisionBaseActual =
+  montoCobroActualMXN *
+  (
+    porcentajeComisionActual /
+    100
+  );
+
+const ivaComisionActual =
+  comisionBaseActual *
+  (
+    porcentajeIvaComisionActual /
+    100
+  );
+
+const comisionBancoActual =
+  comisionBaseActual +
+  ivaComisionActual;
+
+const netoCobroActual =
+  montoCobroActualMXN -
+  comisionBancoActual;
 
 async function registrarCobro() {
 
@@ -962,6 +1135,30 @@ async function registrarCobro() {
     Number(
       nuevoCobro.monto || 0
     );
+
+    const tipoCambioAplicado =
+  nuevoCobro.moneda === "USD"
+    ? tipoCambioCobro
+    : 1;
+
+if (
+  nuevoCobro.moneda === "USD" &&
+  tipoCambioAplicado <= 0
+) {
+
+  alert(
+    "No hay un tipo de cambio válido configurado."
+  );
+
+  return;
+
+}
+
+const montoCobroMXN =
+  nuevoCobro.moneda === "USD"
+    ? montoCobro *
+      tipoCambioAplicado
+    : montoCobro;
 
   if (
     montoCobro <= 0
@@ -1010,8 +1207,8 @@ async function registrarCobro() {
     );
 
   const nuevoTotalPagado =
-    pagadoAnterior +
-    montoCobro;
+  pagadoAnterior +
+  montoCobroMXN;
 
   if (
     totalTratamiento > 0 &&
@@ -1034,72 +1231,8 @@ async function registrarCobro() {
       0
     );
 
-    const {
-  data: configuracionPago,
-  error: errorConfiguracionPago,
-} = await supabase
-  .from(
-    "configuracion_pagos"
-  )
-  .select("*")
-  .eq(
-    "metodo",
-    nuevoCobro.metodo_pago
-  )
-  .eq(
-    "activo",
-    true
-  )
-  .maybeSingle();
-
-if (
-  errorConfiguracionPago
-) {
-
-  console.error(
-    "Error cargando configuración de pago:",
-    errorConfiguracionPago
-  );
-
-}
-
-let comisionBancoCobro = 0;
-
-if (
-  configuracionPago?.aplica_comision
-) {
-
-  const porcentajeComision =
-    Number(
-      configuracionPago
-        .comision_porcentaje || 0
-    );
-
-  const porcentajeIVA =
-    Number(
-      configuracionPago
-        .iva_comision_porcentaje || 0
-    );
-
-  const comisionBase =
-    montoCobro *
-    (
-      porcentajeComision /
-      100
-    );
-
-  const ivaComision =
-    comisionBase *
-    (
-      porcentajeIVA /
-      100
-    );
-
-  comisionBancoCobro =
-    comisionBase +
-    ivaComision;
-
-}
+const comisionBancoCobro =
+  comisionBancoActual;
 
 const comisionBancoAnterior =
   Number(
@@ -1119,19 +1252,27 @@ const nuevaComisionBanco =
       "tratamientos"
     )
 
-    .update({
+   .update({
 
-      metodo_pago:
-        nuevoCobro.metodo_pago,
+  metodo_pago:
+    nuevoCobro.metodo_pago,
 
-      moneda:
-        nuevoCobro.moneda,
+  moneda:
+    nuevoCobro.moneda,
 
-      laboratorio:
-        Number(
-          nuevoCobro.laboratorio ||
-          0
-        ),
+  tipo_cambio:
+    nuevoCobro.moneda === "USD"
+      ? tipoCambioAplicado
+      : null,
+
+  equivalente_mxn:
+    montoCobroMXN,
+
+  laboratorio:
+    Number(
+      nuevoCobro.laboratorio ||
+      0
+    ),
 
       especialista:
         Number(
@@ -1139,7 +1280,7 @@ const nuevaComisionBanco =
           0
         ),
 
-  comision_banco:
+comision_banco:
   nuevaComisionBanco,
 
       pago:
@@ -1191,6 +1332,14 @@ const nuevaComisionBanco =
 
               moneda:
                 nuevoCobro.moneda,
+
+                tipo_cambio:
+  nuevoCobro.moneda === "USD"
+    ? tipoCambioAplicado
+    : null,
+
+equivalente_mxn:
+  montoCobroMXN,
 
               laboratorio:
                 Number(
@@ -1514,13 +1663,73 @@ notas:
 
  if (data) {
 
-  setTratamientos([
-    ...tratamientos,
-    {
-      ...nuevo,
-      id: data.id,
-    },
-  ]);
+  const tratamientoGuardado = {
+
+    id:
+      data.id,
+
+    fecha:
+      data.fecha,
+
+    tratamiento:
+      data.tratamiento,
+
+    doctor:
+      data.doctor,
+
+    doctor_id:
+      data.doctor_id,
+
+    estado:
+      data.estado ||
+      "Pendiente",
+
+    metodo_pago:
+      data.metodo_pago ||
+      "",
+
+    moneda:
+      data.moneda ||
+      "MXN",
+
+    laboratorio:
+      data.laboratorio ||
+      0,
+
+    especialista:
+      data.especialista ||
+      0,
+
+    comision_banco:
+      data.comision_banco ||
+      0,
+
+    total:
+      data.total ||
+      0,
+
+    pagado:
+      data.pago ||
+      0,
+
+    pendiente:
+      data.resta ||
+      0,
+
+    notas:
+      data.notas ||
+      "",
+
+  };
+
+  setTratamientos(
+    (
+      tratamientosActuales
+    ) => [
+      tratamientoGuardado,
+      ...tratamientosActuales,
+    ]
+  );
 
 }
 
@@ -2699,6 +2908,45 @@ const pacientesFiltrados =
                 )
               }
             </h3>
+
+            {
+  tipoCambioCobro > 0 && (
+
+    <p
+      className="
+        text-sm
+        font-semibold
+        mint-text-secondary
+        mt-1
+      "
+    >
+      ≈ $
+      {(
+        tratamientos.reduce(
+          (
+            total,
+            tratamiento
+          ) =>
+            total +
+            Number(
+              tratamiento.pendiente || 0
+            ),
+          0
+        ) /
+        tipoCambioCobro
+      ).toLocaleString(
+        "en-US",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      )}
+      {" "}
+      USD
+    </p>
+
+  )
+}
 
             <p className="
               text-sm
@@ -4273,6 +4521,64 @@ const pacientesFiltrados =
             </select>
           </div>
 
+          {
+  nuevoCobro.moneda === "USD" &&
+  tipoCambioCobro > 0 && (
+
+    <div
+      className="
+        bg-[var(--mint-primary-soft)]
+        border
+        border-[var(--mint-border-primary)]
+        rounded-xl
+        p-3
+      "
+    >
+
+      <p
+        className="
+          text-sm
+          font-semibold
+          mint-text-brand
+        "
+      >
+        Tipo de cambio:
+        {" "}
+        1 USD = ${tipoCambioCobro.toFixed(2)} MXN
+      </p>
+
+      <p
+  className="
+    text-sm
+    font-bold
+    mint-text-primary
+    mt-1
+  "
+>
+  Equivalente:
+  {" "}
+  $
+  {(
+    Number(
+      nuevoCobro.monto || 0
+    ) *
+    tipoCambioCobro
+  ).toLocaleString(
+    "es-MX",
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  )}
+  {" "}
+  MXN
+</p>
+
+    </div>
+
+  )
+}
+
           <div>
             <label
               className="
@@ -4390,41 +4696,71 @@ const pacientesFiltrados =
               />
             </div>
 
-            <div>
-              <label
-                className="
-                  block
-                  text-xs
-                  font-semibold
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                Comisión banco
-              </label>
+          <div>
 
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={
-                  nuevoCobro
-                    .comision_banco
-                }
-                onChange={(e) =>
-                  setNuevoCobro({
-                    ...nuevoCobro,
-                    comision_banco:
-                      e.target.value,
-                  })
-                }
-                className="
-                  mint-input
-                  w-full
-                  p-3
-                "
-              />
-            </div>
+  <label
+    className="
+      block
+      text-xs
+      font-semibold
+      mint-text-secondary
+      mb-2
+    "
+  >
+    Comisión banco
+  </label>
+
+  <input
+    type="number"
+    min="0"
+    step="0.01"
+    value={
+      comisionBancoActual.toFixed(2)
+    }
+    readOnly
+    className="
+      mint-input
+      w-full
+      p-3
+    "
+  />
+
+  {
+    porcentajeComisionActual > 0 && (
+      <div
+        className="
+          mt-2
+          text-xs
+          mint-text-secondary
+          space-y-1
+        "
+      >
+
+        <div>
+          Comisión {porcentajeComisionActual}%:{" "}
+          ${comisionBaseActual.toFixed(2)}
+        </div>
+
+        <div>
+          IVA {porcentajeIvaComisionActual}%:{" "}
+          ${ivaComisionActual.toFixed(2)}
+        </div>
+
+        <div
+          className="
+            font-semibold
+            mint-text-primary
+          "
+        >
+          Neto clínica:{" "}
+          ${netoCobroActual.toFixed(2)}
+        </div>
+
+      </div>
+    )
+  }
+
+</div>
 
           </div>
 
@@ -4499,35 +4835,84 @@ const pacientesFiltrados =
               </strong>
             </div>
 
-            <div
-              className="
-                flex
-                justify-between
-                text-sm
-              "
-            >
-              <span
-                className="
-                  mint-text-secondary
-                "
-              >
-                Pendiente
-              </span>
+       <div
+  className="
+    flex
+    justify-between
+    items-start
+    text-sm
+  "
+>
+  <span
+    className="
+      mint-text-secondary
+    "
+  >
+    Pendiente
+  </span>
 
-              <strong
-                className="
-                  text-[var(--mint-danger)]
-                "
-              >
-                $
-                {
-                  Number(
-                    tratamientoCobro
-                      ?.pendiente || 0
-                  ).toLocaleString()
-                }
-              </strong>
-            </div>
+  <div
+    className="
+      text-right
+    "
+  >
+    <strong
+      className="
+        block
+        text-[var(--mint-danger)]
+      "
+    >
+      $
+      {
+        Number(
+          tratamientoCobro
+            ?.pendiente || 0
+        ).toLocaleString(
+          "es-MX",
+          {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }
+        )
+      }
+      {" "}
+      MXN
+    </strong>
+
+    {
+      tipoCambioCobro > 0 && (
+
+        <span
+          className="
+            block
+            text-xs
+            font-semibold
+            mint-text-secondary
+            mt-1
+          "
+        >
+          ≈ $
+          {(
+            Number(
+              tratamientoCobro
+                ?.pendiente || 0
+            ) /
+            tipoCambioCobro
+          ).toLocaleString(
+            "en-US",
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}
+          {" "}
+          USD
+        </span>
+
+      )
+    }
+  </div>
+</div>
           </div>
 
         </div>

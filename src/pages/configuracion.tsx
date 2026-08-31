@@ -17,18 +17,46 @@ import SeguridadConfig
 import BitacoraConfig
   from "../components/configuracion/BitacoraConfig";
 
+import ConfiguracionFinanzas
+  from "../components/finanzas/ConfiguracionFinanzas";
+
+import useFinanzas
+  from "../hooks/useFinanzas";
+
 type Seccion =
   | "usuarios"
   | "doctores"
   | "seguridad"
   | "bitacora"
-  | "clinica";
+  | "clinica"
+  | "finanzas";
 
 export default function Configuracion() {
 
   const [
     searchParams,
   ] = useSearchParams();
+
+  const finanzas =
+    useFinanzas();
+
+  const {
+
+    doctores,
+
+    catalogoTratamientos,
+
+    configuracionPagos,
+
+    actualizarConfiguracionPago,
+
+    guardarTratamientoCatalogo,
+
+    actualizarTratamientoCatalogo,
+
+    cambiarEstadoTratamientoCatalogo,
+
+  } = finanzas;
 
   const seccion =
     (
@@ -67,6 +95,44 @@ export default function Configuracion() {
       {
         seccion === "bitacora" && (
           <BitacoraConfig />
+        )
+      }
+
+      {
+        seccion === "finanzas" && (
+
+          <ConfiguracionFinanzas
+
+            doctores={
+              doctores
+            }
+
+            catalogoTratamientos={
+              catalogoTratamientos
+            }
+
+            configuracionPagos={
+              configuracionPagos
+            }
+
+            actualizarConfiguracionPago={
+              actualizarConfiguracionPago
+            }
+
+            guardarTratamientoCatalogo={
+              guardarTratamientoCatalogo
+            }
+
+            actualizarTratamientoCatalogo={
+              actualizarTratamientoCatalogo
+            }
+
+            cambiarEstadoTratamientoCatalogo={
+              cambiarEstadoTratamientoCatalogo
+            }
+
+          />
+
         )
       }
 
