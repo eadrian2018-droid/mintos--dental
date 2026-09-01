@@ -947,72 +947,113 @@ console.log(
     }
 
   }
-
 async function abrirModalCobro(
+
   tratamiento: any
+
 ) {
 
   const {
-  data: configuracionPagosData,
-  error: errorConfiguracionPagos,
-} = await supabase
-  .from(
-    "configuracion_pagos"
-  )
-  .select("*")
-  .eq(
-    "activo",
-    true
-  );
 
-if (
-  errorConfiguracionPagos
-) {
+    data: configuracionPagosData,
 
-  console.error(
-    "Error cargando configuración de pagos:",
+    error: errorConfiguracionPagos,
+
+  } = await supabase
+
+    .from(
+      "configuracion_pagos"
+    )
+
+    .select("*")
+
+    .eq(
+      "activo",
+      true
+    );
+
+  if (
     errorConfiguracionPagos
-  );
+  ) {
 
-} else {
+    console.error(
+      "Error cargando configuración de pagos:",
+      errorConfiguracionPagos
+    );
 
-  setConfiguracionPagosCobro(
-    configuracionPagosData ||
-    []
-  );
+  } else {
 
-}
+    setConfiguracionPagosCobro(
+      configuracionPagosData ||
+      []
+    );
 
-const {
-  data: tipoCambioData,
-  error: errorTipoCambio,
-} = await supabase
-  .from(
-    "configuracion_finanzas"
-  )
-  .select("valor")
-  .eq(
-    "clave",
-    "tipo_cambio_usd_mxn"
-  )
-  .maybeSingle();
+  }
 
-if (errorTipoCambio) {
+  const {
 
-  console.error(
-    "Error cargando tipo de cambio:",
-    errorTipoCambio
-  );
+    data: tipoCambioData,
 
-} else {
+    error: errorTipoCambio,
 
-  setTipoCambioCobro(
+  } = await supabase
+
+    .from(
+      "configuracion_finanzas"
+    )
+
+    .select("valor")
+
+    .eq(
+      "clave",
+      "tipo_cambio_usd_mxn"
+    )
+
+    .maybeSingle();
+
+  const tipoCambioActual =
     Number(
       tipoCambioData?.valor || 0
-    )
-  );
+    );
 
-}
+  if (
+    errorTipoCambio
+  ) {
+
+    console.error(
+      "Error cargando tipo de cambio:",
+      errorTipoCambio
+    );
+
+  } else {
+
+    setTipoCambioCobro(
+      tipoCambioActual
+    );
+
+  }
+
+  const monedaInicial =
+    tratamiento.moneda ||
+    "MXN";
+
+  const saldoPendienteMXN =
+    Number(
+      tratamiento.pendiente ||
+      tratamiento.total ||
+      0
+    );
+
+  const montoInicial =
+    monedaInicial === "USD" &&
+    tipoCambioActual > 0
+      ? (
+          saldoPendienteMXN /
+          tipoCambioActual
+        ).toFixed(2)
+      : String(
+          saldoPendienteMXN
+        );
 
   setTratamientoCobro(
     tratamiento
@@ -1025,17 +1066,10 @@ if (errorTipoCambio) {
       "",
 
     moneda:
-      tratamiento.moneda ||
-      "MXN",
+      monedaInicial,
 
     monto:
-  String(
-    Number(
-      tratamiento.pendiente ||
-      tratamiento.total ||
-      0
-    )
-  ),
+      montoInicial,
 
     laboratorio:
       String(
@@ -1120,15 +1154,13 @@ const comisionBancoActual =
 const netoCobroActual =
   montoCobroActualMXN -
   comisionBancoActual;
-
 async function registrarCobro() {
 
   if (
-    !tratamientoCobro?.id
+    !tratamientoCobro?.id ||
+    !pacienteAbierto?.id
   ) {
-
     return;
-
   }
 
   const montoCobro =
@@ -1136,29 +1168,29 @@ async function registrarCobro() {
       nuevoCobro.monto || 0
     );
 
-    const tipoCambioAplicado =
-  nuevoCobro.moneda === "USD"
-    ? tipoCambioCobro
-    : 1;
+  const tipoCambioAplicado =
+    nuevoCobro.moneda === "USD"
+      ? tipoCambioCobro
+      : 1;
 
-if (
-  nuevoCobro.moneda === "USD" &&
-  tipoCambioAplicado <= 0
-) {
+  if (
+    nuevoCobro.moneda === "USD" &&
+    tipoCambioAplicado <= 0
+  ) {
 
-  alert(
-    "No hay un tipo de cambio válido configurado."
-  );
+    alert(
+      "No hay un tipo de cambio válido configurado."
+    );
 
-  return;
+    return;
 
-}
+  }
 
-const montoCobroMXN =
-  nuevoCobro.moneda === "USD"
-    ? montoCobro *
-      tipoCambioAplicado
-    : montoCobro;
+  const montoCobroMXN =
+    nuevoCobro.moneda === "USD"
+      ? montoCobro *
+        tipoCambioAplicado
+      : montoCobro;
 
   if (
     montoCobro <= 0
@@ -1206,14 +1238,21 @@ const montoCobroMXN =
       tratamientoCobro.pagado || 0
     );
 
-  const nuevoTotalPagado =
-  pagadoAnterior +
-  montoCobroMXN;
+  const nuevoTotalPagadoSinAjuste =
+    pagadoAnterior +
+    montoCobroMXN;
+
+  const diferenciaExcedente =
+    nuevoTotalPagadoSinAjuste -
+    totalTratamiento;
+
+  const toleranciaRedondeo =
+    0.50;
 
   if (
     totalTratamiento > 0 &&
-    nuevoTotalPagado >
-      totalTratamiento
+    diferenciaExcedente >
+      toleranciaRedondeo
   ) {
 
     alert(
@@ -1224,6 +1263,13 @@ const montoCobroMXN =
 
   }
 
+  const nuevoTotalPagado =
+    totalTratamiento > 0 &&
+    nuevoTotalPagadoSinAjuste >
+      totalTratamiento
+      ? totalTratamiento
+      : nuevoTotalPagadoSinAjuste;
+
   const nuevoPendiente =
     Math.max(
       totalTratamiento -
@@ -1231,48 +1277,118 @@ const montoCobroMXN =
       0
     );
 
-const comisionBancoCobro =
-  comisionBancoActual;
+  const comisionBancoCobro =
+    comisionBancoActual;
 
-const comisionBancoAnterior =
-  Number(
-    tratamientoCobro
-      .comision_banco || 0
-  );
+  const comisionBancoAnterior =
+    Number(
+      tratamientoCobro
+        .comision_banco || 0
+    );
 
-const nuevaComisionBanco =
-  comisionBancoAnterior +
-  comisionBancoCobro;
+  const nuevaComisionBanco =
+    comisionBancoAnterior +
+    comisionBancoCobro;
 
   const {
-    error,
+    error: errorPago,
+  } = await supabase
+
+    .from(
+      "pagos"
+    )
+
+    .insert({
+
+      paciente_id:
+        pacienteAbierto.id,
+
+      tratamiento_id:
+        tratamientoCobro.id,
+
+      metodo_pago:
+        nuevoCobro.metodo_pago,
+
+      moneda:
+        nuevoCobro.moneda,
+
+      monto_original:
+        montoCobro,
+
+      tipo_cambio:
+        nuevoCobro.moneda === "USD"
+          ? tipoCambioAplicado
+          : null,
+
+      monto_mxn:
+        montoCobroMXN,
+
+      comision_porcentaje:
+        porcentajeComisionActual,
+
+      iva_comision_porcentaje:
+        porcentajeIvaComisionActual,
+
+      comision_base:
+        comisionBaseActual,
+
+      iva_comision:
+        ivaComisionActual,
+
+      comision_banco:
+        comisionBancoCobro,
+
+      neto_recibido:
+        netoCobroActual,
+
+    });
+
+  if (
+    errorPago
+  ) {
+
+    console.error(
+      "Error guardando pago:",
+      errorPago
+    );
+
+    alert(
+      "Error registrando el pago."
+    );
+
+    return;
+
+  }
+
+  const {
+    error: errorTratamiento,
   } = await supabase
 
     .from(
       "tratamientos"
     )
 
-   .update({
+    .update({
 
-  metodo_pago:
-    nuevoCobro.metodo_pago,
+      metodo_pago:
+        nuevoCobro.metodo_pago,
 
-  moneda:
-    nuevoCobro.moneda,
+      moneda:
+        nuevoCobro.moneda,
 
-  tipo_cambio:
-    nuevoCobro.moneda === "USD"
-      ? tipoCambioAplicado
-      : null,
+      tipo_cambio:
+        nuevoCobro.moneda === "USD"
+          ? tipoCambioAplicado
+          : null,
 
-  equivalente_mxn:
-    montoCobroMXN,
+      equivalente_mxn:
+        montoCobroMXN,
 
-  laboratorio:
-    Number(
-      nuevoCobro.laboratorio ||
-      0
-    ),
+      laboratorio:
+        Number(
+          nuevoCobro.laboratorio ||
+          0
+        ),
 
       especialista:
         Number(
@@ -1280,8 +1396,8 @@ const nuevaComisionBanco =
           0
         ),
 
-comision_banco:
-  nuevaComisionBanco,
+      comision_banco:
+        nuevaComisionBanco,
 
       pago:
         nuevoTotalPagado,
@@ -1299,14 +1415,17 @@ comision_banco:
       tratamientoCobro.id
     );
 
-  if (error) {
+  if (
+    errorTratamiento
+  ) {
 
     console.error(
-      error
+      "Error actualizando tratamiento:",
+      errorTratamiento
     );
 
     alert(
-      "Error registrando el cobro."
+      "El pago se registró, pero ocurrió un error actualizando el tratamiento."
     );
 
     return;
@@ -1333,13 +1452,13 @@ comision_banco:
               moneda:
                 nuevoCobro.moneda,
 
-                tipo_cambio:
-  nuevoCobro.moneda === "USD"
-    ? tipoCambioAplicado
-    : null,
+              tipo_cambio:
+                nuevoCobro.moneda === "USD"
+                  ? tipoCambioAplicado
+                  : null,
 
-equivalente_mxn:
-  montoCobroMXN,
+              equivalente_mxn:
+                montoCobroMXN,
 
               laboratorio:
                 Number(
@@ -1354,10 +1473,7 @@ equivalente_mxn:
                 ),
 
               comision_banco:
-                Number(
-                  nuevoCobro.comision_banco ||
-                  0
-                ),
+                nuevaComisionBanco,
 
               pagado:
                 nuevoTotalPagado,
@@ -1368,7 +1484,6 @@ equivalente_mxn:
             }
 
           : tratamiento
-
     )
 
   );
@@ -4498,13 +4613,38 @@ const pacientesFiltrados =
               value={
                 nuevoCobro.moneda
               }
-              onChange={(e) =>
-                setNuevoCobro({
-                  ...nuevoCobro,
-                  moneda:
-                    e.target.value,
-                })
-              }
+              onChange={(e) => {
+
+  const nuevaMoneda =
+    e.target.value;
+
+  const saldoPendienteMXN =
+    Number(
+      tratamientoCobro
+        ?.pendiente || 0
+    );
+
+  const montoConvertido =
+    nuevaMoneda === "USD"
+      ? (
+          tipoCambioCobro > 0
+            ? saldoPendienteMXN /
+              tipoCambioCobro
+            : 0
+        ).toFixed(2)
+      : saldoPendienteMXN.toFixed(2);
+
+  setNuevoCobro({
+    ...nuevoCobro,
+
+    moneda:
+      nuevaMoneda,
+
+    monto:
+      montoConvertido,
+  });
+
+}}
               className="
                 mint-input
                 w-full
