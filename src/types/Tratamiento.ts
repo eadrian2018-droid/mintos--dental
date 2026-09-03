@@ -38,4 +38,8 @@ export interface Tratamiento {
 
   resta_original?: number;
 
+  estado?:
+    | "En proceso"
+    | "Finalizado";
+
 }

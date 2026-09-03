@@ -495,55 +495,179 @@ export default function useIndicadores({
 
   /*
   |--------------------------------------------------------------------------
-  | BASE CLÍNICA
+  | COSTOS CLÍNICOS POR MONEDA
+  |--------------------------------------------------------------------------
+  |
+  | Laboratorio y especialista conservan su moneda real.
+  |
+  | No convertimos USD a MXN ni MXN a USD.
+  |
+  */
+
+  const totalLaboratorioMXN =
+    tratamientosFiltrados
+      .filter(
+        (item) =>
+          !item.moneda_laboratorio ||
+          item.moneda_laboratorio ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.laboratorio || 0
+          ),
+        0
+      );
+
+  const totalLaboratorioUSD =
+    tratamientosFiltrados
+      .filter(
+        (item) =>
+          item.moneda_laboratorio ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.laboratorio || 0
+          ),
+        0
+      );
+
+  const totalEspecialistaMXN =
+    tratamientosFiltrados
+      .filter(
+        (item) =>
+          !item.moneda_especialista ||
+          item.moneda_especialista ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.especialista || 0
+          ),
+        0
+      );
+
+  const totalEspecialistaUSD =
+    tratamientosFiltrados
+      .filter(
+        (item) =>
+          item.moneda_especialista ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          item
+        ) =>
+          total +
+          Number(
+            item.especialista || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | BASE CLÍNICA POR MONEDA
+  |--------------------------------------------------------------------------
+  */
+
+  const totalBaseClinicaMXN =
+    cobradoMXN
+    -
+    totalLaboratorioMXN
+    -
+    totalEspecialistaMXN
+    -
+    totalComisionBanco;
+
+  const totalBaseClinicaUSD =
+    cobradoUSD
+    -
+    totalLaboratorioUSD
+    -
+    totalEspecialistaUSD;
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMPATIBILIDAD BASE CLÍNICA
   |--------------------------------------------------------------------------
   */
 
   const totalBaseClinica =
-    tratamientosFiltrados.reduce(
-      (
-        total,
-        item
-      ) =>
-        total +
-        (
-          Number(
-            item.pago || 0
-          )
-          -
-          Number(
-            item.laboratorio || 0
-          )
-          -
-          Number(
-            item.especialista || 0
-          )
-          -
-          Number(
-            item.comision_banco || 0
-          )
-        ),
-      0
-    );
+    totalBaseClinicaMXN;
 
   /*
   |--------------------------------------------------------------------------
-  | COMISIONES DE DOCTORES
+  | COMISIONES DE DOCTORES POR MONEDA
   |--------------------------------------------------------------------------
+  |
+  | La comisión solamente se vuelve pagable cuando
+  | el tratamiento está Finalizado.
+  |
+  | La moneda de la comisión depende del pago real:
+  |
+  | Pago MXN -> comisión MXN
+  | Pago USD -> comisión USD
+  |
+  | No convertimos monedas.
+  |
   */
 
-  const totalComisionesDoctor =
-    tratamientosFiltrados.reduce(
+  const totalComisionesDoctorMXN =
+    pagosFiltrados.reduce(
       (
         total,
-        item
+        pago
       ) => {
+
+        if (
+          pago.moneda !==
+          "MXN"
+        ) {
+
+          return total;
+
+        }
+
+        const tratamiento =
+          tratamientosFiltrados.find(
+            (item) =>
+              item.id ===
+              pago.tratamiento_id
+          );
+
+        if (
+          !tratamiento ||
+          tratamiento.estado !==
+            "Finalizado"
+        ) {
+
+          return total;
+
+        }
 
         const doctor =
           doctores.find(
             (d) =>
               d.id ===
-              item.doctor_id
+              tratamiento.doctor_id
           );
 
         const porcentaje =
@@ -551,27 +675,15 @@ export default function useIndicadores({
             doctor?.porcentaje || 0
           );
 
-        const baseClinica =
+        const montoPago =
           Number(
-            item.pago || 0
-          )
-          -
-          Number(
-            item.laboratorio || 0
-          )
-          -
-          Number(
-            item.especialista || 0
-          )
-          -
-          Number(
-            item.comision_banco || 0
+            pago.monto_original || 0
           );
 
         return (
           total +
           (
-            baseClinica *
+            montoPago *
             porcentaje /
             100
           )
@@ -580,6 +692,82 @@ export default function useIndicadores({
       },
       0
     );
+
+  const totalComisionesDoctorUSD =
+    pagosFiltrados.reduce(
+      (
+        total,
+        pago
+      ) => {
+
+        if (
+          pago.moneda !==
+          "USD"
+        ) {
+
+          return total;
+
+        }
+
+        const tratamiento =
+          tratamientosFiltrados.find(
+            (item) =>
+              item.id ===
+              pago.tratamiento_id
+          );
+
+        if (
+          !tratamiento ||
+          tratamiento.estado !==
+            "Finalizado"
+        ) {
+
+          return total;
+
+        }
+
+        const doctor =
+          doctores.find(
+            (d) =>
+              d.id ===
+              tratamiento.doctor_id
+          );
+
+        const porcentaje =
+          Number(
+            doctor?.porcentaje || 0
+          );
+
+        const montoPago =
+          Number(
+            pago.monto_original || 0
+          );
+
+        return (
+          total +
+          (
+            montoPago *
+            porcentaje /
+            100
+          )
+        );
+
+      },
+      0
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMPATIBILIDAD COMISIONES
+  |--------------------------------------------------------------------------
+  |
+  | Finanzas todavía utiliza totalComisionesDoctor
+  | como valor MXN.
+  |
+  */
+
+  const totalComisionesDoctor =
+    totalComisionesDoctorMXN;
 
   /*
   |--------------------------------------------------------------------------
@@ -599,14 +787,16 @@ export default function useIndicadores({
   */
 
   const gananciaNetaMXN =
-    totalBaseClinica
+    totalBaseClinicaMXN
     -
-    totalComisionesDoctor
+    totalComisionesDoctorMXN
     -
     totalGastosMXN;
 
   const gananciaNetaUSD =
-    cobradoUSD
+    totalBaseClinicaUSD
+    -
+    totalComisionesDoctorUSD
     -
     totalGastosUSD;
 
@@ -710,6 +900,10 @@ export default function useIndicadores({
     totalBaseClinica,
 
     totalComisionesDoctor,
+
+    totalComisionesDoctorMXN,
+
+    totalComisionesDoctorUSD,
 
     gananciaNeta,
 

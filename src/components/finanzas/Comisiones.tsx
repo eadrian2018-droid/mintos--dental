@@ -11,11 +11,27 @@ import type {
   Tratamiento,
 } from "../../types/Tratamiento";
 
+type PagoComision = {
+
+  id?: number;
+
+  tratamiento_id?: number;
+
+  moneda?: string;
+
+  monto_original?: number;
+
+  comision_banco?: number;
+
+};
+
 type ComisionesProps = {
 
   doctores: Doctor[];
 
   tratamientos: Tratamiento[];
+
+  pagos?: PagoComision[];
 
   setDoctorDetalle:
     Dispatch<
@@ -37,6 +53,8 @@ export default function Comisiones({
 
   tratamientos,
 
+  pagos = [],
+
   setDoctorDetalle,
 
   setMostrarDetalleDoctor,
@@ -54,7 +72,6 @@ export default function Comisiones({
           maximumFractionDigits: 2,
         }
       );
-
   const resumenDoctores =
     doctores.map(
       (doctor) => {
@@ -66,40 +83,30 @@ export default function Comisiones({
               doctor.id
           );
 
-        const baseClinica =
-          tratamientosDoctor.reduce(
-            (
-              total,
-              tratamiento
-            ) =>
+        const tratamientosFinalizados =
+          tratamientosDoctor.filter(
+            (tratamiento) =>
+              tratamiento.estado ===
+              "Finalizado"
+          );
 
-              total +
+        const idsTratamientosFinalizados =
+          new Set(
+            tratamientosFinalizados.map(
+              (tratamiento) =>
+                tratamiento.id
+            )
+          );
 
-              (
-                Number(
-                  tratamiento.pago || 0
-                )
-
-                -
-
-                Number(
-                  tratamiento.laboratorio || 0
-                )
-
-                -
-
-                Number(
-                  tratamiento.especialista || 0
-                )
-
-                -
-
-                Number(
-                  tratamiento.comision_banco || 0
-                )
-              ),
-
-            0
+        const pagosDoctor =
+          pagos.filter(
+            (pago) =>
+              pago.tratamiento_id !==
+                undefined
+              &&
+              idsTratamientosFinalizados.has(
+                pago.tratamiento_id
+              )
           );
 
         const porcentaje =
@@ -107,8 +114,61 @@ export default function Comisiones({
             doctor.porcentaje || 0
           );
 
-        const comision =
-          baseClinica *
+        /*
+        |--------------------------------------------------------------------------
+        | MXN
+        |--------------------------------------------------------------------------
+        */
+
+        const baseClinicaMXN =
+          pagosDoctor
+            .filter(
+              (pago) =>
+                pago.moneda === "MXN"
+            )
+            .reduce(
+              (
+                total,
+                pago
+              ) =>
+                total +
+                Number(
+                  pago.monto_original || 0
+                ),
+              0
+            );
+
+        const comisionMXN =
+          baseClinicaMXN *
+          porcentaje /
+          100;
+
+        /*
+        |--------------------------------------------------------------------------
+        | USD
+        |--------------------------------------------------------------------------
+        */
+
+        const baseClinicaUSD =
+          pagosDoctor
+            .filter(
+              (pago) =>
+                pago.moneda === "USD"
+            )
+            .reduce(
+              (
+                total,
+                pago
+              ) =>
+                total +
+                Number(
+                  pago.monto_original || 0
+                ),
+              0
+            );
+
+        const comisionUSD =
+          baseClinicaUSD *
           porcentaje /
           100;
 
@@ -118,36 +178,64 @@ export default function Comisiones({
 
           tratamientosDoctor,
 
-          baseClinica,
+          tratamientosFinalizados,
 
           porcentaje,
 
-          comision,
+          baseClinicaMXN,
+
+          baseClinicaUSD,
+
+          comisionMXN,
+
+          comisionUSD,
 
         };
 
       }
     );
 
-  const totalBaseClinica =
+  const totalBaseClinicaMXN =
     resumenDoctores.reduce(
       (
         total,
         doctor
       ) =>
         total +
-        doctor.baseClinica,
+        doctor.baseClinicaMXN,
       0
     );
 
-  const totalComisiones =
+  const totalBaseClinicaUSD =
     resumenDoctores.reduce(
       (
         total,
         doctor
       ) =>
         total +
-        doctor.comision,
+        doctor.baseClinicaUSD,
+      0
+    );
+
+  const totalComisionesMXN =
+    resumenDoctores.reduce(
+      (
+        total,
+        doctor
+      ) =>
+        total +
+        doctor.comisionMXN,
+      0
+    );
+
+  const totalComisionesUSD =
+    resumenDoctores.reduce(
+      (
+        total,
+        doctor
+      ) =>
+        total +
+        doctor.comisionUSD,
       0
     );
 
@@ -367,12 +455,42 @@ export default function Comisiones({
               "
             >
 
-              $
-              {
-                formatoMonto(
-                  totalBaseClinica
-                )
-              }
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-1
+                "
+              >
+
+                <span>
+                  $
+                  {
+                    formatoMonto(
+                      totalBaseClinicaMXN
+                    )
+                  }
+                  {" "}
+                  MXN
+                </span>
+
+                <span
+                  className="
+                    text-lg
+                    mint-text-secondary
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      totalBaseClinicaUSD
+                    )
+                  }
+                  {" "}
+                  USD
+                </span>
+
+              </div>
 
             </h3>
 
@@ -435,12 +553,42 @@ export default function Comisiones({
               "
             >
 
-              $
-              {
-                formatoMonto(
-                  totalComisiones
-                )
-              }
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-1
+                "
+              >
+
+                <span>
+                  $
+                  {
+                    formatoMonto(
+                      totalComisionesMXN
+                    )
+                  }
+                  {" "}
+                  MXN
+                </span>
+
+                <span
+                  className="
+                    text-lg
+                    mint-text-secondary
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      totalComisionesUSD
+                    )
+                  }
+                  {" "}
+                  USD
+                </span>
+
+              </div>
 
             </h3>
 
@@ -741,9 +889,11 @@ export default function Comisiones({
                     ({
                       doctor,
                       tratamientosDoctor,
-                      baseClinica,
                       porcentaje,
-                      comision,
+                      baseClinicaMXN,
+                      baseClinicaUSD,
+                      comisionMXN,
+                      comisionUSD,
                     }) => (
 
                       <tr
@@ -889,33 +1039,52 @@ export default function Comisiones({
                           "
                         >
 
-                          <span
+                          <div
                             className="
-                              font-bold
-                              text-[var(--mint-info)]
+                              flex
+                              flex-col
+                              items-end
+                              gap-1
                             "
                           >
 
-                            $
-                            {
-                              formatoMonto(
-                                baseClinica
-                              )
-                            }
+                            <span
+                              className="
+                                font-bold
+                                text-[var(--mint-info)]
+                              "
+                            >
 
-                          </span>
+                              $
+                              {
+                                formatoMonto(
+                                  baseClinicaMXN
+                                )
+                              }
+                              {" "}
+                              MXN
 
-                          <span
-                            className="
-                              ml-2
-                              text-xs
-                              mint-text-muted
-                            "
-                          >
+                            </span>
 
-                            MXN
+                            <span
+                              className="
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
 
-                          </span>
+                              $
+                              {
+                                formatoMonto(
+                                  baseClinicaUSD
+                                )
+                              }
+                              {" "}
+                              USD
+
+                            </span>
+
+                          </div>
 
                         </td>
 
@@ -927,33 +1096,52 @@ export default function Comisiones({
                           "
                         >
 
-                          <span
+                          <div
                             className="
-                              font-bold
-                              text-[var(--mint-success)]
+                              flex
+                              flex-col
+                              items-end
+                              gap-1
                             "
                           >
 
-                            $
-                            {
-                              formatoMonto(
-                                comision
-                              )
-                            }
+                            <span
+                              className="
+                                font-bold
+                                text-[var(--mint-success)]
+                              "
+                            >
 
-                          </span>
+                              $
+                              {
+                                formatoMonto(
+                                  comisionMXN
+                                )
+                              }
+                              {" "}
+                              MXN
 
-                          <span
-                            className="
-                              ml-2
-                              text-xs
-                              mint-text-muted
-                            "
-                          >
+                            </span>
 
-                            MXN
+                            <span
+                              className="
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
 
-                          </span>
+                              $
+                              {
+                                formatoMonto(
+                                  comisionUSD
+                                )
+                              }
+                              {" "}
+                              USD
+
+                            </span>
+
+                          </div>
 
                         </td>
 

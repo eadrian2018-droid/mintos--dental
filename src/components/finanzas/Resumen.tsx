@@ -16,7 +16,9 @@ type ResumenProps = {
   totalGastosUSD: number;
 
   totalBaseClinica: number;
-  totalComisionesDoctor: number;
+
+  totalComisionesDoctorMXN: number;
+  totalComisionesDoctorUSD: number;
 
   cajaMXN: number;
   cajaUSD: number;
@@ -46,7 +48,9 @@ export default function Resumen({
   totalGastosUSD,
 
   totalBaseClinica,
-  totalComisionesDoctor,
+
+  totalComisionesDoctorMXN,
+  totalComisionesDoctorUSD,
 
   cajaMXN,
   cajaUSD,
@@ -981,45 +985,95 @@ export default function Resumen({
                   text-xs
                   font-semibold
                   mint-text-secondary
-                  mb-2
+                  mb-3
                 "
               >
                 Comisiones doctores
               </p>
 
-              <p
+              <div
                 className="
-                  text-2xl
-                  font-bold
-                  text-[var(--mint-warning)]
+                  flex
+                  items-end
+                  gap-4
+                  flex-wrap
                 "
               >
-                ${formatoMoneda(
-                  totalComisionesDoctor
-                )}
-              </p>
 
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.08em]
-                  font-bold
-                  mint-text-muted
-                  mt-1
-                "
-              >
-                MXN
-              </p>
+                <div>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      text-[var(--mint-warning)]
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalComisionesDoctorMXN
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    MXN
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    border-l
+                    border-[var(--mint-border)]
+                    pl-4
+                  "
+                >
+
+                  <p
+                    className="
+                      text-lg
+                      font-bold
+                      text-[var(--mint-info)]
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalComisionesDoctorUSD
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    USD
+                  </p>
+
+                </div>
+
+              </div>
 
               <p
                 className="
                   text-[11px]
                   mint-text-muted
-                  mt-1
+                  mt-2
                 "
               >
-                Comisiones calculadas
+                Comisiones de tratamientos finalizados
               </p>
 
             </div>

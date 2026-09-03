@@ -292,12 +292,12 @@ export default function Finanzas() {
     totalGastosUSD,
 
     totalBaseClinica,
-
-    totalComisionesDoctor,
+    totalComisionesDoctorMXN,
+    totalComisionesDoctorUSD,
 
     gananciaNeta,
 
-        gananciaNetaUSD,
+    gananciaNetaUSD,
 
     totalTarjeta,
 
@@ -883,6 +883,10 @@ export default function Finanzas() {
               tratamientos
             }
 
+            pagos={
+              pagosFiltrados
+            }
+
             setDoctorDetalle={
               setDoctorDetalle
             }
@@ -911,6 +915,10 @@ export default function Finanzas() {
 
             tratamientos={
               tratamientos
+            }
+
+            pagos={
+              pagosFiltrados
             }
 
             onClose={() =>
@@ -954,7 +962,7 @@ export default function Finanzas() {
               gananciaNeta
             }
 
-                        gananciaNetaUSD={
+            gananciaNetaUSD={
               gananciaNetaUSD
             }
 
@@ -970,8 +978,12 @@ export default function Finanzas() {
               totalBaseClinica
             }
 
-            totalComisionesDoctor={
-              totalComisionesDoctor
+            totalComisionesDoctorMXN={
+              totalComisionesDoctorMXN
+            }
+
+            totalComisionesDoctorUSD={
+              totalComisionesDoctorUSD
             }
 
             cajaMXN={

@@ -10,6 +10,20 @@ import type {
   Tratamiento,
 } from "../types/Tratamiento";
 
+type PagoDoctorDetalle = {
+
+  id?: number;
+
+  tratamiento_id?: number;
+
+  moneda?: string;
+
+  monto_original?: number;
+
+  comision_banco?: number;
+
+};
+
 type DoctorDetalleProps = {
 
   doctor: Doctor | null;
@@ -17,6 +31,8 @@ type DoctorDetalleProps = {
   pacientes: Paciente[];
 
   tratamientos: Tratamiento[];
+
+  pagos?: PagoDoctorDetalle[];
 
   onClose: () => void;
 
@@ -29,6 +45,8 @@ export default function DoctorDetalle({
   pacientes,
 
   tratamientos,
+
+  pagos = [],
 
   onClose,
 
@@ -97,46 +115,79 @@ export default function DoctorDetalle({
         doctor.id
     );
 
-  const detalleTratamientos =
+   const detalleTratamientos =
     tratamientosDoctor.map(
       (tratamiento) => {
-
-        const pagado =
-          Number(
-            tratamiento.pago || 0
-          );
-
-        const laboratorio =
-          Number(
-            tratamiento.laboratorio || 0
-          );
-
-        const especialista =
-          Number(
-            tratamiento.especialista || 0
-          );
-
-        const comisionBanco =
-          Number(
-            tratamiento.comision_banco || 0
-          );
-
-        const baseClinica =
-          pagado
-          -
-          laboratorio
-          -
-          especialista
-          -
-          comisionBanco;
 
         const porcentaje =
           Number(
             doctor.porcentaje || 0
           );
 
-        const comision =
-          baseClinica *
+        const tratamientoFinalizado =
+          tratamiento.estado ===
+          "Finalizado";
+
+        const pagosTratamiento =
+          pagos.filter(
+            (pago) =>
+              pago.tratamiento_id ===
+              tratamiento.id
+          );
+
+        const pagadoMXN =
+          pagosTratamiento
+            .filter(
+              (pago) =>
+                pago.moneda === "MXN"
+            )
+            .reduce(
+              (
+                total,
+                pago
+              ) =>
+                total +
+                Number(
+                  pago.monto_original || 0
+                ),
+              0
+            );
+
+        const pagadoUSD =
+          pagosTratamiento
+            .filter(
+              (pago) =>
+                pago.moneda === "USD"
+            )
+            .reduce(
+              (
+                total,
+                pago
+              ) =>
+                total +
+                Number(
+                  pago.monto_original || 0
+                ),
+              0
+            );
+
+        const baseClinicaMXN =
+          tratamientoFinalizado
+            ? pagadoMXN
+            : 0;
+
+        const baseClinicaUSD =
+          tratamientoFinalizado
+            ? pagadoUSD
+            : 0;
+
+        const comisionMXN =
+          baseClinicaMXN *
+          porcentaje /
+          100;
+
+        const comisionUSD =
+          baseClinicaUSD *
           porcentaje /
           100;
 
@@ -153,68 +204,102 @@ export default function DoctorDetalle({
 
           paciente,
 
-          pagado,
+          pagadoMXN,
 
-          laboratorio,
+          pagadoUSD,
 
-          especialista,
+          baseClinicaMXN,
 
-          comisionBanco,
+          baseClinicaUSD,
 
-          baseClinica,
+          comisionMXN,
 
-          comision,
+          comisionUSD,
+
+          tratamientoFinalizado,
 
         };
 
       }
     );
 
-  const totalPagado =
+  /*
+  |--------------------------------------------------------------------------
+  | TOTALES POR MONEDA
+  |--------------------------------------------------------------------------
+  */
+
+  const totalPagadoMXN =
     detalleTratamientos.reduce(
       (
         total,
         detalle
       ) =>
         total +
-        detalle.pagado,
+        detalle.pagadoMXN,
       0
     );
 
-  const totalDescuentos =
+  const totalPagadoUSD =
     detalleTratamientos.reduce(
       (
         total,
         detalle
       ) =>
         total +
-        detalle.laboratorio +
-        detalle.especialista +
-        detalle.comisionBanco,
+        detalle.pagadoUSD,
       0
     );
 
-  const totalBaseClinica =
+  const totalBaseClinicaMXN =
     detalleTratamientos.reduce(
       (
         total,
         detalle
       ) =>
         total +
-        detalle.baseClinica,
+        detalle.baseClinicaMXN,
       0
     );
 
-  const totalComision =
+  const totalBaseClinicaUSD =
     detalleTratamientos.reduce(
       (
         total,
         detalle
       ) =>
         total +
-        detalle.comision,
+        detalle.baseClinicaUSD,
       0
     );
+
+  const totalComisionMXN =
+    detalleTratamientos.reduce(
+      (
+        total,
+        detalle
+      ) =>
+        total +
+        detalle.comisionMXN,
+      0
+    );
+
+  const totalComisionUSD =
+    detalleTratamientos.reduce(
+      (
+        total,
+        detalle
+      ) =>
+        total +
+        detalle.comisionUSD,
+      0
+    );
+
+  const totalTratamientosFinalizados =
+    detalleTratamientos.filter(
+      (detalle) =>
+        detalle.tratamientoFinalizado
+    ).length;
 
   return (
 
@@ -551,12 +636,42 @@ export default function DoctorDetalle({
               "
             >
 
-              $
-              {
-                formatoMonto(
-                  totalPagado
-                )
-              }
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-1
+                "
+              >
+
+                <span>
+                  $
+                  {
+                    formatoMonto(
+                      totalPagadoMXN
+                    )
+                  }
+                  {" "}
+                  MXN
+                </span>
+
+                <span
+                  className="
+                    text-lg
+                    mint-text-secondary
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      totalPagadoUSD
+                    )
+                  }
+                  {" "}
+                  USD
+                </span>
+
+              </div>
 
             </h3>
 
@@ -568,7 +683,7 @@ export default function DoctorDetalle({
               "
             >
 
-              MXN registrados
+              Pagos reales registrados
 
             </p>
 
@@ -619,12 +734,42 @@ export default function DoctorDetalle({
               "
             >
 
-              $
-              {
-                formatoMonto(
-                  totalBaseClinica
-                )
-              }
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-1
+                "
+              >
+
+                <span>
+                  $
+                  {
+                    formatoMonto(
+                      totalBaseClinicaMXN
+                    )
+                  }
+                  {" "}
+                  MXN
+                </span>
+
+                <span
+                  className="
+                    text-lg
+                    mint-text-secondary
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      totalBaseClinicaUSD
+                    )
+                  }
+                  {" "}
+                  USD
+                </span>
+
+              </div>
 
             </h3>
 
@@ -636,7 +781,7 @@ export default function DoctorDetalle({
               "
             >
 
-              Después de costos y comisiones
+              Pagos de tratamientos finalizados
 
             </p>
 
@@ -687,12 +832,42 @@ export default function DoctorDetalle({
               "
             >
 
-              $
-              {
-                formatoMonto(
-                  totalComision
-                )
-              }
+              <div
+                className="
+                  flex
+                  flex-col
+                  gap-1
+                "
+              >
+
+                <span>
+                  $
+                  {
+                    formatoMonto(
+                      totalComisionMXN
+                    )
+                  }
+                  {" "}
+                  MXN
+                </span>
+
+                <span
+                  className="
+                    text-lg
+                    mint-text-secondary
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      totalComisionUSD
+                    )
+                  }
+                  {" "}
+                  USD
+                </span>
+
+              </div>
 
             </h3>
 
@@ -928,9 +1103,12 @@ export default function DoctorDetalle({
                     ({
                       tratamiento,
                       paciente,
-                      pagado,
-                      baseClinica,
-                      comision,
+                      pagadoMXN,
+                      pagadoUSD,
+                      baseClinicaMXN,
+                      baseClinicaUSD,
+                      comisionMXN,
+                      comisionUSD,
                     }) => (
 
                       <tr
@@ -1001,33 +1179,48 @@ export default function DoctorDetalle({
                           "
                         >
 
-                          <span
+                          <div
                             className="
-                              font-semibold
-                              mint-text-primary
+                              flex
+                              flex-col
+                              items-end
+                              gap-1
                             "
                           >
 
-                            $
-                            {
-                              formatoMonto(
-                                pagado
-                              )
-                            }
+                            <span
+                              className="
+                                font-semibold
+                                mint-text-primary
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  pagadoMXN
+                                )
+                              }
+                              {" "}
+                              MXN
+                            </span>
 
-                          </span>
+                            <span
+                              className="
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  pagadoUSD
+                                )
+                              }
+                              {" "}
+                              USD
+                            </span>
 
-                          <span
-                            className="
-                              ml-2
-                              text-xs
-                              mint-text-muted
-                            "
-                          >
-
-                            MXN
-
-                          </span>
+                          </div>
 
                         </td>
 
@@ -1039,33 +1232,48 @@ export default function DoctorDetalle({
                           "
                         >
 
-                          <span
+                          <div
                             className="
-                              font-bold
-                              text-[var(--mint-info)]
+                              flex
+                              flex-col
+                              items-end
+                              gap-1
                             "
                           >
 
-                            $
-                            {
-                              formatoMonto(
-                                baseClinica
-                              )
-                            }
+                            <span
+                              className="
+                                font-bold
+                                text-[var(--mint-info)]
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  baseClinicaMXN
+                                )
+                              }
+                              {" "}
+                              MXN
+                            </span>
 
-                          </span>
+                            <span
+                              className="
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  baseClinicaUSD
+                                )
+                              }
+                              {" "}
+                              USD
+                            </span>
 
-                          <span
-                            className="
-                              ml-2
-                              text-xs
-                              mint-text-muted
-                            "
-                          >
-
-                            MXN
-
-                          </span>
+                          </div>
 
                         </td>
 
@@ -1077,33 +1285,48 @@ export default function DoctorDetalle({
                           "
                         >
 
-                          <span
+                          <div
                             className="
-                              font-bold
-                              text-[var(--mint-success)]
+                              flex
+                              flex-col
+                              items-end
+                              gap-1
                             "
                           >
 
-                            $
-                            {
-                              formatoMonto(
-                                comision
-                              )
-                            }
+                            <span
+                              className="
+                                font-bold
+                                text-[var(--mint-success)]
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  comisionMXN
+                                )
+                              }
+                              {" "}
+                              MXN
+                            </span>
 
-                          </span>
+                            <span
+                              className="
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
+                              $
+                              {
+                                formatoMonto(
+                                  comisionUSD
+                                )
+                              }
+                              {" "}
+                              USD
+                            </span>
 
-                          <span
-                            className="
-                              ml-2
-                              text-xs
-                              mint-text-muted
-                            "
-                          >
-
-                            MXN
-
-                          </span>
+                          </div>
 
                         </td>
 
@@ -1219,9 +1442,20 @@ export default function DoctorDetalle({
                 $
                 {
                   formatoMonto(
-                    totalPagado
+                    totalPagadoMXN
                   )
                 }
+                {" MXN"}
+
+                <br />
+
+                $
+                {
+                  formatoMonto(
+                    totalPagadoUSD
+                  )
+                }
+                {" USD"}
 
               </p>
 
@@ -1244,7 +1478,7 @@ export default function DoctorDetalle({
                 "
               >
 
-                Costos descontados
+                Tratamientos finalizados
 
               </p>
 
@@ -1257,11 +1491,8 @@ export default function DoctorDetalle({
                 "
               >
 
-                -$
                 {
-                  formatoMonto(
-                    totalDescuentos
-                  )
+                  totalTratamientosFinalizados
                 }
 
               </p>
@@ -1301,9 +1532,20 @@ export default function DoctorDetalle({
                 $
                 {
                   formatoMonto(
-                    totalBaseClinica
+                    totalBaseClinicaMXN
                   )
                 }
+                {" MXN"}
+
+                <br />
+
+                $
+                {
+                  formatoMonto(
+                    totalBaseClinicaUSD
+                  )
+                }
+                {" USD"}
 
               </p>
 
@@ -1349,9 +1591,20 @@ export default function DoctorDetalle({
                 $
                 {
                   formatoMonto(
-                    totalComision
+                    totalComisionMXN
                   )
                 }
+                {" MXN"}
+
+                <br />
+
+                $
+                {
+                  formatoMonto(
+                    totalComisionUSD
+                  )
+                }
+                {" USD"}
 
               </p>
 
