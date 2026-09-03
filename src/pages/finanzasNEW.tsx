@@ -291,8 +291,12 @@ export default function Finanzas() {
 
     totalGastosUSD,
 
-    totalBaseClinica,
+    totalBaseClinicaMXN,
+
+    totalBaseClinicaUSD,
+
     totalComisionesDoctorMXN,
+
     totalComisionesDoctorUSD,
 
     gananciaNeta,
@@ -974,8 +978,12 @@ export default function Finanzas() {
               totalGastosUSD
             }
 
-            totalBaseClinica={
-              totalBaseClinica
+            totalBaseClinicaMXN={
+              totalBaseClinicaMXN
+            }
+
+            totalBaseClinicaUSD={
+              totalBaseClinicaUSD
             }
 
             totalComisionesDoctorMXN={

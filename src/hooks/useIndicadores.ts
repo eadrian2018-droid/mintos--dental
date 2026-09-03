@@ -899,6 +899,10 @@ export default function useIndicadores({
 
     totalBaseClinica,
 
+    totalBaseClinicaMXN,
+
+    totalBaseClinicaUSD,
+
     totalComisionesDoctor,
 
     totalComisionesDoctorMXN,

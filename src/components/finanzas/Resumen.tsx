@@ -15,7 +15,9 @@ type ResumenProps = {
   totalGastos: number;
   totalGastosUSD: number;
 
-  totalBaseClinica: number;
+
+  totalBaseClinicaMXN: number;
+  totalBaseClinicaUSD: number;
 
   totalComisionesDoctorMXN: number;
   totalComisionesDoctorUSD: number;
@@ -47,7 +49,8 @@ export default function Resumen({
   totalGastos,
   totalGastosUSD,
 
-  totalBaseClinica,
+  totalBaseClinicaMXN,
+  totalBaseClinicaUSD,
 
   totalComisionesDoctorMXN,
   totalComisionesDoctorUSD,
@@ -929,45 +932,95 @@ export default function Resumen({
                   text-xs
                   font-semibold
                   mint-text-secondary
-                  mb-2
+                  mb-3
                 "
               >
                 Base clínica
               </p>
 
-              <p
+              <div
                 className="
-                  text-2xl
-                  font-bold
-                  text-[var(--mint-info)]
+                  flex
+                  items-end
+                  gap-4
+                  flex-wrap
                 "
               >
-                ${formatoMoneda(
-                  totalBaseClinica
-                )}
-              </p>
 
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.08em]
-                  font-bold
-                  mint-text-muted
-                  mt-1
-                "
-              >
-                MXN
-              </p>
+                <div>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      text-[var(--mint-info)]
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalBaseClinicaMXN
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    MXN
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    border-l
+                    border-[var(--mint-border)]
+                    pl-4
+                  "
+                >
+
+                  <p
+                    className="
+                      text-lg
+                      font-bold
+                      text-[var(--mint-accent)]
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalBaseClinicaUSD
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    USD
+                  </p>
+
+                </div>
+
+              </div>
 
               <p
                 className="
                   text-[11px]
                   mint-text-muted
-                  mt-1
+                  mt-2
                 "
               >
-                Base para operación
+                Después de costos clínicos
               </p>
 
             </div>
