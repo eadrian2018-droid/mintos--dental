@@ -587,157 +587,173 @@ export default function Layout() {
             )
           }
 
-          {
-            puedeVerFinanzas && (
+ {
+  puedeVerFinanzas && (
 
-              <div>
+    <div>
 
-                <button
-                  type="button"
-                  onClick={() =>
-                    toggleMenu(
-                      "finanzas"
-                    )
-                  }
-                  className={`
-                    w-full
-                    flex
-                    items-center
-                    justify-between
-                    gap-2
-                    px-3
-                    py-2.5
-                    rounded-xl
-                    text-sm
-                    font-semibold
-                    transition
+      <button
+        type="button"
+        onClick={() =>
+          toggleMenu(
+            "finanzas"
+          )
+        }
+        className={`
+          w-full
+          flex
+          items-center
+          justify-between
+          gap-2
+          px-3
+          py-2.5
+          rounded-xl
+          text-sm
+          font-semibold
+          transition
 
-                    ${
-                      grupoActivo(
-                        "finanzas"
-                      )
-                        ? `
-                            text-[var(--mint-primary)]
-                            bg-[var(--mint-primary-soft)]
-                          `
-                        : `
-                            mint-text-secondary
-                            hover:bg-[var(--mint-bg-soft)]
-                          `
-                    }
-                  `}
-                >
-
-                  <span
-                    className="
-                      flex
-                      items-center
-                      gap-3
-                    "
-                  >
-
-                    <CircleDollarSign
-                      size={18}
-                    />
-
-                    Finanzas
-
-                  </span>
-
-                  <ChevronDown
-                    size={16}
-                    className={`
-                      transition-transform
-                      duration-200
-
-                      ${
-                        menuAbierto ===
-                        "finanzas"
-                          ? "rotate-180"
-                          : ""
-                      }
-                    `}
-                  />
-
-                </button>
-
-                {
-                  menuAbierto ===
-                    "finanzas" && (
-
-                    <div
-                      className="
-                        ml-8
-                        mt-1
-                        mb-2
-                        pl-3
-                        border-l
-                        border-[var(--mint-border)]
-                        space-y-1
-                      "
-                    >
-
-                      <Link
-                        to="/finanzas"
-                        className={
-                          submenuClasses(
-                            "/finanzas"
-                          )
-                        }
-                      >
-
-                        Resumen financiero
-
-                      </Link>
-
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          mint-text-muted
-                        "
-                      >
-
-                        Cobros
-
-                      </div>
-
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          mint-text-muted
-                        "
-                      >
-
-                        Gastos
-
-                      </div>
-
-                      <div
-                        className="
-                          px-3
-                          py-2
-                          text-[13px]
-                          mint-text-muted
-                        "
-                      >
-
-                        Reportes
-
-                      </div>
-
-                    </div>
-
-                  )
-                }
-
-              </div>
-
+          ${
+            grupoActivo(
+              "finanzas"
             )
+              ? `
+                  text-[var(--mint-primary)]
+                  bg-[var(--mint-primary-soft)]
+                `
+              : `
+                  mint-text-secondary
+                  hover:bg-[var(--mint-bg-soft)]
+                `
           }
+        `}
+      >
+
+        <span
+          className="
+            flex
+            items-center
+            gap-3
+          "
+        >
+
+          <CircleDollarSign
+            size={18}
+          />
+
+          Finanzas
+
+        </span>
+
+        <ChevronDown
+          size={16}
+          className={`
+            transition-transform
+            duration-200
+
+            ${
+              menuAbierto ===
+              "finanzas"
+                ? "rotate-180"
+                : ""
+            }
+          `}
+        />
+
+      </button>
+
+      {
+        menuAbierto ===
+          "finanzas" && (
+
+          <div
+            className="
+              ml-8
+              mt-1
+              mb-2
+              pl-3
+              border-l
+              border-[var(--mint-border)]
+              space-y-1
+            "
+          >
+
+            <Link
+              to="/finanzas"
+              className={
+                submenuClasses(
+                  "/finanzas"
+                )
+              }
+            >
+
+              Resumen financiero
+
+            </Link>
+
+            <Link
+              to="/finanzas?seccion=cobros"
+              className={
+                submenuClasses(
+                  "/finanzas",
+                  "cobros"
+                )
+              }
+            >
+
+              Cobros
+
+            </Link>
+
+            <Link
+  to="/finanzas?seccion=gastos"
+  className={
+    submenuClasses(
+      "/finanzas",
+      "gastos"
+    )
+  }
+>
+
+  Gastos
+
+</Link>
+
+<Link
+  to="/finanzas?seccion=comisiones"
+  className={
+    submenuClasses(
+      "/finanzas",
+      "comisiones"
+    )
+  }
+>
+
+  Comisiones
+
+</Link>
+
+            <div
+              className="
+                px-3
+                py-2
+                text-[13px]
+                mint-text-muted
+              "
+            >
+
+              Reportes
+
+            </div>
+
+          </div>
+
+        )
+      }
+
+    </div>
+
+  )
+}
 
                     {
             puedeVerConfiguracion && (

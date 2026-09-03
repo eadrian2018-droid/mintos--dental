@@ -44,6 +44,11 @@ export default function useFinanzas() {
   ] = useState<Gasto[]>([]);
 
   const [
+    pagos,
+    setPagos,
+  ] = useState<any[]>([]);
+
+  const [
     doctores,
     setDoctores,
   ] = useState<Doctor[]>([]);
@@ -94,6 +99,14 @@ export default function useFinanzas() {
   ] = useState("");
 
   const [
+    monedaGasto,
+    setMonedaGasto,
+  ] = useState<
+    "MXN" |
+    "USD"
+  >("MXN");
+
+  const [
     notasGasto,
     setNotasGasto,
   ] = useState("");
@@ -113,6 +126,8 @@ export default function useFinanzas() {
       cargarPacientes(),
 
       cargarGastos(),
+
+      cargarPagos(),
 
       cargarDoctores(),
 
@@ -155,6 +170,18 @@ export default function useFinanzas() {
         .cargarGastos();
 
     setGastos(
+      data
+    );
+
+  }
+
+  async function cargarPagos() {
+
+    const data =
+      await finanzasService
+        .cargarPagos();
+
+    setPagos(
       data
     );
 
@@ -256,6 +283,8 @@ export default function useFinanzas() {
         montoGasto
       ),
 
+      monedaGasto,
+
       notasGasto
 
     );
@@ -267,6 +296,8 @@ export default function useFinanzas() {
     setCategoriaGasto("");
 
     setMontoGasto("");
+
+    setMonedaGasto("MXN");
 
     setNotasGasto("");
 
@@ -379,6 +410,8 @@ export default function useFinanzas() {
 
     gastos,
 
+    pagos,
+
     doctores,
 
     catalogoTratamientos,
@@ -406,6 +439,9 @@ export default function useFinanzas() {
     montoGasto,
     setMontoGasto,
 
+    monedaGasto,
+    setMonedaGasto,
+
     notasGasto,
     setNotasGasto,
 
@@ -430,6 +466,8 @@ export default function useFinanzas() {
     cargarPacientes,
 
     cargarGastos,
+
+    cargarPagos,
 
     cargarDoctores,
 

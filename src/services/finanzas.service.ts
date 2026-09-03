@@ -92,6 +92,30 @@ export const finanzasService = {
 
   },
 
+  async cargarPagos():
+    Promise<any[]> {
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("pagos")
+      .select("*")
+      .order(
+        "fecha",
+        {
+          ascending: false,
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    return data ?? [];
+
+  },
+
   async cargarDoctores():
     Promise<Doctor[]> {
 
@@ -178,6 +202,9 @@ export const finanzasService = {
     concepto: string,
     categoria: string,
     monto: number,
+    moneda:
+      | "MXN"
+      | "USD",
     notas: string
   ): Promise<void> {
 
@@ -191,6 +218,7 @@ export const finanzasService = {
           concepto,
           categoria,
           monto,
+          moneda,
           notas,
         },
       ]);

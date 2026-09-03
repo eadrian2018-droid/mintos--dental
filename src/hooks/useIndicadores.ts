@@ -10,6 +10,30 @@ import type {
   Tratamiento,
 } from "../types/Tratamiento";
 
+type PagoIndicador = {
+
+  id?: number;
+
+  fecha?: string;
+
+  paciente_id?: number;
+
+  tratamiento_id?: number;
+
+  metodo_pago?: string;
+
+  moneda?: string;
+
+  monto_original?: number;
+
+  monto_mxn?: number;
+
+  comision_banco?: number;
+
+  neto_recibido?: number;
+
+};
+
 export type IndicadoresProps = {
 
   tratamientosFiltrados: Tratamiento[];
@@ -17,6 +41,8 @@ export type IndicadoresProps = {
   gastosFiltrados: Gasto[];
 
   doctores: Doctor[];
+
+  pagosFiltrados?: PagoIndicador[];
 
 };
 
@@ -28,7 +54,20 @@ export default function useIndicadores({
 
   doctores,
 
+  pagosFiltrados = [],
+
 }: IndicadoresProps) {
+
+  /*
+  |--------------------------------------------------------------------------
+  | TRATAMIENTOS
+  |--------------------------------------------------------------------------
+  |
+  | El tratamiento conserva su valor administrativo en MXN.
+  | La moneda en la que el paciente paga pertenece exclusivamente
+  | a cada registro de la tabla pagos.
+  |
+  */
 
   const ingresos =
     tratamientosFiltrados.reduce(
@@ -60,18 +99,333 @@ export default function useIndicadores({
     ingresos -
     cobrado;
 
+  /*
+  |--------------------------------------------------------------------------
+  | COBROS REALES
+  |--------------------------------------------------------------------------
+  |
+  | Estos valores salen de transacciones individuales.
+  |
+  | No convertimos USD a MXN para fingir que son la misma moneda.
+  | Cada moneda conserva su monto original.
+  |
+  */
+
+  const cobradoMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "MXN"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  const cobradoUSD =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "USD"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | COBROS SIN TARJETA
+  |--------------------------------------------------------------------------
+  |
+  | Representan dinero recibido directamente en la moneda correspondiente.
+  | La tarjeta se mantiene separada porque llega al banco en MXN
+  | después de comisiones.
+  |
+  */
+
+  const cobradoDirectoMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "MXN"
+          &&
+          pago.metodo_pago !==
+            "Tarjeta"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  const cobradoDirectoUSD =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "USD"
+          &&
+          pago.metodo_pago !==
+            "Tarjeta"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | TARJETAS
+  |--------------------------------------------------------------------------
+  |
+  | Para tarjeta usamos neto_recibido porque eso representa
+  | lo que realmente entra a la cuenta después de comisión bancaria.
+  |
+  */
+
+  const totalTarjeta =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.metodo_pago ===
+          "Tarjeta"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.neto_recibido || 0
+          ),
+        0
+      );
+
+  const totalComisionBanco =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.metodo_pago ===
+          "Tarjeta"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.comision_banco || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | TRANSFERENCIAS
+  |--------------------------------------------------------------------------
+  */
+
+  const totalTransferenciaMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.metodo_pago ===
+            "Transferencia"
+          &&
+          pago.moneda ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  const totalTransferenciaUSD =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.metodo_pago ===
+            "Transferencia"
+          &&
+          pago.moneda ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMPATIBILIDAD
+  |--------------------------------------------------------------------------
+  |
+  | Conservamos totalTransferencia porque actualmente Finanzas
+  | todavía espera esta propiedad.
+  |
+  */
+
+  const totalTransferencia =
+    totalTransferenciaMXN;
+
+  /*
+  |--------------------------------------------------------------------------
+  | CAJA
+  |--------------------------------------------------------------------------
+  */
+
+  const cajaMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "MXN"
+          &&
+          pago.metodo_pago ===
+            "Efectivo"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  const cajaUSD =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.moneda === "USD"
+          &&
+          pago.metodo_pago ===
+            "Efectivo"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.monto_original || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | GASTOS
+  |--------------------------------------------------------------------------
+  |
+  | MXN y USD permanecen completamente separados.
+  | No hacemos conversiones automáticas entre monedas.
+  |
+  */
+
+  const totalGastosMXN =
+    gastosFiltrados
+      .filter(
+        (gasto) =>
+          !gasto.moneda ||
+          gasto.moneda ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          gasto
+        ) =>
+          total +
+          Number(
+            gasto.monto || 0
+          ),
+        0
+      );
+
+  const totalGastosUSD =
+    gastosFiltrados
+      .filter(
+        (gasto) =>
+          gasto.moneda ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          gasto
+        ) =>
+          total +
+          Number(
+            gasto.monto || 0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMPATIBILIDAD TOTAL GASTOS
+  |--------------------------------------------------------------------------
+  |
+  | La lógica financiera histórica trabaja en MXN.
+  | Por eso NO sumamos USD dentro de totalGastos.
+  |
+  */
+
   const totalGastos =
-    gastosFiltrados.reduce(
-      (
-        total,
-        gasto
-      ) =>
-        total +
-        Number(
-          gasto.monto || 0
-        ),
-      0
-    );
+    totalGastosMXN;
+
+  /*
+  |--------------------------------------------------------------------------
+  | BASE CLÍNICA
+  |--------------------------------------------------------------------------
+  */
 
   const totalBaseClinica =
     tratamientosFiltrados.reduce(
@@ -99,6 +453,12 @@ export default function useIndicadores({
         ),
       0
     );
+
+  /*
+  |--------------------------------------------------------------------------
+  | COMISIONES DE DOCTORES
+  |--------------------------------------------------------------------------
+  */
 
   const totalComisionesDoctor =
     tratamientosFiltrados.reduce(
@@ -149,121 +509,99 @@ export default function useIndicadores({
       0
     );
 
-  const gananciaNeta =
+  /*
+  |--------------------------------------------------------------------------
+  | GANANCIA NETA POR MONEDA
+  |--------------------------------------------------------------------------
+  |
+  | MXN y USD permanecen completamente separados.
+  |
+  | gananciaNetaMXN conserva por ahora la lógica clínica existente:
+  | base clínica - comisiones de doctores - gastos MXN.
+  |
+  | gananciaNetaUSD representa los dólares realmente conservados:
+  | cobros reales USD - gastos reales USD.
+  |
+  | NO convertimos MXN a USD ni USD a MXN.
+  |
+  */
+
+  const gananciaNetaMXN =
     totalBaseClinica
     -
     totalComisionesDoctor
     -
-    totalGastos;
+    totalGastosMXN;
 
-  const totalTarjeta =
-    tratamientosFiltrados
-      .filter(
-        (t) =>
-          t.metodo_pago ===
-          "Tarjeta"
-      )
-      .reduce(
-        (
-          total,
-          t
-        ) =>
-          total +
-          Number(
-            t.pago || 0
-          ),
-        0
-      );
+  const gananciaNetaUSD =
+    cobradoUSD
+    -
+    totalGastosUSD;
 
-  const totalTransferencia =
-    tratamientosFiltrados
-      .filter(
-        (t) =>
-          t.metodo_pago ===
-          "Transferencia"
-      )
-      .reduce(
-        (
-          total,
-          t
-        ) =>
-          total +
-          Number(
-            t.pago || 0
-          ),
-        0
-      );
+  /*
+  |--------------------------------------------------------------------------
+  | COMPATIBILIDAD GANANCIA NETA
+  |--------------------------------------------------------------------------
+  |
+  | Conservamos gananciaNeta porque Finanzas y Resumen todavía
+  | utilizan este nombre.
+  |
+  */
 
-  const cajaMXN =
-    tratamientosFiltrados
-      .filter(
-        (t) =>
-          t.moneda === "MXN"
-          &&
-          t.metodo_pago === "Efectivo"
-      )
-      .reduce(
-        (
-          total,
-          t
-        ) =>
-          total +
-          Number(
-            t.pago || 0
-          ),
-        0
-      );
+  const gananciaNeta =
+    gananciaNetaMXN;
 
-  const cajaUSD =
-    tratamientosFiltrados
-      .filter(
-        (t) =>
-          t.moneda === "USD"
-          &&
-          t.metodo_pago === "Efectivo"
-      )
-      .reduce(
-        (
-          total,
-          t
-        ) =>
-          total +
-          Number(
-            t.pago || 0
-          ),
-        0
-      );
+  /*
+  |--------------------------------------------------------------------------
+  | GASTOS POR CATEGORÍA
+  |--------------------------------------------------------------------------
+  |
+  | Este objeto se mantiene en MXN por compatibilidad.
+  | Gastos.tsx ya realiza su propia separación de monedas.
+  |
+  */
 
   const gastosPorCategoria =
-    gastosFiltrados.reduce<
-      Record<string, number>
-    >(
-      (
-        acumulado,
-        gasto
-      ) => {
+    gastosFiltrados
+      .filter(
+        (gasto) =>
+          !gasto.moneda ||
+          gasto.moneda ===
+            "MXN"
+      )
+      .reduce<
+        Record<string, number>
+      >(
+        (
+          acumulado,
+          gasto
+        ) => {
 
-        const categoria =
-          gasto.categoria ||
-          "Sin categoría";
+          const categoria =
+            gasto.categoria ||
+            "Sin categoría";
 
-        acumulado[categoria] =
-          (
-            acumulado[categoria] ||
-            0
-          )
-          +
-          Number(
-            gasto.monto || 0
-          );
+          acumulado[categoria] =
+            (
+              acumulado[categoria] ||
+              0
+            )
+            +
+            Number(
+              gasto.monto || 0
+            );
 
-        return acumulado;
+          return acumulado;
 
-      },
-      {}
-    );
+        },
+        {}
+      );
 
   return {
+
+    /*
+    | Tratamientos
+    */
 
     ingresos,
 
@@ -271,7 +609,31 @@ export default function useIndicadores({
 
     pendiente,
 
+    /*
+    | Cobros reales
+    */
+
+    cobradoMXN,
+
+    cobradoUSD,
+
+    cobradoDirectoMXN,
+
+    cobradoDirectoUSD,
+
+    /*
+    | Gastos
+    */
+
     totalGastos,
+
+    totalGastosMXN,
+
+    totalGastosUSD,
+
+    /*
+    | Clínica
+    */
 
     totalBaseClinica,
 
@@ -279,13 +641,35 @@ export default function useIndicadores({
 
     gananciaNeta,
 
+    gananciaNetaMXN,
+
+    gananciaNetaUSD,
+
+    /*
+    | Métodos de pago
+    */
+
     totalTarjeta,
 
+    totalComisionBanco,
+
     totalTransferencia,
+
+    totalTransferenciaMXN,
+
+    totalTransferenciaUSD,
+
+    /*
+    | Caja
+    */
 
     cajaMXN,
 
     cajaUSD,
+
+    /*
+    | Categorías
+    */
 
     gastosPorCategoria,
 

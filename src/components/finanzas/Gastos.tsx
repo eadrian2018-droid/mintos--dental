@@ -1,3 +1,8 @@
+import {
+  useMemo,
+  useState,
+} from "react";
+
 import type {
   Dispatch,
   SetStateAction,
@@ -6,6 +11,12 @@ import type {
 import type {
   Gasto,
 } from "../../types/Gasto";
+
+type PeriodoGastos =
+  | "semana"
+  | "mes"
+  | "anio"
+  | "historico";
 
 type GastosProps = {
 
@@ -39,6 +50,18 @@ type GastosProps = {
   setMontoGasto:
     Dispatch<
       SetStateAction<string>
+    >;
+
+  monedaGasto:
+    | "MXN"
+    | "USD";
+
+  setMonedaGasto:
+    Dispatch<
+      SetStateAction<
+        "MXN" |
+        "USD"
+      >
     >;
 
   notasGasto: string;
@@ -83,6 +106,9 @@ export default function Gastos({
   montoGasto,
   setMontoGasto,
 
+  monedaGasto,
+  setMonedaGasto,
+
   notasGasto,
   setNotasGasto,
 
@@ -96,345 +122,1634 @@ export default function Gastos({
 
 }: GastosProps) {
 
+  /*
+    total, cantidad y gastosPorCategoria
+    todavía llegan desde Finanzas.tsx
+    para mantener compatibilidad.
+
+    Esta vista controla ahora
+    su propio período.
+  */
+
+  void total;
+  void cantidad;
+  void gastosPorCategoria;
+
+  const [
+    periodoGastos,
+    setPeriodoGastos,
+  ] = useState<PeriodoGastos>(
+    "semana"
+  );
+
+  const hoy =
+    useMemo(
+      () => {
+
+        const fecha =
+          new Date();
+
+        fecha.setHours(
+          12,
+          0,
+          0,
+          0
+        );
+
+        return fecha;
+
+      },
+      []
+    );
+
+  const lunesSemana =
+    useMemo(
+      () => {
+
+        const fecha =
+          new Date(
+            hoy
+          );
+
+        const diaSemana =
+          fecha.getDay();
+
+        const diferencia =
+          diaSemana === 0
+            ? -6
+            : 1 - diaSemana;
+
+        fecha.setDate(
+          fecha.getDate() +
+          diferencia
+        );
+
+        fecha.setHours(
+          0,
+          0,
+          0,
+          0
+        );
+
+        return fecha;
+
+      },
+      [
+        hoy,
+      ]
+    );
+
+  const sabadoSemana =
+    useMemo(
+      () => {
+
+        const fecha =
+          new Date(
+            lunesSemana
+          );
+
+        fecha.setDate(
+          fecha.getDate() +
+          5
+        );
+
+        fecha.setHours(
+          23,
+          59,
+          59,
+          999
+        );
+
+        return fecha;
+
+      },
+      [
+        lunesSemana,
+      ]
+    );
+
+  const gastosPeriodo =
+    useMemo(
+      () => {
+
+        if (
+          periodoGastos ===
+          "historico"
+        ) {
+
+          return gastosFiltrados;
+
+        }
+
+        return gastosFiltrados.filter(
+          (gasto) => {
+
+            if (
+              !gasto.fecha
+            ) {
+
+              return false;
+
+            }
+
+            const fechaGastoRegistro =
+              new Date(
+                `${gasto.fecha}T12:00:00`
+              );
+
+            if (
+              Number.isNaN(
+                fechaGastoRegistro
+                  .getTime()
+              )
+            ) {
+
+              return false;
+
+            }
+
+            if (
+              periodoGastos ===
+              "semana"
+            ) {
+
+              return (
+                fechaGastoRegistro >=
+                  lunesSemana &&
+                fechaGastoRegistro <=
+                  sabadoSemana
+              );
+
+            }
+
+            if (
+              periodoGastos ===
+              "mes"
+            ) {
+
+              return (
+                fechaGastoRegistro
+                  .getFullYear() ===
+                  hoy.getFullYear() &&
+                fechaGastoRegistro
+                  .getMonth() ===
+                  hoy.getMonth()
+              );
+
+            }
+
+            return (
+              fechaGastoRegistro
+                .getFullYear() ===
+              hoy.getFullYear()
+            );
+
+          }
+        );
+
+      },
+      [
+        gastosFiltrados,
+        periodoGastos,
+        lunesSemana,
+        sabadoSemana,
+        hoy,
+      ]
+    );
+
+  const totalGastosMXN =
+    useMemo(
+      () =>
+        gastosPeriodo
+          .filter(
+            (gasto) =>
+              (
+                gasto.moneda ||
+                "MXN"
+              ) === "MXN"
+          )
+          .reduce(
+            (
+              acumulado,
+              gasto
+            ) =>
+              acumulado +
+              Number(
+                gasto.monto || 0
+              ),
+            0
+          ),
+      [
+        gastosPeriodo,
+      ]
+    );
+
+  const totalGastosUSD =
+    useMemo(
+      () =>
+        gastosPeriodo
+          .filter(
+            (gasto) =>
+              gasto.moneda ===
+              "USD"
+          )
+          .reduce(
+            (
+              acumulado,
+              gasto
+            ) =>
+              acumulado +
+              Number(
+                gasto.monto || 0
+              ),
+            0
+          ),
+      [
+        gastosPeriodo,
+      ]
+    );
+
+  const categorias =
+    useMemo(
+      () =>
+        gastosPeriodo.reduce(
+          (
+            acumulado,
+            gasto
+          ) => {
+
+            const categoria =
+              gasto.categoria ||
+              "Sin categoría";
+
+            const moneda =
+              gasto.moneda ||
+              "MXN";
+
+            if (
+              !acumulado[
+                categoria
+              ]
+            ) {
+
+              acumulado[
+                categoria
+              ] = {
+                MXN: 0,
+                USD: 0,
+              };
+
+            }
+
+            acumulado[
+              categoria
+            ][moneda] +=
+              Number(
+                gasto.monto || 0
+              );
+
+            return acumulado;
+
+          },
+          {} as Record<
+            string,
+            {
+              MXN: number;
+              USD: number;
+            }
+          >
+        ),
+      [
+        gastosPeriodo,
+      ]
+    );
+
+  function formatoMonto(
+    monto: number
+  ) {
+
+    return monto.toLocaleString(
+      "es-MX",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }
+    );
+
+  }
+
+  function formatoFecha(
+    fecha: string
+  ) {
+
+    if (!fecha) {
+
+      return "—";
+
+    }
+
+    const fechaLocal =
+      new Date(
+        `${fecha}T12:00:00`
+      );
+
+    return fechaLocal
+      .toLocaleDateString(
+        "es-MX",
+        {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        }
+      );
+
+  }
+
+  const textoPeriodo =
+    useMemo(
+      () => {
+
+        if (
+          periodoGastos ===
+          "semana"
+        ) {
+
+          return (
+            `${lunesSemana.toLocaleDateString(
+              "es-MX",
+              {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+              }
+            )} — ${
+              sabadoSemana.toLocaleDateString(
+                "es-MX",
+                {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                }
+              )
+            }`
+          );
+
+        }
+
+        if (
+          periodoGastos ===
+          "mes"
+        ) {
+
+          return hoy.toLocaleDateString(
+            "es-MX",
+            {
+              month: "long",
+              year: "numeric",
+            }
+          );
+
+        }
+
+        if (
+          periodoGastos ===
+          "anio"
+        ) {
+
+          return String(
+            hoy.getFullYear()
+          );
+
+        }
+
+        return "Todos los registros";
+
+      },
+      [
+        periodoGastos,
+        lunesSemana,
+        sabadoSemana,
+        hoy,
+      ]
+    );
+
   return (
 
-    <div className="space-y-6">
+    <div
+      className="
+        space-y-6
+      "
+    >
+
+      {/* =========================
+          ENCABEZADO + PERÍODO
+      ========================== */}
 
       <div
         className="
           mint-card
-          p-6
+          overflow-hidden
         "
       >
 
-        <h2
+        <div
           className="
-            text-2xl
-            font-bold
-            mint-text-primary
+            px-6
+            py-6
+            border-b
+            border-[var(--mint-border)]
+            flex
+            flex-col
+            xl:flex-row
+            xl:items-center
+            xl:justify-between
+            gap-6
           "
         >
 
-          Gastos
+          <div>
 
-        </h2>
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                mb-2
+              "
+            >
 
-        <p
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  bg-[var(--mint-danger-bg)]
+                  text-[var(--mint-danger)]
+                  border
+                  border-[var(--mint-danger-border)]
+                  px-3
+                  py-1
+                  text-[11px]
+                  font-bold
+                  uppercase
+                  tracking-[0.12em]
+                "
+              >
+
+                Control de egresos
+
+              </span>
+
+            </div>
+
+            <h2
+              className="
+                text-2xl
+                font-bold
+                tracking-tight
+                mint-text-primary
+              "
+            >
+
+              Gastos operativos
+
+            </h2>
+
+            <p
+              className="
+                mt-2
+                text-sm
+                mint-text-secondary
+                max-w-2xl
+              "
+            >
+
+              Registra y consulta los gastos de
+              operación de la clínica sin mezclar
+              movimientos en pesos y dólares.
+
+            </p>
+
+          </div>
+
+          <div
+            className="
+              inline-flex
+              items-center
+              self-start
+              xl:self-center
+              rounded-xl
+              border
+              border-[var(--mint-border)]
+              bg-[var(--mint-bg-soft)]
+              p-1
+              shadow-sm
+            "
+          >
+
+            <button
+              type="button"
+              onClick={() =>
+                setPeriodoGastos(
+                  "semana"
+                )
+              }
+              className={`
+                px-4
+                py-2
+                rounded-lg
+                text-sm
+                font-semibold
+                transition-all
+
+                ${
+                  periodoGastos ===
+                  "semana"
+
+                    ? `
+                        bg-[var(--mint-bg-card)]
+                        text-[var(--mint-primary)]
+                        shadow-sm
+                        ring-1
+                        ring-[var(--mint-border)]
+                      `
+
+                    : `
+                        mint-text-secondary
+                        hover:text-[var(--mint-text-primary)]
+                      `
+                }
+              `}
+            >
+
+              Semana
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPeriodoGastos(
+                  "mes"
+                )
+              }
+              className={`
+                px-4
+                py-2
+                rounded-lg
+                text-sm
+                font-semibold
+                transition-all
+
+                ${
+                  periodoGastos ===
+                  "mes"
+
+                    ? `
+                        bg-[var(--mint-bg-card)]
+                        text-[var(--mint-primary)]
+                        shadow-sm
+                        ring-1
+                        ring-[var(--mint-border)]
+                      `
+
+                    : `
+                        mint-text-secondary
+                        hover:text-[var(--mint-text-primary)]
+                      `
+                }
+              `}
+            >
+
+              Mes
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPeriodoGastos(
+                  "anio"
+                )
+              }
+              className={`
+                px-4
+                py-2
+                rounded-lg
+                text-sm
+                font-semibold
+                transition-all
+
+                ${
+                  periodoGastos ===
+                  "anio"
+
+                    ? `
+                        bg-[var(--mint-bg-card)]
+                        text-[var(--mint-primary)]
+                        shadow-sm
+                        ring-1
+                        ring-[var(--mint-border)]
+                      `
+
+                    : `
+                        mint-text-secondary
+                        hover:text-[var(--mint-text-primary)]
+                      `
+                }
+              `}
+            >
+
+              Año
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPeriodoGastos(
+                  "historico"
+                )
+              }
+              className={`
+                px-4
+                py-2
+                rounded-lg
+                text-sm
+                font-semibold
+                transition-all
+
+                ${
+                  periodoGastos ===
+                  "historico"
+
+                    ? `
+                        bg-[var(--mint-bg-card)]
+                        text-[var(--mint-primary)]
+                        shadow-sm
+                        ring-1
+                        ring-[var(--mint-border)]
+                      `
+
+                    : `
+                        mint-text-secondary
+                        hover:text-[var(--mint-text-primary)]
+                      `
+                }
+              `}
+            >
+
+              Histórico
+
+            </button>
+
+          </div>
+
+        </div>
+
+        <div
           className="
-            mint-text-secondary
-            mt-1
+            px-6
+            py-4
+            bg-[var(--mint-bg-soft)]
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-3
           "
         >
 
-          Control y administración de gastos operativos
+          <div>
 
-        </p>
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.12em]
+                font-bold
+                mint-text-muted
+                mb-1
+              "
+            >
+
+              Período seleccionado
+
+            </p>
+
+            <p
+              className="
+                text-sm
+                font-semibold
+                mint-text-primary
+              "
+            >
+
+              {textoPeriodo}
+
+            </p>
+
+          </div>
+
+          <div
+            className="
+              inline-flex
+              items-center
+              gap-2
+              text-xs
+              mint-text-secondary
+            "
+          >
+
+            <span
+              className="
+                inline-flex
+                items-center
+                justify-center
+                min-w-[28px]
+                h-7
+                px-2
+                rounded-lg
+                bg-[var(--mint-bg-card)]
+                border
+                border-[var(--mint-border)]
+                font-bold
+                mint-text-primary
+              "
+            >
+
+              {
+                gastosPeriodo.length
+              }
+
+            </span>
+
+            {
+              gastosPeriodo.length ===
+              1
+
+                ? "movimiento"
+
+                : "movimientos"
+            }
+
+          </div>
+
+        </div>
 
       </div>
+
+      {/* =========================
+          KPIS
+      ========================== */}
 
       <div
         className="
           grid
-          md:grid-cols-2
+          grid-cols-1
+          md:grid-cols-3
           gap-4
         "
       >
 
         <div
           className="
-            mint-card-danger
-            p-4
+            mint-card
+            overflow-hidden
           "
         >
 
-          <p
+          <div
             className="
-              text-sm
-              font-medium
-              mint-text-secondary
+              h-1
+              bg-[var(--mint-danger)]
+            "
+          />
+
+          <div
+            className="
+              p-5
             "
           >
 
-            Total Gastos
+            <div
+              className="
+                flex
+                items-start
+                justify-between
+                gap-4
+              "
+            >
 
-          </p>
+              <div>
 
-          <h3
-            className="
-              text-2xl
-              font-bold
-              text-[var(--mint-danger)]
-              mt-1
-            "
-          >
+                <p
+                  className="
+                    text-[11px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    mint-text-muted
+                  "
+                >
 
-            $
+                  Gastos MXN
 
-            {total.toLocaleString()}
+                </p>
 
-          </h3>
+                <h3
+                  className="
+                    text-3xl
+                    font-bold
+                    mt-2
+                    text-[var(--mint-danger)]
+                  "
+                >
+
+                  $
+                  {
+                    formatoMonto(
+                      totalGastosMXN
+                    )
+                  }
+
+                </h3>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-muted
+                    mt-2
+                  "
+                >
+
+                  Pesos mexicanos
+
+                </p>
+
+              </div>
+
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  min-w-[52px]
+                  h-8
+                  px-2
+                  rounded-lg
+                  bg-[var(--mint-danger-bg)]
+                  text-[var(--mint-danger)]
+                  text-xs
+                  font-bold
+                "
+              >
+
+                MXN
+
+              </span>
+
+            </div>
+
+          </div>
 
         </div>
 
         <div
           className="
-            mint-card-accent
-            p-4
+            mint-card
+            overflow-hidden
           "
         >
 
-          <p
+          <div
             className="
-              text-sm
-              font-medium
-              mint-text-secondary
+              h-1
+              bg-[var(--mint-accent)]
+            "
+          />
+
+          <div
+            className="
+              p-5
             "
           >
 
-            Cantidad de Gastos
+            <div
+              className="
+                flex
+                items-start
+                justify-between
+                gap-4
+              "
+            >
 
-          </p>
+              <div>
 
-          <h3
+                <p
+                  className="
+                    text-[11px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    mint-text-muted
+                  "
+                >
+
+                  Gastos USD
+
+                </p>
+
+                <h3
+                  className="
+                    text-3xl
+                    font-bold
+                    mt-2
+                    text-[var(--mint-accent)]
+                  "
+                >
+
+                  $
+                  {
+                    formatoMonto(
+                      totalGastosUSD
+                    )
+                  }
+
+                </h3>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-muted
+                    mt-2
+                  "
+                >
+
+                  Dólares estadounidenses
+
+                </p>
+
+              </div>
+
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  justify-center
+                  min-w-[52px]
+                  h-8
+                  px-2
+                  rounded-lg
+                  bg-[var(--mint-warning-bg)]
+                  text-[var(--mint-warning)]
+                  text-xs
+                  font-bold
+                "
+              >
+
+                USD
+
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <div
+          className="
+            mint-card
+            overflow-hidden
+          "
+        >
+
+          <div
             className="
-              text-2xl
-              font-bold
-              mint-text-accent
-              mt-1
+              h-1
+              bg-[var(--mint-primary)]
+            "
+          />
+
+          <div
+            className="
+              p-5
             "
           >
 
-            {cantidad}
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.1em]
+                font-bold
+                mint-text-muted
+              "
+            >
 
-          </h3>
+              Registros
+
+            </p>
+
+            <h3
+              className="
+                text-3xl
+                font-bold
+                mt-2
+                text-[var(--mint-primary)]
+              "
+            >
+
+              {
+                gastosPeriodo.length
+              }
+
+            </h3>
+
+            <p
+              className="
+                text-xs
+                mint-text-muted
+                mt-2
+              "
+            >
+
+              Gastos en el período seleccionado
+
+            </p>
+
+          </div>
 
         </div>
 
       </div>
 
+            {/* =========================
+          REGISTRAR GASTO
+      ========================== */}
+
       <div
         className="
           mint-card
-          p-6
+          overflow-hidden
         "
       >
 
-        <h3
-          className="
-            text-xl
-            font-bold
-            mint-text-primary
-            mb-4
-          "
-        >
-
-          Nuevo Gasto
-
-        </h3>
-
         <div
           className="
-            grid
-            md:grid-cols-2
+            px-6
+            py-5
+            border-b
+            border-[var(--mint-border)]
+            flex
+            items-center
+            justify-between
             gap-4
           "
         >
 
-          <input
-            type="date"
-            value={fechaGasto}
-            onChange={(e) =>
-              setFechaGasto(
-                e.target.value
-              )
-            }
+          <div>
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.12em]
+                font-bold
+                text-[var(--mint-primary)]
+                mb-1
+              "
+            >
+
+              Nuevo movimiento
+
+            </p>
+
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+
+              Registrar gasto
+
+            </h3>
+
+          </div>
+
+        </div>
+
+        <div
+          className="
+            p-6
+          "
+        >
+
+          <div
             className="
-              mint-input
-              w-full
-              p-3
-            "
-          />
-
-          <input
-            type="text"
-            placeholder="Concepto"
-            value={conceptoGasto}
-            onChange={(e) =>
-              setConceptoGasto(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-            "
-          />
-
-          <select
-            value={categoriaGasto}
-            onChange={(e) =>
-              setCategoriaGasto(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-            "
-          >
-
-            <option value="">
-
-              Seleccionar categoría
-
-            </option>
-
-            <option value="Material Dental">
-
-              Material Dental
-
-            </option>
-
-            <option value="Limpieza">
-
-              Limpieza
-
-            </option>
-
-            <option value="Laboratorio">
-
-              Laboratorio
-
-            </option>
-
-            <option value="Especialistas">
-
-              Especialistas
-
-            </option>
-
-            <option value="Nómina">
-
-              Nómina
-
-            </option>
-
-            <option value="Servicios">
-
-              Servicios
-
-            </option>
-
-            <option value="Marketing">
-
-              Marketing
-
-            </option>
-
-            <option value="Otros">
-
-              Otros
-
-            </option>
-
-          </select>
-
-          <input
-            type="number"
-            placeholder="Monto"
-            value={montoGasto}
-            onChange={(e) =>
-              setMontoGasto(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-            "
-          />
-
-          <textarea
-            placeholder="Notas"
-            value={notasGasto}
-            onChange={(e) =>
-              setNotasGasto(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-              md:col-span-2
-              min-h-[110px]
-              resize-y
-            "
-          />
-
-          <button
-            onClick={guardarGasto}
-            className="
-              mint-btn
-              mint-btn-primary
-              md:col-span-2
-              justify-center
+              grid
+              grid-cols-1
+              md:grid-cols-2
+              xl:grid-cols-4
+              gap-5
             "
           >
 
-            Guardar gasto
+            <div>
 
-          </button>
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Fecha
+
+              </label>
+
+              <input
+                type="date"
+                value={
+                  fechaGasto
+                }
+                onChange={(e) =>
+                  setFechaGasto(
+                    e.target.value
+                  )
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+
+            </div>
+
+            <div
+              className="
+                xl:col-span-2
+              "
+            >
+
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Concepto
+
+              </label>
+
+              <input
+                type="text"
+                placeholder="Ej. Compra de anestesia"
+                value={
+                  conceptoGasto
+                }
+                onChange={(e) =>
+                  setConceptoGasto(
+                    e.target.value
+                  )
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+
+            </div>
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Categoría
+
+              </label>
+
+              <select
+                value={
+                  categoriaGasto
+                }
+                onChange={(e) =>
+                  setCategoriaGasto(
+                    e.target.value
+                  )
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              >
+
+                <option value="">
+                  Seleccionar categoría
+                </option>
+
+                <option value="Material Dental">
+                  Material Dental
+                </option>
+
+                <option value="Limpieza">
+                  Limpieza
+                </option>
+
+                <option value="Laboratorio">
+                  Laboratorio
+                </option>
+
+                <option value="Especialistas">
+                  Especialistas
+                </option>
+
+                <option value="Nómina">
+                  Nómina
+                </option>
+
+                <option value="Servicios">
+                  Servicios
+                </option>
+
+                <option value="Marketing">
+                  Marketing
+                </option>
+
+                <option value="Otros">
+                  Otros
+                </option>
+
+              </select>
+
+            </div>
+
+          </div>
+
+          <div
+            className="
+              grid
+              grid-cols-1
+              md:grid-cols-2
+              gap-5
+              mt-5
+            "
+          >
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Monto
+
+              </label>
+
+              <div
+                className="
+                  flex
+                  gap-3
+                "
+              >
+
+                <div
+                  className="
+                    flex-1
+                  "
+                >
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={
+                      montoGasto
+                    }
+                    onChange={(e) =>
+                      setMontoGasto(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                      p-3
+                    "
+                  />
+
+                </div>
+
+                <div
+                  className="
+                    inline-flex
+                    items-center
+                    rounded-xl
+                    border
+                    border-[var(--mint-border)]
+                    bg-[var(--mint-bg-soft)]
+                    p-1
+                    shrink-0
+                  "
+                >
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMonedaGasto(
+                        "MXN"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-bold
+                      transition-all
+
+                      ${
+                        monedaGasto ===
+                        "MXN"
+
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-primary)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
+
+                          : `
+                              mint-text-muted
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
+
+                    MXN
+
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setMonedaGasto(
+                        "USD"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-bold
+                      transition-all
+
+                      ${
+                        monedaGasto ===
+                        "USD"
+
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-accent)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
+
+                          : `
+                              mint-text-muted
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
+
+                    USD
+
+                  </button>
+
+                </div>
+
+              </div>
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  mint-text-muted
+                "
+              >
+
+                El gasto se guardará en
+                {" "}
+                <strong
+                  className="
+                    mint-text-secondary
+                  "
+                >
+
+                  {monedaGasto}
+
+                </strong>
+                .
+
+              </p>
+
+            </div>
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Notas
+
+              </label>
+
+              <textarea
+                placeholder="Información adicional del gasto..."
+                value={
+                  notasGasto
+                }
+                onChange={(e) =>
+                  setNotasGasto(
+                    e.target.value
+                  )
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                  min-h-[96px]
+                  resize-y
+                "
+              />
+
+            </div>
+
+          </div>
+
+          <div
+            className="
+              flex
+              justify-end
+              mt-5
+              pt-5
+              border-t
+              border-[var(--mint-border)]
+            "
+          >
+
+            <button
+              type="button"
+              onClick={
+                guardarGasto
+              }
+              className="
+                mint-btn
+                mint-btn-primary
+                justify-center
+                px-6
+                min-w-[170px]
+              "
+            >
+
+              Guardar gasto
+
+            </button>
+
+          </div>
 
         </div>
 
       </div>
 
+      {/* =========================
+          HISTORIAL
+      ========================== */}
+
       <div
         className="
           mint-card
-          p-6
+          overflow-hidden
         "
       >
 
-        <h3
+        <div
           className="
-            text-xl
-            font-bold
-            mint-text-primary
-            mb-2
+            px-6
+            py-5
+            border-b
+            border-[var(--mint-border)]
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-3
           "
         >
 
-          Historial de Gastos
+          <div>
 
-        </h3>
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.12em]
+                font-bold
+                text-[var(--mint-primary)]
+                mb-1
+              "
+            >
 
-        <p
-          className="
-            mint-text-secondary
-            mb-4
-          "
-        >
+              Actividad
 
-          Total de registros:
+            </p>
 
-          <strong
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+
+              Historial de gastos
+
+            </h3>
+
+          </div>
+
+          <div
             className="
-              mint-text-primary
+              inline-flex
+              items-center
+              px-3
+              py-2
+              rounded-lg
+              bg-[var(--mint-bg-soft)]
+              text-xs
+              font-semibold
+              mint-text-secondary
             "
           >
 
+            {
+              gastosPeriodo.length
+            }
             {" "}
+            {
+              gastosPeriodo.length ===
+              1
 
-            {gastosFiltrados.length}
+                ? "registro"
 
-          </strong>
+                : "registros"
+            }
 
-        </p>
+          </div>
+
+        </div>
 
         <div
           className="
@@ -458,31 +1773,67 @@ export default function Gastos({
 
               <tr>
 
-                <th className="p-3 text-left">
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
                   Fecha
 
                 </th>
 
-                <th className="p-3 text-left">
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
                   Concepto
 
                 </th>
 
-                <th className="p-3 text-left">
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
                   Categoría
 
                 </th>
 
-                <th className="p-3 text-left">
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
+
+                  Moneda
+
+                </th>
+
+                <th
+                  className="
+                    p-4
+                    text-right
+                  "
+                >
 
                   Monto
 
                 </th>
 
-                <th className="p-3 text-left">
+                <th
+                  className="
+                    p-4
+                    text-right
+                  "
+                >
 
                   Acción
 
@@ -495,86 +1846,245 @@ export default function Gastos({
             <tbody>
 
               {
+                gastosPeriodo.length ===
+                0
 
-                gastosFiltrados.map(
-                  (gasto) => (
+                  ? (
 
-                    <tr
-                      key={gasto.id}
-                      className="
-                        mint-table-row
-                      "
-                    >
-
-                      <td className="p-3">
-
-                        {gasto.fecha}
-
-                      </td>
-
-                      <td className="p-3">
-
-                        {gasto.concepto}
-
-                      </td>
-
-                      <td className="p-3">
-
-                        <span
-                          className="
-                            mint-badge
-                            mint-badge-muted
-                          "
-                        >
-
-                          {gasto.categoria}
-
-                        </span>
-
-                      </td>
+                    <tr>
 
                       <td
+                        colSpan={6}
                         className="
-                          p-3
-                          font-semibold
-                          text-[var(--mint-danger)]
+                          px-6
+                          py-12
+                          text-center
+                          mint-text-muted
                         "
                       >
 
-                        $
-
-                        {Number(
-                          gasto.monto
-                        ).toLocaleString()}
-
-                      </td>
-
-                      <td className="p-3">
-
-                        <button
-                          onClick={() =>
-                            eliminarGasto(
-                              gasto.id
-                            )
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-danger
-                            mint-btn-sm
-                          "
-                        >
-
-                          Eliminar
-
-                        </button>
+                        No hay gastos registrados
+                        en este período.
 
                       </td>
 
                     </tr>
 
                   )
-                )
 
+                  : gastosPeriodo.map(
+                    (gasto) => {
+
+                      const moneda =
+                        gasto.moneda ||
+                        "MXN";
+
+                      return (
+
+                        <tr
+                          key={
+                            gasto.id
+                          }
+                          className="
+                            mint-table-row
+                          "
+                        >
+
+                          <td
+                            className="
+                              p-4
+                              whitespace-nowrap
+                              mint-text-secondary
+                            "
+                          >
+
+                            {
+                              formatoFecha(
+                                gasto.fecha
+                              )
+                            }
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                            "
+                          >
+
+                            <p
+                              className="
+                                font-semibold
+                                mint-text-primary
+                              "
+                            >
+
+                              {
+                                gasto.concepto
+                              }
+
+                            </p>
+
+                            {
+                              gasto.notas
+
+                              &&
+
+                              <p
+                                className="
+                                  mt-1
+                                  text-xs
+                                  mint-text-muted
+                                  max-w-[320px]
+                                  truncate
+                                "
+                              >
+
+                                {
+                                  gasto.notas
+                                }
+
+                              </p>
+                            }
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                            "
+                          >
+
+                            <span
+                              className="
+                                mint-badge
+                                mint-badge-muted
+                              "
+                            >
+
+                              {
+                                gasto.categoria
+                              }
+
+                            </span>
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                            "
+                          >
+
+                            <span
+                              className={`
+                                inline-flex
+                                items-center
+                                justify-center
+                                min-w-[52px]
+                                px-2.5
+                                py-1
+                                rounded-lg
+                                text-xs
+                                font-bold
+
+                                ${
+                                  moneda ===
+                                  "USD"
+
+                                    ? `
+                                        bg-[var(--mint-warning-bg)]
+                                        text-[var(--mint-warning)]
+                                      `
+
+                                    : `
+                                        bg-[var(--mint-primary-soft)]
+                                        text-[var(--mint-primary)]
+                                      `
+                                }
+                              `}
+                            >
+
+                              {moneda}
+
+                            </span>
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                              text-right
+                              whitespace-nowrap
+                            "
+                          >
+
+                            <span
+                              className="
+                                font-bold
+                                text-[var(--mint-danger)]
+                              "
+                            >
+
+                              $
+                              {
+                                formatoMonto(
+                                  Number(
+                                    gasto.monto ||
+                                    0
+                                  )
+                                )
+                              }
+
+                            </span>
+
+                            <span
+                              className="
+                                ml-2
+                                text-xs
+                                mint-text-muted
+                              "
+                            >
+
+                              {moneda}
+
+                            </span>
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                              text-right
+                            "
+                          >
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                eliminarGasto(
+                                  gasto.id
+                                )
+                              }
+                              className="
+                                mint-btn
+                                mint-btn-danger
+                                mint-btn-sm
+                              "
+                            >
+
+                              Eliminar
+
+                            </button>
+
+                          </td>
+
+                        </tr>
+
+                      );
+
+                    }
+                  )
               }
 
             </tbody>
@@ -585,81 +2095,262 @@ export default function Gastos({
 
       </div>
 
+            {/* =========================
+          RESUMEN POR CATEGORÍA
+      ========================== */}
+
       <div
         className="
           mint-card
-          p-6
-          mt-6
+          overflow-hidden
         "
       >
 
-        <h3
+        <div
           className="
-            text-xl
-            font-bold
-            mint-text-primary
-            mb-4
+            px-6
+            py-5
+            border-b
+            border-[var(--mint-border)]
           "
         >
 
-          Resumen por Categoría
+          <p
+            className="
+              text-[11px]
+              uppercase
+              tracking-[0.12em]
+              font-bold
+              text-[var(--mint-primary)]
+              mb-1
+            "
+          >
 
-        </h3>
+            Distribución
 
-        {
+          </p>
 
-          Object.entries(
-            gastosPorCategoria
-          ).map(
-            (
-              [
-                categoria,
-                totalCategoria,
-              ]
-            ) => (
+          <h3
+            className="
+              text-xl
+              font-bold
+              mint-text-primary
+            "
+          >
 
-              <div
-                key={categoria}
-                className="
-                  flex
-                  justify-between
-                  items-center
-                  py-3
-                  border-b
-                  border-[var(--mint-border)]
-                  last:border-b-0
-                "
-              >
+            Gastos por categoría
 
-                <span
+          </h3>
+
+          <p
+            className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            "
+          >
+
+            Los importes en MXN y USD
+            permanecen separados.
+
+          </p>
+
+        </div>
+
+        <div
+          className="
+            p-6
+          "
+        >
+
+          {
+            Object.keys(
+              categorias
+            ).length === 0
+
+              ? (
+
+                <div
                   className="
-                    mint-text-secondary
+                    py-8
+                    text-center
+                    mint-text-muted
                   "
                 >
 
-                  {categoria}
+                  No hay información por
+                  categoría para mostrar.
 
-                </span>
+                </div>
 
-                <span
+              )
+
+              : (
+
+                <div
                   className="
-                    font-semibold
-                    mint-text-primary
+                    grid
+                    grid-cols-1
+                    md:grid-cols-2
+                    xl:grid-cols-3
+                    gap-4
                   "
                 >
 
-                  $
+                  {
+                    Object.entries(
+                      categorias
+                    ).map(
+                      (
+                        [
+                          categoria,
+                          valores,
+                        ]
+                      ) => (
 
-                  {totalCategoria.toLocaleString()}
+                        <div
+                          key={
+                            categoria
+                          }
+                          className="
+                            rounded-2xl
+                            border
+                            border-[var(--mint-border)]
+                            bg-[var(--mint-bg-soft)]
+                            p-4
+                          "
+                        >
 
-                </span>
+                          <div
+                            className="
+                              flex
+                              items-center
+                              justify-between
+                              gap-3
+                              mb-4
+                            "
+                          >
 
-              </div>
+                            <p
+                              className="
+                                font-semibold
+                                mint-text-primary
+                              "
+                            >
 
-            )
-          )
+                              {categoria}
 
-        }
+                            </p>
+
+                            <span
+                              className="
+                                w-2
+                                h-2
+                                rounded-full
+                                bg-[var(--mint-primary)]
+                              "
+                            />
+
+                          </div>
+
+                          <div
+                            className="
+                              space-y-2
+                            "
+                          >
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                justify-between
+                                gap-3
+                              "
+                            >
+
+                              <span
+                                className="
+                                  text-xs
+                                  mint-text-muted
+                                "
+                              >
+
+                                MXN
+
+                              </span>
+
+                              <span
+                                className="
+                                  text-sm
+                                  font-bold
+                                  mint-text-primary
+                                "
+                              >
+
+                                $
+                                {
+                                  formatoMonto(
+                                    valores.MXN
+                                  )
+                                }
+
+                              </span>
+
+                            </div>
+
+                            <div
+                              className="
+                                flex
+                                items-center
+                                justify-between
+                                gap-3
+                              "
+                            >
+
+                              <span
+                                className="
+                                  text-xs
+                                  mint-text-muted
+                                "
+                              >
+
+                                USD
+
+                              </span>
+
+                              <span
+                                className="
+                                  text-sm
+                                  font-bold
+                                  text-[var(--mint-accent)]
+                                "
+                              >
+
+                                $
+                                {
+                                  formatoMonto(
+                                    valores.USD
+                                  )
+                                }
+
+                              </span>
+
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                      )
+                    )
+                  }
+
+                </div>
+
+              )
+          }
+
+        </div>
 
       </div>
 

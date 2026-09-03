@@ -43,265 +43,965 @@ export default function Comisiones({
 
 }: ComisionesProps) {
 
+  const formatoMonto =
+    (
+      monto: number
+    ) =>
+      monto.toLocaleString(
+        "es-MX",
+        {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }
+      );
+
+  const resumenDoctores =
+    doctores.map(
+      (doctor) => {
+
+        const tratamientosDoctor =
+          tratamientos.filter(
+            (tratamiento) =>
+              tratamiento.doctor_id ===
+              doctor.id
+          );
+
+        const baseClinica =
+          tratamientosDoctor.reduce(
+            (
+              total,
+              tratamiento
+            ) =>
+
+              total +
+
+              (
+                Number(
+                  tratamiento.pago || 0
+                )
+
+                -
+
+                Number(
+                  tratamiento.laboratorio || 0
+                )
+
+                -
+
+                Number(
+                  tratamiento.especialista || 0
+                )
+
+                -
+
+                Number(
+                  tratamiento.comision_banco || 0
+                )
+              ),
+
+            0
+          );
+
+        const porcentaje =
+          Number(
+            doctor.porcentaje || 0
+          );
+
+        const comision =
+          baseClinica *
+          porcentaje /
+          100;
+
+        return {
+
+          doctor,
+
+          tratamientosDoctor,
+
+          baseClinica,
+
+          porcentaje,
+
+          comision,
+
+        };
+
+      }
+    );
+
+  const totalBaseClinica =
+    resumenDoctores.reduce(
+      (
+        total,
+        doctor
+      ) =>
+        total +
+        doctor.baseClinica,
+      0
+    );
+
+  const totalComisiones =
+    resumenDoctores.reduce(
+      (
+        total,
+        doctor
+      ) =>
+        total +
+        doctor.comision,
+      0
+    );
+
+  const totalTratamientos =
+    resumenDoctores.reduce(
+      (
+        total,
+        doctor
+      ) =>
+        total +
+        doctor.tratamientosDoctor.length,
+      0
+    );
+
   return (
 
     <div
       className="
-        mint-card
-        p-6
-        mb-6
+        space-y-6
       "
     >
 
-      <h2
-        className="
-          text-2xl
-          font-bold
-          mint-text-primary
-          mb-6
-        "
-      >
-
-        Comisiones por Doctor
-
-      </h2>
+      {/* =========================
+          ENCABEZADO
+      ========================== */}
 
       <div
         className="
-          overflow-x-auto
+          mint-card
+          overflow-hidden
         "
       >
 
-        <table
+        <div
           className="
-            mint-table
-            w-full
-            text-sm
+            px-6
+            py-6
+            flex
+            flex-col
+            lg:flex-row
+            lg:items-center
+            lg:justify-between
+            gap-5
           "
         >
 
-          <thead
+          <div>
+
+            <div
+              className="
+                flex
+                items-center
+                gap-2
+                mb-2
+              "
+            >
+
+              <span
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  bg-[var(--mint-primary-soft)]
+                  text-[var(--mint-primary)]
+                  border
+                  border-[var(--mint-border-primary)]
+                  px-3
+                  py-1
+                  text-[11px]
+                  font-bold
+                  uppercase
+                  tracking-[0.12em]
+                "
+              >
+
+                Honorarios médicos
+
+              </span>
+
+            </div>
+
+            <h2
+              className="
+                text-2xl
+                font-bold
+                tracking-tight
+                mint-text-primary
+              "
+            >
+
+              Comisiones por doctor
+
+            </h2>
+
+            <p
+              className="
+                mt-2
+                text-sm
+                mint-text-secondary
+                max-w-2xl
+              "
+            >
+
+              Consulta la base clínica generada
+              por cada doctor y la comisión
+              correspondiente según su porcentaje.
+
+            </p>
+
+          </div>
+
+          <div
             className="
-              mint-table-head
+              inline-flex
+              items-center
+              gap-3
+              px-4
+              py-3
+              rounded-xl
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
             "
           >
 
-            <tr>
+            <div>
 
-              <th className="p-3 text-left">
-                Doctor
-              </th>
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.12em]
+                  font-bold
+                  mint-text-muted
+                "
+              >
 
-              <th className="p-3 text-left">
-                %
-              </th>
+                Doctores
 
-              <th className="p-3 text-left">
-                Tratamientos
-              </th>
+              </p>
 
-              <th className="p-3 text-left">
-                Base Clínica
-              </th>
+              <p
+                className="
+                  text-xl
+                  font-bold
+                  mint-text-primary
+                "
+              >
 
-              <th className="p-3 text-left">
-                Comisión
-              </th>
+                {
+                  doctores.length
+                }
 
-              <th className="p-3 text-left">
-                Detalle
-              </th>
+              </p>
 
-            </tr>
+            </div>
 
-          </thead>
+          </div>
 
-          <tbody>
+        </div>
+
+      </div>
+
+      {/* =========================
+          KPIS
+      ========================== */}
+
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-3
+          gap-4
+        "
+      >
+
+        <div
+          className="
+            mint-card
+            overflow-hidden
+          "
+        >
+
+          <div
+            className="
+              h-1
+              bg-[var(--mint-info)]
+            "
+          />
+
+          <div
+            className="
+              p-5
+            "
+          >
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.1em]
+                font-bold
+                mint-text-muted
+              "
+            >
+
+              Base clínica
+
+            </p>
+
+            <h3
+              className="
+                text-3xl
+                font-bold
+                mt-2
+                text-[var(--mint-info)]
+              "
+            >
+
+              $
+              {
+                formatoMonto(
+                  totalBaseClinica
+                )
+              }
+
+            </h3>
+
+            <p
+              className="
+                text-xs
+                mint-text-muted
+                mt-2
+              "
+            >
+
+              Ingreso considerado para comisión
+
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          className="
+            mint-card
+            overflow-hidden
+          "
+        >
+
+          <div
+            className="
+              h-1
+              bg-[var(--mint-success)]
+            "
+          />
+
+          <div
+            className="
+              p-5
+            "
+          >
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.1em]
+                font-bold
+                mint-text-muted
+              "
+            >
+
+              Comisiones
+
+            </p>
+
+            <h3
+              className="
+                text-3xl
+                font-bold
+                mt-2
+                text-[var(--mint-success)]
+              "
+            >
+
+              $
+              {
+                formatoMonto(
+                  totalComisiones
+                )
+              }
+
+            </h3>
+
+            <p
+              className="
+                text-xs
+                mint-text-muted
+                mt-2
+              "
+            >
+
+              Total calculado para doctores
+
+            </p>
+
+          </div>
+
+        </div>
+
+        <div
+          className="
+            mint-card
+            overflow-hidden
+          "
+        >
+
+          <div
+            className="
+              h-1
+              bg-[var(--mint-primary)]
+            "
+          />
+
+          <div
+            className="
+              p-5
+            "
+          >
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.1em]
+                font-bold
+                mint-text-muted
+              "
+            >
+
+              Tratamientos
+
+            </p>
+
+            <h3
+              className="
+                text-3xl
+                font-bold
+                mt-2
+                text-[var(--mint-primary)]
+              "
+            >
+
+              {
+                totalTratamientos
+              }
+
+            </h3>
+
+            <p
+              className="
+                text-xs
+                mint-text-muted
+                mt-2
+              "
+            >
+
+              Tratamientos vinculados a doctores
+
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* =========================
+          TABLA DE COMISIONES
+      ========================== */}
+
+      <div
+        className="
+          mint-card
+          overflow-hidden
+        "
+      >
+
+        <div
+          className="
+            px-6
+            py-5
+            border-b
+            border-[var(--mint-border)]
+            flex
+            flex-col
+            sm:flex-row
+            sm:items-center
+            sm:justify-between
+            gap-3
+          "
+        >
+
+          <div>
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.12em]
+                font-bold
+                text-[var(--mint-primary)]
+                mb-1
+              "
+            >
+
+              Desglose
+
+            </p>
+
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+
+              Comisiones por doctor
+
+            </h3>
+
+          </div>
+
+          <div
+            className="
+              inline-flex
+              items-center
+              px-3
+              py-2
+              rounded-lg
+              bg-[var(--mint-bg-soft)]
+              text-xs
+              font-semibold
+              mint-text-secondary
+            "
+          >
 
             {
+              doctores.length
+            }
+            {" "}
+            {
+              doctores.length ===
+              1
 
-              doctores.map(
-                (doctor) => {
+                ? "doctor"
 
-                  const tratamientosDoctor =
-                    tratamientos.filter(
-                      (t) =>
-                        t.doctor_id ===
-                        doctor.id
-                    );
+                : "doctores"
+            }
 
-                  const baseClinica =
-                    tratamientosDoctor.reduce(
-                      (
-                        total,
-                        t
-                      ) =>
+          </div>
 
-                        total +
+        </div>
 
-                        (
-                          Number(
-                            t.pago || 0
-                          )
+        <div
+          className="
+            overflow-x-auto
+          "
+        >
 
-                          -
+          <table
+            className="
+              mint-table
+              w-full
+              text-sm
+            "
+          >
 
-                          Number(
-                            t.laboratorio || 0
-                          )
+            <thead
+              className="
+                mint-table-head
+              "
+            >
 
-                          -
+              <tr>
 
-                          Number(
-                            t.especialista || 0
-                          )
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
-                          -
+                  Doctor
 
-                          Number(
-                            t.comision_banco || 0
-                          )
-                        ),
+                </th>
 
-                      0
-                    );
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
-                  const comision =
+                  %
 
-                    baseClinica *
+                </th>
 
-                    Number(
-                      doctor.porcentaje || 0
-                    ) /
+                <th
+                  className="
+                    p-4
+                    text-left
+                  "
+                >
 
-                    100;
+                  Tratamientos
 
-                  return (
+                </th>
 
-                    <tr
-                      key={doctor.id}
-                      className="
-                        mint-table-row
-                      "
-                    >
+                <th
+                  className="
+                    p-4
+                    text-right
+                  "
+                >
+
+                  Base clínica
+
+                </th>
+
+                <th
+                  className="
+                    p-4
+                    text-right
+                  "
+                >
+
+                  Comisión
+
+                </th>
+
+                <th
+                  className="
+                    p-4
+                    text-right
+                  "
+                >
+
+                  Detalle
+
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {
+
+                resumenDoctores.length ===
+                0
+
+                  ? (
+
+                    <tr>
 
                       <td
+                        colSpan={6}
                         className="
-                          p-3
-                          font-semibold
-                          mint-text-primary
+                          px-6
+                          py-12
+                          text-center
+                          mint-text-muted
                         "
                       >
 
-                        {doctor.nombre}
-
-                      </td>
-
-                      <td className="p-3">
-
-                        <span
-                          className="
-                            mint-badge
-                            mint-badge-accent
-                          "
-                        >
-
-                          {doctor.porcentaje}%
-
-                        </span>
-
-                      </td>
-
-                      <td
-                        className="
-                          p-3
-                          mint-text-secondary
-                        "
-                      >
-
-                        {tratamientosDoctor.length}
-
-                      </td>
-
-                      <td
-                        className="
-                          p-3
-                          font-medium
-                          text-[var(--mint-info)]
-                        "
-                      >
-
-                        $
-
-                      {baseClinica.toLocaleString(
-  "es-MX",
-  {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }
-)}
-
-                      </td>
-
-                      <td
-                        className="
-                          p-3
-                          font-bold
-                          text-[var(--mint-success)]
-                        "
-                      >
-
-                        $
-
-                {comision.toLocaleString(
-  "es-MX",
-  {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }
-)}
-
-                      </td>
-
-                      <td className="p-3">
-
-                        <button
-                          onClick={() => {
-
-                            setDoctorDetalle(
-                              doctor
-                            );
-
-                            setMostrarDetalleDoctor(
-                              true
-                            );
-
-                          }}
-                          className="
-                            mint-btn
-                            mint-btn-action
-                            mint-btn-sm
-                          "
-                        >
-
-                          Ver Detalle
-
-                        </button>
+                        No hay doctores registrados
+                        para mostrar.
 
                       </td>
 
                     </tr>
 
-                  );
+                  )
 
-                }
-              )
+                  : resumenDoctores.map(
+                    ({
+                      doctor,
+                      tratamientosDoctor,
+                      baseClinica,
+                      porcentaje,
+                      comision,
+                    }) => (
 
-            }
+                      <tr
+                        key={
+                          doctor.id
+                        }
+                        className="
+                          mint-table-row
+                        "
+                      >
 
-          </tbody>
+                        <td
+                          className="
+                            p-4
+                          "
+                        >
 
-        </table>
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-3
+                            "
+                          >
+
+                            <div
+                              className="
+                                w-9
+                                h-9
+                                rounded-xl
+                                flex
+                                items-center
+                                justify-center
+                                bg-[var(--mint-primary-soft)]
+                                text-[var(--mint-primary)]
+                                font-bold
+                                border
+                                border-[var(--mint-border-primary)]
+                              "
+                            >
+
+                              {
+                                doctor.nombre
+                                  ?.trim()
+                                  .charAt(0)
+                                  .toUpperCase()
+                              }
+
+                            </div>
+
+                            <div>
+
+                              <p
+                                className="
+                                  font-semibold
+                                  mint-text-primary
+                                "
+                              >
+
+                                {
+                                  doctor.nombre
+                                }
+
+                              </p>
+
+                              <p
+                                className="
+                                  text-xs
+                                  mint-text-muted
+                                  mt-0.5
+                                "
+                              >
+
+                                Doctor clínico
+
+                              </p>
+
+                            </div>
+
+                          </div>
+
+                        </td>
+
+                        <td
+                          className="
+                            p-4
+                          "
+                        >
+
+                          <span
+                            className="
+                              mint-badge
+                              mint-badge-accent
+                            "
+                          >
+
+                            {
+                              porcentaje
+                            }
+                            %
+
+                          </span>
+
+                        </td>
+
+                        <td
+                          className="
+                            p-4
+                            mint-text-secondary
+                          "
+                        >
+
+                          <span
+                            className="
+                              inline-flex
+                              items-center
+                              justify-center
+                              min-w-[38px]
+                              h-8
+                              px-2
+                              rounded-lg
+                              bg-[var(--mint-bg-soft)]
+                              border
+                              border-[var(--mint-border)]
+                              font-semibold
+                              mint-text-primary
+                            "
+                          >
+
+                            {
+                              tratamientosDoctor.length
+                            }
+
+                          </span>
+
+                        </td>
+
+                        <td
+                          className="
+                            p-4
+                            text-right
+                            whitespace-nowrap
+                          "
+                        >
+
+                          <span
+                            className="
+                              font-bold
+                              text-[var(--mint-info)]
+                            "
+                          >
+
+                            $
+                            {
+                              formatoMonto(
+                                baseClinica
+                              )
+                            }
+
+                          </span>
+
+                          <span
+                            className="
+                              ml-2
+                              text-xs
+                              mint-text-muted
+                            "
+                          >
+
+                            MXN
+
+                          </span>
+
+                        </td>
+
+                        <td
+                          className="
+                            p-4
+                            text-right
+                            whitespace-nowrap
+                          "
+                        >
+
+                          <span
+                            className="
+                              font-bold
+                              text-[var(--mint-success)]
+                            "
+                          >
+
+                            $
+                            {
+                              formatoMonto(
+                                comision
+                              )
+                            }
+
+                          </span>
+
+                          <span
+                            className="
+                              ml-2
+                              text-xs
+                              mint-text-muted
+                            "
+                          >
+
+                            MXN
+
+                          </span>
+
+                        </td>
+
+                        <td
+                          className="
+                            p-4
+                            text-right
+                          "
+                        >
+
+                          <button
+                            type="button"
+                            onClick={() => {
+
+                              setDoctorDetalle(
+                                doctor
+                              );
+
+                              setMostrarDetalleDoctor(
+                                true
+                              );
+
+                            }}
+                            className="
+                              mint-btn
+                              mint-btn-action
+                              mint-btn-sm
+                            "
+                          >
+
+                            Ver detalle
+
+                          </button>
+
+                        </td>
+
+                      </tr>
+
+                    )
+                  )
+
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 

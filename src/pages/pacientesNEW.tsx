@@ -153,6 +153,8 @@ const [nuevoTratamiento,
 
   moneda: "",
 
+  moneda_precio: "MXN" as "MXN" | "USD",
+
   laboratorio: "",
 
   especialista: "",
@@ -1034,26 +1036,23 @@ async function abrirModalCobro(
   }
 
   const monedaInicial =
+    tratamiento.moneda_precio ||
     tratamiento.moneda ||
     "MXN";
 
-  const saldoPendienteMXN =
+  const saldoPendienteOriginal =
     Number(
-      tratamiento.pendiente ||
-      tratamiento.total ||
+      tratamiento.resta_original ??
+      tratamiento.pendiente ??
+      tratamiento.total_original ??
+      tratamiento.total ??
       0
     );
 
   const montoInicial =
-    monedaInicial === "USD" &&
-    tipoCambioActual > 0
-      ? (
-          saldoPendienteMXN /
-          tipoCambioActual
-        ).toFixed(2)
-      : String(
-          saldoPendienteMXN
-        );
+    String(
+      saldoPendienteOriginal
+    );
 
   setTratamientoCobro(
     tratamiento
@@ -1228,6 +1227,79 @@ async function registrarCobro() {
 
   }
 
+  const monedaPrecioTratamiento =
+    tratamientoCobro.moneda_precio ||
+    "MXN";
+
+  const totalOriginalTratamiento =
+    Number(
+      tratamientoCobro.total_original ??
+      tratamientoCobro.total ??
+      0
+    );
+
+  if (
+    monedaPrecioTratamiento === "USD" &&
+    tipoCambioCobro <= 0
+  ) {
+    alert(
+      "No hay un tipo de cambio válido configurado."
+    );
+    return;
+  }
+
+  const pagadoOriginalAnterior =
+    Number(
+      tratamientoCobro.pagado_original ??
+      0
+    );
+
+  const montoAplicadoOriginal =
+    monedaPrecioTratamiento === "USD"
+      ? nuevoCobro.moneda === "USD"
+        ? montoCobro
+        : montoCobro /
+          tipoCambioCobro
+      : montoCobroMXN;
+
+  const nuevoPagadoOriginalSinAjuste =
+    pagadoOriginalAnterior +
+    montoAplicadoOriginal;
+
+  const toleranciaOriginal =
+    monedaPrecioTratamiento === "USD"
+      ? 0.05
+      : 0.50;
+
+  const diferenciaExcedenteOriginal =
+    nuevoPagadoOriginalSinAjuste -
+    totalOriginalTratamiento;
+
+  if (
+    totalOriginalTratamiento > 0 &&
+    diferenciaExcedenteOriginal >
+      toleranciaOriginal
+  ) {
+    alert(
+      "El cobro supera el saldo pendiente del tratamiento."
+    );
+    return;
+  }
+
+  const nuevoPagadoOriginal =
+    totalOriginalTratamiento > 0 &&
+    nuevoPagadoOriginalSinAjuste >
+      totalOriginalTratamiento
+      ? totalOriginalTratamiento
+      : nuevoPagadoOriginalSinAjuste;
+
+  const nuevoPendienteOriginal =
+    Math.max(
+      totalOriginalTratamiento -
+        nuevoPagadoOriginal,
+      0
+    );
+
   const totalTratamiento =
     Number(
       tratamientoCobro.total || 0
@@ -1238,37 +1310,12 @@ async function registrarCobro() {
       tratamientoCobro.pagado || 0
     );
 
-  const nuevoTotalPagadoSinAjuste =
-    pagadoAnterior +
-    montoCobroMXN;
-
-  const diferenciaExcedente =
-    nuevoTotalPagadoSinAjuste -
-    totalTratamiento;
-
-  const toleranciaRedondeo =
-    0.50;
-
-  if (
-    totalTratamiento > 0 &&
-    diferenciaExcedente >
-      toleranciaRedondeo
-  ) {
-
-    alert(
-      "El cobro supera el saldo pendiente del tratamiento."
-    );
-
-    return;
-
-  }
-
   const nuevoTotalPagado =
-    totalTratamiento > 0 &&
-    nuevoTotalPagadoSinAjuste >
+    Math.min(
+      pagadoAnterior +
+        montoCobroMXN,
       totalTratamiento
-      ? totalTratamiento
-      : nuevoTotalPagadoSinAjuste;
+    );
 
   const nuevoPendiente =
     Math.max(
@@ -1399,6 +1446,12 @@ async function registrarCobro() {
       comision_banco:
         nuevaComisionBanco,
 
+      pagado_original:
+        nuevoPagadoOriginal,
+
+      resta_original:
+        nuevoPendienteOriginal,
+
       pago:
         nuevoTotalPagado,
 
@@ -1475,6 +1528,12 @@ async function registrarCobro() {
               comision_banco:
                 nuevaComisionBanco,
 
+              pagado_original:
+                nuevoPagadoOriginal,
+
+              resta_original:
+                nuevoPendienteOriginal,
+
               pagado:
                 nuevoTotalPagado,
 
@@ -1549,19 +1608,61 @@ const tratamientoCatalogoSeleccionado =
       nuevoTratamiento.tratamiento
   );
 
-const totalTratamiento =
+const monedaPrecioTratamiento =
+  nuevoTratamiento.moneda_precio ||
+  "MXN";
+
+const totalOriginalTratamiento =
   tratamientoCatalogoSeleccionado
     ? Number(
-        tratamientoCatalogoSeleccionado
-          .precio_mxn || 0
+        monedaPrecioTratamiento === "USD"
+          ? tratamientoCatalogoSeleccionado
+              .precio_usd || 0
+          : tratamientoCatalogoSeleccionado
+              .precio_mxn || 0
       )
     : Number(
         nuevoTratamiento.total || 0
       );
 
+if (
+  monedaPrecioTratamiento === "USD" &&
+  tipoCambioCobro <= 0
+) {
+  alert(
+    "No hay un tipo de cambio válido configurado."
+  );
+  return;
+}
+
+const totalTratamiento =
+  monedaPrecioTratamiento === "USD"
+    ? totalOriginalTratamiento *
+      tipoCambioCobro
+    : totalOriginalTratamiento;
+
+const tratamientoExistente =
+  editandoIndex !== null
+    ? tratamientos[editandoIndex]
+    : null;
+
+const pagadoOriginalTratamiento =
+  Number(
+    tratamientoExistente
+      ?.pagado_original || 0
+  );
+
+const pendienteOriginalTratamiento =
+  Math.max(
+    totalOriginalTratamiento -
+      pagadoOriginalTratamiento,
+    0
+  );
+
 const pagadoTratamiento =
   Number(
-    nuevoTratamiento.pagado || 0
+    tratamientoExistente
+      ?.pagado || 0
   );
 
 const pendienteTratamiento =
@@ -1582,6 +1683,18 @@ const nuevo = {
   moneda:
     nuevoTratamiento.moneda ||
     "MXN",
+
+  moneda_precio:
+    monedaPrecioTratamiento,
+
+  total_original:
+    totalOriginalTratamiento,
+
+  pagado_original:
+    pagadoOriginalTratamiento,
+
+  resta_original:
+    pendienteOriginalTratamiento,
 
   laboratorio:
     nuevoTratamiento.laboratorio ||
@@ -1652,6 +1765,46 @@ estado:
   tratamientoEditar.estado ||
   "Pendiente",
 
+moneda_precio:
+  nuevo.moneda_precio,
+
+total_original:
+  Number(
+    nuevo.total_original || 0
+  ),
+
+pagado_original:
+  Number(
+    tratamientoEditar.pagado_original || 0
+  ),
+
+resta_original:
+  Math.max(
+    Number(
+      nuevo.total_original || 0
+    ) -
+      Number(
+        tratamientoEditar.pagado_original || 0
+      ),
+    0
+  ),
+
+total:
+  Number(
+    nuevo.total || 0
+  ),
+
+resta:
+  Math.max(
+    Number(
+      nuevo.total || 0
+    ) -
+      Number(
+        tratamientoEditar.pagado || 0
+      ),
+    0
+  ),
+
 notas:
   nuevo.notas || "",
 
@@ -1718,6 +1871,24 @@ metodo_pago:
 
 moneda:
   nuevo.moneda,
+
+moneda_precio:
+  nuevo.moneda_precio,
+
+total_original:
+  Number(
+    nuevo.total_original || 0
+  ),
+
+pagado_original:
+  Number(
+    nuevo.pagado_original || 0
+  ),
+
+resta_original:
+  Number(
+    nuevo.resta_original || 0
+  ),
 
 laboratorio:
   Number(
@@ -1806,6 +1977,22 @@ notas:
     moneda:
       data.moneda ||
       "MXN",
+
+    moneda_precio:
+      data.moneda_precio ||
+      "MXN",
+
+    total_original:
+      data.total_original ||
+      0,
+
+    pagado_original:
+      data.pagado_original ||
+      0,
+
+    resta_original:
+      data.resta_original ||
+      0,
 
     laboratorio:
       data.laboratorio ||
@@ -1896,6 +2083,8 @@ setNuevoTratamiento({
   metodo_pago: "",
 
   moneda: "",
+
+  moneda_precio: "MXN",
 
   laboratorio: "",
 
@@ -2043,6 +2232,18 @@ metodo_pago:
 
 moneda:
   t.moneda,
+
+moneda_precio:
+  t.moneda_precio || "MXN",
+
+total_original:
+  t.total_original ?? t.total ?? 0,
+
+pagado_original:
+  t.pagado_original ?? t.pago ?? 0,
+
+resta_original:
+  t.resta_original ?? t.resta ?? 0,
 
   laboratorio:
   t.laboratorio,
@@ -4135,6 +4336,8 @@ const pacientesFiltrados =
 
       moneda: "MXN",
 
+      moneda_precio: "MXN",
+
       total: "",
 
       pagado: "",
@@ -4159,6 +4362,8 @@ const pacientesFiltrados =
       tratamientoSeleccionado.nombre,
 
     moneda: "MXN",
+
+    moneda_precio: "MXN",
 
     total:
       String(
@@ -4227,6 +4432,94 @@ const pacientesFiltrados =
                 )
               }
 
+            </select>
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+
+              Moneda del tratamiento
+
+            </label>
+
+            <select
+              value={
+                nuevoTratamiento.moneda_precio ||
+                "MXN"
+              }
+              onChange={(e) => {
+                const monedaPrecio =
+                  e.target.value as
+                    | "MXN"
+                    | "USD";
+
+                const tratamientoSeleccionado =
+                  catalogoTratamientos.find(
+                    (tratamiento: any) =>
+                      tratamiento.nombre ===
+                      nuevoTratamiento.tratamiento
+                  );
+
+                const precioSeleccionado =
+                  tratamientoSeleccionado
+                    ? Number(
+                        monedaPrecio === "USD"
+                          ? tratamientoSeleccionado
+                              .precio_usd || 0
+                          : tratamientoSeleccionado
+                              .precio_mxn || 0
+                      )
+                    : 0;
+
+                const costoEspecialista =
+                  tratamientoSeleccionado?.tipo ===
+                  "especialista"
+                    ? Number(
+                        monedaPrecio === "USD"
+                          ? tratamientoSeleccionado
+                              .costo_especialista_usd || 0
+                          : tratamientoSeleccionado
+                              .costo_especialista_mxn || 0
+                      )
+                    : 0;
+
+                setNuevoTratamiento({
+                  ...nuevoTratamiento,
+                  moneda_precio:
+                    monedaPrecio,
+                  total:
+                    String(
+                      precioSeleccionado
+                    ),
+                  pagado: "0",
+                  especialista:
+                    String(
+                      costoEspecialista
+                    ),
+                });
+              }}
+              className="
+                mint-input
+                p-3
+                w-full
+              "
+            >
+              <option value="MXN">
+                MXN — Peso mexicano
+              </option>
+              <option value="USD">
+                USD — Dólar estadounidense
+              </option>
             </select>
 
           </div>

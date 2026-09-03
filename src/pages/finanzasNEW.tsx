@@ -1,10 +1,20 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useLocation,
+} from "react-router-dom";
 
 import Gastos
   from "../components/finanzas/Gastos";
 
 import Resumen
   from "../components/finanzas/Resumen";
+
+import Cobros
+  from "../components/finanzas/Cobros";
 
 import Comisiones
   from "../components/finanzas/Comisiones";
@@ -27,6 +37,7 @@ import type {
 
 type SeccionFinanzas =
   | "resumen"
+  | "cobros"
   | "gastos"
   | "comisiones";
 
@@ -38,6 +49,9 @@ type PeriodoFinanzas =
 
 export default function Finanzas() {
 
+  const location =
+    useLocation();
+
   const finanzas =
     useFinanzas();
 
@@ -47,6 +61,40 @@ export default function Finanzas() {
   ] = useState<SeccionFinanzas>(
     "resumen"
   );
+
+  useEffect(() => {
+
+    const parametros =
+      new URLSearchParams(
+        location.search
+      );
+
+    const seccion =
+      parametros.get(
+        "seccion"
+      );
+
+    if (
+      seccion === "cobros" ||
+      seccion === "gastos" ||
+      seccion === "comisiones"
+    ) {
+
+      setSeccionActiva(
+        seccion
+      );
+
+      return;
+
+    }
+
+    setSeccionActiva(
+      "resumen"
+    );
+
+  }, [
+    location.search,
+  ]);
 
   const [
     periodo,
@@ -63,6 +111,8 @@ export default function Finanzas() {
 
     gastos,
 
+    pagos,
+
     doctores,
 
     fechaGasto,
@@ -76,6 +126,9 @@ export default function Finanzas() {
 
     montoGasto,
     setMontoGasto,
+
+    monedaGasto,
+    setMonedaGasto,
 
     notasGasto,
     setNotasGasto,
@@ -120,6 +173,105 @@ export default function Finanzas() {
 
   });
 
+  const pagosFiltrados =
+    pagos.filter(
+      (pago: any) => {
+
+        if (
+          periodo ===
+          "historico"
+        ) {
+
+          return true;
+
+        }
+
+        const fechaPago =
+          new Date(
+            pago.fecha
+          );
+
+        if (
+          Number.isNaN(
+            fechaPago.getTime()
+          )
+        ) {
+
+          return false;
+
+        }
+
+        if (
+          periodo ===
+          "semana"
+        ) {
+
+          const inicio =
+            new Date(
+              lunesSemana
+            );
+
+          inicio.setHours(
+            0,
+            0,
+            0,
+            0
+          );
+
+          const fin =
+            new Date(
+              sabadoSemana
+            );
+
+          fin.setHours(
+            23,
+            59,
+            59,
+            999
+          );
+
+          return (
+            fechaPago >= inicio &&
+            fechaPago <= fin
+          );
+
+        }
+
+        const hoy =
+          new Date();
+
+        if (
+          periodo ===
+          "mes"
+        ) {
+
+          return (
+            fechaPago.getFullYear() ===
+              hoy.getFullYear()
+            &&
+            fechaPago.getMonth() ===
+              hoy.getMonth()
+          );
+
+        }
+
+        if (
+          periodo ===
+          "anio"
+        ) {
+
+          return (
+            fechaPago.getFullYear() ===
+            hoy.getFullYear()
+          );
+
+        }
+
+        return true;
+
+      }
+    );
+
   const {
 
     ingresos,
@@ -128,7 +280,13 @@ export default function Finanzas() {
 
     pendiente,
 
+    cobradoMXN,
+
+    cobradoUSD,
+
     totalGastos,
+
+    totalGastosUSD,
 
     totalBaseClinica,
 
@@ -136,9 +294,13 @@ export default function Finanzas() {
 
     gananciaNeta,
 
+        gananciaNetaUSD,
+
     totalTarjeta,
 
     totalTransferencia,
+
+    totalTransferenciaUSD,
 
     cajaMXN,
 
@@ -154,304 +316,462 @@ export default function Finanzas() {
 
     doctores,
 
+    pagosFiltrados,
+
   });
 
   return (
 
     <div
       className="
-        flex
-        gap-4
+        w-full
       "
     >
 
       <div
         className="
-          w-40
-          mint-card
-          p-4
-          h-fit
-        "
-      >
-
-        <h2
-          className="
-            font-bold
-            text-lg
-            mint-text-primary
-            mb-4
-          "
-        >
-
-          Finanzas
-
-        </h2>
-
-        <div
-          className="
-            flex
-            flex-col
-            gap-2
-          "
-        >
-
-          <button
-            onClick={() =>
-              setSeccionActiva(
-                "resumen"
-              )
-            }
-            className={`
-              p-3
-              rounded-xl
-              text-left
-              font-medium
-              text-sm
-              transition
-
-              ${
-                seccionActiva ===
-                "resumen"
-
-                  ? `
-                      bg-[var(--mint-primary)]
-                      text-[var(--mint-text-on-primary)]
-                      shadow-sm
-                    `
-
-                  : `
-                      bg-[var(--mint-bg-soft)]
-                      mint-text-secondary
-                      hover:bg-[var(--mint-bg-muted)]
-                      hover:text-[var(--mint-text-primary)]
-                    `
-              }
-            `}
-          >
-
-            Resumen
-
-          </button>
-
-          <button
-            onClick={() =>
-              setSeccionActiva(
-                "gastos"
-              )
-            }
-            className={`
-              p-3
-              rounded-xl
-              text-left
-              font-medium
-              text-sm
-              transition
-
-              ${
-                seccionActiva ===
-                "gastos"
-
-                  ? `
-                      bg-[var(--mint-primary)]
-                      text-[var(--mint-text-on-primary)]
-                      shadow-sm
-                    `
-
-                  : `
-                      bg-[var(--mint-bg-soft)]
-                      mint-text-secondary
-                      hover:bg-[var(--mint-bg-muted)]
-                      hover:text-[var(--mint-text-primary)]
-                    `
-              }
-            `}
-          >
-
-            Gastos
-
-          </button>
-
-          <button
-            onClick={() =>
-              setSeccionActiva(
-                "comisiones"
-              )
-            }
-            className={`
-              p-3
-              rounded-xl
-              text-left
-              font-medium
-              text-sm
-              transition
-
-              ${
-                seccionActiva ===
-                "comisiones"
-
-                  ? `
-                      bg-[var(--mint-primary)]
-                      text-[var(--mint-text-on-primary)]
-                      shadow-sm
-                    `
-
-                  : `
-                      bg-[var(--mint-bg-soft)]
-                      mint-text-secondary
-                      hover:bg-[var(--mint-bg-muted)]
-                      hover:text-[var(--mint-text-primary)]
-                    `
-              }
-            `}
-          >
-
-            Comisiones
-
-          </button>
-
-        </div>
-
-      </div>
-
-      <div
-        className="
-          flex-1
+          w-full
           min-w-0
         "
       >
 
-        <h1
-          className="
-            text-4xl
-            font-bold
-            mint-text-primary
-            mb-8
-          "
-        >
+        {
+          seccionActiva ===
+          "resumen"
 
-          {
-            seccionActiva
-              .charAt(0)
-              .toUpperCase()
-            +
-            seccionActiva.slice(1)
-          }
+          ? (
 
-        </h1>
+            <div
+              className="
+                mb-8
+                mint-card
+                overflow-hidden
+              "
+            >
 
-        <div
-          className="
-            mb-6
-          "
-        >
+              <div
+                className="
+                  px-6
+                  py-6
+                  border-b
+                  border-[var(--mint-border)]
+                  flex
+                  flex-col
+                  xl:flex-row
+                  xl:items-center
+                  xl:justify-between
+                  gap-6
+                "
+              >
 
-          <select
-            value={periodo}
-            onChange={(e) => {
-              setPeriodo(
-                e.target.value as PeriodoFinanzas
-              );
-            }}
-            className="
-              mint-input
-              px-4
-              py-2
-              w-auto
-              min-w-[160px]
-            "
-          >
+                <div>
 
-            <option value="semana">
+                  <div
+                    className="
+                      flex
+                      items-center
+                      gap-2
+                      mb-2
+                    "
+                  >
 
-              Semana
+                    <span
+                      className="
+                        inline-flex
+                        items-center
+                        rounded-full
+                        bg-[var(--mint-primary-soft)]
+                        text-[var(--mint-primary)]
+                        px-3
+                        py-1
+                        text-[11px]
+                        font-bold
+                        uppercase
+                        tracking-[0.12em]
+                      "
+                    >
 
-            </option>
+                      Finanzas
 
-            <option value="mes">
+                    </span>
 
-              Mes
+                  </div>
 
-            </option>
+                  <h1
+                    className="
+                      text-3xl
+                      font-bold
+                      tracking-tight
+                      mint-text-primary
+                    "
+                  >
 
-            <option value="anio">
+                    Resumen financiero
 
-              Año
+                  </h1>
 
-            </option>
+                  <p
+                    className="
+                      mt-2
+                      text-sm
+                      mint-text-secondary
+                    "
+                  >
 
-            <option value="historico">
+                    Visión general del rendimiento
+                    financiero de la clínica.
 
-              Histórico
+                  </p>
 
-            </option>
+                </div>
 
-          </select>
+                <div
+                  className="
+                    inline-flex
+                    items-center
+                    self-start
+                    xl:self-center
+                    rounded-xl
+                    border
+                    border-[var(--mint-border)]
+                    bg-[var(--mint-bg-soft)]
+                    p-1
+                    shadow-sm
+                  "
+                >
 
-        </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPeriodo(
+                        "semana"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-semibold
+                      transition-all
 
-        <div
-          className="
-            mb-6
-            text-sm
-            mint-text-secondary
-          "
-        >
+                      ${
+                        periodo ===
+                        "semana"
 
-          {
-            periodo ===
-            "semana"
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-primary)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
 
-            &&
+                          : `
+                              mint-text-secondary
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
 
-            <>
+                    Semana
 
-              Semana Actual
+                  </button>
 
-              <br />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPeriodo(
+                        "mes"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-semibold
+                      transition-all
 
-              {
-                lunesSemana
-                  .toLocaleDateString()
-              }
+                      ${
+                        periodo ===
+                        "mes"
 
-              {" - "}
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-primary)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
 
-              {
-                sabadoSemana
-                  .toLocaleDateString()
-              }
+                          : `
+                              mint-text-secondary
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
 
-            </>
-          }
+                    Mes
 
-          {
-            periodo ===
-            "mes"
+                  </button>
 
-            &&
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPeriodo(
+                        "anio"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-semibold
+                      transition-all
 
-            <>Mes Actual</>
-          }
+                      ${
+                        periodo ===
+                        "anio"
 
-          {
-            periodo ===
-            "anio"
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-primary)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
 
-            &&
+                          : `
+                              mint-text-secondary
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
 
-            <>Año Actual</>
-          }
+                    Año
 
-          {
-            periodo ===
-            "historico"
+                  </button>
 
-            &&
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPeriodo(
+                        "historico"
+                      )
+                    }
+                    className={`
+                      px-4
+                      py-2
+                      rounded-lg
+                      text-sm
+                      font-semibold
+                      transition-all
 
-            <>Todos los registros</>
-          }
+                      ${
+                        periodo ===
+                        "historico"
 
-        </div>
+                          ? `
+                              bg-[var(--mint-bg-card)]
+                              text-[var(--mint-primary)]
+                              shadow-sm
+                              ring-1
+                              ring-[var(--mint-border)]
+                            `
+
+                          : `
+                              mint-text-secondary
+                              hover:text-[var(--mint-text-primary)]
+                            `
+                      }
+                    `}
+                  >
+
+                    Histórico
+
+                  </button>
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  px-6
+                  py-4
+                  bg-[var(--mint-bg-soft)]
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                "
+              >
+
+                <div>
+
+                  <p
+                    className="
+                      text-[11px]
+                      uppercase
+                      tracking-[0.12em]
+                      font-bold
+                      mint-text-muted
+                      mb-1
+                    "
+                  >
+
+                    Período seleccionado
+
+                  </p>
+
+                  <p
+                    className="
+                      text-sm
+                      font-semibold
+                      mint-text-primary
+                    "
+                  >
+
+                    {
+                      periodo ===
+                      "semana"
+
+                      &&
+
+                      <>
+
+                        {
+                          lunesSemana
+                            .toLocaleDateString(
+                              "es-MX",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )
+                        }
+
+                        {" — "}
+
+                        {
+                          sabadoSemana
+                            .toLocaleDateString(
+                              "es-MX",
+                              {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              }
+                            )
+                        }
+
+                      </>
+                    }
+
+                    {
+                      periodo ===
+                      "mes"
+
+                      &&
+
+                      <>Mes actual</>
+                    }
+
+                    {
+                      periodo ===
+                      "anio"
+
+                      &&
+
+                      <>Año actual</>
+                    }
+
+                    {
+                      periodo ===
+                      "historico"
+
+                      &&
+
+                      <>Todos los registros</>
+                    }
+
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    hidden
+                    md:flex
+                    items-center
+                    gap-2
+                    text-xs
+                    mint-text-muted
+                  "
+                >
+
+                  Datos financieros de MintOS
+
+                </div>
+
+              </div>
+
+            </div>
+
+          )
+
+          : (
+
+            <div
+              className="
+                mb-8
+              "
+            >
+
+              <h1
+                className="
+                  text-3xl
+                  font-bold
+                  tracking-tight
+                  mint-text-primary
+                "
+              >
+
+                {
+                  seccionActiva ===
+                  "cobros"
+
+                    ? "Cobros"
+
+                    : seccionActiva ===
+                      "gastos"
+
+                      ? "Gastos"
+
+                      : "Comisiones"
+                }
+
+              </h1>
+
+            </div>
+
+          )
+        }
+
+        {
+          seccionActiva ===
+          "cobros"
+
+          &&
+
+          <Cobros />
+        }
 
         {
           seccionActiva ===
@@ -466,7 +786,7 @@ export default function Finanzas() {
             }
 
             cantidad={
-              gastosFiltrados.length
+              gastos.length
             }
 
             fechaGasto={
@@ -501,6 +821,14 @@ export default function Finanzas() {
               setMontoGasto
             }
 
+            monedaGasto={
+              monedaGasto
+            }
+
+            setMonedaGasto={
+              setMonedaGasto
+            }
+
             notasGasto={
               notasGasto
             }
@@ -514,7 +842,7 @@ export default function Finanzas() {
             }
 
             gastosFiltrados={
-              gastosFiltrados
+              gastos
             }
 
             eliminarGasto={
@@ -599,6 +927,14 @@ export default function Finanzas() {
               cobrado
             }
 
+            cobradoMXN={
+              cobradoMXN
+            }
+
+            cobradoUSD={
+              cobradoUSD
+            }
+
             pendiente={
               pendiente
             }
@@ -607,8 +943,16 @@ export default function Finanzas() {
               gananciaNeta
             }
 
+                        gananciaNetaUSD={
+              gananciaNetaUSD
+            }
+
             totalGastos={
               totalGastos
+            }
+
+            totalGastosUSD={
+              totalGastosUSD
             }
 
             totalBaseClinica={
@@ -633,6 +977,10 @@ export default function Finanzas() {
 
             totalTransferencia={
               totalTransferencia
+            }
+
+            totalTransferenciaUSD={
+              totalTransferenciaUSD
             }
 
             pacientes={

@@ -10,6 +10,10 @@ export interface Gasto {
 
   monto: number;
 
+  moneda:
+    | "MXN"
+    | "USD";
+
   notas?: string;
 
 }

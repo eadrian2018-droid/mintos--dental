@@ -1,4 +1,5 @@
 export interface Tratamiento {
+
   id: number;
 
   fecha: string;
@@ -15,7 +16,11 @@ export interface Tratamiento {
 
   laboratorio?: number;
 
+  moneda_laboratorio?: "MXN" | "USD";
+
   especialista?: number;
+
+  moneda_especialista?: "MXN" | "USD";
 
   comision_banco?: number;
 
@@ -24,4 +29,13 @@ export interface Tratamiento {
   metodo_pago?: string;
 
   moneda?: string;
+
+  moneda_precio?: "MXN" | "USD";
+
+  total_original?: number;
+
+  pagado_original?: number;
+
+  resta_original?: number;
+
 }
