@@ -107,6 +107,15 @@ export default function useFinanzas() {
   >("MXN");
 
   const [
+    metodoPagoGasto,
+    setMetodoPagoGasto,
+  ] = useState<
+    "Efectivo" |
+    "Transferencia" |
+    "Tarjeta"
+  >("Efectivo");
+
+  const [
     notasGasto,
     setNotasGasto,
   ] = useState("");
@@ -285,6 +294,8 @@ export default function useFinanzas() {
 
       monedaGasto,
 
+      metodoPagoGasto,
+
       notasGasto
 
     );
@@ -298,6 +309,8 @@ export default function useFinanzas() {
     setMontoGasto("");
 
     setMonedaGasto("MXN");
+
+    setMetodoPagoGasto("Efectivo");
 
     setNotasGasto("");
 
@@ -441,6 +454,9 @@ export default function useFinanzas() {
 
     monedaGasto,
     setMonedaGasto,
+
+    metodoPagoGasto,
+    setMetodoPagoGasto,
 
     notasGasto,
     setNotasGasto,

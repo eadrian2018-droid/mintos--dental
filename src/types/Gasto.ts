@@ -11,8 +11,18 @@ export interface Gasto {
   monto: number;
 
   moneda:
+
     | "MXN"
+
     | "USD";
+
+  metodo_pago:
+
+    | "Efectivo"
+
+    | "Transferencia"
+
+    | "Tarjeta";
 
   notas?: string;
 

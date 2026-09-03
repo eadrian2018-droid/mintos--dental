@@ -130,6 +130,9 @@ export default function Finanzas() {
     monedaGasto,
     setMonedaGasto,
 
+    metodoPagoGasto,
+    setMetodoPagoGasto,
+
     notasGasto,
     setNotasGasto,
 
@@ -827,6 +830,14 @@ export default function Finanzas() {
 
             setMonedaGasto={
               setMonedaGasto
+            }
+
+            metodoPagoGasto={
+              metodoPagoGasto
+            }
+
+            setMetodoPagoGasto={
+              setMetodoPagoGasto
             }
 
             notasGasto={

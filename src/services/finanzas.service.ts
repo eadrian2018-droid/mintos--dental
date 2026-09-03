@@ -196,7 +196,7 @@ export const finanzasService = {
     }
 
   },
-
+  
   async guardarGasto(
     fecha: string,
     concepto: string,
@@ -205,6 +205,10 @@ export const finanzasService = {
     moneda:
       | "MXN"
       | "USD",
+    metodo_pago:
+      | "Efectivo"
+      | "Transferencia"
+      | "Tarjeta",
     notas: string
   ): Promise<void> {
 
@@ -219,6 +223,7 @@ export const finanzasService = {
           categoria,
           monto,
           moneda,
+          metodo_pago,
           notas,
         },
       ]);

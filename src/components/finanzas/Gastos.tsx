@@ -64,6 +64,20 @@ type GastosProps = {
       >
     >;
 
+  metodoPagoGasto:
+    | "Efectivo"
+    | "Transferencia"
+    | "Tarjeta";
+
+  setMetodoPagoGasto:
+    Dispatch<
+      SetStateAction<
+        "Efectivo" |
+        "Transferencia" |
+        "Tarjeta"
+      >
+    >;
+
   notasGasto: string;
 
   setNotasGasto:
@@ -106,8 +120,11 @@ export default function Gastos({
   montoGasto,
   setMontoGasto,
 
-  monedaGasto,
+    monedaGasto,
   setMonedaGasto,
+
+  metodoPagoGasto,
+  setMetodoPagoGasto,
 
   notasGasto,
   setNotasGasto,
@@ -1413,10 +1430,13 @@ export default function Gastos({
               grid
               grid-cols-1
               md:grid-cols-2
+              xl:grid-cols-3
               gap-5
               mt-5
             "
           >
+
+            {/* MONTO + MONEDA */}
 
             <div>
 
@@ -1588,6 +1608,175 @@ export default function Gastos({
               </p>
 
             </div>
+
+            {/* MÉTODO DE PAGO */}
+
+            <div>
+
+              <label
+                className="
+                  block
+                  text-xs
+                  font-semibold
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+
+                Método de pago
+
+              </label>
+
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  w-full
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg-soft)]
+                  p-1
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMetodoPagoGasto(
+                      "Efectivo"
+                    )
+                  }
+                  className={`
+                    flex-1
+                    px-3
+                    py-2
+                    rounded-lg
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      metodoPagoGasto ===
+                      "Efectivo"
+
+                        ? `
+                            bg-[var(--mint-bg-card)]
+                            text-[var(--mint-primary)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border)]
+                          `
+
+                        : `
+                            mint-text-secondary
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+
+                  Efectivo
+
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMetodoPagoGasto(
+                      "Transferencia"
+                    )
+                  }
+                  className={`
+                    flex-1
+                    px-3
+                    py-2
+                    rounded-lg
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      metodoPagoGasto ===
+                      "Transferencia"
+
+                        ? `
+                            bg-[var(--mint-bg-card)]
+                            text-[var(--mint-info)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border)]
+                          `
+
+                        : `
+                            mint-text-secondary
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+
+                  Transferencia
+
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMetodoPagoGasto(
+                      "Tarjeta"
+                    )
+                  }
+                  className={`
+                    flex-1
+                    px-3
+                    py-2
+                    rounded-lg
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      metodoPagoGasto ===
+                      "Tarjeta"
+
+                        ? `
+                            bg-[var(--mint-bg-card)]
+                            text-[var(--mint-accent)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border)]
+                          `
+
+                        : `
+                            mint-text-secondary
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+
+                  Tarjeta
+
+                </button>
+
+              </div>
+
+              <p
+                className="
+                  mt-2
+                  text-xs
+                  mint-text-muted
+                "
+              >
+
+                Indica de dónde salió el dinero.
+
+              </p>
+
+            </div>
+
+            {/* NOTAS */}
 
             <div>
 
@@ -1820,6 +2009,17 @@ export default function Gastos({
                 <th
                   className="
                     p-4
+                    text-left
+                  "
+                >
+
+                  Método de pago
+
+                </th>
+
+                <th
+                  className="
+                    p-4
                     text-right
                   "
                 >
@@ -1854,7 +2054,7 @@ export default function Gastos({
                     <tr>
 
                       <td
-                        colSpan={6}
+                        colSpan={7}
                         className="
                           px-6
                           py-12
@@ -2006,6 +2206,37 @@ export default function Gastos({
                             >
 
                               {moneda}
+
+                            </span>
+
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                            "
+                          >
+
+                            <span
+                              className="
+                                inline-flex
+                                items-center
+                                px-2.5
+                                py-1
+                                rounded-lg
+                                text-xs
+                                font-semibold
+                                bg-[var(--mint-bg-soft)]
+                                border
+                                border-[var(--mint-border)]
+                                mint-text-secondary
+                              "
+                            >
+
+                              {
+                                gasto.metodo_pago ||
+                                "Efectivo"
+                              }
 
                             </span>
 

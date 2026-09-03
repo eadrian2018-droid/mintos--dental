@@ -315,9 +315,71 @@ export default function useIndicadores({
   |--------------------------------------------------------------------------
   | CAJA
   |--------------------------------------------------------------------------
+  |
+  | Caja representa el dinero físico disponible.
+  |
+  | Cobros en efectivo
+  | -
+  | Gastos pagados en efectivo
+  |
+  | MXN y USD permanecen separados.
+  |
   */
 
-  const cajaMXN =
+  const gastosEfectivoMXN =
+    gastosFiltrados
+      .filter(
+        (gasto) =>
+          (
+            !gasto.moneda ||
+            gasto.moneda ===
+              "MXN"
+          )
+          &&
+          (
+            !gasto.metodo_pago ||
+            gasto.metodo_pago ===
+              "Efectivo"
+          )
+      )
+      .reduce(
+        (
+          total,
+          gasto
+        ) =>
+          total +
+          Number(
+            gasto.monto || 0
+          ),
+        0
+      );
+
+  const gastosEfectivoUSD =
+    gastosFiltrados
+      .filter(
+        (gasto) =>
+          gasto.moneda ===
+            "USD"
+          &&
+          (
+            !gasto.metodo_pago ||
+            gasto.metodo_pago ===
+              "Efectivo"
+          )
+      )
+      .reduce(
+        (
+          total,
+          gasto
+        ) =>
+          total +
+          Number(
+            gasto.monto || 0
+          ),
+        0
+      );
+
+  const cobrosEfectivoMXN =
     pagosFiltrados
       .filter(
         (pago) =>
@@ -338,7 +400,7 @@ export default function useIndicadores({
         0
       );
 
-  const cajaUSD =
+  const cobrosEfectivoUSD =
     pagosFiltrados
       .filter(
         (pago) =>
@@ -358,6 +420,16 @@ export default function useIndicadores({
           ),
         0
       );
+
+  const cajaMXN =
+    cobrosEfectivoMXN
+    -
+    gastosEfectivoMXN;
+
+  const cajaUSD =
+    cobrosEfectivoUSD
+    -
+    gastosEfectivoUSD;
 
   /*
   |--------------------------------------------------------------------------
