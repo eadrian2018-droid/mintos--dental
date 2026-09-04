@@ -2204,11 +2204,13 @@ async function cargarPreciosEspecialista(
                                         "
                                       >
                                         {
-                                          precio.tratamiento
-                                            ?.[0]
-                                            ?.nombre ||
-                                          "Tratamiento"
-                                        }
+  catalogoTratamientos.find(
+    (tratamiento: any) =>
+      Number(tratamiento.id) ===
+      Number(precio.tratamiento_id)
+  )?.nombre ||
+  "Tratamiento"
+}
                                       </td>
 
                                       <td
