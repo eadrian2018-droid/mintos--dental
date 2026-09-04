@@ -442,10 +442,19 @@ export default function useIndicadores({
             "Efectivo"
           &&
           (
-            !tratamiento.moneda_especialista
-            ||
-            tratamiento.moneda_especialista ===
+            tratamiento.especialista_pago_moneda ===
               "MXN"
+            ||
+            (
+              !tratamiento.especialista_pago_moneda
+              &&
+              (
+                !tratamiento.moneda_especialista
+                ||
+                tratamiento.moneda_especialista ===
+                  "MXN"
+              )
+            )
           )
       )
       .reduce(
@@ -455,7 +464,8 @@ export default function useIndicadores({
         ) =>
           total +
           Number(
-            tratamiento.especialista ||
+            tratamiento.especialista_pago_monto ??
+            tratamiento.especialista ??
             0
           ),
         0
@@ -470,8 +480,17 @@ export default function useIndicadores({
           tratamiento.especialista_metodo_pago ===
             "Efectivo"
           &&
-          tratamiento.moneda_especialista ===
-            "USD"
+          (
+            tratamiento.especialista_pago_moneda ===
+              "USD"
+            ||
+            (
+              !tratamiento.especialista_pago_moneda
+              &&
+              tratamiento.moneda_especialista ===
+                "USD"
+            )
+          )
       )
       .reduce(
         (
@@ -480,7 +499,8 @@ export default function useIndicadores({
         ) =>
           total +
           Number(
-            tratamiento.especialista ||
+            tratamiento.especialista_pago_monto ??
+            tratamiento.especialista ??
             0
           ),
         0

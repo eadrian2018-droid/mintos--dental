@@ -48,10 +48,10 @@ type Vista =
   | "doctores"
   | "especialistas";
 
-type MetodoPago =
-  | "Efectivo"
-  | "Transferencia"
-  | "Tarjeta";
+type FormaPagoEspecialista =
+  | "MXN"
+  | "USD"
+  | "Transferencia";
 
 export default function Comisiones({
   doctores,
@@ -76,11 +76,16 @@ export default function Comisiones({
   );
 
   const [
-    metodoPago,
-    setMetodoPago,
-  ] = useState<MetodoPago>(
-    "Efectivo"
+    formaPagoEspecialista,
+    setFormaPagoEspecialista,
+  ] = useState<FormaPagoEspecialista>(
+    "MXN"
   );
+
+  const [
+    montoPagoEspecialista,
+    setMontoPagoEspecialista,
+  ] = useState("");
 
   const [
     guardando,
@@ -104,10 +109,23 @@ export default function Comisiones({
   const tratamientosAny =
     tratamientos as any[];
 
-  const resumenDoctores =
-    useMemo(
-      () =>
-        doctores.map(
+ const resumenDoctores =
+  useMemo(
+    () =>
+      doctores
+        .filter(
+          (doctor) =>
+            !tratamientosAny.some(
+              (tratamiento) =>
+                Number(
+                  tratamiento.especialista_id
+                ) ===
+                Number(
+                  doctor.id
+                )
+            )
+        )
+        .map(
           (doctor) => {
 
             const tratamientosDoctor =
@@ -425,67 +443,58 @@ export default function Comisiones({
 
   async function registrarPagoEspecialista() {
 
-    if (
-      !tratamientoPago?.id
-    ) {
+    if (!tratamientoPago?.id) return;
+
+    const monto = Number(montoPagoEspecialista);
+
+    if (!Number.isFinite(monto) || monto <= 0) {
+      alert("Ingresa una cantidad válida.");
       return;
     }
 
-    setGuardando(
-      true
-    );
+    const monedaPago =
+      formaPagoEspecialista === "USD"
+        ? "USD"
+        : "MXN";
 
-    const {
-      error,
-    } =
+    const metodoPago =
+      formaPagoEspecialista === "Transferencia"
+        ? "Transferencia"
+        : "Efectivo";
+
+    setGuardando(true);
+
+    const { error } =
       await supabase
-        .from(
-          "tratamientos"
-        )
+        .from("tratamientos")
         .update({
-          especialista_pagado:
-            true,
+          especialista_pagado: true,
           especialista_fecha_pago:
-            new Date()
-              .toISOString(),
+            new Date().toISOString(),
           especialista_metodo_pago:
             metodoPago,
+          especialista_pago_moneda:
+            monedaPago,
+          especialista_pago_monto:
+            monto,
         })
-        .eq(
-          "id",
-          tratamientoPago.id
-        );
+        .eq("id", tratamientoPago.id);
 
-    setGuardando(
-      false
-    );
+    setGuardando(false);
 
-    if (
-      error
-    ) {
-
+    if (error) {
       console.error(
         "Error registrando pago a especialista:",
         error
       );
-
       alert(
         "No se pudo registrar el pago al especialista."
       );
-
       return;
-
     }
 
-    setTratamientoPago(
-      null
-    );
-
-    /*
-    | Recargamos para que tratamientos, corte de caja
-    | y todos los indicadores financieros lean
-    | inmediatamente el nuevo estado desde Supabase.
-    */
+    setTratamientoPago(null);
+    setMontoPagoEspecialista("");
     window.location.reload();
 
   }
@@ -664,9 +673,9 @@ export default function Comisiones({
                     Doctores
                   </p>
                   <p className="text-2xl font-bold mint-text-primary mt-2">
-                    {
-                      doctores.length
-                    }
+                   {
+  resumenDoctores.length
+}
                   </p>
                 </div>
 
@@ -1184,8 +1193,20 @@ export default function Comisiones({
                                                         type="button"
                                                         onClick={() => {
 
-                                                          setMetodoPago(
-                                                            "Efectivo"
+                                                          setFormaPagoEspecialista(
+                                                            tratamiento.moneda_especialista ===
+                                                            "USD"
+                                                              ? "USD"
+                                                              : "MXN"
+                                                          );
+
+                                                          setMontoPagoEspecialista(
+                                                            String(
+                                                              Number(
+                                                                tratamiento.especialista ||
+                                                                0
+                                                              )
+                                                            )
                                                           );
 
                                                           setTratamientoPago(
@@ -1313,98 +1334,78 @@ export default function Comisiones({
             <div className="mt-5">
 
               <label className="text-sm font-semibold mint-text-primary">
-                Método de pago
+                Forma de pago
               </label>
 
               <div className="grid grid-cols-3 gap-2 mt-2">
-
-                {
-                  (
-                    [
-                      "Efectivo",
-                      "Transferencia",
-                      "Tarjeta",
-                    ] as MetodoPago[]
-                  ).map(
-                    (
-                      metodo
-                    ) => (
-
-                      <button
-                        key={
-                          metodo
-                        }
-                        type="button"
-                        onClick={() =>
-                          setMetodoPago(
-                            metodo
-                          )
-                        }
-                        className={`
-                          px-3
-                          py-2.5
-                          rounded-xl
-                          text-sm
-                          font-semibold
-                          border
-                          transition
-
-                          ${
-                            metodoPago ===
-                            metodo
-
-                              ? `
-                                bg-[var(--mint-primary)]
-                                text-white
-                                border-[var(--mint-primary)]
-                              `
-
-                              : `
-                                bg-white
-                                mint-text-secondary
-                                border-[var(--mint-border)]
-                              `
-                          }
-                        `}
-                      >
-                        {
-                          metodo
-                        }
-                      </button>
-
-                    )
-                  )
-                }
-
+                {(
+                  [
+                    "MXN",
+                    "USD",
+                    "Transferencia",
+                  ] as FormaPagoEspecialista[]
+                ).map((forma) => (
+                  <button
+                    key={forma}
+                    type="button"
+                    onClick={() =>
+                      setFormaPagoEspecialista(forma)
+                    }
+                    className={`
+                      px-3 py-2.5 rounded-xl text-sm
+                      font-semibold border transition
+                      ${
+                        formaPagoEspecialista === forma
+                          ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
+                          : "bg-white mint-text-secondary border-[var(--mint-border)]"
+                      }
+                    `}
+                  >
+                    {forma}
+                  </button>
+                ))}
               </div>
 
-              {
-                metodoPago ===
-                "Efectivo"
+              <div className="mt-4">
+                <label className="text-sm font-semibold mint-text-primary">
+                  Cantidad
+                </label>
 
-                &&
+                <div className="relative mt-2">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 mint-text-muted font-semibold">
+                    $
+                  </span>
 
-                <p className="text-xs text-[var(--mint-warning)] mt-3">
-                  Este pago reducirá la caja física de {
-                    tratamientoPago.moneda_especialista ===
-                    "USD"
-                      ? "USD"
-                      : "MXN"
-                  }.
-                </p>
-              }
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={montoPagoEspecialista}
+                    onChange={(event) =>
+                      setMontoPagoEspecialista(
+                        event.target.value
+                      )
+                    }
+                    className="
+                      w-full rounded-xl border
+                      border-[var(--mint-border)]
+                      bg-white pl-8 pr-16 py-2.5
+                      text-sm font-semibold
+                      mint-text-primary outline-none
+                      focus:border-[var(--mint-primary)]
+                    "
+                    placeholder="0.00"
+                  />
 
-              {
-                metodoPago !==
-                "Efectivo"
-
-                &&
-
-                <p className="text-xs mint-text-muted mt-3">
-                  Este pago no modificará la caja física.
-                </p>
-              }
-
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
+                    {
+                      formaPagoEspecialista === "USD"
+                        ? "USD"
+                        : "MXN"
+                    }
+                  </span>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
