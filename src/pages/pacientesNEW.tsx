@@ -949,6 +949,7 @@ console.log(
     }
 
   }
+
 async function abrirModalCobro(
 
   tratamiento: any
@@ -3807,6 +3808,7 @@ const pacientesFiltrados =
   Registrar cobro
 </button>
 
+
                               <button
                                 type="button"
                                 onClick={() => {
@@ -3843,20 +3845,30 @@ const pacientesFiltrados =
                                     tratamientos[index];
 
                                   if (
-                                    tratamientoEliminar?.id
-                                  ) {
+  tratamientoEliminar?.id
+) {
 
-                                    await supabase
-                                      .from(
-                                        "tratamientos"
-                                      )
-                                      .delete()
-                                      .eq(
-                                        "id",
-                                        tratamientoEliminar.id
-                                      );
+  await supabase
+    .from(
+      "pagos"
+    )
+    .delete()
+    .eq(
+      "tratamiento_id",
+      tratamientoEliminar.id
+    );
 
-                                  }
+  await supabase
+    .from(
+      "tratamientos"
+    )
+    .delete()
+    .eq(
+      "id",
+      tratamientoEliminar.id
+    );
+
+}
 
                                   setTratamientos(
 
