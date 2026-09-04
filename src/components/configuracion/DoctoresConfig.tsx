@@ -14,6 +14,11 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+type TipoDoctor =
+  | "doctor"
+  | "especialista"
+  | "ambos";
+
 type Doctor = {
   id: number;
   nombre: string;
@@ -21,6 +26,7 @@ type Doctor = {
   porcentaje: number | null;
   telefono: string | null;
   activo: boolean;
+  tipo_doctor: TipoDoctor;
 };
 
 type FormDoctor = {
@@ -29,6 +35,7 @@ type FormDoctor = {
   porcentaje: string;
   telefono: string;
   activo: boolean;
+  tipo_doctor: TipoDoctor;
 };
 
 type TratamientoCatalogo = {
@@ -63,6 +70,7 @@ const formularioInicial: FormDoctor = {
   porcentaje: "",
   telefono: "",
   activo: true,
+  tipo_doctor: "doctor",
 };
 
 const formularioPrecioInicial:
@@ -147,17 +155,31 @@ const [
   formularioPrecioInicial
 );
 
-const [
-  guardandoPrecio,
-  setGuardandoPrecio,
-] = useState(false);
+  const [
+    guardandoPrecio,
+    setGuardandoPrecio,
+  ] = useState(false);
 
-useEffect(() => {
+  const doctoresClinica =
+    doctores.filter(
+      (doctor) =>
+        doctor.tipo_doctor === "doctor" ||
+        doctor.tipo_doctor === "ambos"
+    );
 
-  cargarDoctores();
-  cargarCatalogoTratamientos();
+  const especialistas =
+    doctores.filter(
+      (doctor) =>
+        doctor.tipo_doctor === "especialista" ||
+        doctor.tipo_doctor === "ambos"
+    );
 
-}, []);
+  useEffect(() => {
+
+    cargarDoctores();
+    cargarCatalogoTratamientos();
+
+  }, []);
 
   async function cargarDoctores() {
 
@@ -177,7 +199,8 @@ useEffect(() => {
         especialidad,
         porcentaje,
         telefono,
-        activo
+        activo,
+        tipo_doctor
         `
       )
 
@@ -363,6 +386,9 @@ async function cargarPreciosEspecialista(
       activo:
         doctor.activo,
 
+      tipo_doctor:
+        doctor.tipo_doctor || "doctor",
+
     });
 
     setMostrarFormulario(
@@ -457,6 +483,9 @@ async function cargarPreciosEspecialista(
 
       activo:
         form.activo,
+
+      tipo_doctor:
+        form.tipo_doctor,
 
     };
 
@@ -930,8 +959,7 @@ async function cargarPreciosEspecialista(
 
       </div>
 
-      {
-
+           {
         mostrarFormulario && (
 
           <div
@@ -994,7 +1022,7 @@ async function cargarPreciosEspecialista(
                 grid
                 grid-cols-1
                 md:grid-cols-2
-                xl:grid-cols-4
+                xl:grid-cols-5
                 gap-4
               "
             >
@@ -1076,6 +1104,56 @@ async function cargarPreciosEspecialista(
                     py-2.5
                   "
                 />
+
+              </div>
+
+              <div>
+
+                <label
+                  className="
+                    mint-label
+                    block
+                    mb-2
+                  "
+                >
+
+                  Tipo
+
+                </label>
+
+                <select
+                  value={
+                    form.tipo_doctor
+                  }
+                  onChange={
+                    (e) =>
+                      setForm({
+                        ...form,
+                        tipo_doctor:
+                          e.target.value as TipoDoctor,
+                      })
+                  }
+                  className="
+                    mint-input
+                    w-full
+                    px-3
+                    py-2.5
+                  "
+                >
+
+                  <option value="doctor">
+                    Doctor
+                  </option>
+
+                  <option value="especialista">
+                    Especialista
+                  </option>
+
+                  <option value="ambos">
+                    Ambos
+                  </option>
+
+                </select>
 
               </div>
 
@@ -1280,7 +1358,52 @@ async function cargarPreciosEspecialista(
 
       }
 
-            <div
+      <div
+        className="
+          px-5
+          py-4
+          border-b
+          border-[var(--mint-border)]
+          bg-[var(--mint-bg-soft)]
+        "
+      >
+
+        <p
+          className="
+            text-xs
+            font-bold
+            uppercase
+            tracking-[0.12em]
+            text-[var(--mint-primary)]
+            mb-1
+          "
+        >
+          Personal clínico
+        </p>
+
+        <h3
+          className="
+            text-base
+            font-bold
+            mint-text-primary
+          "
+        >
+          Doctores
+        </h3>
+
+        <p
+          className="
+            text-sm
+            mint-text-secondary
+            mt-1
+          "
+        >
+          Doctores que atienden pacientes y reciben comisión clínica.
+        </p>
+
+      </div>
+
+      <div
         className="
           overflow-x-auto
         "
@@ -1396,7 +1519,7 @@ async function cargarPreciosEspecialista(
 
                 </tr>
 
-              ) : doctores.length === 0 ? (
+              ) : doctoresClinica.length === 0 ? (
 
                 <tr>
 
@@ -1418,7 +1541,7 @@ async function cargarPreciosEspecialista(
 
               ) : (
 
-              doctores.map(
+              doctoresClinica.map(
   (doctor) => (
 
     <Fragment
@@ -1553,61 +1676,6 @@ async function cargarPreciosEspecialista(
 
             <button
               type="button"
-              onClick={() => {
-
-                if (
-                  doctorPreciosId ===
-                  doctor.id
-                ) {
-
-                  setDoctorPreciosId(
-                    null
-                  );
-
-                  setPreciosEspecialista(
-                    []
-                  );
-
-                  cancelarFormularioPrecio();
-
-                  return;
-
-                }
-
-                setDoctorPreciosId(
-                  doctor.id
-                );
-
-                cancelarFormularioPrecio();
-
-                cargarPreciosEspecialista(
-                  doctor.id
-                );
-
-              }}
-              className={`
-                mint-btn
-                inline-flex
-                items-center
-                px-3
-                py-2
-                text-sm
-
-                ${
-                  doctorPreciosId ===
-                  doctor.id
-                    ? "mint-btn-primary"
-                    : "mint-btn-secondary"
-                }
-              `}
-            >
-
-              Precios
-
-            </button>
-
-            <button
-              type="button"
               onClick={() =>
                 editarDoctor(
                   doctor
@@ -1639,727 +1707,6 @@ async function cargarPreciosEspecialista(
 
       </tr>
 
-      {
-        doctorPreciosId ===
-          doctor.id && (
-
-          <tr>
-
-            <td
-              colSpan={6}
-              className="
-                p-0
-                bg-[var(--mint-bg-soft)]
-              "
-            >
-
-              <div
-                className="
-                  m-4
-                  mint-card
-                  overflow-hidden
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    justify-between
-                    gap-4
-                    px-5
-                    py-4
-                    border-b
-                    border-[var(--mint-border)]
-                  "
-                >
-
-                  <div>
-
-                    <p
-                      className="
-                        text-xs
-                        font-bold
-                        uppercase
-                        tracking-[0.12em]
-                        text-[var(--mint-primary)]
-                        mb-1
-                      "
-                    >
-                      Tarifario especialista
-                    </p>
-
-                    <h3
-                      className="
-                        text-lg
-                        font-bold
-                        mint-text-primary
-                      "
-                    >
-                      Precios de{" "}
-                      {
-                        doctor.nombre
-                      }
-                    </h3>
-
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={
-                      abrirNuevoPrecioEspecialista
-                    }
-                    className="
-                      mint-btn
-                      mint-btn-primary
-                      inline-flex
-                      items-center
-                      gap-2
-                      px-4
-                      py-2
-                      text-sm
-                    "
-                  >
-
-                    <Plus
-                      size={16}
-                    />
-
-                    Agregar tratamiento
-
-                  </button>
-
-                </div>
-
-                {
-                  mostrarFormularioPrecio && (
-
-                    <div
-                      className="
-                        p-5
-                        border-b
-                        border-[var(--mint-border)]
-                        bg-[var(--mint-bg-soft)]
-                      "
-                    >
-
-                      <div
-                        className="
-                          flex
-                          items-center
-                          justify-between
-                          gap-4
-                          mb-4
-                        "
-                      >
-
-                        <h4
-                          className="
-                            font-bold
-                            mint-text-primary
-                          "
-                        >
-
-                          {
-                            precioEditandoId !== null
-                              ? "Editar precio"
-                              : "Agregar tratamiento"
-                          }
-
-                        </h4>
-
-                        <button
-                          type="button"
-                          onClick={
-                            cancelarFormularioPrecio
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-ghost
-                            p-2
-                          "
-                        >
-
-                          <X
-                            size={18}
-                          />
-
-                        </button>
-
-                      </div>
-
-                      <div
-                        className="
-                          grid
-                          grid-cols-1
-                          md:grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_auto]
-                          gap-4
-                          items-end
-                        "
-                      >
-
-                        <div>
-
-                          <label
-                            className="
-                              mint-label
-                              block
-                              mb-2
-                            "
-                          >
-                            Tratamiento
-                          </label>
-
-                          <select
-                            value={
-                              formPrecio.tratamiento_id
-                            }
-                            onChange={
-                              (e) =>
-                                setFormPrecio({
-                                  ...formPrecio,
-                                  tratamiento_id:
-                                    e.target.value,
-                                })
-                            }
-                            disabled={
-                              precioEditandoId !== null
-                            }
-                            className="
-                              mint-input
-                              w-full
-                              px-3
-                              py-2.5
-                              disabled:opacity-60
-                              disabled:cursor-not-allowed
-                            "
-                          >
-
-                            <option
-                              value=""
-                            >
-                              Selecciona tratamiento
-                            </option>
-
-                            {
-                              catalogoTratamientos.map(
-                                (tratamiento) => (
-
-                                  <option
-                                    key={
-                                      tratamiento.id
-                                    }
-                                    value={
-                                      tratamiento.id
-                                    }
-                                  >
-                                    {
-                                      tratamiento.nombre
-                                    }
-                                  </option>
-
-                                )
-                              )
-                            }
-
-                          </select>
-
-                        </div>
-
-                        <div>
-
-                          <label
-                            className="
-                              mint-label
-                              block
-                              mb-2
-                            "
-                          >
-                            Costo
-                          </label>
-
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={
-                              formPrecio.costo
-                            }
-                            onChange={
-                              (e) =>
-                                setFormPrecio({
-                                  ...formPrecio,
-                                  costo:
-                                    e.target.value,
-                                })
-                            }
-                            placeholder="0.00"
-                            className="
-                              mint-input
-                              w-full
-                              px-3
-                              py-2.5
-                            "
-                          />
-
-                        </div>
-
-                        <div
-                          className="
-                            flex
-                            flex-col
-                            gap-2
-                          "
-                        >
-
-                          <label
-                            className="
-                              mint-label
-                            "
-                          >
-                            Moneda
-                          </label>
-
-                          <div
-                            className="
-                              inline-flex
-                              p-1
-                              rounded-xl
-                              bg-[var(--mint-bg-muted)]
-                            "
-                          >
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormPrecio({
-                                  ...formPrecio,
-                                  moneda: "MXN",
-                                })
-                              }
-                              className={`
-                                px-3
-                                py-2
-                                rounded-lg
-                                text-sm
-                                font-bold
-                                transition
-
-                                ${
-                                  formPrecio.moneda ===
-                                  "MXN"
-                                    ? `
-                                      bg-[var(--mint-bg-card)]
-                                      text-[var(--mint-primary)]
-                                      shadow-sm
-                                    `
-                                    : `
-                                      mint-text-secondary
-                                    `
-                                }
-                              `}
-                            >
-                              MXN
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setFormPrecio({
-                                  ...formPrecio,
-                                  moneda: "USD",
-                                })
-                              }
-                              className={`
-                                px-3
-                                py-2
-                                rounded-lg
-                                text-sm
-                                font-bold
-                                transition
-
-                                ${
-                                  formPrecio.moneda ===
-                                  "USD"
-                                    ? `
-                                      bg-[var(--mint-bg-card)]
-                                      text-[var(--mint-accent)]
-                                      shadow-sm
-                                    `
-                                    : `
-                                      mint-text-secondary
-                                    `
-                                }
-                              `}
-                            >
-                              USD
-                            </button>
-
-                          </div>
-
-                        </div>
-
-                      </div>
-
-                      <div
-                        className="
-                          flex
-                          justify-end
-                          gap-2
-                          mt-5
-                        "
-                      >
-
-                        <button
-                          type="button"
-                          onClick={
-                            cancelarFormularioPrecio
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-neutral
-                            px-4
-                            py-2.5
-                            text-sm
-                          "
-                        >
-                          Cancelar
-                        </button>
-
-                        <button
-                          type="button"
-                          disabled={
-                            guardandoPrecio
-                          }
-                          onClick={
-                            guardarPrecioEspecialista
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-primary
-                            inline-flex
-                            items-center
-                            gap-2
-                            px-4
-                            py-2.5
-                            text-sm
-                            disabled:opacity-50
-                            disabled:cursor-not-allowed
-                          "
-                        >
-
-                          <Save
-                            size={16}
-                          />
-
-                          {
-                            guardandoPrecio
-                              ? "Guardando..."
-                              : "Guardar precio"
-                          }
-
-                        </button>
-
-                      </div>
-
-                    </div>
-
-                  )
-                }
-
-                <div
-                  className="
-                    px-5
-                    py-4
-                  "
-                >
-
-                  {
-                    preciosEspecialista.length === 0
-                      ? (
-
-                        <div
-                          className="
-                            py-8
-                            text-center
-                            mint-text-secondary
-                          "
-                        >
-
-                          No hay precios configurados para{" "}
-
-                          <strong>
-                            {
-                              doctor.nombre
-                            }
-                          </strong>.
-
-                        </div>
-
-                      )
-                      : (
-
-                        <div
-                          className="
-                            overflow-x-auto
-                          "
-                        >
-
-                          <table
-                            className="
-                              w-full
-                              text-sm
-                            "
-                          >
-
-                            <thead
-                              className="
-                                mint-text-secondary
-                              "
-                            >
-
-                              <tr>
-
-                                <th
-                                  className="
-                                    text-left
-                                    py-3
-                                    pr-4
-                                    font-semibold
-                                  "
-                                >
-                                  Tratamiento
-                                </th>
-
-                                <th
-                                  className="
-                                    text-right
-                                    px-4
-                                    py-3
-                                    font-semibold
-                                  "
-                                >
-                                  Costo
-                                </th>
-
-                                <th
-                                  className="
-                                    text-center
-                                    px-4
-                                    py-3
-                                    font-semibold
-                                  "
-                                >
-                                  Moneda
-                                </th>
-
-                                <th
-                                  className="
-                                    text-center
-                                    px-4
-                                    py-3
-                                    font-semibold
-                                  "
-                                >
-                                  Estado
-                                </th>
-
-                                <th
-                                  className="
-                                    text-right
-                                    pl-4
-                                    py-3
-                                    font-semibold
-                                  "
-                                >
-                                  Acción
-                                </th>
-
-                              </tr>
-
-                            </thead>
-
-                            <tbody>
-
-                              {
-                                preciosEspecialista.map(
-                                  (precio) => (
-
-                                    <tr
-                                      key={
-                                        precio.id
-                                      }
-                                      className="
-                                        border-t
-                                        border-[var(--mint-border)]
-                                      "
-                                    >
-
-                                      <td
-                                        className="
-                                          py-4
-                                          pr-4
-                                          font-semibold
-                                          mint-text-primary
-                                        "
-                                      >
-                                        {
-  catalogoTratamientos.find(
-    (tratamiento: any) =>
-      Number(tratamiento.id) ===
-      Number(precio.tratamiento_id)
-  )?.nombre ||
-  "Tratamiento"
-}
-                                      </td>
-
-                                      <td
-                                        className="
-                                          px-4
-                                          py-4
-                                          text-right
-                                          font-bold
-                                          mint-text-primary
-                                        "
-                                      >
-                                        ${
-                                          Number(
-                                            precio.costo || 0
-                                          ).toLocaleString(
-                                            "es-MX",
-                                            {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                            }
-                                          )
-                                        }
-                                      </td>
-
-                                      <td
-                                        className="
-                                          px-4
-                                          py-4
-                                          text-center
-                                        "
-                                      >
-
-                                        <span
-                                          className={`
-                                            mint-badge
-
-                                            ${
-                                              precio.moneda ===
-                                              "USD"
-                                                ? "mint-badge-warning"
-                                                : "mint-badge-info"
-                                            }
-                                          `}
-                                        >
-                                          {
-                                            precio.moneda
-                                          }
-                                        </span>
-
-                                      </td>
-
-                                      <td
-                                        className="
-                                          px-4
-                                          py-4
-                                          text-center
-                                        "
-                                      >
-
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            cambiarEstadoPrecioEspecialista(
-                                              precio
-                                            )
-                                          }
-                                          className={`
-                                            mint-badge
-                                            cursor-pointer
-
-                                            ${
-                                              precio.activo
-                                                ? "mint-badge-success"
-                                                : "mint-badge-muted"
-                                            }
-                                          `}
-                                        >
-                                          {
-                                            precio.activo
-                                              ? "Activo"
-                                              : "Inactivo"
-                                          }
-                                        </button>
-
-                                      </td>
-
-                                      <td
-                                        className="
-                                          pl-4
-                                          py-4
-                                          text-right
-                                        "
-                                      >
-
-                                        <button
-                                          type="button"
-                                          onClick={() =>
-                                            editarPrecioEspecialista(
-                                              precio
-                                            )
-                                          }
-                                          className="
-                                            mint-btn
-                                            mint-btn-action-soft
-                                            inline-flex
-                                            items-center
-                                            gap-2
-                                            px-3
-                                            py-2
-                                            text-sm
-                                          "
-                                        >
-
-                                          <Pencil
-                                            size={15}
-                                          />
-
-                                          Editar
-
-                                        </button>
-
-                                      </td>
-
-                                    </tr>
-
-                                  )
-                                )
-                              }
-
-                            </tbody>
-
-                          </table>
-
-                        </div>
-
-                      )
-                  }
-
-                </div>
-
-              </div>
-
-            </td>
-
-          </tr>
-
-        )
-      }
-
     </Fragment>
 
   )
@@ -2371,6 +1718,1110 @@ async function cargarPreciosEspecialista(
           </tbody>
 
         </table>
+
+      </div>
+
+      <div
+        className="
+          border-t
+          border-[var(--mint-border)]
+        "
+      >
+
+        <div
+          className="
+            px-5
+            py-4
+            border-b
+            border-[var(--mint-border)]
+            bg-[var(--mint-bg-soft)]
+          "
+        >
+
+          <p
+            className="
+              text-xs
+              font-bold
+              uppercase
+              tracking-[0.12em]
+              text-[var(--mint-accent)]
+              mb-1
+            "
+          >
+            Servicios especializados
+          </p>
+
+          <h3
+            className="
+              text-base
+              font-bold
+              mint-text-primary
+            "
+          >
+            Especialistas
+          </h3>
+
+          <p
+            className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            "
+          >
+            Especialistas externos con tarifario clínico configurado.
+          </p>
+
+        </div>
+
+        <div
+          className="
+            overflow-x-auto
+          "
+        >
+
+          <table
+            className="
+              w-full
+              text-sm
+            "
+          >
+
+            <thead
+              className="
+                bg-[var(--mint-bg-soft)]
+                mint-text-secondary
+              "
+            >
+
+              <tr>
+
+                <th
+                  className="
+                    text-left
+                    px-5
+                    py-3
+                    font-semibold
+                  "
+                >
+                  Especialista
+                </th>
+
+                <th
+                  className="
+                    text-left
+                    px-5
+                    py-3
+                    font-semibold
+                  "
+                >
+                  Especialidad
+                </th>
+
+                <th
+                  className="
+                    text-left
+                    px-5
+                    py-3
+                    font-semibold
+                  "
+                >
+                  WhatsApp
+                </th>
+
+                <th
+                  className="
+                    text-center
+                    px-5
+                    py-3
+                    font-semibold
+                  "
+                >
+                  Estado
+                </th>
+
+                <th
+                  className="
+                    text-right
+                    px-5
+                    py-3
+                    font-semibold
+                  "
+                >
+                  Acción
+                </th>
+
+              </tr>
+
+            </thead>
+
+            <tbody>
+
+              {
+
+                cargando ? (
+
+                  <tr>
+
+                    <td
+                      colSpan={5}
+                      className="
+                        px-5
+                        py-8
+                        text-center
+                        mint-text-secondary
+                      "
+                    >
+                      Cargando especialistas...
+                    </td>
+
+                  </tr>
+
+                ) : especialistas.length === 0 ? (
+
+                  <tr>
+
+                    <td
+                      colSpan={5}
+                      className="
+                        px-5
+                        py-8
+                        text-center
+                        mint-text-secondary
+                      "
+                    >
+                      No hay especialistas registrados.
+                    </td>
+
+                  </tr>
+
+                ) : (
+
+                  especialistas.map(
+                    (doctor) => (
+
+                      <Fragment
+                        key={
+                          doctor.id
+                        }
+                      >
+
+                        <tr
+                          className="
+                            border-t
+                            border-[var(--mint-border)]
+                            hover:bg-[var(--mint-bg-soft)]
+                            transition-colors
+                          "
+                        >
+
+                          <td
+                            className="
+                              px-5
+                              py-4
+                              font-bold
+                              mint-text-primary
+                            "
+                          >
+                            {
+                              doctor.nombre
+                            }
+                          </td>
+
+                          <td
+                            className="
+                              px-5
+                              py-4
+                              mint-text-secondary
+                            "
+                          >
+                            {
+                              doctor.especialidad ||
+                              "—"
+                            }
+                          </td>
+
+                          <td
+                            className="
+                              px-5
+                              py-4
+                              mint-text-secondary
+                            "
+                          >
+                            {
+                              doctor.telefono ||
+                              "Sin teléfono"
+                            }
+                          </td>
+
+                          <td
+                            className="
+                              px-5
+                              py-4
+                              text-center
+                            "
+                          >
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                cambiarEstado(
+                                  doctor
+                                )
+                              }
+                              className={`
+                                mint-badge
+                                cursor-pointer
+
+                                ${
+                                  doctor.activo
+                                    ? "mint-badge-success"
+                                    : "mint-badge-muted"
+                                }
+                              `}
+                            >
+                              {
+                                doctor.activo
+                                  ? "Activo"
+                                  : "Inactivo"
+                              }
+                            </button>
+
+                          </td>
+
+                          <td
+                            className="
+                              px-5
+                              py-4
+                              text-right
+                            "
+                          >
+
+                            <div
+                              className="
+                                inline-flex
+                                items-center
+                                justify-end
+                                gap-2
+                              "
+                            >
+
+                              <button
+                                type="button"
+                                onClick={() => {
+
+                                  if (
+                                    doctorPreciosId ===
+                                    doctor.id
+                                  ) {
+
+                                    setDoctorPreciosId(
+                                      null
+                                    );
+
+                                    setPreciosEspecialista(
+                                      []
+                                    );
+
+                                    cancelarFormularioPrecio();
+
+                                    return;
+
+                                  }
+
+                                  setDoctorPreciosId(
+                                    doctor.id
+                                  );
+
+                                  cancelarFormularioPrecio();
+
+                                  cargarPreciosEspecialista(
+                                    doctor.id
+                                  );
+
+                                }}
+                                className={`
+                                  mint-btn
+                                  inline-flex
+                                  items-center
+                                  px-3
+                                  py-2
+                                  text-sm
+
+                                  ${
+                                    doctorPreciosId ===
+                                    doctor.id
+                                      ? "mint-btn-primary"
+                                      : "mint-btn-secondary"
+                                  }
+                                `}
+                              >
+                                Precios
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  editarDoctor(
+                                    doctor
+                                  )
+                                }
+                                className="
+                                  mint-btn
+                                  mint-btn-action-soft
+                                  inline-flex
+                                  items-center
+                                  gap-2
+                                  px-3
+                                  py-2
+                                  text-sm
+                                "
+                              >
+
+                                <Pencil
+                                  size={15}
+                                />
+
+                                Editar
+
+                              </button>
+
+                            </div>
+
+                          </td>
+
+                        </tr>
+
+                        {
+                          doctorPreciosId ===
+                            doctor.id && (
+
+                            <tr>
+
+                              <td
+                                colSpan={5}
+                                className="
+                                  p-0
+                                  bg-[var(--mint-bg-soft)]
+                                "
+                              >
+
+                                <div
+                                  className="
+                                    m-4
+                                    mint-card
+                                    overflow-hidden
+                                  "
+                                >
+
+                                  <div
+                                    className="
+                                      flex
+                                      items-center
+                                      justify-between
+                                      gap-4
+                                      px-5
+                                      py-4
+                                      border-b
+                                      border-[var(--mint-border)]
+                                    "
+                                  >
+
+                                    <div>
+
+                                      <p
+                                        className="
+                                          text-xs
+                                          font-bold
+                                          uppercase
+                                          tracking-[0.12em]
+                                          text-[var(--mint-primary)]
+                                          mb-1
+                                        "
+                                      >
+                                        Tarifario especialista
+                                      </p>
+
+                                      <h3
+                                        className="
+                                          text-lg
+                                          font-bold
+                                          mint-text-primary
+                                        "
+                                      >
+                                        Precios de{" "}
+                                        {
+                                          doctor.nombre
+                                        }
+                                      </h3>
+
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={
+                                        abrirNuevoPrecioEspecialista
+                                      }
+                                      className="
+                                        mint-btn
+                                        mint-btn-primary
+                                        inline-flex
+                                        items-center
+                                        gap-2
+                                        px-4
+                                        py-2
+                                        text-sm
+                                      "
+                                    >
+
+                                      <Plus
+                                        size={16}
+                                      />
+
+                                      Agregar tratamiento
+
+                                    </button>
+
+                                  </div>
+
+                                  {
+                                    mostrarFormularioPrecio && (
+
+                                      <div
+                                        className="
+                                          p-5
+                                          border-b
+                                          border-[var(--mint-border)]
+                                          bg-[var(--mint-bg-soft)]
+                                        "
+                                      >
+
+                                        <div
+                                          className="
+                                            flex
+                                            items-center
+                                            justify-between
+                                            gap-4
+                                            mb-4
+                                          "
+                                        >
+
+                                          <h4
+                                            className="
+                                              font-bold
+                                              mint-text-primary
+                                            "
+                                          >
+                                            {
+                                              precioEditandoId !== null
+                                                ? "Editar precio"
+                                                : "Agregar tratamiento"
+                                            }
+                                          </h4>
+
+                                          <button
+                                            type="button"
+                                            onClick={
+                                              cancelarFormularioPrecio
+                                            }
+                                            className="
+                                              mint-btn
+                                              mint-btn-ghost
+                                              p-2
+                                            "
+                                          >
+
+                                            <X
+                                              size={18}
+                                            />
+
+                                          </button>
+
+                                        </div>
+
+                                        <div
+                                          className="
+                                            grid
+                                            grid-cols-1
+                                            md:grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_auto]
+                                            gap-4
+                                            items-end
+                                          "
+                                        >
+
+                                          <div>
+
+                                            <label
+                                              className="
+                                                mint-label
+                                                block
+                                                mb-2
+                                              "
+                                            >
+                                              Tratamiento
+                                            </label>
+
+                                            <select
+                                              value={
+                                                formPrecio.tratamiento_id
+                                              }
+                                              onChange={
+                                                (e) =>
+                                                  setFormPrecio({
+                                                    ...formPrecio,
+                                                    tratamiento_id:
+                                                      e.target.value,
+                                                  })
+                                              }
+                                              disabled={
+                                                precioEditandoId !== null
+                                              }
+                                              className="
+                                                mint-input
+                                                w-full
+                                                px-3
+                                                py-2.5
+                                                disabled:opacity-60
+                                                disabled:cursor-not-allowed
+                                              "
+                                            >
+
+                                              <option value="">
+                                                Selecciona tratamiento
+                                              </option>
+
+                                              {
+                                                catalogoTratamientos.map(
+                                                  (tratamiento) => (
+
+                                                    <option
+                                                      key={
+                                                        tratamiento.id
+                                                      }
+                                                      value={
+                                                        tratamiento.id
+                                                      }
+                                                    >
+                                                      {
+                                                        tratamiento.nombre
+                                                      }
+                                                    </option>
+
+                                                  )
+                                                )
+                                              }
+
+                                            </select>
+
+                                          </div>
+
+                                          <div>
+
+                                            <label
+                                              className="
+                                                mint-label
+                                                block
+                                                mb-2
+                                              "
+                                            >
+                                              Costo
+                                            </label>
+
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={
+                                                formPrecio.costo
+                                              }
+                                              onChange={
+                                                (e) =>
+                                                  setFormPrecio({
+                                                    ...formPrecio,
+                                                    costo:
+                                                      e.target.value,
+                                                  })
+                                              }
+                                              placeholder="0.00"
+                                              className="
+                                                mint-input
+                                                w-full
+                                                px-3
+                                                py-2.5
+                                              "
+                                            />
+
+                                          </div>
+
+                                          <div
+                                            className="
+                                              flex
+                                              flex-col
+                                              gap-2
+                                            "
+                                          >
+
+                                            <label
+                                              className="
+                                                mint-label
+                                              "
+                                            >
+                                              Moneda
+                                            </label>
+
+                                            <div
+                                              className="
+                                                inline-flex
+                                                p-1
+                                                rounded-xl
+                                                bg-[var(--mint-bg-muted)]
+                                              "
+                                            >
+
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setFormPrecio({
+                                                    ...formPrecio,
+                                                    moneda: "MXN",
+                                                  })
+                                                }
+                                                className={`
+                                                  px-3
+                                                  py-2
+                                                  rounded-lg
+                                                  text-sm
+                                                  font-bold
+                                                  transition
+
+                                                  ${
+                                                    formPrecio.moneda ===
+                                                    "MXN"
+                                                      ? `
+                                                        bg-[var(--mint-bg-card)]
+                                                        text-[var(--mint-primary)]
+                                                        shadow-sm
+                                                      `
+                                                      : `
+                                                        mint-text-secondary
+                                                      `
+                                                  }
+                                                `}
+                                              >
+                                                MXN
+                                              </button>
+
+                                              <button
+                                                type="button"
+                                                onClick={() =>
+                                                  setFormPrecio({
+                                                    ...formPrecio,
+                                                    moneda: "USD",
+                                                  })
+                                                }
+                                                className={`
+                                                  px-3
+                                                  py-2
+                                                  rounded-lg
+                                                  text-sm
+                                                  font-bold
+                                                  transition
+
+                                                  ${
+                                                    formPrecio.moneda ===
+                                                    "USD"
+                                                      ? `
+                                                        bg-[var(--mint-bg-card)]
+                                                        text-[var(--mint-accent)]
+                                                        shadow-sm
+                                                      `
+                                                      : `
+                                                        mint-text-secondary
+                                                      `
+                                                  }
+                                                `}
+                                              >
+                                                USD
+                                              </button>
+
+                                            </div>
+
+                                          </div>
+
+                                        </div>
+
+                                        <div
+                                          className="
+                                            flex
+                                            justify-end
+                                            gap-2
+                                            mt-5
+                                          "
+                                        >
+
+                                          <button
+                                            type="button"
+                                            onClick={
+                                              cancelarFormularioPrecio
+                                            }
+                                            className="
+                                              mint-btn
+                                              mint-btn-neutral
+                                              px-4
+                                              py-2.5
+                                              text-sm
+                                            "
+                                          >
+                                            Cancelar
+                                          </button>
+
+                                          <button
+                                            type="button"
+                                            disabled={
+                                              guardandoPrecio
+                                            }
+                                            onClick={
+                                              guardarPrecioEspecialista
+                                            }
+                                            className="
+                                              mint-btn
+                                              mint-btn-primary
+                                              inline-flex
+                                              items-center
+                                              gap-2
+                                              px-4
+                                              py-2.5
+                                              text-sm
+                                              disabled:opacity-50
+                                              disabled:cursor-not-allowed
+                                            "
+                                          >
+
+                                            <Save
+                                              size={16}
+                                            />
+
+                                            {
+                                              guardandoPrecio
+                                                ? "Guardando..."
+                                                : "Guardar precio"
+                                            }
+
+                                          </button>
+
+                                        </div>
+
+                                      </div>
+
+                                    )
+                                  }
+
+                                  <div
+                                    className="
+                                      px-5
+                                      py-4
+                                    "
+                                  >
+
+                                    {
+                                      preciosEspecialista.length === 0
+                                        ? (
+
+                                          <div
+                                            className="
+                                              py-8
+                                              text-center
+                                              mint-text-secondary
+                                            "
+                                          >
+                                            No hay precios configurados para{" "}
+                                            <strong>
+                                              {
+                                                doctor.nombre
+                                              }
+                                            </strong>.
+                                          </div>
+
+                                        )
+                                        : (
+
+                                          <div
+                                            className="
+                                              overflow-x-auto
+                                            "
+                                          >
+
+                                            <table
+                                              className="
+                                                w-full
+                                                text-sm
+                                              "
+                                            >
+
+                                              <thead
+                                                className="
+                                                  mint-text-secondary
+                                                "
+                                              >
+
+                                                <tr>
+
+                                                  <th
+                                                    className="
+                                                      text-left
+                                                      py-3
+                                                      pr-4
+                                                      font-semibold
+                                                    "
+                                                  >
+                                                    Tratamiento
+                                                  </th>
+
+                                                  <th
+                                                    className="
+                                                      text-right
+                                                      px-4
+                                                      py-3
+                                                      font-semibold
+                                                    "
+                                                  >
+                                                    Costo
+                                                  </th>
+
+                                                  <th
+                                                    className="
+                                                      text-center
+                                                      px-4
+                                                      py-3
+                                                      font-semibold
+                                                    "
+                                                  >
+                                                    Moneda
+                                                  </th>
+
+                                                  <th
+                                                    className="
+                                                      text-center
+                                                      px-4
+                                                      py-3
+                                                      font-semibold
+                                                    "
+                                                  >
+                                                    Estado
+                                                  </th>
+
+                                                  <th
+                                                    className="
+                                                      text-right
+                                                      pl-4
+                                                      py-3
+                                                      font-semibold
+                                                    "
+                                                  >
+                                                    Acción
+                                                  </th>
+
+                                                </tr>
+
+                                              </thead>
+
+                                              <tbody>
+
+                                                {
+                                                  preciosEspecialista.map(
+                                                    (precio) => (
+
+                                                      <tr
+                                                        key={
+                                                          precio.id
+                                                        }
+                                                        className="
+                                                          border-t
+                                                          border-[var(--mint-border)]
+                                                        "
+                                                      >
+
+                                                        <td
+                                                          className="
+                                                            py-4
+                                                            pr-4
+                                                            font-semibold
+                                                            mint-text-primary
+                                                          "
+                                                        >
+                                                          {
+                                                            catalogoTratamientos.find(
+                                                              (tratamiento: any) =>
+                                                                Number(
+                                                                  tratamiento.id
+                                                                ) ===
+                                                                Number(
+                                                                  precio.tratamiento_id
+                                                                )
+                                                            )?.nombre ||
+                                                            "Tratamiento"
+                                                          }
+                                                        </td>
+
+                                                        <td
+                                                          className="
+                                                            px-4
+                                                            py-4
+                                                            text-right
+                                                            font-bold
+                                                            mint-text-primary
+                                                          "
+                                                        >
+                                                          ${
+                                                            Number(
+                                                              precio.costo || 0
+                                                            ).toLocaleString(
+                                                              "es-MX",
+                                                              {
+                                                                minimumFractionDigits: 2,
+                                                                maximumFractionDigits: 2,
+                                                              }
+                                                            )
+                                                          }
+                                                        </td>
+
+                                                        <td
+                                                          className="
+                                                            px-4
+                                                            py-4
+                                                            text-center
+                                                          "
+                                                        >
+
+                                                          <span
+                                                            className={`
+                                                              mint-badge
+
+                                                              ${
+                                                                precio.moneda ===
+                                                                "USD"
+                                                                  ? "mint-badge-warning"
+                                                                  : "mint-badge-info"
+                                                              }
+                                                            `}
+                                                          >
+                                                            {
+                                                              precio.moneda
+                                                            }
+                                                          </span>
+
+                                                        </td>
+
+                                                        <td
+                                                          className="
+                                                            px-4
+                                                            py-4
+                                                            text-center
+                                                          "
+                                                        >
+
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              cambiarEstadoPrecioEspecialista(
+                                                                precio
+                                                              )
+                                                            }
+                                                            className={`
+                                                              mint-badge
+                                                              cursor-pointer
+
+                                                              ${
+                                                                precio.activo
+                                                                  ? "mint-badge-success"
+                                                                  : "mint-badge-muted"
+                                                              }
+                                                            `}
+                                                          >
+                                                            {
+                                                              precio.activo
+                                                                ? "Activo"
+                                                                : "Inactivo"
+                                                            }
+                                                          </button>
+
+                                                        </td>
+
+                                                        <td
+                                                          className="
+                                                            pl-4
+                                                            py-4
+                                                            text-right
+                                                          "
+                                                        >
+
+                                                          <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                              editarPrecioEspecialista(
+                                                                precio
+                                                              )
+                                                            }
+                                                            className="
+                                                              mint-btn
+                                                              mint-btn-action-soft
+                                                              inline-flex
+                                                              items-center
+                                                              gap-2
+                                                              px-3
+                                                              py-2
+                                                              text-sm
+                                                            "
+                                                          >
+
+                                                            <Pencil
+                                                              size={15}
+                                                            />
+
+                                                            Editar
+
+                                                          </button>
+
+                                                        </td>
+
+                                                      </tr>
+
+                                                    )
+                                                  )
+                                                }
+
+                                              </tbody>
+
+                                            </table>
+
+                                          </div>
+
+                                        )
+                                    }
+
+                                  </div>
+
+                                </div>
+
+                              </td>
+
+                            </tr>
+
+                          )
+                        }
+
+                      </Fragment>
+
+                    )
+                  )
+
+                )
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 

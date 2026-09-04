@@ -141,7 +141,10 @@ const [nuevoTratamiento,
 
 ] = useState({
 
-  fecha: "",
+  fecha:
+    new Date().toLocaleDateString(
+      "en-CA"
+    ),
 
   tratamiento: "",
 
@@ -269,30 +272,9 @@ useEffect(() => {
 
   let activo = true;
 
-  async function cargarEspecialistasDelTratamiento() {
+  async function cargarTarifarioEspecialistas() {
 
-    if (
-      !mostrarModalTratamiento ||
-      !nuevoTratamiento.tratamiento
-    ) {
-
-      if (activo) {
-        setEspecialistasDisponibles([]);
-        setCargandoEspecialistas(false);
-      }
-
-      return;
-
-    }
-
-    const tratamientoCatalogo =
-      catalogoTratamientos.find(
-        (tratamiento: any) =>
-          tratamiento.nombre ===
-          nuevoTratamiento.tratamiento
-      );
-
-    if (!tratamientoCatalogo?.id) {
+    if (!mostrarModalTratamiento) {
 
       if (activo) {
         setEspecialistasDisponibles([]);
@@ -316,15 +298,11 @@ useEffect(() => {
         "id, doctor_id, tratamiento_id, costo, moneda, activo"
       )
       .eq(
-        "tratamiento_id",
-        tratamientoCatalogo.id
-      )
-      .eq(
         "activo",
         true
       )
       .order(
-        "costo",
+        "doctor_id",
         { ascending: true }
       );
 
@@ -335,7 +313,7 @@ useEffect(() => {
     if (error) {
 
       console.error(
-        "Error cargando especialistas del tratamiento:",
+        "Error cargando tarifario de especialistas:",
         error
       );
 
@@ -345,32 +323,41 @@ useEffect(() => {
 
     }
 
-    const preciosConDoctor =
-      (data || [])
-        .map(
-          (precio: any) => ({
-            ...precio,
-            doctor: doctores.find(
-              (doctor: any) =>
-                Number(doctor.id) ===
-                Number(precio.doctor_id)
-            ) || null,
-          })
+    const tarifarioConDoctor =
+  (data || [])
+    .map(
+      (precio: any) => ({
+        ...precio,
+
+        doctor:
+          doctores.find(
+            (doctor: any) =>
+              Number(doctor.id) ===
+              Number(precio.doctor_id)
+          ) || null,
+
+      })
+    )
+    .filter(
+      (precio: any) =>
+        precio.doctor &&
+        (
+          precio.doctor.tipo_doctor ===
+            "especialista" ||
+          precio.doctor.tipo_doctor ===
+            "ambos"
         )
-        .filter(
-          (precio: any) =>
-            precio.doctor
-        );
+    );
 
     setEspecialistasDisponibles(
-      preciosConDoctor
+      tarifarioConDoctor
     );
 
     setCargandoEspecialistas(false);
 
   }
 
-  cargarEspecialistasDelTratamiento();
+  cargarTarifarioEspecialistas();
 
   return () => {
     activo = false;
@@ -378,8 +365,6 @@ useEffect(() => {
 
 }, [
   mostrarModalTratamiento,
-  nuevoTratamiento.tratamiento,
-  catalogoTratamientos,
   doctores,
 ]);
 
@@ -1722,19 +1707,22 @@ async function guardarTratamiento() {
 
   }
 
-  if (
-    !nuevoTratamiento.fecha ||
-    !nuevoTratamiento.tratamiento ||
-    !nuevoTratamiento.doctor
-  ) {
+ if (
+  !nuevoTratamiento.fecha ||
+  !nuevoTratamiento.tratamiento ||
+  (
+    !nuevoTratamiento.doctor &&
+    !nuevoTratamiento.especialista_id
+  )
+) {
 
-    alert(
-      "Completa fecha, tratamiento y doctor."
-    );
+  alert(
+    "Completa fecha, tratamiento y selecciona un doctor o especialista."
+  );
 
-    return;
+  return;
 
-  }
+}
 
 const tratamientoCatalogoSeleccionado =
   catalogoTratamientos.find(
@@ -2259,7 +2247,10 @@ notas:
 
 setNuevoTratamiento({
 
-  fecha: "",
+  fecha:
+    new Date().toLocaleDateString(
+      "en-CA"
+    ),
 
   tratamiento: "",
 
@@ -4419,51 +4410,81 @@ const pacientesFiltrados =
       className="
         fixed
         inset-0
-        bg-black/50
+        bg-slate-950/45
+        backdrop-blur-[2px]
         flex
         items-center
         justify-center
         z-50
+        p-4
       "
     >
 
       <div
         className="
           mint-card
-          p-6
           w-full
-          max-w-xl
+          max-w-2xl
+          max-h-[90vh]
+          overflow-y-auto
+          p-6
+          md:p-7
+          rounded-3xl
+          shadow-2xl
+          border
+          border-slate-200
         "
       >
 
-        <h2
+        <div
           className="
-            text-2xl
-            font-bold
-            mint-text-primary
-            mb-2
-          "
-        >
-
-          Nuevo Tratamiento
-
-        </h2>
-
-        <p
-          className="
-            text-sm
-            mint-text-secondary
             mb-5
+            pb-4
+            border-b
+            border-slate-200
           "
         >
 
-          Registra la información clínica del tratamiento.
+          <p
+            className="
+              text-xs
+              font-semibold
+              uppercase
+              tracking-[0.14em]
+              text-teal-700
+              mb-1
+            "
+          >
+            Expediente clínico
+          </p>
 
-        </p>
+          <h2
+            className="
+              text-2xl
+              font-bold
+              mint-text-primary
+            "
+          >
+            Nuevo Tratamiento
+          </h2>
+
+          <p
+            className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            "
+          >
+            Registra la información clínica del tratamiento.
+          </p>
+
+        </div>
 
         <div
           className="
             grid
+            grid-cols-1
+            md:grid-cols-2
             gap-4
           "
         >
@@ -4479,27 +4500,24 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-
               Fecha
-
             </label>
 
             <input
               type="date"
-              value={
-                nuevoTratamiento.fecha
-              }
+              value={nuevoTratamiento.fecha}
               onChange={(e) =>
                 setNuevoTratamiento({
                   ...nuevoTratamiento,
-                  fecha:
-                    e.target.value,
+                  fecha: e.target.value,
                 })
               }
               className="
                 mint-input
-                p-3
                 w-full
+                h-11
+                px-3.5
+                text-sm
               "
             />
 
@@ -4516,240 +4534,18 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-
-              Tratamiento
-
-            </label>
-
-            <select
-              value={
-                nuevoTratamiento.tratamiento ||
-                ""
-              }
-              onChange={(e) => {
-
-  const tratamientoSeleccionado =
-    catalogoTratamientos.find(
-      (tratamiento: any) =>
-        tratamiento.nombre ===
-        e.target.value
-    );
-
-  if (
-    !tratamientoSeleccionado
-  ) {
-
-    setNuevoTratamiento({
-
-      ...nuevoTratamiento,
-
-      tratamiento:
-        e.target.value,
-
-      moneda: "MXN",
-
-      moneda_precio: "MXN",
-
-      total: "",
-
-      pagado: "",
-
-      laboratorio: "",
-
-      especialista: "",
-
-      especialista_id: "",
-
-      especialista_nombre: "",
-
-      moneda_especialista: "MXN",
-
-      comision_banco: "",
-
-    });
-
-    return;
-
-  }
-
-  setNuevoTratamiento({
-
-    ...nuevoTratamiento,
-
-    tratamiento:
-      tratamientoSeleccionado.nombre,
-
-    moneda: "MXN",
-
-    moneda_precio: "MXN",
-
-    total:
-      String(
-        Number(
-          tratamientoSeleccionado
-            .precio_mxn || 0
-        )
-      ),
-
-    pagado: "0",
-
-    laboratorio: "",
-
-    especialista: "0",
-
-    especialista_id: "",
-
-    especialista_nombre: "",
-
-    moneda_especialista: "MXN",
-
-    comision_banco: "0",
-
-  });
-
-}}
-              className="
-                mint-input
-                p-3
-                w-full
-              "
-            >
-
-              <option value="">
-
-                Seleccionar Tratamiento
-
-              </option>
-
-              {
-                catalogoTratamientos.map(
-                  (
-                    tratamiento: any
-                  ) => (
-
-                    <option
-                      key={
-                        tratamiento.id
-                      }
-                      value={
-                        tratamiento.nombre
-                      }
-                    >
-
-                      {
-                        tratamiento.nombre
-                      }
-
-                    </option>
-
-                  )
-                )
-              }
-
-            </select>
-
-          </div>
-
-          <div>
-
-            <label
-              className="
-                block
-                text-sm
-                font-semibold
-                mint-text-primary
-                mb-2
-              "
-            >
-
-              Moneda del tratamiento
-
-            </label>
-
-            <select
-              value={
-                nuevoTratamiento.moneda_precio ||
-                "MXN"
-              }
-              onChange={(e) => {
-                const monedaPrecio =
-                  e.target.value as
-                    | "MXN"
-                    | "USD";
-
-                const tratamientoSeleccionado =
-                  catalogoTratamientos.find(
-                    (tratamiento: any) =>
-                      tratamiento.nombre ===
-                      nuevoTratamiento.tratamiento
-                  );
-
-                const precioSeleccionado =
-                  tratamientoSeleccionado
-                    ? Number(
-                        monedaPrecio === "USD"
-                          ? tratamientoSeleccionado
-                              .precio_usd || 0
-                          : tratamientoSeleccionado
-                              .precio_mxn || 0
-                      )
-                    : 0;
-
-                setNuevoTratamiento({
-                  ...nuevoTratamiento,
-                  moneda_precio:
-                    monedaPrecio,
-                  total:
-                    String(
-                      precioSeleccionado
-                    ),
-                  pagado: "0",
-                });
-              }}
-              className="
-                mint-input
-                p-3
-                w-full
-              "
-            >
-              <option value="MXN">
-                MXN — Peso mexicano
-              </option>
-              <option value="USD">
-                USD — Dólar estadounidense
-              </option>
-            </select>
-
-          </div>
-
-          <div>
-
-            <label
-              className="
-                block
-                text-sm
-                font-semibold
-                mint-text-primary
-                mb-2
-              "
-            >
-
               Doctor
-
             </label>
 
             <select
               value={
                 doctorSeleccionado?.id
-                  ? String(
-                      doctorSeleccionado.id
-                    )
+                  ? String(doctorSeleccionado.id)
                   : ""
               }
               onChange={(e) => {
 
                 const doctor =
-
                   doctores.find(
                     (d: any) =>
                       String(d.id) ===
@@ -4761,51 +4557,45 @@ const pacientesFiltrados =
                 );
 
                 setNuevoTratamiento({
-
                   ...nuevoTratamiento,
-
                   doctor:
-                    doctor?.nombre ||
-                    "",
-
+                    doctor?.nombre || "",
                 });
 
               }}
               className="
                 mint-input
-                p-3
                 w-full
+                h-11
+                px-3.5
+                text-sm
               "
             >
 
               <option value="">
-
                 Seleccionar Doctor
-
               </option>
 
-              {
-                doctores.map(
-                  (
-                    doctor: any
-                  ) => (
+             {
+  doctores
+    .filter(
+      (doctor: any) =>
+        doctor.tipo_doctor === "doctor" ||
+        doctor.tipo_doctor === "ambos"
+    )
+    .map(
+      (doctor: any) => (
 
-                    <option
-                      key={
-                        doctor.id
-                      }
-                      value={
-                        doctor.id
-                      }
-                    >
+        <option
+          key={doctor.id}
+          value={doctor.id}
+        >
+          {doctor.nombre}
+        </option>
 
-                      {doctor.nombre}
-
-                    </option>
-
-                  )
-                )
-              }
+      )
+    )
+}
 
             </select>
 
@@ -4822,9 +4612,7 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-
               Especialista
-
             </label>
 
             <select
@@ -4834,14 +4622,10 @@ const pacientesFiltrados =
               }
               onChange={(e) => {
 
-                const precioEspecialista =
-                  especialistasDisponibles.find(
-                    (precio: any) =>
-                      String(precio.doctor_id) ===
-                      e.target.value
-                  );
+                const especialistaId =
+                  e.target.value;
 
-                if (!precioEspecialista) {
+                if (!especialistaId) {
 
                   setNuevoTratamiento({
                     ...nuevoTratamiento,
@@ -4849,79 +4633,84 @@ const pacientesFiltrados =
                     especialista_nombre: "",
                     especialista: "0",
                     moneda_especialista: "MXN",
+                    tratamiento: "",
+                    total: "",
+                    pagado: "",
                   });
 
                   return;
-
                 }
+
+                const especialistaSeleccionado =
+                  especialistasDisponibles.find(
+                    (precio: any) =>
+                      String(precio.doctor_id) ===
+                      especialistaId
+                  );
 
                 setNuevoTratamiento({
                   ...nuevoTratamiento,
+
                   especialista_id:
-                    String(
-                      precioEspecialista.doctor_id
-                    ),
+                    especialistaId,
+
                   especialista_nombre:
-                    precioEspecialista.doctor
-                      ?.nombre ||
-                    "",
-                  especialista:
-                    String(
-                      Number(
-                        precioEspecialista.costo ||
-                        0
-                      )
-                    ),
+                    especialistaSeleccionado
+                      ?.doctor
+                      ?.nombre || "",
+
+                  especialista: "0",
+
                   moneda_especialista:
-                    precioEspecialista.moneda ===
-                    "USD"
-                      ? "USD"
-                      : "MXN",
+                    "MXN",
+
+                  tratamiento: "",
+
+                  total: "",
+
+                  pagado: "",
                 });
 
               }}
               className="
                 mint-input
-                p-3
                 w-full
+                h-11
+                px-3.5
+                text-sm
               "
-              disabled={
-                !nuevoTratamiento.tratamiento ||
-                cargandoEspecialistas
-              }
+              disabled={cargandoEspecialistas}
             >
 
               <option value="">
                 {
                   cargandoEspecialistas
                     ? "Cargando especialistas..."
-                    : especialistasDisponibles.length > 0
-                      ? "Sin especialista"
-                      : "No hay especialista configurado"
+                    : "Sin especialista"
                 }
               </option>
 
               {
-                especialistasDisponibles.map(
+                Array.from(
+                  new Map(
+                    especialistasDisponibles.map(
+                      (precio: any) => [
+                        String(precio.doctor_id),
+                        precio,
+                      ]
+                    )
+                  ).values()
+                ).map(
                   (precio: any) => (
 
                     <option
-                      key={precio.id}
+                      key={precio.doctor_id}
                       value={precio.doctor_id}
                     >
                       {
-                        `${precio.doctor?.nombre || "Especialista"} — ${Number(
-                          precio.costo || 0
-                        ).toLocaleString(
-                          "es-MX",
-                          {
-                            style: "currency",
-                            currency:
-                              precio.moneda === "USD"
-                                ? "USD"
-                                : "MXN",
-                          }
-                        )} ${precio.moneda || "MXN"}`
+                        precio.doctor
+                          ?.nombre ||
+                        "Especialista"
                       }
                     </option>
 
@@ -4931,36 +4720,225 @@ const pacientesFiltrados =
 
             </select>
 
-            {
-              nuevoTratamiento.especialista_id && (
+          </div>
 
-                <p
-                  className="
-                    text-xs
-                    mint-text-muted
-                    mt-1
-                  "
-                >
-                  Costo clínico guardado: {
-                    Number(
-                      nuevoTratamiento.especialista ||
-                      0
-                    ).toLocaleString(
-                      "es-MX",
-                      {
-                        style: "currency",
-                        currency:
-                          nuevoTratamiento.moneda_especialista ===
-                          "USD"
-                            ? "USD"
-                            : "MXN",
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+              Tratamiento
+            </label>
+
+            <select
+              value={
+                nuevoTratamiento.tratamiento ||
+                ""
+              }
+              onChange={(e) => {
+
+                const tratamientoSeleccionado =
+                  catalogoTratamientos.find(
+                    (tratamiento: any) =>
+                      tratamiento.nombre ===
+                      e.target.value
+                  );
+
+                if (!tratamientoSeleccionado) {
+
+                  setNuevoTratamiento({
+                    ...nuevoTratamiento,
+
+                    tratamiento: "",
+
+                    moneda: "MXN",
+
+                    moneda_precio: "MXN",
+
+                    total: "",
+
+                    pagado: "",
+
+                    especialista:
+                      nuevoTratamiento.especialista_id
+                        ? "0"
+                        : "",
+
+                    moneda_especialista:
+                      "MXN",
+
+                    comision_banco: "",
+                  });
+
+                  return;
+                }
+
+                const tarifaEspecialista =
+                  nuevoTratamiento.especialista_id
+                    ? especialistasDisponibles.find(
+                        (precio: any) =>
+                          String(
+                            precio.doctor_id
+                          ) ===
+                            String(
+                              nuevoTratamiento.especialista_id
+                            ) &&
+                          Number(
+                            precio.tratamiento_id
+                          ) ===
+                            Number(
+                              tratamientoSeleccionado.id
+                            )
+                      )
+                    : null;
+
+                setNuevoTratamiento({
+                  ...nuevoTratamiento,
+
+                  tratamiento:
+                    tratamientoSeleccionado.nombre,
+
+                  moneda: "MXN",
+
+                  moneda_precio: "MXN",
+
+                  total:
+                    String(
+                      Number(
+                        tratamientoSeleccionado
+                          .precio_mxn || 0
+                      )
+                    ),
+
+                  pagado: "0",
+
+                  laboratorio: "",
+
+                  especialista:
+                    tarifaEspecialista
+                      ? String(
+                          Number(
+                            tarifaEspecialista.costo ||
+                            0
+                          )
+                        )
+                      : "0",
+
+                  moneda_especialista:
+                    tarifaEspecialista?.moneda ===
+                    "USD"
+                      ? "USD"
+                      : "MXN",
+
+                  comision_banco: "0",
+                });
+
+              }}
+              className="
+                mint-input
+                w-full
+                h-11
+                px-3.5
+                text-sm
+              "
+            >
+
+              <option value="">
+                Seleccionar Tratamiento
+              </option>
+
+              {
+                catalogoTratamientos
+                  .filter(
+                    (tratamiento: any) => {
+
+                      if (
+                        !nuevoTratamiento.especialista_id
+                      ) {
+                        return true;
                       }
-                    )
-                  } {nuevoTratamiento.moneda_especialista}
-                </p>
 
-              )
-            }
+                      return especialistasDisponibles.some(
+                        (precio: any) =>
+                          String(
+                            precio.doctor_id
+                          ) ===
+                            String(
+                              nuevoTratamiento.especialista_id
+                            ) &&
+                          Number(
+                            precio.tratamiento_id
+                          ) ===
+                            Number(
+                              tratamiento.id
+                            )
+                      );
+
+                    }
+                  )
+                  .map(
+                    (tratamiento: any) => {
+
+                      const tarifaEspecialista =
+                        nuevoTratamiento.especialista_id
+                          ? especialistasDisponibles.find(
+                              (precio: any) =>
+                                String(
+                                  precio.doctor_id
+                                ) ===
+                                  String(
+                                    nuevoTratamiento.especialista_id
+                                  ) &&
+                                Number(
+                                  precio.tratamiento_id
+                                ) ===
+                                  Number(
+                                    tratamiento.id
+                                  )
+                            )
+                          : null;
+
+                      return (
+
+                        <option
+                          key={tratamiento.id}
+                          value={tratamiento.nombre}
+                        >
+
+                          {
+                            tarifaEspecialista
+                              ? `${tratamiento.nombre} — ${Number(
+                                  tarifaEspecialista.costo ||
+                                  0
+                                ).toLocaleString(
+                                  "es-MX",
+                                  {
+                                    style: "currency",
+                                    currency:
+                                      tarifaEspecialista.moneda ===
+                                      "USD"
+                                        ? "USD"
+                                        : "MXN",
+                                  }
+                                )} ${tarifaEspecialista.moneda || "MXN"}`
+                              : tratamiento.nombre
+                          }
+
+                        </option>
+
+                      );
+
+                    }
+                  )
+              }
+
+            </select>
 
           </div>
 
@@ -4975,9 +4953,7 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-
               Estado
-
             </label>
 
             <select
@@ -4987,41 +4963,40 @@ const pacientesFiltrados =
               }
               onChange={(e) =>
                 setNuevoTratamiento({
-
                   ...nuevoTratamiento,
-
-                  estado:
-                    e.target.value,
-
+                  estado: e.target.value,
                 })
               }
               className="
                 mint-input
-                p-3
                 w-full
+                h-11
+                px-3.5
+                text-sm
               "
-              disabled
             >
 
               <option value="Pendiente">
-
                 Pendiente
+              </option>
 
+              <option value="Confirmado">
+                Confirmado
+              </option>
+
+              <option value="En proceso">
+                En proceso
+              </option>
+
+              <option value="Finalizado">
+                Finalizado
+              </option>
+
+              <option value="Cancelado">
+                Cancelado
               </option>
 
             </select>
-
-            <p
-              className="
-                text-xs
-                mint-text-muted
-                mt-1
-              "
-            >
-
-              El doctor podrá confirmar y actualizar el estado posteriormente.
-
-            </p>
 
           </div>
 
@@ -5036,31 +5011,25 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-
-              Notas clínicas iniciales
-
+              Notas / Observaciones
             </label>
 
             <textarea
-              placeholder="Observaciones relevantes sobre el tratamiento..."
-              value={
-                nuevoTratamiento.notas
-              }
+              placeholder="Agrega notas u observaciones del tratamiento..."
+              value={nuevoTratamiento.notas}
               onChange={(e) =>
                 setNuevoTratamiento({
-
                   ...nuevoTratamiento,
-
-                  notas:
-                    e.target.value,
-
+                  notas: e.target.value,
                 })
               }
               className="
                 mint-input
-                p-3
-                min-h-[120px]
                 w-full
+                min-h-[80px]
+                px-3.5
+                py-2.5
+                text-sm
                 resize-y
               "
             />
@@ -5072,9 +5041,15 @@ const pacientesFiltrados =
         <div
           className="
             flex
-            justify-end
+            flex-col-reverse
+            sm:flex-row
+            sm:items-center
+            sm:justify-end
             gap-3
             mt-6
+            pt-5
+            border-t
+            border-slate-200
           "
         >
 
@@ -5102,14 +5077,14 @@ const pacientesFiltrados =
             className="
               mint-btn
               mint-btn-secondary
-              px-4
-              py-2
+              px-5
+              py-2.5
               text-sm
+              font-semibold
+              sm:min-w-[110px]
             "
           >
-
             Cancelar
-
           </button>
 
           <button
@@ -5120,14 +5095,15 @@ const pacientesFiltrados =
             className="
               mint-btn
               mint-btn-primary
-              px-4
-              py-2
+              px-5
+              py-2.5
               text-sm
+              font-semibold
+              sm:min-w-[180px]
+              shadow-sm
             "
           >
-
             Guardar Tratamiento
-
           </button>
 
         </div>
