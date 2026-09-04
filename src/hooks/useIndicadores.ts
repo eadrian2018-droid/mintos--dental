@@ -421,15 +421,84 @@ export default function useIndicadores({
         0
       );
 
+  /*
+  |--------------------------------------------------------------------------
+  | PAGOS EN EFECTIVO A ESPECIALISTAS
+  |--------------------------------------------------------------------------
+  |
+  | El costo del especialista ya afecta Base clínica.
+  | Aquí únicamente descontamos de la caja física cuando
+  | ese especialista YA fue pagado en Efectivo.
+  |
+  */
+
+  const pagosEspecialistasEfectivoMXN =
+    tratamientosFiltrados
+      .filter(
+        (tratamiento: any) =>
+          tratamiento.especialista_pagado === true
+          &&
+          tratamiento.especialista_metodo_pago ===
+            "Efectivo"
+          &&
+          (
+            !tratamiento.moneda_especialista
+            ||
+            tratamiento.moneda_especialista ===
+              "MXN"
+          )
+      )
+      .reduce(
+        (
+          total,
+          tratamiento: any
+        ) =>
+          total +
+          Number(
+            tratamiento.especialista ||
+            0
+          ),
+        0
+      );
+
+  const pagosEspecialistasEfectivoUSD =
+    tratamientosFiltrados
+      .filter(
+        (tratamiento: any) =>
+          tratamiento.especialista_pagado === true
+          &&
+          tratamiento.especialista_metodo_pago ===
+            "Efectivo"
+          &&
+          tratamiento.moneda_especialista ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          tratamiento: any
+        ) =>
+          total +
+          Number(
+            tratamiento.especialista ||
+            0
+          ),
+        0
+      );
+
   const cajaMXN =
     cobrosEfectivoMXN
     -
-    gastosEfectivoMXN;
+    gastosEfectivoMXN
+    -
+    pagosEspecialistasEfectivoMXN;
 
   const cajaUSD =
     cobrosEfectivoUSD
     -
-    gastosEfectivoUSD;
+    gastosEfectivoUSD
+    -
+    pagosEspecialistasEfectivoUSD;
 
   /*
   |--------------------------------------------------------------------------

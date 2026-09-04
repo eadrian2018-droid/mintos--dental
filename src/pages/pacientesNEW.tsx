@@ -159,6 +159,12 @@ const [nuevoTratamiento,
 
   especialista: "",
 
+  especialista_id: "",
+
+  especialista_nombre: "",
+
+  moneda_especialista: "MXN" as "MXN" | "USD",
+
   comision_banco: "",
 
   total: "",
@@ -189,6 +195,16 @@ const [
   catalogoTratamientos,
   setCatalogoTratamientos,
 ] = useState<any[]>([]);
+
+const [
+  especialistasDisponibles,
+  setEspecialistasDisponibles,
+] = useState<any[]>([]);
+
+const [
+  cargandoEspecialistas,
+  setCargandoEspecialistas,
+] = useState(false);
 
 const [
   notasClinicas,
@@ -248,6 +264,124 @@ useEffect(() => {
   cargarTipoCambio();
 
 }, []);
+
+useEffect(() => {
+
+  let activo = true;
+
+  async function cargarEspecialistasDelTratamiento() {
+
+    if (
+      !mostrarModalTratamiento ||
+      !nuevoTratamiento.tratamiento
+    ) {
+
+      if (activo) {
+        setEspecialistasDisponibles([]);
+        setCargandoEspecialistas(false);
+      }
+
+      return;
+
+    }
+
+    const tratamientoCatalogo =
+      catalogoTratamientos.find(
+        (tratamiento: any) =>
+          tratamiento.nombre ===
+          nuevoTratamiento.tratamiento
+      );
+
+    if (!tratamientoCatalogo?.id) {
+
+      if (activo) {
+        setEspecialistasDisponibles([]);
+        setCargandoEspecialistas(false);
+      }
+
+      return;
+
+    }
+
+    setCargandoEspecialistas(true);
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(
+        "especialista_tratamientos"
+      )
+      .select(
+        "id, doctor_id, tratamiento_id, costo, moneda, activo"
+      )
+      .eq(
+        "tratamiento_id",
+        tratamientoCatalogo.id
+      )
+      .eq(
+        "activo",
+        true
+      )
+      .order(
+        "costo",
+        { ascending: true }
+      );
+
+    if (!activo) {
+      return;
+    }
+
+    if (error) {
+
+      console.error(
+        "Error cargando especialistas del tratamiento:",
+        error
+      );
+
+      setEspecialistasDisponibles([]);
+      setCargandoEspecialistas(false);
+      return;
+
+    }
+
+    const preciosConDoctor =
+      (data || [])
+        .map(
+          (precio: any) => ({
+            ...precio,
+            doctor: doctores.find(
+              (doctor: any) =>
+                Number(doctor.id) ===
+                Number(precio.doctor_id)
+            ) || null,
+          })
+        )
+        .filter(
+          (precio: any) =>
+            precio.doctor
+        );
+
+    setEspecialistasDisponibles(
+      preciosConDoctor
+    );
+
+    setCargandoEspecialistas(false);
+
+  }
+
+  cargarEspecialistasDelTratamiento();
+
+  return () => {
+    activo = false;
+  };
+
+}, [
+  mostrarModalTratamiento,
+  nuevoTratamiento.tratamiento,
+  catalogoTratamientos,
+  doctores,
+]);
 
 async function cargarTipoCambio() {
 
@@ -1806,6 +1940,31 @@ resta:
     0
   ),
 
+laboratorio:
+  Number(
+    nuevo.laboratorio || 0
+  ),
+
+especialista:
+  Number(
+    nuevo.especialista || 0
+  ),
+
+especialista_id:
+  nuevo.especialista_id
+    ? Number(
+        nuevo.especialista_id
+      )
+    : null,
+
+especialista_nombre:
+  nuevo.especialista_nombre ||
+  null,
+
+moneda_especialista:
+  nuevo.moneda_especialista ||
+  "MXN",
+
 notas:
   nuevo.notas || "",
 
@@ -1900,6 +2059,21 @@ especialista:
   Number(
     nuevo.especialista || 0
   ),
+
+especialista_id:
+  nuevo.especialista_id
+    ? Number(
+        nuevo.especialista_id
+      )
+    : null,
+
+especialista_nombre:
+  nuevo.especialista_nombre ||
+  null,
+
+moneda_especialista:
+  nuevo.moneda_especialista ||
+  "MXN",
 
 comision_banco:
   Number(
@@ -2003,6 +2177,18 @@ notas:
       data.especialista ||
       0,
 
+    especialista_id:
+      data.especialista_id ||
+      null,
+
+    especialista_nombre:
+      data.especialista_nombre ||
+      "",
+
+    moneda_especialista:
+      data.moneda_especialista ||
+      "MXN",
+
     comision_banco:
       data.comision_banco ||
       0,
@@ -2090,6 +2276,12 @@ setNuevoTratamiento({
   laboratorio: "",
 
   especialista: "",
+
+  especialista_id: "",
+
+  especialista_nombre: "",
+
+  moneda_especialista: "MXN",
 
   comision_banco: "",
 
@@ -2251,6 +2443,15 @@ resta_original:
 
 especialista:
   t.especialista,
+
+especialista_id:
+  t.especialista_id,
+
+especialista_nombre:
+  t.especialista_nombre || "",
+
+moneda_especialista:
+  t.moneda_especialista || "MXN",
 
 comision_banco:
   t.comision_banco,
@@ -3808,7 +4009,6 @@ const pacientesFiltrados =
   Registrar cobro
 </button>
 
-
                               <button
                                 type="button"
                                 onClick={() => {
@@ -4358,6 +4558,12 @@ const pacientesFiltrados =
 
       especialista: "",
 
+      especialista_id: "",
+
+      especialista_nombre: "",
+
+      moneda_especialista: "MXN",
+
       comision_banco: "",
 
     });
@@ -4389,17 +4595,13 @@ const pacientesFiltrados =
 
     laboratorio: "",
 
-    especialista:
-      tratamientoSeleccionado.tipo ===
-      "especialista"
-        ? String(
-            Number(
-              tratamientoSeleccionado
-                .costo_especialista_mxn ||
-                0
-            )
-          )
-        : "0",
+    especialista: "0",
+
+    especialista_id: "",
+
+    especialista_nombre: "",
+
+    moneda_especialista: "MXN",
 
     comision_banco: "0",
 
@@ -4493,18 +4695,6 @@ const pacientesFiltrados =
                       )
                     : 0;
 
-                const costoEspecialista =
-                  tratamientoSeleccionado?.tipo ===
-                  "especialista"
-                    ? Number(
-                        monedaPrecio === "USD"
-                          ? tratamientoSeleccionado
-                              .costo_especialista_usd || 0
-                          : tratamientoSeleccionado
-                              .costo_especialista_mxn || 0
-                      )
-                    : 0;
-
                 setNuevoTratamiento({
                   ...nuevoTratamiento,
                   moneda_precio:
@@ -4514,10 +4704,6 @@ const pacientesFiltrados =
                       precioSeleccionado
                     ),
                   pagado: "0",
-                  especialista:
-                    String(
-                      costoEspecialista
-                    ),
                 });
               }}
               className="
@@ -4622,6 +4808,159 @@ const pacientesFiltrados =
               }
 
             </select>
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                block
+                text-sm
+                font-semibold
+                mint-text-primary
+                mb-2
+              "
+            >
+
+              Especialista
+
+            </label>
+
+            <select
+              value={
+                nuevoTratamiento.especialista_id ||
+                ""
+              }
+              onChange={(e) => {
+
+                const precioEspecialista =
+                  especialistasDisponibles.find(
+                    (precio: any) =>
+                      String(precio.doctor_id) ===
+                      e.target.value
+                  );
+
+                if (!precioEspecialista) {
+
+                  setNuevoTratamiento({
+                    ...nuevoTratamiento,
+                    especialista_id: "",
+                    especialista_nombre: "",
+                    especialista: "0",
+                    moneda_especialista: "MXN",
+                  });
+
+                  return;
+
+                }
+
+                setNuevoTratamiento({
+                  ...nuevoTratamiento,
+                  especialista_id:
+                    String(
+                      precioEspecialista.doctor_id
+                    ),
+                  especialista_nombre:
+                    precioEspecialista.doctor
+                      ?.nombre ||
+                    "",
+                  especialista:
+                    String(
+                      Number(
+                        precioEspecialista.costo ||
+                        0
+                      )
+                    ),
+                  moneda_especialista:
+                    precioEspecialista.moneda ===
+                    "USD"
+                      ? "USD"
+                      : "MXN",
+                });
+
+              }}
+              className="
+                mint-input
+                p-3
+                w-full
+              "
+              disabled={
+                !nuevoTratamiento.tratamiento ||
+                cargandoEspecialistas
+              }
+            >
+
+              <option value="">
+                {
+                  cargandoEspecialistas
+                    ? "Cargando especialistas..."
+                    : especialistasDisponibles.length > 0
+                      ? "Sin especialista"
+                      : "No hay especialista configurado"
+                }
+              </option>
+
+              {
+                especialistasDisponibles.map(
+                  (precio: any) => (
+
+                    <option
+                      key={precio.id}
+                      value={precio.doctor_id}
+                    >
+                      {
+                        `${precio.doctor?.nombre || "Especialista"} — ${Number(
+                          precio.costo || 0
+                        ).toLocaleString(
+                          "es-MX",
+                          {
+                            style: "currency",
+                            currency:
+                              precio.moneda === "USD"
+                                ? "USD"
+                                : "MXN",
+                          }
+                        )} ${precio.moneda || "MXN"}`
+                      }
+                    </option>
+
+                  )
+                )
+              }
+
+            </select>
+
+            {
+              nuevoTratamiento.especialista_id && (
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-muted
+                    mt-1
+                  "
+                >
+                  Costo clínico guardado: {
+                    Number(
+                      nuevoTratamiento.especialista ||
+                      0
+                    ).toLocaleString(
+                      "es-MX",
+                      {
+                        style: "currency",
+                        currency:
+                          nuevoTratamiento.moneda_especialista ===
+                          "USD"
+                            ? "USD"
+                            : "MXN",
+                      }
+                    )
+                  } {nuevoTratamiento.moneda_especialista}
+                </p>
+
+              )
+            }
 
           </div>
 
@@ -4753,6 +5092,10 @@ const pacientesFiltrados =
 
               setDoctorSeleccionado(
                 null
+              );
+
+              setEspecialistasDisponibles(
+                []
               );
 
             }}
