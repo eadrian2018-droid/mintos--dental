@@ -32,6 +32,14 @@ type PagoIndicador = {
 
   neto_recibido?: number;
 
+  comision_doctor_pagada?: boolean;
+
+  comision_doctor_metodo_pago?: string | null;
+
+  comision_doctor_pago_moneda?: string | null;
+
+  comision_doctor_pago_monto?: number;
+
 };
 
 export type IndicadoresProps = {
@@ -506,19 +514,170 @@ export default function useIndicadores({
         0
       );
 
+  /*
+  |--------------------------------------------------------------------------
+  | PAGOS POR TRANSFERENCIA A ESPECIALISTAS
+  |--------------------------------------------------------------------------
+  |
+  | Una transferencia al especialista no sale de Caja física.
+  | Sale del saldo bancario MXN.
+  |
+  | No convertimos monedas.
+  | Transferencia a especialista se registra y descuenta en MXN.
+  |
+  */
+
+  const pagosEspecialistasTransferenciaMXN =
+    tratamientosFiltrados
+      .filter(
+        (tratamiento: any) =>
+          tratamiento.especialista_pagado === true
+          &&
+          tratamiento.especialista_metodo_pago ===
+            "Transferencia"
+          &&
+          (
+            tratamiento.especialista_pago_moneda ===
+              "MXN"
+            ||
+            !tratamiento.especialista_pago_moneda
+          )
+      )
+      .reduce(
+        (
+          total,
+          tratamiento: any
+        ) =>
+          total +
+          Number(
+            tratamiento.especialista_pago_monto ??
+            tratamiento.especialista ??
+            0
+          ),
+        0
+      );
+
+  /*
+  |--------------------------------------------------------------------------
+  | PAGOS REALES DE COMISIONES A DOCTORES
+  |--------------------------------------------------------------------------
+  |
+  | La comisión ya afecta la ganancia clínica cuando el tratamiento
+  | está Finalizado.
+  |
+  | Aquí NO volvemos a descontarla de la ganancia.
+  | Únicamente registramos de dónde salió físicamente el dinero:
+  |
+  | Efectivo MXN -> Caja MXN
+  | Efectivo USD -> Caja USD
+  | Transferencia -> Banco MXN
+  |
+  */
+
+  const pagosComisionesDoctorEfectivoMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.comision_doctor_pagada ===
+            true
+          &&
+          pago.comision_doctor_metodo_pago ===
+            "Efectivo"
+          &&
+          pago.comision_doctor_pago_moneda ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.comision_doctor_pago_monto ||
+            0
+          ),
+        0
+      );
+
+  const pagosComisionesDoctorEfectivoUSD =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.comision_doctor_pagada ===
+            true
+          &&
+          pago.comision_doctor_metodo_pago ===
+            "Efectivo"
+          &&
+          pago.comision_doctor_pago_moneda ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.comision_doctor_pago_monto ||
+            0
+          ),
+        0
+      );
+
+  const pagosComisionesDoctorTransferenciaMXN =
+    pagosFiltrados
+      .filter(
+        (pago) =>
+          pago.comision_doctor_pagada ===
+            true
+          &&
+          pago.comision_doctor_metodo_pago ===
+            "Transferencia"
+          &&
+          pago.comision_doctor_pago_moneda ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          pago
+        ) =>
+          total +
+          Number(
+            pago.comision_doctor_pago_monto ||
+            0
+          ),
+        0
+      );
+
   const cajaMXN =
     cobrosEfectivoMXN
     -
     gastosEfectivoMXN
     -
-    pagosEspecialistasEfectivoMXN;
+    pagosEspecialistasEfectivoMXN
+    -
+    pagosComisionesDoctorEfectivoMXN;
 
   const cajaUSD =
     cobrosEfectivoUSD
     -
     gastosEfectivoUSD
     -
-    pagosEspecialistasEfectivoUSD;
+    pagosEspecialistasEfectivoUSD
+    -
+    pagosComisionesDoctorEfectivoUSD;
+
+  const bancoMXN =
+    totalTarjeta
+    +
+    totalTransferenciaMXN
+    -
+    pagosEspecialistasTransferenciaMXN
+    -
+    pagosComisionesDoctorTransferenciaMXN;
 
   /*
   |--------------------------------------------------------------------------
@@ -1025,6 +1184,16 @@ export default function useIndicadores({
     cajaMXN,
 
     cajaUSD,
+
+    bancoMXN,
+
+    pagosEspecialistasTransferenciaMXN,
+
+    pagosComisionesDoctorEfectivoMXN,
+
+    pagosComisionesDoctorEfectivoUSD,
+
+    pagosComisionesDoctorTransferenciaMXN,
 
     /*
     | Categorías

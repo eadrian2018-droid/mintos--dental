@@ -14,6 +14,8 @@ type PagoDoctorDetalle = {
 
   id?: number;
 
+  fecha?: string;
+
   tratamiento_id?: number;
 
   moneda?: string;
@@ -21,6 +23,16 @@ type PagoDoctorDetalle = {
   monto_original?: number;
 
   comision_banco?: number;
+
+  comision_doctor_pagada?: boolean;
+
+  comision_doctor_fecha_pago?: string | null;
+
+  comision_doctor_metodo_pago?: string | null;
+
+  comision_doctor_pago_moneda?: string | null;
+
+  comision_doctor_pago_monto?: number;
 
 };
 
@@ -103,6 +115,40 @@ export default function DoctorDetalle({
             day: "2-digit",
             month: "short",
             year: "numeric",
+          }
+        );
+
+    };
+
+  const formatoFechaHora =
+    (
+      fecha?: string | null
+    ) => {
+
+      if (!fecha) {
+        return "—";
+      }
+
+      const fechaReal =
+        new Date(fecha);
+
+      if (
+        Number.isNaN(
+          fechaReal.getTime()
+        )
+      ) {
+        return fecha;
+      }
+
+      return fechaReal
+        .toLocaleString(
+          "es-MX",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
           }
         );
 
@@ -300,6 +346,170 @@ export default function DoctorDetalle({
       (detalle) =>
         detalle.tratamientoFinalizado
     ).length;
+
+  /*
+  |--------------------------------------------------------------------------
+  | HISTORIAL REAL DE COMISIONES
+  |--------------------------------------------------------------------------
+  |
+  | Cada cobro real genera una comisión cuando el tratamiento está Finalizado.
+  | Conservamos MXN y USD separados.
+  |
+  */
+
+  const movimientosComision =
+    pagos
+      .map(
+        (pago) => {
+
+          const tratamiento =
+            tratamientosDoctor.find(
+              (item) =>
+                Number(item.id) ===
+                Number(
+                  pago.tratamiento_id
+                )
+            );
+
+          if (
+            !tratamiento ||
+            tratamiento.estado !==
+              "Finalizado"
+          ) {
+            return null;
+          }
+
+          const paciente =
+            pacientes.find(
+              (item) =>
+                Number(item.id) ===
+                Number(
+                  tratamiento.paciente_id
+                )
+            );
+
+          const porcentaje =
+            Number(
+              doctor.porcentaje || 0
+            );
+
+          const montoCobro =
+            Number(
+              pago.monto_original || 0
+            );
+
+          const comisionGenerada =
+            montoCobro *
+            porcentaje /
+            100;
+
+          const moneda =
+            pago.moneda === "USD"
+              ? "USD"
+              : "MXN";
+
+          const pagada =
+            pago.comision_doctor_pagada ===
+            true;
+
+          const montoPagado =
+            pagada
+              ? Number(
+                  pago.comision_doctor_pago_monto ??
+                  comisionGenerada
+                )
+              : 0;
+
+          return {
+            pago,
+            tratamiento,
+            paciente,
+            moneda,
+            montoCobro,
+            comisionGenerada,
+            pagada,
+            montoPagado,
+          };
+
+        }
+      )
+      .filter(
+        (
+          movimiento
+        ): movimiento is NonNullable<
+          typeof movimiento
+        > =>
+          movimiento !== null
+      )
+      .sort(
+        (a, b) => {
+
+          const fechaA =
+            new Date(
+              a.pago.fecha || 0
+            ).getTime();
+
+          const fechaB =
+            new Date(
+              b.pago.fecha || 0
+            ).getTime();
+
+          return fechaB - fechaA;
+
+        }
+      );
+
+  const comisionPagadaMXN =
+    movimientosComision
+      .filter(
+        (movimiento) =>
+          movimiento.pagada
+          &&
+          movimiento.moneda ===
+            "MXN"
+      )
+      .reduce(
+        (
+          total,
+          movimiento
+        ) =>
+          total +
+          movimiento.montoPagado,
+        0
+      );
+
+  const comisionPagadaUSD =
+    movimientosComision
+      .filter(
+        (movimiento) =>
+          movimiento.pagada
+          &&
+          movimiento.moneda ===
+            "USD"
+      )
+      .reduce(
+        (
+          total,
+          movimiento
+        ) =>
+          total +
+          movimiento.montoPagado,
+        0
+      );
+
+  const comisionPendienteMXN =
+    Math.max(
+      totalComisionMXN -
+      comisionPagadaMXN,
+      0
+    );
+
+  const comisionPendienteUSD =
+    Math.max(
+      totalComisionUSD -
+      comisionPagadaUSD,
+      0
+    );
 
   return (
 
@@ -1335,6 +1545,440 @@ export default function DoctorDetalle({
                     )
                   )
 
+              }
+
+            </tbody>
+
+          </table>
+
+        </div>
+
+      </div>
+
+      {/* =========================
+          HISTORIAL DE COMISIONES
+      ========================== */}
+
+      <div
+        className="
+          mint-card
+          overflow-hidden
+        "
+      >
+
+        <div
+          className="
+            px-6
+            py-5
+            border-b
+            border-[var(--mint-border)]
+            flex
+            flex-col
+            xl:flex-row
+            xl:items-center
+            xl:justify-between
+            gap-4
+          "
+        >
+
+          <div>
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.12em]
+                font-bold
+                text-[var(--mint-primary)]
+                mb-1
+              "
+            >
+              Historial financiero
+            </p>
+
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+              Comisiones por cobro
+            </h3>
+
+            <p
+              className="
+                text-sm
+                mint-text-secondary
+                mt-1
+              "
+            >
+              Cada registro corresponde a un cobro real
+              de un tratamiento finalizado.
+            </p>
+
+          </div>
+
+          <div
+            className="
+              grid
+              grid-cols-2
+              lg:grid-cols-4
+              gap-2
+            "
+          >
+
+            <div
+              className="
+                rounded-xl
+                border
+                border-[var(--mint-danger-border)]
+                bg-[var(--mint-danger-bg)]
+                px-3
+                py-2
+              "
+            >
+              <p className="text-[10px] uppercase font-bold text-[var(--mint-danger)]">
+                Pendiente MXN
+              </p>
+              <p className="font-bold text-[var(--mint-danger)]">
+                $
+                {
+                  formatoMonto(
+                    comisionPendienteMXN
+                  )
+                }
+              </p>
+            </div>
+
+            <div
+              className="
+                rounded-xl
+                border
+                border-[var(--mint-success-border)]
+                bg-[var(--mint-success-bg)]
+                px-3
+                py-2
+              "
+            >
+              <p className="text-[10px] uppercase font-bold text-[var(--mint-success)]">
+                Pagado MXN
+              </p>
+              <p className="font-bold text-[var(--mint-success)]">
+                $
+                {
+                  formatoMonto(
+                    comisionPagadaMXN
+                  )
+                }
+              </p>
+            </div>
+
+            <div
+              className="
+                rounded-xl
+                border
+                border-[var(--mint-warning-border)]
+                bg-[var(--mint-warning-bg)]
+                px-3
+                py-2
+              "
+            >
+              <p className="text-[10px] uppercase font-bold text-[var(--mint-warning)]">
+                Pendiente USD
+              </p>
+              <p className="font-bold text-[var(--mint-warning)]">
+                $
+                {
+                  formatoMonto(
+                    comisionPendienteUSD
+                  )
+                }
+              </p>
+            </div>
+
+            <div
+              className="
+                rounded-xl
+                border
+                border-[var(--mint-border-primary)]
+                bg-[var(--mint-primary-soft)]
+                px-3
+                py-2
+              "
+            >
+              <p className="text-[10px] uppercase font-bold text-[var(--mint-primary)]">
+                Pagado USD
+              </p>
+              <p className="font-bold text-[var(--mint-primary)]">
+                $
+                {
+                  formatoMonto(
+                    comisionPagadaUSD
+                  )
+                }
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="overflow-x-auto">
+
+          <table className="mint-table w-full text-sm">
+
+            <thead className="mint-table-head">
+              <tr>
+
+                <th className="p-4 text-left">
+                  Fecha cobro
+                </th>
+
+                <th className="p-4 text-left">
+                  Paciente
+                </th>
+
+                <th className="p-4 text-left">
+                  Tratamiento
+                </th>
+
+                <th className="p-4 text-right">
+                  Cobro
+                </th>
+
+                <th className="p-4 text-right">
+                  Comisión
+                </th>
+
+                <th className="p-4 text-center">
+                  Estado
+                </th>
+
+                <th className="p-4 text-left">
+                  Pago comisión
+                </th>
+
+              </tr>
+            </thead>
+
+            <tbody>
+
+              {
+                movimientosComision.length ===
+                0
+
+                  ? (
+
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="
+                          px-6
+                          py-12
+                          text-center
+                          mint-text-muted
+                        "
+                      >
+                        No hay comisiones generadas
+                        para este doctor en el período seleccionado.
+                      </td>
+                    </tr>
+
+                  )
+
+                  : movimientosComision.map(
+                      (
+                        movimiento
+                      ) => (
+
+                        <tr
+                          key={
+                            movimiento.pago.id
+                            ??
+                            `${movimiento.tratamiento.id}-${movimiento.pago.fecha}`
+                          }
+                          className="mint-table-row"
+                        >
+
+                          <td
+                            className="
+                              p-4
+                              whitespace-nowrap
+                              mint-text-secondary
+                            "
+                          >
+                            {
+                              formatoFechaHora(
+                                movimiento.pago.fecha
+                              )
+                            }
+                          </td>
+
+                          <td className="p-4">
+                            <p className="font-semibold mint-text-primary">
+                              {
+                                movimiento.paciente?.nombre ||
+                                "Sin paciente"
+                              }
+                            </p>
+                          </td>
+
+                          <td className="p-4">
+                            <p className="font-semibold mint-text-primary">
+                              {
+                                movimiento.tratamiento.tratamiento ||
+                                "Tratamiento"
+                              }
+                            </p>
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                              text-right
+                              whitespace-nowrap
+                            "
+                          >
+                            <span className="font-semibold mint-text-primary">
+                              $
+                              {
+                                formatoMonto(
+                                  movimiento.montoCobro
+                                )
+                              }
+                              {" "}
+                              {
+                                movimiento.moneda
+                              }
+                            </span>
+                          </td>
+
+                          <td
+                            className="
+                              p-4
+                              text-right
+                              whitespace-nowrap
+                            "
+                          >
+                            <span className="font-bold text-[var(--mint-accent)]">
+                              $
+                              {
+                                formatoMonto(
+                                  movimiento.comisionGenerada
+                                )
+                              }
+                              {" "}
+                              {
+                                movimiento.moneda
+                              }
+                            </span>
+                          </td>
+
+                          <td className="p-4 text-center">
+
+                            {
+                              movimiento.pagada
+
+                                ? (
+                                  <span
+                                    className="
+                                      inline-flex
+                                      px-3
+                                      py-1
+                                      rounded-full
+                                      text-xs
+                                      font-semibold
+                                      bg-[var(--mint-success-bg)]
+                                      text-[var(--mint-success)]
+                                      border
+                                      border-[var(--mint-success-border)]
+                                    "
+                                  >
+                                    Pagado
+                                  </span>
+                                )
+
+                                : (
+                                  <span
+                                    className="
+                                      inline-flex
+                                      px-3
+                                      py-1
+                                      rounded-full
+                                      text-xs
+                                      font-semibold
+                                      bg-[var(--mint-danger-bg)]
+                                      text-[var(--mint-danger)]
+                                      border
+                                      border-[var(--mint-danger-border)]
+                                    "
+                                  >
+                                    Pendiente
+                                  </span>
+                                )
+                            }
+
+                          </td>
+
+                          <td className="p-4">
+
+                            {
+                              movimiento.pagada
+
+                                ? (
+
+                                  <div>
+                                    <p className="font-semibold mint-text-primary">
+                                      {
+                                        movimiento.pago
+                                          .comision_doctor_metodo_pago ||
+                                        "Registrado"
+                                      }
+                                    </p>
+
+                                    <p className="text-xs mint-text-muted mt-1">
+                                      $
+                                      {
+                                        formatoMonto(
+                                          movimiento.montoPagado
+                                        )
+                                      }
+                                      {" "}
+                                      {
+                                        movimiento.pago
+                                          .comision_doctor_pago_moneda ||
+                                        movimiento.moneda
+                                      }
+                                    </p>
+
+                                    <p className="text-xs mint-text-muted mt-1">
+                                      {
+                                        formatoFechaHora(
+                                          movimiento.pago
+                                            .comision_doctor_fecha_pago
+                                        )
+                                      }
+                                    </p>
+                                  </div>
+
+                                )
+
+                                : (
+
+                                  <span className="text-xs mint-text-muted">
+                                    Sin liquidar
+                                  </span>
+
+                                )
+                            }
+
+                          </td>
+
+                        </tr>
+
+                      )
+                    )
               }
 
             </tbody>

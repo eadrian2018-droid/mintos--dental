@@ -24,6 +24,11 @@ type PagoComision = {
   tratamiento_id?: number;
   moneda?: string;
   monto_original?: number;
+  comision_doctor_pagada?: boolean;
+  comision_doctor_fecha_pago?: string | null;
+  comision_doctor_metodo_pago?: string | null;
+  comision_doctor_pago_moneda?: string | null;
+  comision_doctor_pago_monto?: number;
 };
 
 type ComisionesProps = {
@@ -49,6 +54,11 @@ type Vista =
   | "especialistas";
 
 type FormaPagoEspecialista =
+  | "MXN"
+  | "USD"
+  | "Transferencia";
+
+type FormaPagoDoctor =
   | "MXN"
   | "USD"
   | "Transferencia";
@@ -88,6 +98,25 @@ export default function Comisiones({
   ] = useState("");
 
   const [
+    doctorPago,
+    setDoctorPago,
+  ] = useState<any | null>(
+    null
+  );
+
+  const [
+    formaPagoDoctor,
+    setFormaPagoDoctor,
+  ] = useState<FormaPagoDoctor>(
+    "MXN"
+  );
+
+  const [
+    montoPagoDoctor,
+    setMontoPagoDoctor,
+  ] = useState("");
+
+  const [
     guardando,
     setGuardando,
   ] = useState(false);
@@ -109,126 +138,161 @@ export default function Comisiones({
   const tratamientosAny =
     tratamientos as any[];
 
- const resumenDoctores =
-  useMemo(
-    () =>
-      doctores
-        .filter(
-          (doctor) =>
-            !tratamientosAny.some(
-              (tratamiento) =>
-                Number(
-                  tratamiento.especialista_id
-                ) ===
-                Number(
-                  doctor.id
-                )
-            )
-        )
-        .map(
-          (doctor) => {
-
-            const tratamientosDoctor =
-              tratamientosAny.filter(
+  const resumenDoctores =
+    useMemo(
+      () =>
+        doctores
+          .filter(
+            (doctor) =>
+              !tratamientosAny.some(
                 (tratamiento) =>
                   Number(
-                    tratamiento.doctor_id
+                    tratamiento.especialista_id
                   ) ===
                   Number(
                     doctor.id
                   )
-              );
+              )
+          )
+          .map(
+            (doctor) => {
 
-            const finalizados =
-              tratamientosDoctor.filter(
-                (tratamiento) =>
-                  tratamiento.estado ===
-                  "Finalizado"
-              );
-
-            const ids =
-              new Set(
-                finalizados.map(
+              const tratamientosDoctor =
+                tratamientosAny.filter(
                   (tratamiento) =>
                     Number(
-                      tratamiento.id
-                    )
-                )
-              );
-
-            const pagosDoctor =
-              pagos.filter(
-                (pago) =>
-                  ids.has(
+                      tratamiento.doctor_id
+                    ) ===
                     Number(
-                      pago.tratamiento_id
+                      doctor.id
                     )
+                );
+
+              const finalizados =
+                tratamientosDoctor.filter(
+                  (tratamiento) =>
+                    tratamiento.estado ===
+                    "Finalizado"
+                );
+
+              const ids =
+                new Set(
+                  finalizados.map(
+                    (tratamiento) =>
+                      Number(
+                        tratamiento.id
+                      )
                   )
-              );
+                );
 
-            const porcentaje =
-              Number(
-                doctor.porcentaje || 0
-              );
-
-            const cobradoMXN =
-              pagosDoctor
-                .filter(
+              const pagosDoctor =
+                pagos.filter(
                   (pago) =>
-                    pago.moneda ===
-                    "MXN"
-                )
-                .reduce(
-                  (
-                    total,
-                    pago
-                  ) =>
+                    ids.has(
+                      Number(
+                        pago.tratamiento_id
+                      )
+                    )
+                );
+
+              const porcentaje =
+                Number(
+                  doctor.porcentaje || 0
+                );
+
+              const calcularComision =
+                (pago: PagoComision) =>
+                  Number(
+                    pago.monto_original || 0
+                  ) *
+                  porcentaje /
+                  100;
+
+              const pagosMXN =
+                pagosDoctor.filter(
+                  (pago) =>
+                    pago.moneda === "MXN"
+                );
+
+              const pagosUSD =
+                pagosDoctor.filter(
+                  (pago) =>
+                    pago.moneda === "USD"
+                );
+
+              const comisionMXN =
+                pagosMXN.reduce(
+                  (total, pago) =>
                     total +
-                    Number(
-                      pago.monto_original ||
-                      0
-                    ),
+                    calcularComision(pago),
                   0
                 );
 
-            const cobradoUSD =
-              pagosDoctor
-                .filter(
-                  (pago) =>
-                    pago.moneda ===
-                    "USD"
-                )
-                .reduce(
-                  (
-                    total,
-                    pago
-                  ) =>
+              const comisionUSD =
+                pagosUSD.reduce(
+                  (total, pago) =>
                     total +
-                    Number(
-                      pago.monto_original ||
-                      0
-                    ),
+                    calcularComision(pago),
                   0
                 );
 
-            return {
-              doctor,
-              finalizados:
-                finalizados.length,
-              cobradoMXN,
-              cobradoUSD,
-              comisionMXN:
-                cobradoMXN *
-                porcentaje /
-                100,
-              comisionUSD:
-                cobradoUSD *
-                porcentaje /
-                100,
-            };
+              const pagadoMXN =
+                pagosDoctor
+                  .filter(
+                    (pago) =>
+                      pago.comision_doctor_pagada === true
+                      &&
+                      pago.comision_doctor_pago_moneda === "MXN"
+                  )
+                  .reduce(
+                    (total, pago) =>
+                      total +
+                      Number(
+                        pago.comision_doctor_pago_monto || 0
+                      ),
+                    0
+                  );
 
-          }
-        ),
+              const pagadoUSD =
+                pagosDoctor
+                  .filter(
+                    (pago) =>
+                      pago.comision_doctor_pagada === true
+                      &&
+                      pago.comision_doctor_pago_moneda === "USD"
+                  )
+                  .reduce(
+                    (total, pago) =>
+                      total +
+                      Number(
+                        pago.comision_doctor_pago_monto || 0
+                      ),
+                    0
+                  );
+
+              return {
+                doctor,
+                finalizados:
+                  finalizados.length,
+                comisionMXN,
+                comisionUSD,
+                pagadoMXN,
+                pagadoUSD,
+                pendienteMXN:
+                  Math.max(
+                    comisionMXN - pagadoMXN,
+                    0
+                  ),
+                pendienteUSD:
+                  Math.max(
+                    comisionUSD - pagadoUSD,
+                    0
+                  ),
+                pagosDoctor,
+              };
+
+            }
+          ),
       [
         doctores,
         pagos,
@@ -243,7 +307,7 @@ export default function Comisiones({
         item
       ) =>
         total +
-        item.comisionMXN,
+        item.pendienteMXN,
       0
     );
 
@@ -254,7 +318,7 @@ export default function Comisiones({
         item
       ) =>
         total +
-        item.comisionUSD,
+        item.pendienteUSD,
       0
     );
 
@@ -440,6 +504,156 @@ export default function Comisiones({
         item.pendienteUSD,
       0
     );
+
+  async function registrarPagoDoctor() {
+
+    if (!doctorPago?.doctor?.id) return;
+
+    const monto =
+      Number(
+        montoPagoDoctor
+      );
+
+    if (
+      !Number.isFinite(monto) ||
+      monto <= 0
+    ) {
+      alert("Ingresa una cantidad válida.");
+      return;
+    }
+
+    const monedaPago =
+      formaPagoDoctor === "USD"
+        ? "USD"
+        : "MXN";
+
+    const metodoPago =
+      formaPagoDoctor === "Transferencia"
+        ? "Transferencia"
+        : "Efectivo";
+
+    const pendiente =
+      monedaPago === "USD"
+        ? Number(doctorPago.pendienteUSD || 0)
+        : Number(doctorPago.pendienteMXN || 0);
+
+    if (monto > pendiente + 0.01) {
+      alert(
+        "La cantidad no puede ser mayor a la comisión pendiente."
+      );
+      return;
+    }
+
+    /*
+      Cada fila de pagos representa una comisión generada.
+      Con el esquema actual la marcamos pagada por fila,
+      igual que el tratamiento del especialista se liquida
+      como una obligación completa.
+    */
+    const porcentaje =
+      Number(
+        doctorPago.doctor.porcentaje || 0
+      );
+
+    const pagosPendientes =
+      doctorPago.pagosDoctor.filter(
+        (pago: PagoComision) =>
+          pago.moneda === monedaPago
+          &&
+          pago.comision_doctor_pagada !== true
+      );
+
+    const totalPendienteFilas =
+      pagosPendientes.reduce(
+        (
+          total: number,
+          pago: PagoComision
+        ) =>
+          total +
+          (
+            Number(
+              pago.monto_original || 0
+            ) *
+            porcentaje /
+            100
+          ),
+        0
+      );
+
+    if (
+      Math.abs(
+        monto -
+        totalPendienteFilas
+      ) > 0.01
+    ) {
+      alert(
+        `Para mantener el control exacto por cobro, paga la comisión pendiente completa: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`
+      );
+      return;
+    }
+
+    setGuardando(true);
+
+    const fechaPago =
+      new Date().toISOString();
+
+    for (
+      const pago of
+      pagosPendientes
+    ) {
+
+      const montoComision =
+        Number(
+          pago.monto_original || 0
+        ) *
+        porcentaje /
+        100;
+
+      const { error } =
+        await supabase
+          .from("pagos")
+          .update({
+            comision_doctor_pagada:
+              true,
+            comision_doctor_fecha_pago:
+              fechaPago,
+            comision_doctor_metodo_pago:
+              metodoPago,
+            comision_doctor_pago_moneda:
+              monedaPago,
+            comision_doctor_pago_monto:
+              montoComision,
+          })
+          .eq(
+            "id",
+            pago.id
+          );
+
+      if (error) {
+
+        setGuardando(false);
+
+        console.error(
+          "Error registrando pago de comisión:",
+          error
+        );
+
+        alert(
+          "No se pudo registrar el pago de la comisión."
+        );
+
+        return;
+
+      }
+
+    }
+
+    setGuardando(false);
+    setDoctorPago(null);
+    setMontoPagoDoctor("");
+    window.location.reload();
+
+  }
 
   async function registrarPagoEspecialista() {
 
@@ -686,7 +900,7 @@ export default function Comisiones({
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Comisiones MXN
+                    Por pagar MXN
                   </p>
                   <p className="text-2xl font-bold text-[var(--mint-success)] mt-2">
                     $
@@ -705,7 +919,7 @@ export default function Comisiones({
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Comisiones USD
+                    Por pagar USD
                   </p>
                   <p className="text-2xl font-bold mint-text-accent mt-2">
                     $
@@ -742,10 +956,16 @@ export default function Comisiones({
                           Finalizados
                         </th>
                         <th className="p-4 text-right">
-                          Comisión MXN
+                          Pendiente MXN
                         </th>
                         <th className="p-4 text-right">
-                          Comisión USD
+                          Pagado MXN
+                        </th>
+                        <th className="p-4 text-right">
+                          Pendiente USD
+                        </th>
+                        <th className="p-4 text-right">
+                          Pagado USD
                         </th>
                         <th className="p-4 text-right">
                           Acción
@@ -799,33 +1019,104 @@ export default function Comisiones({
                                 }
                               </td>
 
-                              <td className="p-4 text-right font-bold text-[var(--mint-success)]">
-                                $
-                                {
-                                  formatoMonto(
-                                    item.comisionMXN
-                                  )
-                                }
+                              <td className="p-4 text-right">
+                                <span className="font-bold text-[var(--mint-danger)]">
+                                  $
+                                  {
+                                    formatoMonto(
+                                      item.pendienteMXN
+                                    )
+                                  }
+                                </span>
                               </td>
 
-                              <td className="p-4 text-right font-bold mint-text-accent">
-                                $
-                                {
-                                  formatoMonto(
-                                    item.comisionUSD
-                                  )
-                                }
+                              <td className="p-4 text-right">
+                                <span className="font-bold text-[var(--mint-success)]">
+                                  $
+                                  {
+                                    formatoMonto(
+                                      item.pagadoMXN
+                                    )
+                                  }
+                                </span>
+                              </td>
+
+                              <td className="p-4 text-right">
+                                <span className="font-bold text-[var(--mint-warning)]">
+                                  $
+                                  {
+                                    formatoMonto(
+                                      item.pendienteUSD
+                                    )
+                                  }
+                                </span>
+                              </td>
+
+                              <td className="p-4 text-right">
+                                <span className="font-bold mint-text-accent">
+                                  $
+                                  {
+                                    formatoMonto(
+                                      item.pagadoUSD
+                                    )
+                                  }
+                                </span>
                               </td>
 
                               <td className="p-4 text-right">
 
-                                <button
-                                  type="button"
-                                  onClick={() => {
+                                <div className="flex justify-end gap-2">
 
-                                    setDoctorDetalle(
-                                      item.doctor
-                                    );
+                                  {
+                                    (
+                                      item.pendienteMXN > 0 ||
+                                      item.pendienteUSD > 0
+                                    )
+                                    &&
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+
+                                        const usarUSD =
+                                          item.pendienteMXN <= 0 &&
+                                          item.pendienteUSD > 0;
+
+                                        setFormaPagoDoctor(
+                                          usarUSD
+                                            ? "USD"
+                                            : "MXN"
+                                        );
+
+                                        setMontoPagoDoctor(
+                                          String(
+                                            usarUSD
+                                              ? item.pendienteUSD
+                                              : item.pendienteMXN
+                                          )
+                                        );
+
+                                        setDoctorPago(
+                                          item
+                                        );
+
+                                      }}
+                                      className="
+                                        mint-btn
+                                        mint-btn-primary
+                                        mint-btn-sm
+                                      "
+                                    >
+                                      Pagar
+                                    </button>
+                                  }
+
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+
+                                      setDoctorDetalle(
+                                        item.doctor
+                                      );
 
                                     setMostrarDetalleDoctor(
                                       true
@@ -840,6 +1131,8 @@ export default function Comisiones({
                                 >
                                   Ver detalle
                                 </button>
+
+                                </div>
 
                               </td>
 
@@ -1259,6 +1552,238 @@ export default function Comisiones({
             </>
 
           )
+      }
+
+      {
+        doctorPago
+
+        &&
+
+        <div
+          className="
+            fixed
+            inset-0
+            z-50
+            bg-slate-950/35
+            backdrop-blur-[2px]
+            flex
+            items-center
+            justify-center
+            p-4
+          "
+        >
+
+          <div
+            className="
+              mint-card
+              w-full
+              max-w-md
+              p-6
+              shadow-xl
+            "
+          >
+
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
+              Pago de comisión
+            </p>
+
+            <h3 className="text-xl font-bold mint-text-primary mt-1">
+              {
+                doctorPago.doctor?.nombre ||
+                "Doctor"
+              }
+            </h3>
+
+            <div className="mt-5 p-4 rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)]">
+
+              <p className="text-xs font-bold uppercase mint-text-muted">
+                Comisión pendiente
+              </p>
+
+              <div className="grid grid-cols-2 gap-3 mt-3">
+
+                <div>
+                  <p className="text-xs mint-text-muted">
+                    MXN
+                  </p>
+                  <p className="text-xl font-bold mint-text-primary">
+                    $
+                    {
+                      formatoMonto(
+                        doctorPago.pendienteMXN
+                      )
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs mint-text-muted">
+                    USD
+                  </p>
+                  <p className="text-xl font-bold mint-text-accent">
+                    $
+                    {
+                      formatoMonto(
+                        doctorPago.pendienteUSD
+                      )
+                    }
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="mt-5">
+
+              <label className="text-sm font-semibold mint-text-primary">
+                Forma de pago
+              </label>
+
+              <div className="grid grid-cols-3 gap-2 mt-2">
+                {(
+                  [
+                    "MXN",
+                    "USD",
+                    "Transferencia",
+                  ] as FormaPagoDoctor[]
+                ).map((forma) => (
+                  <button
+                    key={forma}
+                    type="button"
+                    disabled={
+                      forma === "MXN"
+                        ? doctorPago.pendienteMXN <= 0
+                        : forma === "USD"
+                          ? doctorPago.pendienteUSD <= 0
+                          : doctorPago.pendienteMXN <= 0
+                    }
+                    onClick={() => {
+
+                      setFormaPagoDoctor(
+                        forma
+                      );
+
+                      setMontoPagoDoctor(
+                        String(
+                          forma === "USD"
+                            ? doctorPago.pendienteUSD
+                            : doctorPago.pendienteMXN
+                        )
+                      );
+
+                    }}
+                    className={`
+                      px-3 py-2.5 rounded-xl text-sm
+                      font-semibold border transition
+                      disabled:opacity-40
+                      disabled:cursor-not-allowed
+                      ${
+                        formaPagoDoctor === forma
+                          ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
+                          : "bg-white mint-text-secondary border-[var(--mint-border)]"
+                      }
+                    `}
+                  >
+                    {forma}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mt-4">
+
+                <label className="text-sm font-semibold mint-text-primary">
+                  Cantidad
+                </label>
+
+                <div className="relative mt-2">
+
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 mint-text-muted font-semibold">
+                    $
+                  </span>
+
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={
+                      montoPagoDoctor
+                    }
+                    onChange={(event) =>
+                      setMontoPagoDoctor(
+                        event.target.value
+                      )
+                    }
+                    className="
+                      w-full rounded-xl border
+                      border-[var(--mint-border)]
+                      bg-white pl-8 pr-16 py-2.5
+                      text-sm font-semibold
+                      mint-text-primary outline-none
+                      focus:border-[var(--mint-primary)]
+                    "
+                    placeholder="0.00"
+                  />
+
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
+                    {
+                      formaPagoDoctor === "USD"
+                        ? "USD"
+                        : "MXN"
+                    }
+                  </span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+
+              <button
+                type="button"
+                disabled={
+                  guardando
+                }
+                onClick={() =>
+                  setDoctorPago(
+                    null
+                  )
+                }
+                className="
+                  mint-btn
+                  mint-btn-secondary
+                "
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                disabled={
+                  guardando
+                }
+                onClick={
+                  registrarPagoDoctor
+                }
+                className="
+                  mint-btn
+                  mint-btn-primary
+                "
+              >
+                {
+                  guardando
+                    ? "Guardando..."
+                    : "Confirmar pago"
+                }
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
       }
 
       {
