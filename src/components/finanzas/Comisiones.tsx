@@ -24,6 +24,7 @@ type PagoComision = {
   tratamiento_id?: number;
   moneda?: string;
   monto_original?: number;
+  comision_doctor_porcentaje?: number | null;
   comision_doctor_pagada?: boolean;
   comision_doctor_fecha_pago?: string | null;
   comision_doctor_metodo_pago?: string | null;
@@ -195,18 +196,30 @@ export default function Comisiones({
                     )
                 );
 
-              const porcentaje =
-                Number(
-                  doctor.porcentaje || 0
-                );
-
               const calcularComision =
-                (pago: PagoComision) =>
-                  Number(
-                    pago.monto_original || 0
-                  ) *
-                  porcentaje /
-                  100;
+                (pago: PagoComision) => {
+
+                  const porcentaje =
+                    pago.comision_doctor_porcentaje !==
+                      null &&
+                    pago.comision_doctor_porcentaje !==
+                      undefined
+                      ? Number(
+                          pago.comision_doctor_porcentaje
+                        )
+                      : Number(
+                          doctor.porcentaje || 0
+                        );
+
+                  return (
+                    Number(
+                      pago.monto_original || 0
+                    ) *
+                    porcentaje /
+                    100
+                  );
+
+                };
 
               const pagosMXN =
                 pagosDoctor.filter(
@@ -550,11 +563,6 @@ export default function Comisiones({
       igual que el tratamiento del especialista se liquida
       como una obligación completa.
     */
-    const porcentaje =
-      Number(
-        doctorPago.doctor.porcentaje || 0
-      );
-
     const pagosPendientes =
       doctorPago.pagosDoctor.filter(
         (pago: PagoComision) =>
@@ -568,15 +576,32 @@ export default function Comisiones({
         (
           total: number,
           pago: PagoComision
-        ) =>
-          total +
-          (
-            Number(
-              pago.monto_original || 0
-            ) *
-            porcentaje /
-            100
-          ),
+        ) => {
+
+          const porcentaje =
+            pago.comision_doctor_porcentaje !==
+              null &&
+            pago.comision_doctor_porcentaje !==
+              undefined
+              ? Number(
+                  pago.comision_doctor_porcentaje
+                )
+              : Number(
+                  doctorPago.doctor.porcentaje || 0
+                );
+
+          return (
+            total +
+            (
+              Number(
+                pago.monto_original || 0
+              ) *
+              porcentaje /
+              100
+            )
+          );
+
+        },
         0
       );
 
@@ -602,11 +627,23 @@ export default function Comisiones({
       pagosPendientes
     ) {
 
+      const porcentajePago =
+        pago.comision_doctor_porcentaje !==
+          null &&
+        pago.comision_doctor_porcentaje !==
+          undefined
+          ? Number(
+              pago.comision_doctor_porcentaje
+            )
+          : Number(
+              doctorPago.doctor.porcentaje || 0
+            );
+
       const montoComision =
         Number(
           pago.monto_original || 0
         ) *
-        porcentaje /
+        porcentajePago /
         100;
 
       const { error } =

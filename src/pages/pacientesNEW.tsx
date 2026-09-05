@@ -1408,62 +1408,77 @@ async function registrarCobro() {
         .comision_banco || 0
     );
 
-  const nuevaComisionBanco =
-    comisionBancoAnterior +
-    comisionBancoCobro;
+const nuevaComisionBanco =
+  comisionBancoAnterior +
+  comisionBancoCobro;
 
-  const {
-    error: errorPago,
-  } = await supabase
+const doctorCobro =
+  doctores.find(
+    (doctor: any) =>
+      doctor.id ===
+      tratamientoCobro.doctor_id
+  );
 
-    .from(
-      "pagos"
-    )
+const porcentajeDoctorCobro =
+  Number(
+    doctorCobro?.porcentaje || 0
+  );
 
-    .insert({
+const {
+  error: errorPago,
+} = await supabase
 
-      paciente_id:
-        pacienteAbierto.id,
+  .from(
+    "pagos"
+  )
 
-      tratamiento_id:
-        tratamientoCobro.id,
+  .insert({
 
-      metodo_pago:
-        nuevoCobro.metodo_pago,
+    paciente_id:
+      pacienteAbierto.id,
 
-      moneda:
-        nuevoCobro.moneda,
+    tratamiento_id:
+      tratamientoCobro.id,
 
-      monto_original:
-        montoCobro,
+    metodo_pago:
+      nuevoCobro.metodo_pago,
 
-      tipo_cambio:
-        nuevoCobro.moneda === "USD"
-          ? tipoCambioAplicado
-          : null,
+    moneda:
+      nuevoCobro.moneda,
 
-      monto_mxn:
-        montoCobroMXN,
+    monto_original:
+      montoCobro,
 
-      comision_porcentaje:
-        porcentajeComisionActual,
+    tipo_cambio:
+      nuevoCobro.moneda === "USD"
+        ? tipoCambioAplicado
+        : null,
 
-      iva_comision_porcentaje:
-        porcentajeIvaComisionActual,
+    monto_mxn:
+      montoCobroMXN,
 
-      comision_base:
-        comisionBaseActual,
+    comision_porcentaje:
+      porcentajeComisionActual,
 
-      iva_comision:
-        ivaComisionActual,
+    iva_comision_porcentaje:
+      porcentajeIvaComisionActual,
 
-      comision_banco:
-        comisionBancoCobro,
+    comision_base:
+      comisionBaseActual,
 
-      neto_recibido:
-        netoCobroActual,
+    iva_comision:
+      ivaComisionActual,
 
-    });
+    comision_banco:
+      comisionBancoCobro,
+
+    neto_recibido:
+      netoCobroActual,
+
+    comision_doctor_porcentaje:
+      porcentajeDoctorCobro,
+
+  });
 
   if (
     errorPago

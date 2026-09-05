@@ -24,6 +24,8 @@ type PagoDoctorDetalle = {
 
   comision_banco?: number;
 
+  comision_doctor_porcentaje?: number | null;
+
   comision_doctor_pagada?: boolean;
 
   comision_doctor_fecha_pago?: string | null;
@@ -388,20 +390,27 @@ export default function DoctorDetalle({
                 )
             );
 
-          const porcentaje =
-            Number(
-              doctor.porcentaje || 0
-            );
+         const porcentaje =
+  pago.comision_doctor_porcentaje !==
+    null &&
+  pago.comision_doctor_porcentaje !==
+    undefined
+    ? Number(
+        pago.comision_doctor_porcentaje
+      )
+    : Number(
+        doctor.porcentaje || 0
+      );
 
-          const montoCobro =
-            Number(
-              pago.monto_original || 0
-            );
+const montoCobro =
+  Number(
+    pago.monto_original || 0
+  );
 
-          const comisionGenerada =
-            montoCobro *
-            porcentaje /
-            100;
+const comisionGenerada =
+  montoCobro *
+  porcentaje /
+  100;
 
           const moneda =
             pago.moneda === "USD"
