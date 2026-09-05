@@ -47,7 +47,8 @@ type TratamientoCatalogo = {
 type PrecioEspecialista = {
   id: number;
   doctor_id: number;
-  tratamiento_id: number;
+  tratamiento_id: number | null;
+  nombre_tratamiento: string;
   costo: number;
   moneda: "MXN" | "USD";
   activo: boolean;
@@ -60,6 +61,7 @@ type PrecioEspecialista = {
 
 type FormPrecioEspecialista = {
   tratamiento_id: string;
+  nombre_tratamiento: string;
   costo: string;
   moneda: "MXN" | "USD";
 };
@@ -76,6 +78,7 @@ const formularioInicial: FormDoctor = {
 const formularioPrecioInicial:
   FormPrecioEspecialista = {
     tratamiento_id: "",
+    nombre_tratamiento: "",
     costo: "",
     moneda: "MXN",
   };
@@ -298,6 +301,7 @@ async function cargarPreciosEspecialista(
       id,
       doctor_id,
       tratamiento_id,
+      nombre_tratamiento,
       costo,
       moneda,
       activo,
@@ -632,13 +636,21 @@ async function cargarPreciosEspecialista(
 
     setFormPrecio({
       tratamiento_id:
-        String(
-          precio.tratamiento_id
-        ),
+        precio.tratamiento_id
+          ? String(
+              precio.tratamiento_id
+            )
+          : "",
+
+      nombre_tratamiento:
+        precio.nombre_tratamiento ||
+        "",
+
       costo:
         String(
           precio.costo
         ),
+
       moneda:
         precio.moneda,
     });
@@ -665,170 +677,156 @@ async function cargarPreciosEspecialista(
 
   }
 
-  async function guardarPrecioEspecialista() {
+async function guardarPrecioEspecialista() {
 
-    if (
-      doctorPreciosId === null
-    ) {
-      return;
-    }
+  if (
+    doctorPreciosId === null
+  ) {
+    return;
+  }
 
-    if (
-      !formPrecio.tratamiento_id
-    ) {
+  const nombreTratamiento =
+    formPrecio.nombre_tratamiento.trim();
+
+  if (
+    !nombreTratamiento
+  ) {
+
+    alert(
+      "Ingresa el nombre del tratamiento."
+    );
+
+    return;
+  }
+
+  const costo =
+    Number(
+      formPrecio.costo
+    );
+
+  if (
+    Number.isNaN(costo) ||
+    costo <= 0
+  ) {
+
+    alert(
+      "Ingresa un costo válido."
+    );
+
+    return;
+  }
+
+  setGuardandoPrecio(
+    true
+  );
+
+  const datosPrecio = {
+
+    doctor_id:
+      doctorPreciosId,
+
+    tratamiento_id:
+      null,
+
+    nombre_tratamiento:
+      nombreTratamiento,
+
+    costo,
+
+    moneda:
+      formPrecio.moneda,
+
+    activo:
+      true,
+
+    updated_at:
+      new Date().toISOString(),
+  };
+
+  if (
+    precioEditandoId !== null
+  ) {
+
+    const {
+      error,
+    } = await supabase
+
+      .from(
+        "especialista_tratamientos"
+      )
+
+      .update(
+        datosPrecio
+      )
+
+      .eq(
+        "id",
+        precioEditandoId
+      );
+
+    if (error) {
+
+      console.error(
+        "Error actualizando precio del especialista:",
+        error
+      );
 
       alert(
-        "Selecciona un tratamiento."
+        "No se pudo actualizar el tratamiento."
+      );
+
+      setGuardandoPrecio(
+        false
       );
 
       return;
-
     }
 
-    const costo =
-      Number(
-        formPrecio.costo
-      );
+  } else {
 
-    if (
-      Number.isNaN(costo) ||
-      costo <= 0
-    ) {
+    const {
+      error,
+    } = await supabase
+
+      .from(
+        "especialista_tratamientos"
+      )
+
+      .insert([
+        datosPrecio,
+      ]);
+
+    if (error) {
+
+      console.error(
+        "Error guardando tratamiento del especialista:",
+        error
+      );
 
       alert(
-        "Ingresa un costo válido."
+        "No se pudo guardar el tratamiento."
+      );
+
+      setGuardandoPrecio(
+        false
       );
 
       return;
-
     }
-
-    setGuardandoPrecio(
-      true
-    );
-
-    const datosPrecio = {
-
-      doctor_id:
-        doctorPreciosId,
-
-      tratamiento_id:
-        Number(
-          formPrecio.tratamiento_id
-        ),
-
-      costo,
-
-      moneda:
-        formPrecio.moneda,
-
-      activo:
-        true,
-
-      updated_at:
-        new Date().toISOString(),
-
-    };
-
-    if (
-      precioEditandoId !== null
-    ) {
-
-      const {
-        error,
-      } = await supabase
-
-        .from(
-          "especialista_tratamientos"
-        )
-
-        .update(
-          datosPrecio
-        )
-
-        .eq(
-          "id",
-          precioEditandoId
-        );
-
-      if (error) {
-
-        console.error(
-          "Error actualizando precio del especialista:",
-          error
-        );
-
-        alert(
-          "No se pudo actualizar el precio."
-        );
-
-        setGuardandoPrecio(
-          false
-        );
-
-        return;
-
-      }
-
-    } else {
-
-      const {
-        error,
-      } = await supabase
-
-        .from(
-          "especialista_tratamientos"
-        )
-
-        .insert([
-          datosPrecio,
-        ]);
-
-      if (error) {
-
-        console.error(
-          "Error guardando precio del especialista:",
-          error
-        );
-
-        if (
-          error.code ===
-          "23505"
-        ) {
-
-          alert(
-            "Este especialista ya tiene un precio configurado para ese tratamiento."
-          );
-
-        } else {
-
-          alert(
-            "No se pudo guardar el precio."
-          );
-
-        }
-
-        setGuardandoPrecio(
-          false
-        );
-
-        return;
-
-      }
-
-    }
-
-    await cargarPreciosEspecialista(
-      doctorPreciosId
-    );
-
-    cancelarFormularioPrecio();
-
-    setGuardandoPrecio(
-      false
-    );
 
   }
+
+  await cargarPreciosEspecialista(
+    doctorPreciosId
+  );
+
+  cancelarFormularioPrecio();
+
+  setGuardandoPrecio(
+    false
+  );
+
+}
 
   async function cambiarEstadoPrecioEspecialista(
     precio: PrecioEspecialista
@@ -2260,57 +2258,27 @@ async function cargarPreciosEspecialista(
                                               Tratamiento
                                             </label>
 
-                                            <select
+                                            <input
+                                              type="text"
                                               value={
-                                                formPrecio.tratamiento_id
+                                                formPrecio.nombre_tratamiento
                                               }
                                               onChange={
                                                 (e) =>
                                                   setFormPrecio({
                                                     ...formPrecio,
-                                                    tratamiento_id:
+                                                    nombre_tratamiento:
                                                       e.target.value,
                                                   })
                                               }
-                                              disabled={
-                                                precioEditandoId !== null
-                                              }
+                                              placeholder="Ej. Endodoncia molar"
                                               className="
                                                 mint-input
                                                 w-full
                                                 px-3
                                                 py-2.5
-                                                disabled:opacity-60
-                                                disabled:cursor-not-allowed
                                               "
-                                            >
-
-                                              <option value="">
-                                                Selecciona tratamiento
-                                              </option>
-
-                                              {
-                                                catalogoTratamientos.map(
-                                                  (tratamiento) => (
-
-                                                    <option
-                                                      key={
-                                                        tratamiento.id
-                                                      }
-                                                      value={
-                                                        tratamiento.id
-                                                      }
-                                                    >
-                                                      {
-                                                        tratamiento.nombre
-                                                      }
-                                                    </option>
-
-                                                  )
-                                                )
-                                              }
-
-                                            </select>
+                                            />
 
                                           </div>
 
@@ -2649,6 +2617,7 @@ async function cargarPreciosEspecialista(
                                                           "
                                                         >
                                                           {
+                                                            precio.nombre_tratamiento ||
                                                             catalogoTratamientos.find(
                                                               (tratamiento: any) =>
                                                                 Number(
