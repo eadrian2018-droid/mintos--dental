@@ -40,9 +40,13 @@ type PagoIndicador = {
 
   comision_doctor_pago_monto?: number;
 
+  comision_doctor_porcentaje?: number | null;
+
 };
 
 export type IndicadoresProps = {
+
+  tratamientos: Tratamiento[];
 
   tratamientosFiltrados: Tratamiento[];
 
@@ -55,6 +59,8 @@ export type IndicadoresProps = {
 };
 
 export default function useIndicadores({
+
+  tratamientos,
 
   tratamientosFiltrados,
 
@@ -743,92 +749,190 @@ export default function useIndicadores({
 
   /*
   |--------------------------------------------------------------------------
-  | COSTOS CLÍNICOS POR MONEDA
+  | COSTOS CLÍNICOS VINCULADOS A LOS COBROS DEL PERÍODO
   |--------------------------------------------------------------------------
   |
-  | Laboratorio y especialista conservan su moneda real.
+  | Reportes y Resumen trabajan con los pagos reales del período.
+  | Para no perder los costos cuando el tratamiento fue creado en otra fecha,
+  | localizamos el tratamiento en el historial completo.
   |
-  | No convertimos USD a MXN ni MXN a USD.
+  | Cuando un tratamiento recibe pagos parciales, laboratorio y especialista
+  | se reconocen proporcionalmente al porcentaje cobrado del tratamiento.
+  | Esto evita descontar el costo completo varias veces en períodos distintos.
+  |
+  | MXN y USD permanecen separados. No convertimos costos entre monedas.
   |
   */
 
-  const totalLaboratorioMXN =
-    tratamientosFiltrados
-      .filter(
-        (item) =>
-          !item.moneda_laboratorio ||
-          item.moneda_laboratorio ===
-            "MXN"
-      )
-      .reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          Number(
-            item.laboratorio || 0
-          ),
-        0
+  function buscarTratamientoPago(
+    pago: PagoIndicador
+  ) {
+
+    return tratamientos.find(
+      (item) =>
+        Number(item.id) ===
+        Number(pago.tratamiento_id)
+    );
+
+  }
+
+  function proporcionCobroTratamiento(
+    pago: PagoIndicador,
+    tratamiento: Tratamiento
+  ) {
+
+    const totalTratamiento =
+      Number(
+        tratamiento.total || 0
       );
+
+    if (
+      totalTratamiento <= 0
+    ) {
+
+      return 0;
+
+    }
+
+    const montoAplicadoMXN =
+      Number(
+        pago.monto_mxn || 0
+      ) > 0
+        ? Number(
+            pago.monto_mxn || 0
+          )
+        : pago.moneda === "MXN"
+          ? Number(
+              pago.monto_original || 0
+            )
+          : 0;
+
+    if (
+      montoAplicadoMXN <= 0
+    ) {
+
+      return 0;
+
+    }
+
+    return Math.min(
+      montoAplicadoMXN /
+        totalTratamiento,
+      1
+    );
+
+  }
+
+  const costosClinicosPeriodo =
+    pagosFiltrados.reduce(
+      (
+        acumulado,
+        pago
+      ) => {
+
+        const tratamiento =
+          buscarTratamientoPago(
+            pago
+          );
+
+        if (
+          !tratamiento
+        ) {
+
+          return acumulado;
+
+        }
+
+        const proporcion =
+          proporcionCobroTratamiento(
+            pago,
+            tratamiento
+          );
+
+        if (
+          proporcion <= 0
+        ) {
+
+          return acumulado;
+
+        }
+
+        const laboratorio =
+          Number(
+            tratamiento.laboratorio || 0
+          ) *
+          proporcion;
+
+        const especialista =
+          Number(
+            tratamiento.especialista || 0
+          ) *
+          proporcion;
+
+        if (
+          !tratamiento.moneda_laboratorio ||
+          tratamiento.moneda_laboratorio ===
+            "MXN"
+        ) {
+
+          acumulado.laboratorioMXN +=
+            laboratorio;
+
+        } else if (
+          tratamiento.moneda_laboratorio ===
+          "USD"
+        ) {
+
+          acumulado.laboratorioUSD +=
+            laboratorio;
+
+        }
+
+        if (
+          !tratamiento.moneda_especialista ||
+          tratamiento.moneda_especialista ===
+            "MXN"
+        ) {
+
+          acumulado.especialistaMXN +=
+            especialista;
+
+        } else if (
+          tratamiento.moneda_especialista ===
+          "USD"
+        ) {
+
+          acumulado.especialistaUSD +=
+            especialista;
+
+        }
+
+        return acumulado;
+
+      },
+      {
+        laboratorioMXN: 0,
+        laboratorioUSD: 0,
+        especialistaMXN: 0,
+        especialistaUSD: 0,
+      }
+    );
+
+  const totalLaboratorioMXN =
+    costosClinicosPeriodo
+      .laboratorioMXN;
 
   const totalLaboratorioUSD =
-    tratamientosFiltrados
-      .filter(
-        (item) =>
-          item.moneda_laboratorio ===
-            "USD"
-      )
-      .reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          Number(
-            item.laboratorio || 0
-          ),
-        0
-      );
+    costosClinicosPeriodo
+      .laboratorioUSD;
 
   const totalEspecialistaMXN =
-    tratamientosFiltrados
-      .filter(
-        (item) =>
-          !item.moneda_especialista ||
-          item.moneda_especialista ===
-            "MXN"
-      )
-      .reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          Number(
-            item.especialista || 0
-          ),
-        0
-      );
+    costosClinicosPeriodo
+      .especialistaMXN;
 
   const totalEspecialistaUSD =
-    tratamientosFiltrados
-      .filter(
-        (item) =>
-          item.moneda_especialista ===
-            "USD"
-      )
-      .reduce(
-        (
-          total,
-          item
-        ) =>
-          total +
-          Number(
-            item.especialista || 0
-          ),
-        0
-      );
+    costosClinicosPeriodo
+      .especialistaUSD;
 
   /*
   |--------------------------------------------------------------------------
@@ -895,10 +999,8 @@ export default function useIndicadores({
         }
 
         const tratamiento =
-          tratamientosFiltrados.find(
-            (item) =>
-              item.id ===
-              pago.tratamiento_id
+          buscarTratamientoPago(
+            pago
           );
 
         if (
@@ -914,14 +1016,23 @@ export default function useIndicadores({
         const doctor =
           doctores.find(
             (d) =>
-              d.id ===
-              tratamiento.doctor_id
+              Number(d.id) ===
+              Number(
+                tratamiento.doctor_id
+              )
           );
 
         const porcentaje =
-          Number(
-            doctor?.porcentaje || 0
-          );
+          pago.comision_doctor_porcentaje !==
+            null &&
+          pago.comision_doctor_porcentaje !==
+            undefined
+            ? Number(
+                pago.comision_doctor_porcentaje
+              )
+            : Number(
+                doctor?.porcentaje || 0
+              );
 
         const montoPago =
           Number(
@@ -958,10 +1069,8 @@ export default function useIndicadores({
         }
 
         const tratamiento =
-          tratamientosFiltrados.find(
-            (item) =>
-              item.id ===
-              pago.tratamiento_id
+          buscarTratamientoPago(
+            pago
           );
 
         if (
@@ -977,14 +1086,23 @@ export default function useIndicadores({
         const doctor =
           doctores.find(
             (d) =>
-              d.id ===
-              tratamiento.doctor_id
+              Number(d.id) ===
+              Number(
+                tratamiento.doctor_id
+              )
           );
 
         const porcentaje =
-          Number(
-            doctor?.porcentaje || 0
-          );
+          pago.comision_doctor_porcentaje !==
+            null &&
+          pago.comision_doctor_porcentaje !==
+            undefined
+            ? Number(
+                pago.comision_doctor_porcentaje
+              )
+            : Number(
+                doctor?.porcentaje || 0
+              );
 
         const montoPago =
           Number(

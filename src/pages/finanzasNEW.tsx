@@ -19,6 +19,9 @@ import Cobros
 import Comisiones
   from "../components/finanzas/Comisiones";
 
+import Reportes
+  from "../components/finanzas/Reportes";
+
 import DoctorDetalle
   from "../components/DoctorDetalle";
 
@@ -39,7 +42,8 @@ type SeccionFinanzas =
   | "resumen"
   | "cobros"
   | "gastos"
-  | "comisiones";
+  | "comisiones"
+  | "reportes";
 
 type PeriodoFinanzas =
   | "semana"
@@ -74,19 +78,19 @@ export default function Finanzas() {
         "seccion"
       );
 
-    if (
-      seccion === "cobros" ||
-      seccion === "gastos" ||
-      seccion === "comisiones"
-    ) {
+   if (
+  seccion === "cobros" ||
+  seccion === "gastos" ||
+  seccion === "comisiones" ||
+  seccion === "reportes"
+) {
 
-      setSeccionActiva(
-        seccion
-      );
+  setSeccionActiva(
+    seccion
+  );
 
-      return;
-
-    }
+  return;
+}
 
     setSeccionActiva(
       "resumen"
@@ -317,6 +321,8 @@ export default function Finanzas() {
 
   } = useIndicadores({
 
+    tratamientos,
+
     tratamientosFiltrados,
 
     gastosFiltrados,
@@ -344,7 +350,9 @@ export default function Finanzas() {
 
         {
           seccionActiva ===
-          "resumen"
+          "resumen" ||
+          seccionActiva ===
+          "reportes"
 
           ? (
 
@@ -413,7 +421,12 @@ export default function Finanzas() {
                     "
                   >
 
-                    Resumen financiero
+                    {
+                      seccionActiva ===
+                      "reportes"
+                        ? "Reportes"
+                        : "Resumen financiero"
+                    }
 
                   </h1>
 
@@ -425,8 +438,12 @@ export default function Finanzas() {
                     "
                   >
 
-                    Visión general del rendimiento
-                    financiero de la clínica.
+                    {
+                      seccionActiva ===
+                      "reportes"
+                        ? "Cierre financiero del período seleccionado."
+                        : "Visión general del rendimiento financiero de la clínica."
+                    }
 
                   </p>
 
@@ -761,7 +778,12 @@ export default function Finanzas() {
 
                       ? "Gastos"
 
-                      : "Comisiones"
+                      : seccionActiva ===
+                        "comisiones"
+
+                        ? "Comisiones"
+
+                        : "Reportes"
                 }
 
               </h1>
@@ -934,96 +956,179 @@ export default function Finanzas() {
           />
         }
 
-        {
-          seccionActiva ===
-          "resumen"
+     {
+  seccionActiva ===
+  "resumen"
 
-          &&
+  &&
 
-          <Resumen
+  <Resumen
 
-            ingresos={
-              ingresos
-            }
+    ingresos={
+      ingresos
+    }
 
-            cobrado={
-              cobrado
-            }
+    cobrado={
+      cobrado
+    }
 
-            cobradoMXN={
-              cobradoMXN
-            }
+    cobradoMXN={
+      cobradoMXN
+    }
 
-            cobradoUSD={
-              cobradoUSD
-            }
+    cobradoUSD={
+      cobradoUSD
+    }
 
-            pendiente={
-              pendiente
-            }
+    pendiente={
+      pendiente
+    }
 
-            gananciaNeta={
-              gananciaNeta
-            }
+    gananciaNeta={
+      gananciaNeta
+    }
 
-            gananciaNetaUSD={
-              gananciaNetaUSD
-            }
+    gananciaNetaUSD={
+      gananciaNetaUSD
+    }
 
-            totalGastos={
-              totalGastos
-            }
+    totalGastos={
+      totalGastos
+    }
 
-            totalGastosUSD={
-              totalGastosUSD
-            }
+    totalGastosUSD={
+      totalGastosUSD
+    }
 
-            totalBaseClinicaMXN={
-              totalBaseClinicaMXN
-            }
+    totalBaseClinicaMXN={
+      totalBaseClinicaMXN
+    }
 
-            totalBaseClinicaUSD={
-              totalBaseClinicaUSD
-            }
+    totalBaseClinicaUSD={
+      totalBaseClinicaUSD
+    }
 
-            totalComisionesDoctorMXN={
-              totalComisionesDoctorMXN
-            }
+    totalComisionesDoctorMXN={
+      totalComisionesDoctorMXN
+    }
 
-            totalComisionesDoctorUSD={
-              totalComisionesDoctorUSD
-            }
+    totalComisionesDoctorUSD={
+      totalComisionesDoctorUSD
+    }
 
-            cajaMXN={
-              cajaMXN
-            }
+    cajaMXN={
+      cajaMXN
+    }
 
-            cajaUSD={
-              cajaUSD
-            }
+    cajaUSD={
+      cajaUSD
+    }
 
-            totalTarjeta={
-              totalTarjeta
-            }
+    totalTarjeta={
+      totalTarjeta
+    }
 
-            totalTransferencia={
-              totalTransferencia
-            }
+    totalTransferencia={
+      totalTransferencia
+    }
 
-            totalTransferenciaUSD={
-              totalTransferenciaUSD
-            }
+    totalTransferenciaUSD={
+      totalTransferenciaUSD
+    }
 
-            pacientes={
-              pacientes
-            }
+    pacientes={
+      pacientes
+    }
 
-            tratamientosFiltrados={
-              tratamientosFiltrados
-            }
+    tratamientosFiltrados={
+      tratamientosFiltrados
+    }
 
-          />
-        }
+  />
+}
+
+{
+  seccionActiva ===
+  "reportes"
+
+  &&
+
+  <Reportes
+
+    ingresos={
+      ingresos
+    }
+
+    cobradoMXN={
+      cobradoMXN
+    }
+
+    cobradoUSD={
+      cobradoUSD
+    }
+
+    pendiente={
+      pendiente
+    }
+
+    totalBaseClinicaMXN={
+      totalBaseClinicaMXN
+    }
+
+    totalBaseClinicaUSD={
+      totalBaseClinicaUSD
+    }
+
+    totalComisionesDoctorMXN={
+      totalComisionesDoctorMXN
+    }
+
+    totalComisionesDoctorUSD={
+      totalComisionesDoctorUSD
+    }
+
+    totalGastos={
+      totalGastos
+    }
+
+    totalGastosUSD={
+      totalGastosUSD
+    }
+
+    gananciaNeta={
+      gananciaNeta
+    }
+
+    gananciaNetaUSD={
+      gananciaNetaUSD
+    }
+
+    cajaMXN={
+      cajaMXN
+    }
+
+    cajaUSD={
+      cajaUSD
+    }
+
+    totalTarjeta={
+      totalTarjeta
+    }
+
+    totalTransferencia={
+      totalTransferencia
+    }
+
+    totalTransferenciaUSD={
+      totalTransferenciaUSD
+    }
+
+    tratamientosFiltrados={
+      tratamientosFiltrados
+    }
+
+  />
+}
 
       </div>
 

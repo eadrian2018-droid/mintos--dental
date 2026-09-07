@@ -732,18 +732,19 @@ export default function Layout() {
 
 </Link>
 
-            <div
-              className="
-                px-3
-                py-2
-                text-[13px]
-                mint-text-muted
-              "
+            <Link
+              to="/finanzas?seccion=reportes"
+              className={
+                submenuClasses(
+                  "/finanzas",
+                  "reportes"
+                )
+              }
             >
 
               Reportes
 
-            </div>
+            </Link>
 
           </div>
 

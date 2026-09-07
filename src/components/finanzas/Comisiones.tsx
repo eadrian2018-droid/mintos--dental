@@ -144,16 +144,9 @@ export default function Comisiones({
       () =>
         doctores
           .filter(
-            (doctor) =>
-              !tratamientosAny.some(
-                (tratamiento) =>
-                  Number(
-                    tratamiento.especialista_id
-                  ) ===
-                  Number(
-                    doctor.id
-                  )
-              )
+            (doctor: any) =>
+              doctor.tipo_doctor === "doctor" ||
+              doctor.tipo_doctor === "ambos"
           )
           .map(
             (doctor) => {
@@ -359,134 +352,93 @@ export default function Comisiones({
     useMemo(
       () => {
 
-        const mapa =
-          new Map<
-            string,
-            {
-              id: any;
-              nombre: string;
-              tratamientos: any[];
-              pendienteMXN: number;
-              pendienteUSD: number;
-              pagadoMXN: number;
-              pagadoUSD: number;
-            }
-          >();
-
-        tratamientosEspecialistas
-          .forEach(
-            (tratamiento) => {
-
-              const id =
-                tratamiento
-                  .especialista_id;
-
-              const nombre =
-                tratamiento
-                  .especialista_nombre
-                ||
-                doctores.find(
-                  (doctor) =>
-                    Number(
-                      doctor.id
-                    ) ===
-                    Number(
-                      id
-                    )
-                )?.nombre
-                ||
-                "Especialista";
-
-              const key =
-                String(id);
-
-              if (
-                !mapa.has(
-                  key
-                )
-              ) {
-                mapa.set(
-                  key,
-                  {
-                    id,
-                    nombre,
-                    tratamientos: [],
-                    pendienteMXN: 0,
-                    pendienteUSD: 0,
-                    pagadoMXN: 0,
-                    pagadoUSD: 0,
-                  }
-                );
-              }
-
-              const item =
-                mapa.get(
-                  key
-                )!;
-
-              item.tratamientos.push(
-                tratamiento
-              );
-
-              const costo =
-                Number(
-                  tratamiento.especialista ||
-                  0
-                );
-
-              const moneda =
-                tratamiento
-                  .moneda_especialista ===
-                  "USD"
-                  ? "USD"
-                  : "MXN";
-
-              if (
-                tratamiento
-                  .especialista_pagado ===
-                true
-              ) {
-
-                if (
-                  moneda ===
-                  "USD"
-                ) {
-                  item.pagadoUSD +=
-                    costo;
-                }
-                else {
-                  item.pagadoMXN +=
-                    costo;
-                }
-
-                return;
-
-              }
-
-              if (
-                tratamiento.estado !==
-                "Finalizado"
-              ) {
-                return;
-              }
-
-              if (
-                moneda ===
-                "USD"
-              ) {
-                item.pendienteUSD +=
-                  costo;
-              }
-              else {
-                item.pendienteMXN +=
-                  costo;
-              }
-
-            }
+        const especialistasConfigurados =
+          doctores.filter(
+            (doctor: any) =>
+              doctor.tipo_doctor === "especialista" ||
+              doctor.tipo_doctor === "ambos"
           );
 
-        return Array.from(
-          mapa.values()
+        return especialistasConfigurados.map(
+          (doctor: any) => {
+
+            const tratamientosEspecialista =
+              tratamientosEspecialistas.filter(
+                (tratamiento) =>
+                  Number(
+                    tratamiento.especialista_id
+                  ) ===
+                  Number(
+                    doctor.id
+                  )
+              );
+
+            let pendienteMXN = 0;
+            let pendienteUSD = 0;
+            let pagadoMXN = 0;
+            let pagadoUSD = 0;
+
+            tratamientosEspecialista.forEach(
+              (tratamiento) => {
+
+                const costo =
+                  Number(
+                    tratamiento.especialista || 0
+                  );
+
+                const moneda =
+                  tratamiento.moneda_especialista ===
+                  "USD"
+                    ? "USD"
+                    : "MXN";
+
+                if (
+                  tratamiento.especialista_pagado ===
+                  true
+                ) {
+
+                  if (moneda === "USD") {
+                    pagadoUSD += costo;
+                  }
+                  else {
+                    pagadoMXN += costo;
+                  }
+
+                  return;
+                }
+
+                if (
+                  tratamiento.estado !==
+                  "Finalizado"
+                ) {
+                  return;
+                }
+
+                if (moneda === "USD") {
+                  pendienteUSD += costo;
+                }
+                else {
+                  pendienteMXN += costo;
+                }
+
+              }
+            );
+
+            return {
+              id: doctor.id,
+              nombre:
+                doctor.nombre ||
+                "Especialista",
+              doctor,
+              tratamientos:
+                tratamientosEspecialista,
+              pendienteMXN,
+              pendienteUSD,
+              pagadoMXN,
+              pagadoUSD,
+            };
+
+          }
         );
 
       },
@@ -859,13 +811,23 @@ export default function Comisiones({
               Doctores
             </button>
 
-            <button
+                    <button
               type="button"
-              onClick={() =>
+              onClick={() => {
+
                 setVista(
                   "especialistas"
-                )
-              }
+                );
+
+                setDoctorDetalle(
+                  null
+                );
+
+                setMostrarDetalleDoctor(
+                  false
+                );
+
+              }}
               className={`
                 px-4
                 py-2
@@ -878,14 +840,14 @@ export default function Comisiones({
                   "especialistas"
 
                     ? `
-                      bg-white
-                      text-[var(--mint-primary)]
-                      shadow-sm
-                    `
+                        bg-white
+                        text-[var(--mint-primary)]
+                        shadow-sm
+                      `
 
                     : `
-                      mint-text-secondary
-                    `
+                        mint-text-secondary
+                      `
                 }
               `}
             >
