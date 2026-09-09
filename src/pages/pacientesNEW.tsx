@@ -54,10 +54,30 @@ export default function Pacientes() {
     setBusqueda] =
     useState("");
 
+  const [
+    busquedaTelefono,
+    setBusquedaTelefono,
+  ] = useState("");
+
     const [
   mostrarQR,
   setMostrarQR,
 ] = useState(false);
+
+  const [
+    pacientesNuevosMes,
+    setPacientesNuevosMes,
+  ] = useState(0);
+
+  const [
+    pacientesConSaldo,
+    setPacientesConSaldo,
+  ] = useState(0);
+
+  const [
+    tratamientosPendientesGlobal,
+    setTratamientosPendientesGlobal,
+  ] = useState(0);
 
   const [pacientes,
     setPacientes] =
@@ -261,6 +281,8 @@ useEffect(() => {
 
   cargarTipoCambio();
 
+  cargarResumenPacientes();
+
 }, []);
 
 useEffect(() => {
@@ -378,6 +400,86 @@ async function cargarTipoCambio() {
       setPacientes(data);
 
     }
+
+  }
+
+  async function cargarResumenPacientes() {
+
+    const ahora =
+      new Date();
+
+    const inicioMes =
+      new Date(
+        ahora.getFullYear(),
+        ahora.getMonth(),
+        1
+      ).toISOString();
+
+    const [
+      pacientesMesResponse,
+      tratamientosResponse,
+    ] = await Promise.all([
+
+      supabase
+        .from("pacientes")
+        .select(
+          "*",
+          {
+            count: "exact",
+            head: true,
+          }
+        )
+        .gte(
+          "created_at",
+          inicioMes
+        ),
+
+      supabase
+        .from("tratamientos")
+        .select(
+          "paciente_id, resta, pendiente"
+        ),
+
+    ]);
+
+    setPacientesNuevosMes(
+      pacientesMesResponse.count || 0
+    );
+
+    const tratamientosActivos =
+      (
+        tratamientosResponse.data || []
+      ).filter(
+        (tratamiento: any) =>
+          Number(
+            tratamiento.resta || 0
+          ) > 0 ||
+          tratamiento.pendiente === true
+      );
+
+    setTratamientosPendientesGlobal(
+      tratamientosActivos.length
+    );
+
+    const pacientesConSaldoIds =
+      new Set(
+        tratamientosActivos
+          .filter(
+            (tratamiento: any) =>
+              Number(
+                tratamiento.resta || 0
+              ) > 0
+          )
+          .map(
+            (tratamiento: any) =>
+              tratamiento.paciente_id
+          )
+          .filter(Boolean)
+      );
+
+    setPacientesConSaldo(
+      pacientesConSaldoIds.size
+    );
 
   }
 
@@ -2447,14 +2549,15 @@ comision_banco:
 const pacientesFiltrados =
   pacientes.filter((p) => {
 
-    const textoBusqueda =
+    const textoNombre =
       busqueda
         .toLowerCase()
         .trim();
 
-    if (!textoBusqueda) {
-      return true;
-    }
+    const textoTelefono =
+      busquedaTelefono
+        .toLowerCase()
+        .trim();
 
     const nombre =
       p.nombre
@@ -2464,18 +2567,21 @@ const pacientesFiltrados =
       p.telefono
         ?.toLowerCase() || "";
 
-    const correo =
-      p.correo
-        ?.toLowerCase() || "";
+    const coincideNombre =
+      !textoNombre ||
+      nombre.includes(
+        textoNombre
+      );
 
-    const idPaciente =
-      String(p.id);
+    const coincideTelefono =
+      !textoTelefono ||
+      telefono.includes(
+        textoTelefono
+      );
 
     return (
-      nombre.includes(textoBusqueda) ||
-      telefono.includes(textoBusqueda) ||
-      correo.includes(textoBusqueda) ||
-      idPaciente.includes(textoBusqueda)
+      coincideNombre &&
+      coincideTelefono
     );
 
   });
@@ -2489,59 +2595,38 @@ const pacientesFiltrados =
   gap-3
 ">
 
-<div
-  className="
-    mint-card
-    p-4
-  "
->
-
-  <div
-    className="
-      flex
-      flex-col
-      xl:flex-row
-      xl:items-center
-      gap-4
-    "
-  >
+{
+  pacienteAbierto && (
 
     <div
       className="
+        mint-card
+        px-4
+        py-3
         flex
         items-center
         justify-between
-        gap-4
-        shrink-0
+        gap-3
       "
     >
 
-      <div>
-
-        <p
-          className="
-            text-xs
-            font-semibold
-            uppercase
-            tracking-wide
-            mint-text-brand
-          "
-        >
-          Pacientes
-        </p>
-
-        <p
-          className="
-            text-sm
-            font-bold
-            mint-text-primary
-            mt-1
-          "
-        >
-          {pacientes.length} registrados
-        </p>
-
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setPacienteAbierto(null);
+          setBusqueda("");
+          setBusquedaTelefono("");
+        }}
+        className="
+          mint-btn
+          mint-btn-secondary
+          px-4
+          py-2
+          text-sm
+        "
+      >
+        ← Todos los pacientes
+      </button>
 
       <button
         type="button"
@@ -2561,220 +2646,8 @@ const pacientesFiltrados =
 
     </div>
 
-    <div
-      className="
-        xl:w-[320px]
-        shrink-0
-      "
-    >
-
-      <input
-        value={busqueda}
-        onChange={(e) =>
-          setBusqueda(
-            e.target.value
-          )
-        }
-        placeholder="Buscar por nombre, teléfono, correo o ID..."
-        className="
-          mint-input
-          w-full
-          px-4
-          py-2.5
-          text-sm
-        "
-      />
-
-    </div>
-
-    <div
-      className="
-        flex-1
-        min-w-0
-      "
-    >
-
-      {
-        pacientesFiltrados.length === 0
-
-          ? (
-
-            <div
-              className="
-                mint-card
-                h-[54px]
-                flex
-                items-center
-                justify-center
-                text-sm
-                mint-text-muted
-              "
-            >
-              Sin resultados
-            </div>
-
-          )
-
-          : (
-
-            <div
-              className="
-                flex
-                gap-2
-                overflow-x-auto
-                pb-1
-              "
-            >
-
-              {
-                pacientesFiltrados.map(
-                  (p) => {
-
-                    const seleccionado =
-                      pacienteAbierto?.id ===
-                      p.id;
-
-                    return (
-
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() =>
-                          abrirPaciente(p)
-                        }
-                        className={`
-                          shrink-0
-                          min-w-[180px]
-                          max-w-[220px]
-                          text-left
-                          px-3
-                          py-2.5
-                          transition-all
-
-                          ${
-                            seleccionado
-                              ? "mint-card-primary"
-                              : "mint-card"
-                          }
-                        `}
-                      >
-
-                        <div
-                          className="
-                            flex
-                            items-center
-                            gap-3
-                          "
-                        >
-
-                          <div
-                            className={`
-                              w-9
-                              h-9
-                              rounded-full
-                              flex
-                              items-center
-                              justify-center
-                              shrink-0
-                              font-bold
-                              text-sm
-
-                              ${
-                                seleccionado
-                                  ? "mint-btn-primary"
-                                  : "mint-card mint-text-secondary"
-                              }
-                            `}
-                          >
-
-                            {
-                              p.nombre
-                                ?.charAt(0)
-                                ?.toUpperCase()
-                            }
-
-                          </div>
-
-                          <div
-                            className="
-                              min-w-0
-                              flex-1
-                            "
-                          >
-
-                            <div
-                              className="
-                                flex
-                                items-center
-                                justify-between
-                                gap-2
-                              "
-                            >
-
-                              <h3
-                                className={`
-                                  text-sm
-                                  font-semibold
-                                  truncate
-
-                                  ${
-                                    seleccionado
-                                      ? "mint-text-brand"
-                                      : "mint-text-primary"
-                                  }
-                                `}
-                              >
-                                {p.nombre}
-                              </h3>
-
-                              <span
-                                className="
-                                  text-[10px]
-                                  mint-text-muted
-                                  shrink-0
-                                "
-                              >
-                                #{p.id}
-                              </span>
-
-                            </div>
-
-                            <p
-                              className="
-                                text-xs
-                                mint-text-secondary
-                                truncate
-                                mt-1
-                              "
-                            >
-                              {
-                                p.telefono ||
-                                "Sin teléfono"
-                              }
-                            </p>
-
-                          </div>
-
-                        </div>
-
-                      </button>
-
-                    );
-
-                  }
-                )
-              }
-
-            </div>
-
-          )
-      }
-
-    </div>
-
-  </div>
-
-</div>
+  )
+}
 
    <div className="
   flex-1
@@ -6567,94 +6440,499 @@ const pacientesFiltrados =
 
                    (
 
-            <div className="
-              h-full
-              mint-card
-              p-6
-            ">
-
-              <div className="
+            <div
+              className="
                 h-full
-                max-w-4xl
-                mx-auto
                 flex
                 flex-col
-              ">
+                gap-4
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  flex-col
+                  xl:flex-row
+                  xl:items-end
+                  xl:justify-between
+                  gap-4
+                "
+              >
 
                 <div>
 
-                  <p className="
-                    text-xs
-                    font-semibold
-                    uppercase
-                    tracking-wide
-                    mint-text-brand
-                  ">
+                  <p
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-brand
+                    "
+                  >
                     Pacientes
                   </p>
 
-                  <h2 className="
-                    text-2xl
-                    font-bold
-                    mint-text-primary
-                    mt-1
-                  ">
-                    Expedientes de Pacientes
+                  <h2
+                    className="
+                      text-2xl
+                      font-bold
+                      mint-text-primary
+                      mt-1
+                    "
+                  >
+                    Buscar expediente
                   </h2>
 
-                  <p className="
-                    text-sm
-                    mint-text-secondary
-                    mt-2
-                  ">
-                    Selecciona un paciente de la barra superior
-                    para consultar su expediente.
+                  <p
+                    className="
+                      text-sm
+                      mint-text-secondary
+                      mt-2
+                    "
+                  >
+                    Encuentra rápidamente un paciente por nombre
+                    o número de teléfono.
                   </p>
 
                 </div>
 
-                <div className="
-                  flex-1
-                  flex
-                  items-center
-                  justify-center
-                  min-h-[250px]
-                ">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarQR(true)
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    px-5
+                    py-2.5
+                    text-sm
+                    shrink-0
+                  "
+                >
+                  + QR
+                </button>
 
-                  <div className="
-                    w-full
-                    max-w-[360px]
-                    text-center
-                  ">
+              </div>
 
-                    <p className="
-                      text-sm
+              <div
+                className="
+                  grid
+                  grid-cols-1
+                  sm:grid-cols-2
+                  xl:grid-cols-4
+                  gap-3
+                "
+              >
+
+                <div
+                  className="
+                    mint-card
+                    p-4
+                  "
+                >
+                  <p
+                    className="
+                      text-xs
                       font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-muted
+                    "
+                  >
+                    Pacientes registrados
+                  </p>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      mint-text-primary
+                      mt-2
+                    "
+                  >
+                    {pacientes.length}
+                  </p>
+                </div>
+
+                <div
+                  className="
+                    mint-card
+                    p-4
+                  "
+                >
+                  <p
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-muted
+                    "
+                  >
+                    Nuevos este mes
+                  </p>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
                       mint-text-brand
-                      mb-2
-                    ">
-                      Registro de pacientes
-                    </p>
+                      mt-2
+                    "
+                  >
+                    {pacientesNuevosMes}
+                  </p>
+                </div>
 
-                    <p className="
-                      text-sm
-                      mint-text-secondary
-                      mb-4
-                    ">
-                      Escanea el código para abrir el formulario
-                      de registro desde un teléfono.
-                    </p>
+                <div
+                  className="
+                    mint-card
+                    p-4
+                  "
+                >
+                  <p
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-muted
+                    "
+                  >
+                    Con saldo pendiente
+                  </p>
 
-                    <div className="
-                      max-w-[340px]
-                      mx-auto
-                    ">
-                      <QRCodePaciente />
-                    </div>
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      text-[var(--mint-danger)]
+                      mt-2
+                    "
+                  >
+                    {pacientesConSaldo}
+                  </p>
+                </div>
+
+                <div
+                  className="
+                    mint-card
+                    p-4
+                  "
+                >
+                  <p
+                    className="
+                      text-xs
+                      font-semibold
+                      uppercase
+                      tracking-wide
+                      mint-text-muted
+                    "
+                  >
+                    Tratamientos pendientes
+                  </p>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      text-[var(--mint-warning)]
+                      mt-2
+                    "
+                  >
+                    {tratamientosPendientesGlobal}
+                  </p>
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  mint-card
+                  p-5
+                "
+              >
+
+                <div
+                  className="
+                    flex
+                    flex-col
+                    lg:flex-row
+                    lg:items-end
+                    gap-4
+                  "
+                >
+
+                  <div
+                    className="
+                      flex-1
+                    "
+                  >
+
+                    <label
+                      className="
+                        mint-label
+                      "
+                    >
+                      Buscar por nombre
+                    </label>
+
+                    <input
+                      value={busqueda}
+                      onChange={(e) =>
+                        setBusqueda(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Ej. María López"
+                      className="
+                        mint-input
+                        w-full
+                        px-4
+                        py-2.5
+                        text-sm
+                      "
+                    />
+
+                  </div>
+
+                  <div
+                    className="
+                      flex-1
+                    "
+                  >
+
+                    <label
+                      className="
+                        mint-label
+                      "
+                    >
+                      Buscar por teléfono
+                    </label>
+
+                    <input
+                      value={busquedaTelefono}
+                      onChange={(e) =>
+                        setBusquedaTelefono(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Ej. 6531234567"
+                      className="
+                        mint-input
+                        w-full
+                        px-4
+                        py-2.5
+                        text-sm
+                      "
+                    />
 
                   </div>
 
                 </div>
+
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    gap-3
+                    mt-5
+                    mb-3
+                  "
+                >
+
+                  <h3
+                    className="
+                      text-base
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    Resultados
+                  </h3>
+
+                  <span
+                    className="
+                      mint-badge
+                      mint-badge-primary
+                    "
+                  >
+                    {pacientesFiltrados.length} pacientes
+                  </span>
+
+                </div>
+
+                {
+                  pacientesFiltrados.length === 0
+
+                    ? (
+
+                      <div
+                        className="
+                          mint-empty
+                          py-10
+                        "
+                      >
+                        No encontramos pacientes con esos datos.
+                      </div>
+
+                    )
+
+                    : (
+
+                      <div
+                        className="
+                          border
+                          border-[var(--mint-border)]
+                          rounded-2xl
+                          overflow-hidden
+                        "
+                      >
+
+                        {
+                          pacientesFiltrados.map(
+                            (p) => (
+
+                              <div
+                                key={p.id}
+                                className="
+                                  px-4
+                                  py-3
+                                  flex
+                                  flex-col
+                                  md:flex-row
+                                  md:items-center
+                                  gap-3
+                                  border-b
+                                  last:border-b-0
+                                  border-[var(--mint-border)]
+                                  hover:bg-[var(--mint-bg-soft)]
+                                  transition
+                                "
+                              >
+
+                                <div
+                                  className="
+                                    w-10
+                                    h-10
+                                    rounded-xl
+                                    bg-[var(--mint-primary-soft)]
+                                    text-[var(--mint-primary)]
+                                    flex
+                                    items-center
+                                    justify-center
+                                    font-bold
+                                    shrink-0
+                                  "
+                                >
+                                  {
+                                    p.nombre
+                                      ?.charAt(0)
+                                      ?.toUpperCase()
+                                  }
+                                </div>
+
+                                <div
+                                  className="
+                                    flex-1
+                                    min-w-0
+                                  "
+                                >
+
+                                  <p
+                                    className="
+                                      text-sm
+                                      font-bold
+                                      mint-text-primary
+                                      truncate
+                                    "
+                                  >
+                                    {p.nombre}
+                                  </p>
+
+                                  <p
+                                    className="
+                                      text-xs
+                                      mint-text-secondary
+                                      mt-1
+                                      truncate
+                                    "
+                                  >
+                                    {
+                                      p.telefono ||
+                                      "Sin teléfono"
+                                    }
+                                    {
+                                      p.correo
+                                        ? ` · ${p.correo}`
+                                        : ""
+                                    }
+                                  </p>
+
+                                </div>
+
+                                <div
+                                  className="
+                                    md:text-right
+                                    shrink-0
+                                  "
+                                >
+
+                                  <p
+                                    className="
+                                      text-xs
+                                      uppercase
+                                      tracking-wide
+                                      mint-text-muted
+                                    "
+                                  >
+                                    Expediente
+                                  </p>
+
+                                  <p
+                                    className="
+                                      text-sm
+                                      font-bold
+                                      mint-text-primary
+                                      mt-0.5
+                                    "
+                                  >
+                                    #{p.id}
+                                  </p>
+
+                                </div>
+
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    abrirPaciente(p)
+                                  }
+                                  className="
+                                    mint-btn
+                                    mint-btn-primary
+                                    px-4
+                                    py-2
+                                    text-sm
+                                    shrink-0
+                                  "
+                                >
+                                  Abrir expediente
+                                </button>
+
+                              </div>
+
+                            )
+                          )
+                        }
+
+                      </div>
+
+                    )
+                }
 
               </div>
 
