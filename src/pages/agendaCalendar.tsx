@@ -26,11 +26,6 @@ import Select
   from "react-select";
 
 import {
-  CalendarDays,
-  Circle,
-} from "lucide-react";
-
-import {
   supabase,
 } from "../lib/supabase";
 
@@ -133,6 +128,11 @@ export default function AgendaCalendar() {
     finNuevo,
     setFinNuevo,
   ] = useState<any>(null);
+
+  const [
+    duracionMinutos,
+    setDuracionMinutos,
+  ] = useState(60);
 
   useEffect(() => {
 
@@ -296,8 +296,17 @@ export default function AgendaCalendar() {
       info.start
     );
 
+    setDuracionMinutos(
+      60
+    );
+
     setFinNuevo(
-      info.end
+      new Date(
+        new Date(
+          info.start
+        ).getTime() +
+        60 * 60 * 1000
+      )
     );
 
     setPacienteId(
@@ -318,6 +327,31 @@ export default function AgendaCalendar() {
 
     setModalOpen(
       true
+    );
+
+  }
+
+  function cambiarDuracion(
+    minutos: number
+  ) {
+
+    setDuracionMinutos(
+      minutos
+    );
+
+    if (!inicioNuevo) {
+
+      return;
+
+    }
+
+    setFinNuevo(
+      new Date(
+        new Date(
+          inicioNuevo
+        ).getTime() +
+        minutos * 60 * 1000
+      )
     );
 
   }
@@ -830,103 +864,6 @@ export default function AgendaCalendar() {
     >
 
       <div
-        className="agenda-top"
-      >
-
-        <div
-          className="agenda-heading"
-        >
-
-          <div
-            className="agenda-heading-icon"
-          >
-
-            <CalendarDays
-              size={24}
-            />
-
-          </div>
-
-          <div>
-
-            <h1>
-              Agenda
-            </h1>
-
-            <p>
-              Administra citas y horarios
-              de tus pacientes
-            </p>
-
-          </div>
-
-        </div>
-
-        <div
-          className="agenda-status-legend"
-        >
-
-          <div
-            className="agenda-status-item"
-          >
-
-            <Circle
-              size={10}
-              fill="#f59e0b"
-              stroke="#f59e0b"
-            />
-
-            Pendiente
-
-          </div>
-
-          <div
-            className="agenda-status-item"
-          >
-
-            <Circle
-              size={10}
-              fill="#22c55e"
-              stroke="#22c55e"
-            />
-
-            Confirmada
-
-          </div>
-
-          <div
-            className="agenda-status-item"
-          >
-
-            <Circle
-              size={10}
-              fill="#3b82f6"
-              stroke="#3b82f6"
-            />
-
-            Tratamiento
-
-          </div>
-
-          <div
-            className="agenda-status-item"
-          >
-
-            <Circle
-              size={10}
-              fill="#ef4444"
-              stroke="#ef4444"
-            />
-
-            Cancelada
-
-          </div>
-
-        </div>
-
-      </div>
-
-      <div
         className="agenda-calendar-card"
       >
 
@@ -1009,7 +946,7 @@ export default function AgendaCalendar() {
           }
 
           height=
-            "calc(100vh - 245px)"
+            "100%"
 
           slotMinTime=
             "08:00:00"
@@ -1269,6 +1206,89 @@ export default function AgendaCalendar() {
             />
 
           </div>
+
+          {
+            modoCrear && (
+
+              <div
+                className="agenda-field"
+              >
+
+                <label>
+                  Duración de la cita
+                </label>
+
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(4, minmax(0, 1fr))",
+                    gap: "8px",
+                    padding: "5px",
+                    borderRadius: "14px",
+                    background:
+                      "var(--mint-bg-soft)",
+                    border:
+                      "1px solid var(--mint-border)",
+                  }}
+                >
+
+                  {[
+                    { minutos: 30, label: "30 min" },
+                    { minutos: 60, label: "1 hora" },
+                    { minutos: 90, label: "1 h 30" },
+                    { minutos: 120, label: "2 horas" },
+                  ].map((opcion) => {
+
+                    const activo =
+                      duracionMinutos ===
+                      opcion.minutos;
+
+                    return (
+
+                      <button
+                        key={opcion.minutos}
+                        type="button"
+                        disabled={!puedeEditarCitas}
+                        onClick={() =>
+                          cambiarDuracion(
+                            opcion.minutos
+                          )
+                        }
+                        style={{
+                          minHeight: "38px",
+                          padding: "8px 10px",
+                          borderRadius: "10px",
+                          border: activo
+                            ? "1px solid var(--mint-primary)"
+                            : "1px solid transparent",
+                          background: activo
+                            ? "var(--mint-primary)"
+                            : "transparent",
+                          color: activo
+                            ? "#ffffff"
+                            : "inherit",
+                          fontSize: "13px",
+                          fontWeight: 700,
+                          cursor: puedeEditarCitas
+                            ? "pointer"
+                            : "not-allowed",
+                          transition: "all 0.18s ease",
+                        }}
+                      >
+                        {opcion.label}
+                      </button>
+
+                    );
+
+                  })}
+
+                </div>
+
+              </div>
+
+            )
+          }
 
           <div
             className="agenda-modal-grid"

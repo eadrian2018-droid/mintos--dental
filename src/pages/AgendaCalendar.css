@@ -3,10 +3,11 @@
 ================================= */
 
 .agenda-page {
-  height: 100%;
+  height:
+    100vh;
 
   padding:
-    18px 22px 22px;
+    10px 12px 12px;
 
   background:
     var(--mint-bg-app);
@@ -16,6 +17,9 @@
 
   overflow:
     hidden;
+
+  box-sizing:
+    border-box;
 }
 
 
@@ -177,7 +181,7 @@
 
 .agenda-calendar-card {
   height:
-    calc(100vh - 145px);
+    calc(100vh - 22px);
 
   background:
     var(--mint-bg-card);
@@ -186,16 +190,19 @@
     1px solid var(--mint-border);
 
   border-radius:
-    var(--mint-radius-lg);
+    var(--mint-radius-md);
 
   padding:
-    14px;
+    10px;
 
   overflow:
     hidden;
 
   box-shadow:
-    var(--mint-shadow-md);
+    var(--mint-shadow-sm);
+
+  box-sizing:
+    border-box;
 }
 
 
@@ -233,10 +240,10 @@
 
 .fc .fc-toolbar {
   margin-bottom:
-    14px;
+    8px;
 
   gap:
-    16px;
+    14px;
 
   padding:
     0 1px;
@@ -442,7 +449,7 @@
 
 .fc .fc-timegrid-slot {
   height:
-    1.82em;
+    1.5em;
 
   border-color:
     var(--mint-border);
@@ -1338,28 +1345,16 @@ th {
 
   .agenda-page {
     padding:
-      14px;
-  }
-
-
-  .agenda-top {
-    align-items:
-      flex-start;
-
-    flex-direction:
-      column;
-  }
-
-
-  .agenda-status-legend {
-    width:
-      100%;
+      8px;
   }
 
 
   .agenda-calendar-card {
     height:
-      calc(100vh - 205px);
+      calc(100vh - 16px);
+
+    padding:
+      8px;
   }
 
 }
