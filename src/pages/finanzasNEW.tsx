@@ -22,6 +22,9 @@ import Comisiones
 import Reportes
   from "../components/finanzas/Reportes";
 
+import CierreMensual
+  from "../components/finanzas/CierreMensual";
+
 import DoctorDetalle
   from "../components/DoctorDetalle";
 
@@ -43,7 +46,8 @@ type SeccionFinanzas =
   | "cobros"
   | "gastos"
   | "comisiones"
-  | "reportes";
+  | "reportes"
+  | "cierre";
 
 type PeriodoFinanzas =
   | "semana"
@@ -82,7 +86,8 @@ export default function Finanzas() {
   seccion === "cobros" ||
   seccion === "gastos" ||
   seccion === "comisiones" ||
-  seccion === "reportes"
+  seccion === "reportes" ||
+  seccion === "cierre"
 ) {
 
   setSeccionActiva(
@@ -783,7 +788,12 @@ export default function Finanzas() {
 
                         ? "Comisiones"
 
-                        : "Reportes"
+                        : seccionActiva ===
+                          "cierre"
+
+                          ? "Cierre mensual"
+
+                          : "Reportes"
                 }
 
               </h1>
@@ -1125,6 +1135,99 @@ export default function Finanzas() {
 
     tratamientosFiltrados={
       tratamientosFiltrados
+    }
+
+    periodo={
+      periodo
+    }
+
+    lunesSemana={
+      lunesSemana
+    }
+
+    sabadoSemana={
+      sabadoSemana
+    }
+
+  />
+}
+
+{
+  seccionActiva ===
+  "cierre"
+
+  &&
+
+  <CierreMensual
+
+    cobradoMXN={
+      cobradoMXN
+    }
+
+    cobradoUSD={
+      cobradoUSD
+    }
+
+    totalBaseClinicaMXN={
+      totalBaseClinicaMXN
+    }
+
+    totalBaseClinicaUSD={
+      totalBaseClinicaUSD
+    }
+
+    totalComisionesDoctorMXN={
+      totalComisionesDoctorMXN
+    }
+
+    totalComisionesDoctorUSD={
+      totalComisionesDoctorUSD
+    }
+
+    totalGastos={
+      totalGastos
+    }
+
+    totalGastosUSD={
+      totalGastosUSD
+    }
+
+    gananciaNeta={
+      gananciaNeta
+    }
+
+    gananciaNetaUSD={
+      gananciaNetaUSD
+    }
+
+    cajaMXN={
+      cajaMXN
+    }
+
+    cajaUSD={
+      cajaUSD
+    }
+
+    bancoMXN={
+      totalTarjeta
+    }
+
+    pendiente={
+      pendiente
+    }
+
+    tratamientosTotal={
+      tratamientosFiltrados.length
+    }
+
+    tratamientosFinalizados={
+      tratamientosFiltrados.filter(
+        (tratamiento) =>
+          String(
+            tratamiento.estado ||
+              ""
+          ) === "Finalizado"
+      ).length
     }
 
   />

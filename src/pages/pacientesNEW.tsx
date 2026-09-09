@@ -3683,8 +3683,17 @@ const pacientesFiltrados =
                             $
                             {
                               Number(
-                                tratamiento.total || 0
+                                tratamiento.moneda_precio === "USD"
+                                  ? tratamiento.total_original ??
+                                    tratamiento.total ??
+                                    0
+                                  : tratamiento.total || 0
                               ).toLocaleString()
+                            }
+                            {" "}
+                            {
+                              tratamiento.moneda_precio ||
+                              "MXN"
                             }
 
                           </td>
@@ -3701,8 +3710,17 @@ const pacientesFiltrados =
                             $
                             {
                               Number(
-                                tratamiento.pagado || 0
+                                tratamiento.moneda_precio === "USD"
+                                  ? tratamiento.pagado_original ??
+                                    tratamiento.pagado ??
+                                    0
+                                  : tratamiento.pagado || 0
                               ).toLocaleString()
+                            }
+                            {" "}
+                            {
+                              tratamiento.moneda_precio ||
+                              "MXN"
                             }
 
                           </td>
@@ -3719,8 +3737,17 @@ const pacientesFiltrados =
                             $
                             {
                               Number(
-                                tratamiento.pendiente || 0
+                                tratamiento.moneda_precio === "USD"
+                                  ? tratamiento.resta_original ??
+                                    tratamiento.pendiente ??
+                                    0
+                                  : tratamiento.pendiente || 0
                               ).toLocaleString()
+                            }
+                            {" "}
+                            {
+                              tratamiento.moneda_precio ||
+                              "MXN"
                             }
 
                           </td>
@@ -5308,8 +5335,22 @@ const pacientesFiltrados =
                 {
                   Number(
                     tratamientoCobro
-                      ?.total || 0
+                      ?.moneda_precio ===
+                    "USD"
+                      ? tratamientoCobro
+                          ?.total_original ??
+                        tratamientoCobro
+                          ?.total ??
+                        0
+                      : tratamientoCobro
+                          ?.total || 0
                   ).toLocaleString()
+                }
+                {" "}
+                {
+                  tratamientoCobro
+                    ?.moneda_precio ||
+                  "MXN"
                 }
               </strong>
             </div>
@@ -5339,8 +5380,22 @@ const pacientesFiltrados =
                 {
                   Number(
                     tratamientoCobro
-                      ?.pagado || 0
+                      ?.moneda_precio ===
+                    "USD"
+                      ? tratamientoCobro
+                          ?.pagado_original ??
+                        tratamientoCobro
+                          ?.pagado ??
+                        0
+                      : tratamientoCobro
+                          ?.pagado || 0
                   ).toLocaleString()
+                }
+                {" "}
+                {
+                  tratamientoCobro
+                    ?.moneda_precio ||
+                  "MXN"
                 }
               </strong>
             </div>
@@ -5376,7 +5431,15 @@ const pacientesFiltrados =
       {
         Number(
           tratamientoCobro
-            ?.pendiente || 0
+            ?.moneda_precio ===
+          "USD"
+            ? tratamientoCobro
+                ?.resta_original ??
+              tratamientoCobro
+                ?.pendiente ??
+              0
+            : tratamientoCobro
+                ?.pendiente || 0
         ).toLocaleString(
           "es-MX",
           {
@@ -5386,11 +5449,57 @@ const pacientesFiltrados =
         )
       }
       {" "}
-      MXN
+      {
+        tratamientoCobro
+          ?.moneda_precio ||
+        "MXN"
+      }
     </strong>
 
     {
-      tipoCambioCobro > 0 && (
+      tipoCambioCobro > 0 &&
+      tratamientoCobro
+        ?.moneda_precio ===
+      "USD" && (
+
+        <span
+          className="
+            block
+            text-xs
+            font-semibold
+            mint-text-secondary
+            mt-1
+          "
+        >
+          ≈ $
+          {(
+            Number(
+              tratamientoCobro
+                ?.resta_original ??
+              tratamientoCobro
+                ?.pendiente ??
+              0
+            ) *
+            tipoCambioCobro
+          ).toLocaleString(
+            "es-MX",
+            {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }
+          )}
+          {" "}
+          MXN
+        </span>
+
+      )
+    }
+
+    {
+      tipoCambioCobro > 0 &&
+      tratamientoCobro
+        ?.moneda_precio !==
+      "USD" && (
 
         <span
           className="

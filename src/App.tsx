@@ -26,6 +26,8 @@ import PacienteDetalle from "./pages/pacientedetalle";
 
 import Finanzas from "./pages/finanzasNEW";
 
+import PresupuestosPage from "./pages/presupuestosPage";
+
 import QRCodePaciente from "./components/QRCodePaciente";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
@@ -389,6 +391,29 @@ export default function App() {
 
                     ? (
                       <PacienteDetalle />
+                    )
+
+                    : (
+                      <Navigate
+                        to="/dashboard"
+                        replace
+                      />
+                    )
+
+                }
+
+              />
+
+              <Route
+
+                path="/presupuestos"
+
+                element={
+
+                  permisos?.ver_pacientes === true
+
+                    ? (
+                      <PresupuestosPage />
                     )
 
                     : (
