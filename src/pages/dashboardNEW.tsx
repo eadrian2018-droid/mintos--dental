@@ -41,7 +41,7 @@ export default function Dashboard() {
   const [tipoCambio, setTipoCambio] = useState(0);
 
   const [
-    cargando,
+    ,
     setCargando,
   ] = useState(true);
 
@@ -372,11 +372,7 @@ export default function Dashboard() {
 
   }
 
-  if (
-    cargando
-  ) {
-
-    return (
+  return (
 
     <div
       className="
@@ -1066,7 +1062,5 @@ export default function Dashboard() {
     </div>
 
   );
-
-}
 
 }
