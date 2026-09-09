@@ -355,9 +355,14 @@ export default function Layout() {
 
   return (
 
-    <div className="mint-app-viewport">
-
-      <div className="mint-app-scaled">
+    <div
+      className="
+        flex
+        h-screen
+        bg-[var(--mint-bg-app)]
+        overflow-hidden
+      "
+    >
 
       <aside
         style={{
@@ -1093,8 +1098,6 @@ export default function Layout() {
         <Outlet />
 
       </main>
-
-      </div>
 
     </div>
 

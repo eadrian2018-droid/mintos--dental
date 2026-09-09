@@ -1281,30 +1281,3 @@ textarea.mint-input {
   border:
     1px solid var(--mint-accent-border);
 }
-
-/* =================================
-   AUTHENTICATED APP SCALE
-   Global compact scale for MintOS after login.
-   Login/public screens are intentionally excluded.
-================================= */
-
-:root {
-  --mint-app-scale: 0.86;
-}
-
-.mint-app-viewport {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  background: var(--mint-bg-app);
-}
-
-.mint-app-scaled {
-  width: calc(100% / var(--mint-app-scale));
-  height: calc(100% / var(--mint-app-scale));
-  transform: scale(var(--mint-app-scale));
-  transform-origin: top left;
-  display: flex;
-  background: var(--mint-bg-app);
-}
-
