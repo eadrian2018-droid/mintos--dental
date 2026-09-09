@@ -1,30 +1,37 @@
 @import "tailwindcss";
 
 :root {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 html,
-body,
-#root {
+body {
+  margin: 0;
+  width: 100%;
   min-height: 100%;
 }
 
 body {
-  margin: 0;
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: 1.4;
+  overflow-x: hidden;
+}
+
+#root {
+  zoom: 0.8;
+  width: 125%;
+  min-height: 125vh;
 }
 
 button,
 input,
 select,
 textarea {
-  font-size: 1rem;
+  font-size: 0.95rem;
 }
 
 table {
-  font-size: 0.96rem;
+  font-size: 0.92rem;
 }
 
 h1 {
