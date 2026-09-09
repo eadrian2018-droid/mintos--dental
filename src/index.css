@@ -2,46 +2,61 @@
 
 :root {
   font-size: 14px;
+
+  /* Escala global más compacta para MintOS */
+  --spacing: 0.225rem;
+
+  --text-xs: 0.70rem;
+  --text-sm: 0.82rem;
+  --text-base: 0.92rem;
+  --text-lg: 1.05rem;
+  --text-xl: 1.18rem;
+  --text-2xl: 1.38rem;
+  --text-3xl: 1.68rem;
+  --text-4xl: 2rem;
 }
 
 html,
-body {
-  margin: 0;
+body,
+#root {
   width: 100%;
   min-height: 100%;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 0.92rem;
   line-height: 1.4;
   overflow-x: hidden;
 }
 
 #root {
-  zoom: 0.8;
-  width: 125%;
-  min-height: 125vh;
+  min-height: 100vh;
 }
 
 button,
 input,
 select,
 textarea {
-  font-size: 0.95rem;
-}
-
-table {
   font-size: 0.92rem;
 }
 
+table {
+  font-size: 0.88rem;
+}
+
 h1 {
-  font-size: 1.9rem;
+  font-size: 1.75rem;
 }
 
 h2 {
-  font-size: 1.55rem;
+  font-size: 1.4rem;
 }
 
 h3 {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
 }
