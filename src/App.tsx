@@ -219,13 +219,10 @@ export default function App() {
       <Routes>
 
         <Route
-
           path="*"
-
           element={
             <ResetPassword />
           }
-
         />
 
       </Routes>
@@ -264,36 +261,36 @@ export default function App() {
 
     <Routes>
 
+      {/* ================================================= */}
       {/* RUTAS PÚBLICAS */}
+      {/* ================================================= */}
 
       <Route
-
-        path="/registro-paciente"
-
+        path="/formulario-paciente"
         element={
           <FormularioPacientePublico />
         }
-
       />
 
       <Route
+        path="/registro-paciente"
+        element={
+          <FormularioPacientePublico />
+        }
+      />
 
+      <Route
         path="/accept-invite"
-
         element={
           <AcceptInvite />
         }
-
       />
 
       <Route
-
         path="/reset-password"
-
         element={
           <ResetPassword />
         }
-
       />
 
       {
@@ -303,42 +300,31 @@ export default function App() {
           ? (
 
             <Route
-
               path="/"
-
               element={
                 <Layout />
               }
-
             >
 
               <Route
-
                 index
-
                 element={
                   <Navigate
                     to="/dashboard"
                     replace
                   />
                 }
-
               />
 
               <Route
-
                 path="/dashboard"
-
                 element={
                   <Dashboard />
                 }
-
               />
 
               <Route
-
                 path="/agenda"
-
                 element={
 
                   permisos?.ver_agenda === true
@@ -355,13 +341,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/pacientes"
-
                 element={
 
                   permisos?.ver_pacientes === true
@@ -378,13 +361,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/paciente/:id"
-
                 element={
 
                   permisos?.ver_expediente === true
@@ -401,13 +381,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/presupuestos"
-
                 element={
 
                   permisos?.ver_pacientes === true
@@ -424,13 +401,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/qr-pacientes"
-
                 element={
 
                   permisos?.editar_pacientes === true
@@ -447,13 +421,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/finanzas"
-
                 element={
 
                   puedeVerFinanzas
@@ -470,13 +441,10 @@ export default function App() {
                     )
 
                 }
-
               />
 
               <Route
-
                 path="/configuracion"
-
                 element={
 
                   puedeVerConfiguracion
@@ -493,7 +461,6 @@ export default function App() {
                     )
 
                 }
-
               />
 
             </Route>
@@ -503,13 +470,10 @@ export default function App() {
           : (
 
             <Route
-
               path="*"
-
               element={
                 <Login />
               }
-
             />
 
           )
