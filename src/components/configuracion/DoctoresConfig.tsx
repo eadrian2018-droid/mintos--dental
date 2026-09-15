@@ -14,6 +14,9 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+import { useAuth }
+  from "../../context/AuthContext";
+
 type TipoDoctor =
   | "doctor"
   | "especialista"
@@ -84,6 +87,18 @@ const formularioPrecioInicial:
   };
 
 export default function DoctoresConfig() {
+
+  const {
+    perfil,
+    permisos,
+  } = useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
+
+  const puedeConfigurarComisiones =
+    esAdmin ||
+    permisos?.configurar_comisiones === true;
 
   const [
     doctores,
@@ -419,6 +434,86 @@ async function cargarPreciosEspecialista(
 
   async function guardarDoctor() {
 
+    if (
+      !esAdmin &&
+      puedeConfigurarComisiones &&
+      doctorEditando !== null
+    ) {
+
+      const porcentaje =
+        form.porcentaje.trim()
+          ? Number(
+              form.porcentaje
+            )
+          : 0;
+
+      if (
+        Number.isNaN(
+          porcentaje
+        ) ||
+        porcentaje < 0 ||
+        porcentaje > 100
+      ) {
+
+        alert(
+          "El porcentaje debe estar entre 0 y 100."
+        );
+
+        return;
+
+      }
+
+      setGuardando(true);
+
+      const {
+        error,
+      } = await supabase.rpc(
+        "actualizar_comision_doctor",
+        {
+          p_doctor_id:
+            doctorEditando,
+          p_porcentaje:
+            porcentaje,
+        }
+      );
+
+      if (error) {
+
+        console.error(
+          "Error actualizando comisión:",
+          error
+        );
+
+        alert(
+          "No se pudo actualizar la comisión."
+        );
+
+        setGuardando(false);
+
+        return;
+
+      }
+
+      await cargarDoctores();
+
+      cancelarFormulario();
+
+      setGuardando(false);
+
+      return;
+
+    }
+
+    if (!esAdmin) {
+
+      alert(
+        "No tienes permiso para administrar doctores."
+      );
+
+      return;
+
+    }
+
     const nombre =
       form.nombre.trim();
 
@@ -571,6 +666,10 @@ async function cargarPreciosEspecialista(
   async function cambiarEstado(
     doctor: Doctor
   ) {
+
+    if (!esAdmin) {
+      return;
+    }
 
     const {
       error,
@@ -930,6 +1029,11 @@ async function guardarPrecioEspecialista() {
 
         </div>
 
+        {
+          esAdmin
+
+          &&
+
         <button
           type="button"
           onClick={
@@ -954,10 +1058,11 @@ async function guardarPrecioEspecialista() {
           Nuevo Doctor
 
         </button>
+        }
 
       </div>
 
-           {
+      {
         mostrarFormulario && (
 
           <div
@@ -986,11 +1091,13 @@ async function guardarPrecioEspecialista() {
               >
 
                 {
-                  doctorEditando !== null
-
-                    ? "Editar Doctor"
-
-                    : "Nuevo Doctor"
+                  esAdmin
+                    ? (
+                        doctorEditando !== null
+                          ? "Editar Doctor"
+                          : "Nuevo Doctor"
+                      )
+                    : "Editar comisión"
                 }
 
               </h3>
@@ -1015,340 +1122,414 @@ async function guardarPrecioEspecialista() {
 
             </div>
 
-            <div
-              className="
-                grid
-                grid-cols-1
-                md:grid-cols-2
-                xl:grid-cols-5
-                gap-4
-              "
-            >
+            {
+              esAdmin
 
-              <div>
+              ? (
 
-                <label
+                <>
+
+                  <div
+                    className="
+                      grid
+                      grid-cols-1
+                      md:grid-cols-2
+                      xl:grid-cols-5
+                      gap-4
+                    "
+                  >
+
+                    <div>
+
+                      <label
+                        className="
+                          mint-label
+                          block
+                          mb-2
+                        "
+                      >
+                        Nombre
+                      </label>
+
+                      <input
+                        type="text"
+                        value={form.nombre}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            nombre:
+                              e.target.value,
+                          })
+                        }
+                        placeholder="Dr. Nombre"
+                        className="
+                          mint-input
+                          w-full
+                          px-3
+                          py-2.5
+                        "
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mint-label
+                          block
+                          mb-2
+                        "
+                      >
+                        Especialidad
+                      </label>
+
+                      <input
+                        type="text"
+                        value={form.especialidad}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            especialidad:
+                              e.target.value,
+                          })
+                        }
+                        placeholder="General"
+                        className="
+                          mint-input
+                          w-full
+                          px-3
+                          py-2.5
+                        "
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mint-label
+                          block
+                          mb-2
+                        "
+                      >
+                        Tipo
+                      </label>
+
+                      <select
+                        value={form.tipo_doctor}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            tipo_doctor:
+                              e.target.value as TipoDoctor,
+                          })
+                        }
+                        className="
+                          mint-input
+                          w-full
+                          px-3
+                          py-2.5
+                        "
+                      >
+                        <option value="doctor">
+                          Doctor
+                        </option>
+                        <option value="especialista">
+                          Especialista
+                        </option>
+                        <option value="ambos">
+                          Ambos
+                        </option>
+                      </select>
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mint-label
+                          block
+                          mb-2
+                        "
+                      >
+                        Porcentaje %
+                      </label>
+
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={form.porcentaje}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            porcentaje:
+                              e.target.value,
+                          })
+                        }
+                        placeholder="30"
+                        className="
+                          mint-input
+                          w-full
+                          px-3
+                          py-2.5
+                        "
+                      />
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mint-label
+                          block
+                          mb-2
+                        "
+                      >
+                        WhatsApp
+                      </label>
+
+                      <input
+                        type="tel"
+                        value={form.telefono}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            telefono:
+                              e.target.value,
+                          })
+                        }
+                        placeholder="526531234567"
+                        className="
+                          mint-input
+                          w-full
+                          px-3
+                          py-2.5
+                        "
+                      />
+
+                    </div>
+
+                  </div>
+
+                  <div
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-4
+                      mt-5
+                    "
+                  >
+
+                    <label
+                      className="
+                        flex
+                        items-center
+                        gap-2
+                        text-sm
+                        font-semibold
+                        mint-text-secondary
+                        cursor-pointer
+                      "
+                    >
+
+                      <input
+                        type="checkbox"
+                        checked={form.activo}
+                        onChange={(e) =>
+                          setForm({
+                            ...form,
+                            activo:
+                              e.target.checked,
+                          })
+                        }
+                        className="
+                          w-4
+                          h-4
+                          accent-[var(--mint-primary)]
+                        "
+                      />
+
+                      Doctor activo
+
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        gap-2
+                      "
+                    >
+
+                      <button
+                        type="button"
+                        onClick={
+                          cancelarFormulario
+                        }
+                        className="
+                          mint-btn
+                          mint-btn-neutral
+                          px-4
+                          py-2.5
+                          text-sm
+                        "
+                      >
+                        Cancelar
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={guardando}
+                        onClick={guardarDoctor}
+                        className="
+                          mint-btn
+                          mint-btn-primary
+                          inline-flex
+                          items-center
+                          gap-2
+                          px-4
+                          py-2.5
+                          text-sm
+                          disabled:opacity-50
+                          disabled:cursor-not-allowed
+                        "
+                      >
+
+                        <Save
+                          size={16}
+                        />
+
+                        {
+                          guardando
+                            ? "Guardando..."
+                            : "Guardar"
+                        }
+
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                </>
+
+              )
+
+              : (
+
+                <div
                   className="
-                    mint-label
-                    block
-                    mb-2
+                    max-w-md
                   "
                 >
 
-                  Nombre
+                  <p
+                    className="
+                      text-sm
+                      font-semibold
+                      mint-text-primary
+                      mb-4
+                    "
+                  >
+                    {form.nombre}
+                  </p>
 
-                </label>
+                  <label
+                    className="
+                      mint-label
+                      block
+                      mb-2
+                    "
+                  >
+                    Porcentaje de comisión
+                  </label>
 
-                <input
-                  type="text"
-                  value={
-                    form.nombre
-                  }
-                  onChange={
-                    (e) =>
-                      setForm({
-                        ...form,
-                        nombre:
-                          e.target.value,
-                      })
-                  }
-                  placeholder="
-                    Dr. Nombre
-                  "
-                  className="
-                    mint-input
-                    w-full
-                    px-3
-                    py-2.5
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label
-                  className="
-                    mint-label
-                    block
-                    mb-2
-                  "
-                >
-
-                  Especialidad
-
-                </label>
-
-                <input
-                  type="text"
-                  value={
-                    form.especialidad
-                  }
-                  onChange={
-                    (e) =>
-                      setForm({
-                        ...form,
-                        especialidad:
-                          e.target.value,
-                      })
-                  }
-                  placeholder="
-                    General
-                  "
-                  className="
-                    mint-input
-                    w-full
-                    px-3
-                    py-2.5
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label
-                  className="
-                    mint-label
-                    block
-                    mb-2
-                  "
-                >
-
-                  Tipo
-
-                </label>
-
-                <select
-                  value={
-                    form.tipo_doctor
-                  }
-                  onChange={
-                    (e) =>
-                      setForm({
-                        ...form,
-                        tipo_doctor:
-                          e.target.value as TipoDoctor,
-                      })
-                  }
-                  className="
-                    mint-input
-                    w-full
-                    px-3
-                    py-2.5
-                  "
-                >
-
-                  <option value="doctor">
-                    Doctor
-                  </option>
-
-                  <option value="especialista">
-                    Especialista
-                  </option>
-
-                  <option value="ambos">
-                    Ambos
-                  </option>
-
-                </select>
-
-              </div>
-
-              <div>
-
-                <label
-                  className="
-                    mint-label
-                    block
-                    mb-2
-                  "
-                >
-
-                  Porcentaje %
-
-                </label>
-
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={
-                    form.porcentaje
-                  }
-                  onChange={
-                    (e) =>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={form.porcentaje}
+                    onChange={(e) =>
                       setForm({
                         ...form,
                         porcentaje:
                           e.target.value,
                       })
-                  }
-                  placeholder="30"
-                  className="
-                    mint-input
-                    w-full
-                    px-3
-                    py-2.5
-                  "
-                />
-
-              </div>
-
-              <div>
-
-                <label
-                  className="
-                    mint-label
-                    block
-                    mb-2
-                  "
-                >
-
-                  WhatsApp
-
-                </label>
-
-                <input
-                  type="tel"
-                  value={
-                    form.telefono
-                  }
-                  onChange={
-                    (e) =>
-                      setForm({
-                        ...form,
-                        telefono:
-                          e.target.value,
-                      })
-                  }
-                  placeholder="
-                    526531234567
-                  "
-                  className="
-                    mint-input
-                    w-full
-                    px-3
-                    py-2.5
-                  "
-                />
-
-              </div>
-
-            </div>
-
-            <div
-              className="
-                flex
-                items-center
-                justify-between
-                gap-4
-                mt-5
-              "
-            >
-
-              <label
-                className="
-                  flex
-                  items-center
-                  gap-2
-                  text-sm
-                  font-semibold
-                  mint-text-secondary
-                  cursor-pointer
-                "
-              >
-
-                <input
-                  type="checkbox"
-                  checked={
-                    form.activo
-                  }
-                  onChange={
-                    (e) =>
-                      setForm({
-                        ...form,
-                        activo:
-                          e.target.checked,
-                      })
-                  }
-                  className="
-                    w-4
-                    h-4
-                    accent-[var(--mint-primary)]
-                  "
-                />
-
-                Doctor activo
-
-              </label>
-
-              <div
-                className="
-                  flex
-                  gap-2
-                "
-              >
-
-                <button
-                  type="button"
-                  onClick={
-                    cancelarFormulario
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-neutral
-                    px-4
-                    py-2.5
-                    text-sm
-                  "
-                >
-
-                  Cancelar
-
-                </button>
-
-                <button
-                  type="button"
-                  disabled={
-                    guardando
-                  }
-                  onClick={
-                    guardarDoctor
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-primary
-                    inline-flex
-                    items-center
-                    gap-2
-                    px-4
-                    py-2.5
-                    text-sm
-                    disabled:opacity-50
-                    disabled:cursor-not-allowed
-                  "
-                >
-
-                  <Save
-                    size={16}
+                    }
+                    className="
+                      mint-input
+                      w-full
+                      px-3
+                      py-2.5
+                    "
                   />
 
-                  {
+                  <div
+                    className="
+                      flex
+                      gap-2
+                      mt-4
+                    "
+                  >
 
-                    guardando
+                    <button
+                      type="button"
+                      onClick={
+                        cancelarFormulario
+                      }
+                      className="
+                        mint-btn
+                        mint-btn-neutral
+                        px-4
+                        py-2.5
+                        text-sm
+                      "
+                    >
+                      Cancelar
+                    </button>
 
-                      ? "Guardando..."
+                    <button
+                      type="button"
+                      disabled={guardando}
+                      onClick={guardarDoctor}
+                      className="
+                        mint-btn
+                        mint-btn-primary
+                        inline-flex
+                        items-center
+                        gap-2
+                        px-4
+                        py-2.5
+                        text-sm
+                        disabled:opacity-50
+                        disabled:cursor-not-allowed
+                      "
+                    >
 
-                      : "Guardar"
+                      <Save
+                        size={16}
+                      />
 
-                  }
+                      {
+                        guardando
+                          ? "Guardando..."
+                          : "Guardar comisión"
+                      }
 
-                </button>
+                    </button>
 
-              </div>
+                  </div>
 
-            </div>
+                </div>
+
+              )
+            }
 
           </div>
 
@@ -1626,6 +1807,11 @@ async function guardarPrecioEspecialista() {
           "
         >
 
+          {
+            esAdmin
+
+            ? (
+
           <button
             type="button"
             onClick={() =>
@@ -1652,6 +1838,33 @@ async function guardarPrecioEspecialista() {
             }
 
           </button>
+
+            )
+
+            : (
+
+              <span
+                className={`
+                  mint-badge
+
+                  ${
+                    doctor.activo
+                      ? "mint-badge-success"
+                      : "mint-badge-muted"
+                  }
+                `}
+              >
+
+                {
+                  doctor.activo
+                    ? "Activo"
+                    : "Inactivo"
+                }
+
+              </span>
+
+            )
+          }
 
         </td>
 
@@ -1695,7 +1908,11 @@ async function guardarPrecioEspecialista() {
                 size={15}
               />
 
-              Editar
+              {
+                esAdmin
+                  ? "Editar"
+                  : "Editar comisión"
+              }
 
             </button>
 
@@ -1718,6 +1935,13 @@ async function guardarPrecioEspecialista() {
         </table>
 
       </div>
+
+      {
+        esAdmin
+
+        &&
+
+        (
 
       <div
         className="
@@ -2793,6 +3017,9 @@ async function guardarPrecioEspecialista() {
         </div>
 
       </div>
+
+        )
+      }
 
     </div>
 

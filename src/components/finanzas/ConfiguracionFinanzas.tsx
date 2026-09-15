@@ -27,6 +27,9 @@ import type {
 import { supabase }
   from "../../lib/supabase";
 
+import { useAuth }
+  from "../../context/AuthContext";
+
 type SeccionConfiguracion =
   | "tratamientos"
   | "comisiones"
@@ -101,6 +104,13 @@ export default function ConfiguracionFinanzas({
   cambiarEstadoTratamientoCatalogo,
 
 }: ConfiguracionFinanzasProps) {
+
+  const {
+    perfil,
+  } = useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
 
   const [
     seccion,
@@ -338,53 +348,65 @@ export default function ConfiguracionFinanzas({
 
           </button>
 
-          <button
-            onClick={() =>
-              setSeccion(
-                "pagos"
-              )
-            }
-            className={`
-              mint-tab
+          {
+            esAdmin
 
-              ${
-                seccion ===
-                "pagos"
+            &&
 
-                  ? "mint-tab-active"
-
-                  : ""
+            <button
+              onClick={() =>
+                setSeccion(
+                  "pagos"
+                )
               }
-            `}
-          >
+              className={`
+                mint-tab
 
-            Pagos
+                ${
+                  seccion ===
+                  "pagos"
 
-          </button>
+                    ? "mint-tab-active"
 
-          <button
-            onClick={() =>
-              setSeccion(
-                "tipo_cambio"
-              )
-            }
-            className={`
-              mint-tab
+                    : ""
+                }
+              `}
+            >
 
-              ${
-                seccion ===
-                "tipo_cambio"
+              Pagos
 
-                  ? "mint-tab-active"
+            </button>
+          }
 
-                  : ""
+          {
+            esAdmin
+
+            &&
+
+            <button
+              onClick={() =>
+                setSeccion(
+                  "tipo_cambio"
+                )
               }
-            `}
-          >
+              className={`
+                mint-tab
 
-            Tipo de cambio
+                ${
+                  seccion ===
+                  "tipo_cambio"
 
-          </button>
+                    ? "mint-tab-active"
+
+                    : ""
+                }
+              `}
+            >
+
+              Tipo de cambio
+
+            </button>
+          }
 
         </div>
 
@@ -449,6 +471,7 @@ export default function ConfiguracionFinanzas({
       }
 
       {
+        esAdmin &&
         seccion ===
         "pagos"
 
@@ -468,6 +491,7 @@ export default function ConfiguracionFinanzas({
       }
 
       {
+        esAdmin &&
         seccion ===
         "tipo_cambio"
 

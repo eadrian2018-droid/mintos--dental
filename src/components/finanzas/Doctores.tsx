@@ -11,6 +11,12 @@ import type {
   Doctor,
 } from "../../types/Doctor";
 
+import { supabase }
+  from "../../lib/supabase";
+
+import { useAuth }
+  from "../../context/AuthContext";
+
 type DoctoresProps = {
 
   doctores: Doctor[];
@@ -77,6 +83,18 @@ export default function Doctores({
 
 }: DoctoresProps) {
 
+  const {
+    perfil,
+    permisos,
+  } = useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
+
+  const puedeConfigurarComisiones =
+    esAdmin ||
+    permisos?.configurar_comisiones === true;
+
   const [
     doctorEditando,
     setDoctorEditando,
@@ -134,19 +152,86 @@ export default function Doctores({
 
     }
 
-    await actualizarDoctor(
+    if (
+      !puedeConfigurarComisiones
+    ) {
 
-      doctorEditando.id,
+      return;
 
-      nombreDoctor,
+    }
 
-      especialidadDoctor,
+    if (esAdmin) {
 
-      Number(
-        porcentajeDoctor
-      )
+      await actualizarDoctor(
 
-    );
+        doctorEditando.id,
+
+        nombreDoctor,
+
+        especialidadDoctor,
+
+        Number(
+          porcentajeDoctor
+        )
+
+      );
+
+    }
+    else {
+
+      const porcentaje =
+        Number(
+          porcentajeDoctor
+        );
+
+      if (
+        !Number.isFinite(
+          porcentaje
+        ) ||
+        porcentaje < 0 ||
+        porcentaje > 100
+      ) {
+
+        alert(
+          "Ingresa un porcentaje válido entre 0 y 100."
+        );
+
+        return;
+
+      }
+
+      const {
+        error,
+      } = await supabase.rpc(
+        "actualizar_comision_doctor",
+        {
+          p_doctor_id:
+            doctorEditando.id,
+          p_porcentaje:
+            porcentaje,
+        }
+      );
+
+      if (error) {
+
+        console.error(
+          "Error actualizando comisión:",
+          error
+        );
+
+        alert(
+          "No se pudo actualizar la comisión."
+        );
+
+        return;
+
+      }
+
+      window.location.reload();
+
+      return;
+
+    }
 
     setDoctorEditando(
       null
@@ -207,7 +292,11 @@ export default function Doctores({
               "
             >
 
-              Editando:
+              {
+                esAdmin
+                  ? "Editando:"
+                  : "Editando comisión:"
+              }
               {" "}
               {doctorEditando.nombre}
 
@@ -218,78 +307,219 @@ export default function Doctores({
 
       </div>
 
-      <div
-        className="
-          grid
-          md:grid-cols-3
-          gap-4
-          mb-6
-        "
-      >
+      {
+        esAdmin
 
-        <input
-          type="text"
-          placeholder="Nombre"
-          value={nombreDoctor}
-          onChange={(e) =>
-            setNombreDoctor(
-              e.target.value
-            )
-          }
+        &&
+
+        <>
+
+          <div
+            className="
+              grid
+              md:grid-cols-3
+              gap-4
+              mb-6
+            "
+          >
+
+            <input
+              type="text"
+              placeholder="Nombre"
+              value={nombreDoctor}
+              onChange={(e) =>
+                setNombreDoctor(
+                  e.target.value
+                )
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+            />
+
+            <input
+              type="text"
+              placeholder="Especialidad"
+              value={especialidadDoctor}
+              onChange={(e) =>
+                setEspecialidadDoctor(
+                  e.target.value
+                )
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+            />
+
+            <input
+              type="number"
+              placeholder="% Comisión"
+              value={porcentajeDoctor}
+              onChange={(e) =>
+                setPorcentajeDoctor(
+                  e.target.value
+                )
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+            />
+
+          </div>
+
+          <div
+            className="
+              flex
+              flex-wrap
+              gap-3
+              mb-6
+            "
+          >
+
+            {
+              doctorEditando
+
+              ? (
+
+                <button
+                  onClick={
+                    guardarCambios
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    mint-btn-md
+                  "
+                >
+
+                  Actualizar Doctor
+
+                </button>
+
+              )
+
+              : (
+
+                <button
+                  onClick={
+                    guardarDoctor
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    mint-btn-md
+                  "
+                >
+
+                  Guardar Doctor
+
+                </button>
+
+              )
+            }
+
+            {
+              doctorEditando
+
+              &&
+
+              <button
+                onClick={
+                  cancelarEdicion
+                }
+                className="
+                  mint-btn
+                  mint-btn-neutral
+                  mint-btn-md
+                "
+              >
+
+                Cancelar
+
+              </button>
+            }
+
+          </div>
+
+        </>
+
+      }
+
+      {
+        !esAdmin &&
+        puedeConfigurarComisiones &&
+        doctorEditando
+
+        &&
+
+        <div
           className="
-            mint-input
-            w-full
-            p-3
+            mb-6
+            p-4
+            rounded-2xl
+            border
+            border-[var(--mint-border)]
+            bg-[var(--mint-bg-soft)]
           "
-        />
+        >
 
-        <input
-          type="text"
-          placeholder="Especialidad"
-          value={especialidadDoctor}
-          onChange={(e) =>
-            setEspecialidadDoctor(
-              e.target.value
-            )
-          }
-          className="
-            mint-input
-            w-full
-            p-3
-          "
-        />
+          <label
+            className="
+              block
+              text-sm
+              font-semibold
+              mint-text-primary
+              mb-2
+            "
+          >
 
-        <input
-          type="number"
-          placeholder="% Comisión"
-          value={porcentajeDoctor}
-          onChange={(e) =>
-            setPorcentajeDoctor(
-              e.target.value
-            )
-          }
-          className="
-            mint-input
-            w-full
-            p-3
-          "
-        />
+            Porcentaje de comisión
 
-      </div>
+          </label>
 
-      <div
-        className="
-          flex
-          flex-wrap
-          gap-3
-          mb-6
-        "
-      >
+          <div
+            className="
+              flex
+              flex-col
+              sm:flex-row
+              gap-3
+              sm:items-end
+            "
+          >
 
-        {
-          doctorEditando
+            <div
+              className="
+                w-full
+                sm:max-w-[220px]
+              "
+            >
 
-          ? (
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                placeholder="% Comisión"
+                value={porcentajeDoctor}
+                onChange={(e) =>
+                  setPorcentajeDoctor(
+                    e.target.value
+                  )
+                }
+                className="
+                  mint-input
+                  w-full
+                  p-3
+                "
+              />
+
+            </div>
 
             <button
               onClick={
@@ -302,54 +532,30 @@ export default function Doctores({
               "
             >
 
-              Actualizar Doctor
+              Guardar comisión
 
             </button>
 
-          )
-
-          : (
-
             <button
               onClick={
-                guardarDoctor
+                cancelarEdicion
               }
               className="
                 mint-btn
-                mint-btn-primary
+                mint-btn-neutral
                 mint-btn-md
               "
             >
 
-              Guardar Doctor
+              Cancelar
 
             </button>
 
-          )
-        }
+          </div>
 
-        {
-          doctorEditando
+        </div>
 
-          &&
-
-          <button
-            onClick={
-              cancelarEdicion
-            }
-            className="
-              mint-btn
-              mint-btn-neutral
-              mint-btn-md
-            "
-          >
-
-            Cancelar
-
-          </button>
-        }
-
-      </div>
+      }
 
       <div
         className="
@@ -464,39 +670,55 @@ export default function Doctores({
                         "
                       >
 
-                        <button
-                          onClick={() =>
-                            iniciarEdicion(
-                              doctor
-                            )
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-neutral
-                            mint-btn-sm
-                          "
-                        >
+                        {
+                          puedeConfigurarComisiones
 
-                          Editar
+                          &&
 
-                        </button>
+                          <button
+                            onClick={() =>
+                              iniciarEdicion(
+                                doctor
+                              )
+                            }
+                            className="
+                              mint-btn
+                              mint-btn-neutral
+                              mint-btn-sm
+                            "
+                          >
 
-                        <button
-                          onClick={() =>
-                            setDoctorDetalle(
-                              doctor
-                            )
-                          }
-                          className="
-                            mint-btn
-                            mint-btn-action
-                            mint-btn-sm
-                          "
-                        >
+                            {
+                              esAdmin
+                                ? "Editar"
+                                : "Editar comisión"
+                            }
 
-                          Ver detalle
+                          </button>
+                        }
 
-                        </button>
+                        {
+                          esAdmin
+
+                          &&
+
+                          <button
+                            onClick={() =>
+                              setDoctorDetalle(
+                                doctor
+                              )
+                            }
+                            className="
+                              mint-btn
+                              mint-btn-action
+                              mint-btn-sm
+                            "
+                          >
+
+                            Ver detalle
+
+                          </button>
+                        }
 
                       </div>
 

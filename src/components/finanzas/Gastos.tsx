@@ -12,6 +12,9 @@ import type {
   Gasto,
 } from "../../types/Gasto";
 
+import { useAuth }
+  from "../../context/AuthContext";
+
 type PeriodoGastos =
   | "semana"
   | "mes"
@@ -138,6 +141,15 @@ export default function Gastos({
   gastosPorCategoria,
 
 }: GastosProps) {
+
+  const {
+    permisos,
+  } = useAuth();
+
+  const puedeAnularGastos =
+    permisos
+      ?.anular_gastos ===
+    true;
 
   /*
     total, cantidad y gastosPorCategoria
@@ -2290,23 +2302,29 @@ export default function Gastos({
                             "
                           >
 
-                            <button
-                              type="button"
-                              onClick={() =>
-                                eliminarGasto(
-                                  gasto.id
-                                )
-                              }
-                              className="
-                                mint-btn
-                                mint-btn-danger
-                                mint-btn-sm
-                              "
-                            >
+                            {
+                              puedeAnularGastos && (
 
-                              Eliminar
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    eliminarGasto(
+                                      gasto.id
+                                    )
+                                  }
+                                  className="
+                                    mint-btn
+                                    mint-btn-danger
+                                    mint-btn-sm
+                                  "
+                                >
 
-                            </button>
+                                  Eliminar
+
+                                </button>
+
+                              )
+                            }
 
                           </td>
 

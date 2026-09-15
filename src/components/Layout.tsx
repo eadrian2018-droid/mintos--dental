@@ -312,15 +312,48 @@ export default function Layout() {
       ?.ver_bitacora ===
       true;
 
-  const puedeConfigurarFinanzas =
+  const esAdmin =
+    perfil?.rol === "admin";
 
-    permisos
-      ?.configurar_precios_costos ===
-      true ||
+  const puedeVerResumenFinanzas =
+    esAdmin ||
+    permisos?.ver_resumen_financiero === true;
 
+  const puedeVerCobrosFinanzas =
+    esAdmin ||
+    permisos?.registrar_cobros === true ||
+    permisos?.anular_cobros === true;
+
+  const puedeVerGastosFinanzas =
+    esAdmin ||
+    permisos?.registrar_gastos === true ||
+    permisos?.anular_gastos === true;
+
+  const puedeVerComisionesFinanzas =
+    esAdmin ||
+    permisos?.ver_comisiones === true;
+
+  const puedeVerReportesFinanzas =
+    esAdmin ||
+    permisos?.ver_utilidades === true;
+
+  const puedeVerCierreFinanzas =
+    esAdmin;
+
+  const puedeVerDoctoresConfig =
+    esAdmin ||
     permisos
       ?.configurar_comisiones ===
       true;
+
+  const puedeVerClinicaConfig =
+    esAdmin;
+
+  const puedeConfigurarFinanzas =
+    esAdmin;
+
+  const puedeVerSeguridadConfig =
+    esAdmin;
 
   async function cerrarSesion() {
 
@@ -683,7 +716,10 @@ export default function Layout() {
                       "
                     >
 
-                      <Link
+                      {
+                        puedeVerResumenFinanzas && (
+
+                          <Link
                         to="/finanzas"
                         className={
                           submenuClasses(
@@ -696,7 +732,13 @@ export default function Layout() {
 
                       </Link>
 
-                      <Link
+                        )
+                      }
+
+                      {
+                        puedeVerCobrosFinanzas && (
+
+                          <Link
                         to="/finanzas?seccion=cobros"
                         className={
                           submenuClasses(
@@ -710,7 +752,13 @@ export default function Layout() {
 
                       </Link>
 
-                      <Link
+                        )
+                      }
+
+                      {
+                        puedeVerGastosFinanzas && (
+
+                          <Link
                         to="/finanzas?seccion=gastos"
                         className={
                           submenuClasses(
@@ -724,7 +772,13 @@ export default function Layout() {
 
                       </Link>
 
-                      <Link
+                        )
+                      }
+
+                      {
+                        puedeVerComisionesFinanzas && (
+
+                          <Link
                         to="/finanzas?seccion=comisiones"
                         className={
                           submenuClasses(
@@ -738,7 +792,13 @@ export default function Layout() {
 
                       </Link>
 
-                      <Link
+                        )
+                      }
+
+                      {
+                        puedeVerReportesFinanzas && (
+
+                          <Link
                         to="/finanzas?seccion=reportes"
                         className={
                           submenuClasses(
@@ -752,7 +812,13 @@ export default function Layout() {
 
                       </Link>
 
-                      <Link
+                        )
+                      }
+
+                      {
+                        puedeVerCierreFinanzas && (
+
+                          <Link
                         to="/finanzas?seccion=cierre"
                         className={
                           submenuClasses(
@@ -765,6 +831,9 @@ export default function Layout() {
                         Cierre mensual
 
                       </Link>
+
+                        )
+                      }
 
                     </div>
 
@@ -888,47 +957,59 @@ export default function Layout() {
                         )
                       }
 
-                      <Link
-                        to="/configuracion?seccion=doctores"
-                        className={
-                          submenuClasses(
-                            "/configuracion",
-                            "doctores"
-                          )
-                        }
-                      >
+                      {
+                        puedeVerDoctoresConfig && (
 
-                        <span
-                          className="
-                            flex
-                            items-center
-                            gap-2
-                          "
-                        >
+                          <Link
+                            to="/configuracion?seccion=doctores"
+                            className={
+                              submenuClasses(
+                                "/configuracion",
+                                "doctores"
+                              )
+                            }
+                          >
 
-                          <Stethoscope
-                            size={14}
-                          />
+                            <span
+                              className="
+                                flex
+                                items-center
+                                gap-2
+                              "
+                            >
 
-                          Doctores
+                              <Stethoscope
+                                size={14}
+                              />
 
-                        </span>
+                              Doctores
 
-                      </Link>
+                            </span>
 
-                      <Link
-                        to="/configuracion?seccion=clinica"
-                        className={
-                          submenuClasses(
-                            "/configuracion",
-                            "clinica"
-                          )
-                        }
-                      >
+                          </Link>
 
-                        Clínica
+                        )
+                      }
 
-                      </Link>
+                      {
+                        puedeVerClinicaConfig && (
+
+                          <Link
+                            to="/configuracion?seccion=clinica"
+                            className={
+                              submenuClasses(
+                                "/configuracion",
+                                "clinica"
+                              )
+                            }
+                          >
+
+                            Clínica
+
+                          </Link>
+
+                        )
+                      }
 
                       {
                         puedeConfigurarFinanzas && (
@@ -972,19 +1053,25 @@ export default function Layout() {
                         )
                       }
 
-                      <Link
-                        to="/configuracion?seccion=seguridad"
-                        className={
-                          submenuClasses(
-                            "/configuracion",
-                            "seguridad"
-                          )
-                        }
-                      >
+                      {
+                        puedeVerSeguridadConfig && (
 
-                        Seguridad
+                          <Link
+                            to="/configuracion?seccion=seguridad"
+                            className={
+                              submenuClasses(
+                                "/configuracion",
+                                "seguridad"
+                              )
+                            }
+                          >
 
-                      </Link>
+                            Seguridad
+
+                          </Link>
+
+                        )
+                      }
 
                     </div>
 

@@ -37,6 +37,9 @@ import useIndicadores
 import useFinanzas
   from "../hooks/useFinanzas";
 
+import { useAuth }
+  from "../context/AuthContext";
+
 import type {
   Doctor,
 } from "../types/Doctor";
@@ -60,6 +63,39 @@ export default function Finanzas() {
   const location =
     useLocation();
 
+  const {
+    perfil,
+    permisos,
+  } = useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
+
+  const puedeVerResumen =
+    esAdmin ||
+    permisos?.ver_resumen_financiero === true;
+
+  const puedeVerCobros =
+    esAdmin ||
+    permisos?.registrar_cobros === true ||
+    permisos?.anular_cobros === true;
+
+  const puedeVerGastos =
+    esAdmin ||
+    permisos?.registrar_gastos === true ||
+    permisos?.anular_gastos === true;
+
+  const puedeVerComisiones =
+    esAdmin ||
+    permisos?.ver_comisiones === true;
+
+  const puedeVerReportes =
+    esAdmin ||
+    permisos?.ver_utilidades === true;
+
+  const puedeVerCierre =
+    esAdmin;
+
   const finanzas =
     useFinanzas();
 
@@ -82,27 +118,68 @@ export default function Finanzas() {
         "seccion"
       );
 
-   if (
-  seccion === "cobros" ||
-  seccion === "gastos" ||
-  seccion === "comisiones" ||
-  seccion === "reportes" ||
-  seccion === "cierre"
-) {
+    if (seccion === "cobros" && puedeVerCobros) {
+      setSeccionActiva("cobros");
+      return;
+    }
 
-  setSeccionActiva(
-    seccion
-  );
+    if (seccion === "gastos" && puedeVerGastos) {
+      setSeccionActiva("gastos");
+      return;
+    }
 
-  return;
-}
+    if (seccion === "comisiones" && puedeVerComisiones) {
+      setSeccionActiva("comisiones");
+      return;
+    }
 
-    setSeccionActiva(
-      "resumen"
-    );
+    if (seccion === "reportes" && puedeVerReportes) {
+      setSeccionActiva("reportes");
+      return;
+    }
+
+    if (seccion === "cierre" && puedeVerCierre) {
+      setSeccionActiva("cierre");
+      return;
+    }
+
+    if (puedeVerResumen) {
+      setSeccionActiva("resumen");
+      return;
+    }
+
+    if (puedeVerCobros) {
+      setSeccionActiva("cobros");
+      return;
+    }
+
+    if (puedeVerGastos) {
+      setSeccionActiva("gastos");
+      return;
+    }
+
+    if (puedeVerComisiones) {
+      setSeccionActiva("comisiones");
+      return;
+    }
+
+    if (puedeVerReportes) {
+      setSeccionActiva("reportes");
+      return;
+    }
+
+    if (puedeVerCierre) {
+      setSeccionActiva("cierre");
+    }
 
   }, [
     location.search,
+    puedeVerResumen,
+    puedeVerCobros,
+    puedeVerGastos,
+    puedeVerComisiones,
+    puedeVerReportes,
+    puedeVerCierre,
   ]);
 
   const [
@@ -809,12 +886,20 @@ export default function Finanzas() {
 
           &&
 
+          puedeVerCobros
+
+          &&
+
           <Cobros />
         }
 
         {
           seccionActiva ===
           "gastos"
+
+          &&
+
+          puedeVerGastos
 
           &&
 
@@ -909,6 +994,10 @@ export default function Finanzas() {
 
           &&
 
+          puedeVerComisiones
+
+          &&
+
           <Comisiones
 
             doctores={
@@ -969,6 +1058,10 @@ export default function Finanzas() {
      {
   seccionActiva ===
   "resumen"
+
+  &&
+
+  puedeVerResumen
 
   &&
 
@@ -1060,6 +1153,10 @@ export default function Finanzas() {
 {
   seccionActiva ===
   "reportes"
+
+  &&
+
+  puedeVerReportes
 
   &&
 
@@ -1155,6 +1252,10 @@ export default function Finanzas() {
 {
   seccionActiva ===
   "cierre"
+
+  &&
+
+  puedeVerCierre
 
   &&
 

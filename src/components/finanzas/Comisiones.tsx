@@ -19,6 +19,9 @@ import type {
 import { supabase }
   from "../../lib/supabase";
 
+import { useAuth }
+  from "../../context/AuthContext";
+
 type PagoComision = {
   id?: number;
   tratamiento_id?: number;
@@ -71,6 +74,13 @@ export default function Comisiones({
   setDoctorDetalle,
   setMostrarDetalleDoctor,
 }: ComisionesProps) {
+
+  const {
+    perfil,
+  } = useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
 
   const [
     vista,
@@ -1067,6 +1077,7 @@ export default function Comisiones({
                                 <div className="flex justify-end gap-2">
 
                                   {
+                                    esAdmin &&
                                     (
                                       item.pendienteMXN > 0 ||
                                       item.pendienteUSD > 0
@@ -1477,7 +1488,8 @@ export default function Comisiones({
 
                                                   )
 
-                                                  : finalizado
+                                                  : finalizado &&
+                                                    esAdmin
 
                                                     ? (
 

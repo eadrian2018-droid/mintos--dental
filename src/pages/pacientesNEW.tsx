@@ -6,6 +6,8 @@ import * as htmlToImage from "html-to-image";
 
 import { supabase } from "../lib/supabase";
 
+import { useAuth } from "../context/AuthContext";
+
 import Odontograma from "../components/Odontograma";
 
 import QRCodePaciente from "../components/QRCodePaciente";
@@ -50,6 +52,20 @@ type Paciente = {
 
 export default function Pacientes() {
 
+  const { permisos } = useAuth();
+
+  const puedeRegistrarCobros =
+    permisos?.registrar_cobros === true;
+
+  const puedeAnularTratamientos =
+    permisos?.anular_tratamientos === true;
+
+  const puedeEditarPacientes =
+    permisos?.editar_pacientes === true;
+
+  const puedeEditarCitas =
+    permisos?.editar_citas === true;
+
   const [busqueda,
     setBusqueda] =
     useState("");
@@ -86,6 +102,23 @@ export default function Pacientes() {
   const [pacienteAbierto,
     setPacienteAbierto] =
     useState<Paciente | null>(null);
+
+  const [
+    mostrarEditarPaciente,
+    setMostrarEditarPaciente,
+  ] = useState(false);
+
+  const [
+    datosPacienteEditando,
+    setDatosPacienteEditando,
+  ] = useState({
+    nombre: "",
+    telefono: "",
+    correo: "",
+    edad: "",
+    sexo: "",
+    direccion: "",
+  });
 
   const [observacionesDientes,
     setObservacionesDientes] =
@@ -2315,6 +2348,151 @@ setNuevoTratamiento({
 
 }
 
+  function abrirEditarPaciente() {
+
+    if (
+      !pacienteAbierto ||
+      !puedeEditarPacientes
+    ) {
+
+      return;
+
+    }
+
+    setDatosPacienteEditando({
+      nombre:
+        pacienteAbierto.nombre || "",
+
+      telefono:
+        pacienteAbierto.telefono || "",
+
+      correo:
+        pacienteAbierto.correo || "",
+
+      edad:
+        pacienteAbierto.edad || "",
+
+      sexo:
+        pacienteAbierto.sexo || "",
+
+      direccion:
+        pacienteAbierto.direccion || "",
+    });
+
+    setMostrarEditarPaciente(
+      true
+    );
+
+  }
+
+  async function guardarDatosPaciente() {
+
+    if (
+      !pacienteAbierto?.id ||
+      !puedeEditarPacientes
+    ) {
+
+      return;
+
+    }
+
+    const nombre =
+      datosPacienteEditando.nombre.trim();
+
+    if (!nombre) {
+
+      alert(
+        "El nombre del paciente es obligatorio."
+      );
+
+      return;
+
+    }
+
+    const datosActualizados = {
+      nombre,
+
+      telefono:
+        datosPacienteEditando.telefono.trim(),
+
+      correo:
+        datosPacienteEditando.correo.trim(),
+
+      edad:
+        datosPacienteEditando.edad.trim(),
+
+      sexo:
+        datosPacienteEditando.sexo.trim(),
+
+      direccion:
+        datosPacienteEditando.direccion.trim(),
+    };
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("pacientes")
+      .update(
+        datosActualizados
+      )
+      .eq(
+        "id",
+        pacienteAbierto.id
+      )
+      .select(
+        "id, nombre, telefono, correo, edad, sexo, direccion"
+      )
+      .single();
+
+    if (
+      error ||
+      !data
+    ) {
+
+      console.error(
+        "Error actualizando paciente:",
+        error
+      );
+
+      alert(
+        "No se pudieron actualizar los datos del paciente."
+      );
+
+      return;
+
+    }
+
+    const pacienteActualizado = {
+      ...pacienteAbierto,
+      ...data,
+    };
+
+    setPacienteAbierto(
+      pacienteActualizado
+    );
+
+    setPacientes(
+      pacientes.map((p) =>
+        p.id === pacienteAbierto.id
+          ? {
+              ...p,
+              ...data,
+            }
+          : p
+      )
+    );
+
+    setMostrarEditarPaciente(
+      false
+    );
+
+    alert(
+      "Datos del paciente actualizados."
+    );
+
+  }
+
   async function abrirPaciente(
   paciente: Paciente
 ) {
@@ -2748,6 +2926,28 @@ const pacientesFiltrados =
               Expediente #{pacienteAbierto.id}
 
             </span>
+
+            {
+              puedeEditarPacientes && (
+
+                <button
+                  type="button"
+                  onClick={
+                    abrirEditarPaciente
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-secondary
+                    px-3
+                    py-1.5
+                    text-xs
+                  "
+                >
+                  Editar paciente
+                </button>
+
+              )
+            }
 
           </div>
 
@@ -3797,23 +3997,29 @@ const pacientesFiltrados =
 
                               </select>
 
-                              <button
-  type="button"
-  onClick={() =>
-    abrirModalCobro(
-      tratamiento
-    )
-  }
-  className="
-    mint-btn
-    mint-btn-action
-    px-3
-    py-2
-    text-xs
-  "
->
-  Registrar cobro
-</button>
+                              {
+                                puedeRegistrarCobros && (
+
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      abrirModalCobro(
+                                        tratamiento
+                                      )
+                                    }
+                                    className="
+                                      mint-btn
+                                      mint-btn-action
+                                      px-3
+                                      py-2
+                                      text-xs
+                                    "
+                                  >
+                                    Registrar cobro
+                                  </button>
+
+                                )
+                              }
 
                               <button
                                 type="button"
@@ -3843,6 +4049,9 @@ const pacientesFiltrados =
                                 Editar
                               </button>
 
+                              {
+                                puedeAnularTratamientos && (
+
                               <button
                                 type="button"
                                 onClick={async () => {
@@ -3851,18 +4060,56 @@ const pacientesFiltrados =
                                     tratamientos[index];
 
                                   if (
-                                    tratamientoEliminar?.id
+                                    !tratamientoEliminar?.id
                                   ) {
 
-                                    await supabase
-                                      .from(
-                                        "tratamientos"
-                                      )
-                                      .delete()
-                                      .eq(
-                                        "id",
-                                        tratamientoEliminar.id
-                                      );
+                                    return;
+
+                                  }
+
+                                  const confirmar =
+                                    window.confirm(
+                                      "¿Seguro que deseas eliminar este tratamiento?"
+                                    );
+
+                                  if (
+                                    !confirmar
+                                  ) {
+
+                                    return;
+
+                                  }
+
+                                  const {
+                                    data,
+                                    error,
+                                  } = await supabase
+                                    .from(
+                                      "tratamientos"
+                                    )
+                                    .delete()
+                                    .eq(
+                                      "id",
+                                      tratamientoEliminar.id
+                                    )
+                                    .select("id");
+
+                                  if (
+                                    error ||
+                                    !data ||
+                                    data.length === 0
+                                  ) {
+
+                                    console.error(
+                                      "Error eliminando tratamiento:",
+                                      error
+                                    );
+
+                                    alert(
+                                      "No tienes permiso para eliminar tratamientos."
+                                    );
+
+                                    return;
 
                                   }
 
@@ -3889,6 +4136,9 @@ const pacientesFiltrados =
                               >
                                 Eliminar
                               </button>
+
+                                )
+                              }
 
                             </div>
 
@@ -6056,33 +6306,39 @@ const pacientesFiltrados =
 
   </h3>
 
-  <button
+  {
+    puedeEditarCitas && (
 
-    onClick={() => {
+      <button
 
-  console.log(
-    "CLICK CITA"
-  );
+        onClick={() => {
 
-  setMostrarModalCita(
-    true
-  );
+          console.log(
+            "CLICK CITA"
+          );
 
-}}
+          setMostrarModalCita(
+            true
+          );
 
-    className="
-      mint-btn
-      mint-btn-primary
-      px-4
-      py-2
-      text-sm
-    "
+        }}
 
-  >
+        className="
+          mint-btn
+          mint-btn-primary
+          px-4
+          py-2
+          text-sm
+        "
 
-    + Agregar
+      >
 
-  </button>
+        + Agregar
+
+      </button>
+
+    )
+  }
 
 </div>
 
@@ -6256,49 +6512,59 @@ const pacientesFiltrados =
                           gap-2
                         ">
 
-                          <button
+                          {
+                            puedeEditarCitas && (
 
-                            onClick={() =>
-                              editarCita(
-                                cita
-                              )
-                            }
+                              <>
 
-                            className="
-                              mint-btn
-                              mint-btn-secondary
-                              px-3
-                              py-1
-                              text-sm
-                            "
+                                <button
 
-                          >
+                                  onClick={() =>
+                                    editarCita(
+                                      cita
+                                    )
+                                  }
 
-                            Editar
+                                  className="
+                                    mint-btn
+                                    mint-btn-secondary
+                                    px-3
+                                    py-1
+                                    text-sm
+                                  "
 
-                          </button>
+                                >
 
-                          <button
+                                  Editar
 
-                            onClick={() =>
-                              eliminarCita(
-                                cita.id
-                              )
-                            }
+                                </button>
 
-                            className="
-                              mint-btn
-                              mint-btn-danger
-                              px-3
-                              py-1
-                              text-sm
-                            "
+                                <button
 
-                          >
+                                  onClick={() =>
+                                    eliminarCita(
+                                      cita.id
+                                    )
+                                  }
 
-                            Eliminar
+                                  className="
+                                    mint-btn
+                                    mint-btn-danger
+                                    px-3
+                                    py-1
+                                    text-sm
+                                  "
 
-                          </button>
+                                >
+
+                                  Eliminar
+
+                                </button>
+
+                              </>
+
+                            )
+                          }
 
                         </div>
 
@@ -6942,6 +7208,412 @@ const pacientesFiltrados =
         }
 
       </div>
+
+      {
+        mostrarEditarPaciente &&
+        pacienteAbierto && (
+
+          <div
+            className="
+              fixed
+              inset-0
+              z-50
+              bg-black/40
+              flex
+              items-center
+              justify-center
+              p-4
+            "
+            onClick={() =>
+              setMostrarEditarPaciente(
+                false
+              )
+            }
+          >
+
+            <div
+              className="
+                mint-card
+                w-full
+                max-w-2xl
+                p-6
+              "
+              onClick={(e) =>
+                e.stopPropagation()
+              }
+            >
+
+              <div className="
+                flex
+                items-start
+                justify-between
+                gap-4
+                mb-6
+              ">
+
+                <div>
+
+                  <p className="
+                    text-xs
+                    uppercase
+                    tracking-wide
+                    font-semibold
+                    mint-text-muted
+                  ">
+                    Expediente #{pacienteAbierto.id}
+                  </p>
+
+                  <h3 className="
+                    text-xl
+                    font-bold
+                    mint-text-primary
+                    mt-1
+                  ">
+                    Editar paciente
+                  </h3>
+
+                  <p className="
+                    text-sm
+                    mint-text-secondary
+                    mt-1
+                  ">
+                    Actualiza los datos generales del paciente.
+                  </p>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarEditarPaciente(
+                      false
+                    )
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-secondary
+                    w-9
+                    h-9
+                    rounded-full
+                    p-0
+                    font-bold
+                    shrink-0
+                  "
+                >
+                  ×
+                </button>
+
+              </div>
+
+              <div className="
+                grid
+                grid-cols-1
+                md:grid-cols-2
+                gap-4
+              ">
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                  md:col-span-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Nombre
+                  </span>
+
+                  <input
+                    type="text"
+                    value={
+                      datosPacienteEditando.nombre
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        nombre:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Teléfono
+                  </span>
+
+                  <input
+                    type="tel"
+                    value={
+                      datosPacienteEditando.telefono
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        telefono:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Correo
+                  </span>
+
+                  <input
+                    type="email"
+                    value={
+                      datosPacienteEditando.correo
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        correo:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Edad
+                  </span>
+
+                  <input
+                    type="text"
+                    value={
+                      datosPacienteEditando.edad
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        edad:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Sexo
+                  </span>
+
+                  <input
+                    type="text"
+                    value={
+                      datosPacienteEditando.sexo
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        sexo:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+                <label className="
+                  flex
+                  flex-col
+                  gap-2
+                  md:col-span-2
+                ">
+
+                  <span className="
+                    text-sm
+                    font-semibold
+                    mint-text-primary
+                  ">
+                    Dirección
+                  </span>
+
+                  <input
+                    type="text"
+                    value={
+                      datosPacienteEditando.direccion
+                    }
+                    onChange={(e) =>
+                      setDatosPacienteEditando({
+                        ...datosPacienteEditando,
+                        direccion:
+                          e.target.value,
+                      })
+                    }
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      px-4
+                      py-3
+                      text-sm
+                      outline-none
+                    "
+                  />
+
+                </label>
+
+              </div>
+
+              <div className="
+                mt-6
+                pt-5
+                border-t
+                border-[var(--mint-border)]
+                flex
+                justify-end
+                gap-3
+              ">
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setMostrarEditarPaciente(
+                      false
+                    )
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-secondary
+                    px-5
+                    py-2.5
+                    text-sm
+                  "
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    guardarDatosPaciente
+                  }
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    px-5
+                    py-2.5
+                    text-sm
+                  "
+                >
+                  Guardar cambios
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
       {
         mostrarQR && (
