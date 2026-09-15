@@ -66,6 +66,15 @@ export default function Pacientes() {
   const puedeEditarCitas =
     permisos?.editar_citas === true;
 
+  const puedeAgregarNotasClinicas =
+    permisos?.agregar_notas_clinicas === true;
+
+  const puedeCrearTratamientos =
+    permisos?.crear_tratamientos === true;
+
+  const puedeCambiarEstadoTratamientos =
+    permisos?.cambiar_estado_tratamientos === true;
+
   const [busqueda,
     setBusqueda] =
     useState("");
@@ -633,6 +642,14 @@ async function cargarNotasClinicas(
 }
 
 async function guardarNotaClinica() {
+
+  if (
+    !puedeAgregarNotasClinicas
+  ) {
+
+    return;
+
+  }
 
   if (
     !pacienteAbierto?.id
@@ -1805,6 +1822,27 @@ const {
 async function guardarTratamiento() {
 
   if (
+    editandoIndex === null &&
+    !puedeCrearTratamientos
+  ) {
+
+    return;
+
+  }
+
+  if (
+    editandoIndex !== null &&
+    (
+      !puedeCrearTratamientos ||
+      !puedeCambiarEstadoTratamientos
+    )
+  ) {
+
+    return;
+
+  }
+
+  if (
     !pacienteAbierto?.id
   ) {
 
@@ -2669,6 +2707,14 @@ comision_banco:
   nuevoEstado: string
 ) {
 
+  if (
+    !puedeCambiarEstadoTratamientos
+  ) {
+
+    return;
+
+  }
+
   const {
     error,
   } = await supabase
@@ -3500,24 +3546,30 @@ const pacientesFiltrados =
 
           </h3>
 
-          <button
-            onClick={() =>
-              setMostrarModalTratamiento(
-                true
-              )
-            }
-            className="
-              mint-btn
-              mint-btn-primary
-              px-4
-              py-2
-              text-sm
-            "
-          >
+          {
+            puedeCrearTratamientos && (
 
-            + Agregar
+              <button
+                onClick={() =>
+                  setMostrarModalTratamiento(
+                    true
+                  )
+                }
+                className="
+                  mint-btn
+                  mint-btn-primary
+                  px-4
+                  py-2
+                  text-sm
+                "
+              >
 
-          </button>
+                + Agregar
+
+              </button>
+
+            )
+          }
 
         </div>
 
@@ -3956,46 +4008,52 @@ const pacientesFiltrados =
                               gap-2
                             ">
 
-                              <select
-                                value={
-                                  tratamiento.estado ||
-                                  "Pendiente"
-                                }
-                                onChange={(e) =>
-                                  actualizarEstadoTratamiento(
-                                    tratamiento.id,
-                                    e.target.value
-                                  )
-                                }
-                                className="
-                                  mint-input
-                                  px-3
-                                  py-2
-                                  text-xs
-                                "
-                              >
+                              {
+                                puedeCambiarEstadoTratamientos && (
 
-                                <option value="Pendiente">
-                                  Pendiente
-                                </option>
+                                  <select
+                                    value={
+                                      tratamiento.estado ||
+                                      "Pendiente"
+                                    }
+                                    onChange={(e) =>
+                                      actualizarEstadoTratamiento(
+                                        tratamiento.id,
+                                        e.target.value
+                                      )
+                                    }
+                                    className="
+                                      mint-input
+                                      px-3
+                                      py-2
+                                      text-xs
+                                    "
+                                  >
 
-                                <option value="Confirmado">
-                                  Confirmado
-                                </option>
+                                    <option value="Pendiente">
+                                      Pendiente
+                                    </option>
 
-                                <option value="En proceso">
-                                  En proceso
-                                </option>
+                                    <option value="Confirmado">
+                                      Confirmado
+                                    </option>
 
-                                <option value="Finalizado">
-                                  Finalizado
-                                </option>
+                                    <option value="En proceso">
+                                      En proceso
+                                    </option>
 
-                                <option value="Cancelado">
-                                  Cancelado
-                                </option>
+                                    <option value="Finalizado">
+                                      Finalizado
+                                    </option>
 
-                              </select>
+                                    <option value="Cancelado">
+                                      Cancelado
+                                    </option>
+
+                                  </select>
+
+                                )
+                              }
 
                               {
                                 puedeRegistrarCobros && (
@@ -4021,33 +4079,40 @@ const pacientesFiltrados =
                                 )
                               }
 
-                              <button
-                                type="button"
-                                onClick={() => {
+                              {
+                                puedeCrearTratamientos &&
+                                puedeCambiarEstadoTratamientos && (
 
-                                  setNuevoTratamiento(
-                                    tratamiento
-                                  );
+                                  <button
+                                    type="button"
+                                    onClick={() => {
 
-                                  setEditandoIndex(
-                                    index
-                                  );
+                                      setNuevoTratamiento(
+                                        tratamiento
+                                      );
 
-                                  setMostrarModalTratamiento(
-                                    true
-                                  );
+                                      setEditandoIndex(
+                                        index
+                                      );
 
-                                }}
-                                className="
-                                  mint-btn
-                                  mint-btn-secondary
-                                  px-3
-                                  py-2
-                                  text-xs
-                                "
-                              >
-                                Editar
-                              </button>
+                                      setMostrarModalTratamiento(
+                                        true
+                                      );
+
+                                    }}
+                                    className="
+                                      mint-btn
+                                      mint-btn-secondary
+                                      px-3
+                                      py-2
+                                      text-xs
+                                    "
+                                  >
+                                    Editar
+                                  </button>
+
+                                )
+                              }
 
                               {
                                 puedeAnularTratamientos && (
@@ -4207,7 +4272,10 @@ const pacientesFiltrados =
 
         </div>
 
-        <div
+        {
+          puedeAgregarNotasClinicas && (
+
+            <div
           className="
             grid
             gap-3
@@ -4309,6 +4377,9 @@ const pacientesFiltrados =
           </div>
 
         </div>
+
+          )
+        }
 
         <div
           className="

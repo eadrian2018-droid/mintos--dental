@@ -19,12 +19,14 @@ type PresupuestosProps = {
   onAbrirPresupuesto?: (
     presupuesto: PresupuestoConPaciente
   ) => void;
+  puedeCrear?: boolean;
 };
 
 export default function Presupuestos({
   presupuestos,
   onNuevoPresupuesto,
   onAbrirPresupuesto,
+  puedeCrear = false,
 }: PresupuestosProps) {
 
   const formatoMonto =
@@ -166,25 +168,29 @@ export default function Presupuestos({
 
           </div>
 
-          <button
-            type="button"
-            onClick={
-              onNuevoPresupuesto
-            }
-            className="
-              mint-btn
-              mint-btn-primary
-              inline-flex
-              items-center
-              gap-2
-            "
-          >
-            <Plus
-              size={17}
-            />
+          {
+            puedeCrear && (
+              <button
+                type="button"
+                onClick={
+                  onNuevoPresupuesto
+                }
+                className="
+                  mint-btn
+                  mint-btn-primary
+                  inline-flex
+                  items-center
+                  gap-2
+                "
+              >
+                <Plus
+                  size={17}
+                />
 
-            Nuevo presupuesto
-          </button>
+                Nuevo presupuesto
+              </button>
+            )
+          }
 
         </div>
 

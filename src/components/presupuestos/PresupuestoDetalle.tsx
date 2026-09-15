@@ -23,6 +23,8 @@ type PresupuestoDetalleProps = {
   onMarcarEnviado?: () => void | Promise<void>;
   onConvertirTratamiento?: () => void | Promise<void>;
   convirtiendo?: boolean;
+  puedeEnviar?: boolean;
+  puedeConvertir?: boolean;
 };
 
 export default function PresupuestoDetalle({
@@ -31,6 +33,8 @@ export default function PresupuestoDetalle({
   onMarcarEnviado,
   onConvertirTratamiento,
   convirtiendo = false,
+  puedeEnviar = false,
+  puedeConvertir = false,
 }: PresupuestoDetalleProps) {
 
   const formatoMonto =
@@ -973,6 +977,10 @@ export default function PresupuestoDetalle({
 
   async function enviarPresupuesto() {
 
+    if (!puedeEnviar) {
+      return;
+    }
+
     generarPDF();
 
     if (
@@ -1146,6 +1154,7 @@ export default function PresupuestoDetalle({
               "Borrador"
 
                 ? (
+                  puedeEnviar ? (
 
                   <button
                     type="button"
@@ -1167,6 +1176,7 @@ export default function PresupuestoDetalle({
                     Enviar presupuesto
                   </button>
 
+                  ) : null
                 )
 
                 : (
@@ -1196,7 +1206,8 @@ export default function PresupuestoDetalle({
             {
               presupuesto.estado ===
                 "Enviado" &&
-              onConvertirTratamiento
+              onConvertirTratamiento &&
+              puedeConvertir
 
                 ? (
 

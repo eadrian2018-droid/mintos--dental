@@ -15,6 +15,9 @@ import PresupuestoDetalle
 import { supabase }
   from "../lib/supabase";
 
+import { useAuth }
+  from "../context/AuthContext";
+
 import type {
   Presupuesto,
   PresupuestoItem,
@@ -45,6 +48,24 @@ type DatosNuevoPresupuesto = {
 };
 
 export default function PresupuestosPage() {
+
+  const { perfil, permisos } =
+    useAuth();
+
+  const esAdmin =
+    perfil?.rol === "admin";
+
+  const puedeVerPresupuestos =
+    esAdmin ||
+    permisos?.ver_expediente === true;
+
+  const puedeCrearPresupuestos =
+    esAdmin ||
+    permisos?.crear_tratamientos === true;
+
+  const puedeConvertirPresupuestos =
+    esAdmin ||
+    permisos?.crear_tratamientos === true;
 
   const [
     presupuestos,
@@ -123,6 +144,11 @@ export default function PresupuestosPage() {
   }
 
   async function cargarPresupuestos() {
+
+    if (!puedeVerPresupuestos) {
+      setPresupuestos([]);
+      return;
+    }
 
     const {
       data,
@@ -273,6 +299,10 @@ export default function PresupuestosPage() {
   async function guardarPresupuesto(
     datos: DatosNuevoPresupuesto
   ) {
+
+    if (!puedeCrearPresupuestos) {
+      return;
+    }
 
     const subtotal =
       datos.items.reduce(
@@ -533,6 +563,10 @@ export default function PresupuestosPage() {
 
   async function marcarComoEnviado() {
 
+    if (!puedeCrearPresupuestos) {
+      return;
+    }
+
     if (
       !presupuestoSeleccionado
     ) {
@@ -615,6 +649,10 @@ export default function PresupuestosPage() {
   }
 
   async function convertirATratamiento() {
+
+    if (!puedeConvertirPresupuestos) {
+      return;
+    }
 
     if (
       !presupuestoSeleccionado ||
@@ -1070,6 +1108,10 @@ export default function PresupuestosPage() {
 
   function nuevoPresupuesto() {
 
+    if (!puedeCrearPresupuestos) {
+      return;
+    }
+
     setPresupuestoSeleccionado(
       null
     );
@@ -1190,6 +1232,14 @@ export default function PresupuestosPage() {
           convirtiendo
         }
 
+        puedeEnviar={
+          puedeCrearPresupuestos
+        }
+
+        puedeConvertir={
+          puedeConvertirPresupuestos
+        }
+
       />
 
     );
@@ -1236,6 +1286,10 @@ export default function PresupuestosPage() {
 
       onAbrirPresupuesto={
         abrirPresupuesto
+      }
+
+      puedeCrear={
+        puedeCrearPresupuestos
       }
 
     />
