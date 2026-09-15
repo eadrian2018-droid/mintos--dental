@@ -27,6 +27,9 @@ import type {
 import { supabase }
   from "../../lib/supabase";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 import { useAuth }
   from "../../context/AuthContext";
 
@@ -125,6 +128,11 @@ export default function ConfiguracionFinanzas({
   ] = useState("");
 
   const [
+    tipoCambioOriginal,
+    setTipoCambioOriginal,
+  ] = useState("");
+
+  const [
     cargandoTipoCambio,
     setCargandoTipoCambio,
   ] = useState(true);
@@ -183,10 +191,17 @@ export default function ConfiguracionFinanzas({
 
     if (data) {
 
-      setTipoCambio(
+      const valorActual =
         String(
           data.valor
-        )
+        );
+
+      setTipoCambio(
+        valorActual
+      );
+
+      setTipoCambioOriginal(
+        valorActual
       );
 
     }
@@ -263,8 +278,27 @@ export default function ConfiguracionFinanzas({
 
     }
 
+    const valorAnterior =
+      Number(
+        tipoCambioOriginal || 0
+      );
+
+    const valorNuevo =
+      valor.toFixed(2);
+
+    await registrarBitacora({
+      accion: "Cambiar tipo de cambio",
+      modulo: "Configuración financiera",
+      detalle:
+        `USD/MXN: ${valorAnterior.toFixed(2)} → ${valorNuevo}`,
+    });
+
     setTipoCambio(
-      valor.toFixed(2)
+      valorNuevo
+    );
+
+    setTipoCambioOriginal(
+      valorNuevo
     );
 
     setGuardandoTipoCambio(

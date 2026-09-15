@@ -14,6 +14,9 @@ import {
   supabase,
 } from "../../lib/supabase";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 type CierreFinanciero = {
 
   id: number;
@@ -551,6 +554,13 @@ export default function CierreMensual({
       return;
 
     }
+
+    await registrarBitacora({
+      accion: "Cerrar mes financiero",
+      modulo: "Finanzas",
+      detalle:
+        `Período: ${MESES[mesActual - 1]} ${anioActual} | Cobrado: ${Number(cobradoMXN || 0)} MXN / ${Number(cobradoUSD || 0)} USD | Gastos: ${Number(totalGastos || 0)} MXN / ${Number(totalGastosUSD || 0)} USD | Utilidad: ${Number(gananciaNeta || 0)} MXN / ${Number(gananciaNetaUSD || 0)} USD`,
+    });
 
     await cargarCierres();
 

@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { finanzasService } from "../services/finanzas.service";
 
+import { registrarBitacora } from "../lib/registrarBitacora";
+
 import type {
   Tratamiento,
 } from "../types/Tratamiento";
@@ -244,6 +246,13 @@ export default function useFinanzas() {
 
     );
 
+    await registrarBitacora({
+      accion: "Crear doctor",
+      modulo: "Finanzas",
+      detalle:
+        `Doctor: ${nombreDoctor} | Especialidad: ${especialidadDoctor || "-"} | Comisión: ${porcentajeDoctor}%`,
+    });
+
     setNombreDoctor("");
 
     setEspecialidadDoctor("");
@@ -274,31 +283,63 @@ export default function useFinanzas() {
 
       );
 
+    await registrarBitacora({
+      accion: "Editar doctor",
+      modulo: "Finanzas",
+      detalle:
+        `Doctor ID: ${id} | Doctor: ${nombre} | Especialidad: ${especialidad || "-"} | Comisión: ${porcentaje}%`,
+    });
+
     await cargarDoctores();
 
   }
 
   async function guardarGasto() {
 
-    await finanzasService.guardarGasto(
+    const fecha =
+      fechaGasto;
 
-      fechaGasto,
+    const concepto =
+      conceptoGasto;
 
-      conceptoGasto,
+    const categoria =
+      categoriaGasto;
 
-      categoriaGasto,
-
+    const monto =
       Number(
         montoGasto
-      ),
+      );
 
-      monedaGasto,
+    const moneda =
+      monedaGasto;
 
-      metodoPagoGasto,
+    const metodoPago =
+      metodoPagoGasto;
+
+    await finanzasService.guardarGasto(
+
+      fecha,
+
+      concepto,
+
+      categoria,
+
+      monto,
+
+      moneda,
+
+      metodoPago,
 
       notasGasto
 
     );
+
+    await registrarBitacora({
+      accion: "Registrar gasto",
+      modulo: "Finanzas",
+      detalle:
+        `Fecha: ${fecha || "-"} | Concepto: ${concepto || "-"} | Categoría: ${categoria || "-"} | Monto: ${monto} ${moneda} | Método: ${metodoPago}`,
+    });
 
     setFechaGasto("");
 
@@ -333,9 +374,22 @@ export default function useFinanzas() {
 
     }
 
+    const gasto =
+      gastos.find(
+        (registro) =>
+          registro.id === id
+      );
+
     await finanzasService.eliminarGasto(
       id
     );
+
+    await registrarBitacora({
+      accion: "Eliminar gasto",
+      modulo: "Finanzas",
+      detalle:
+        `Gasto ID: ${id} | Concepto: ${gasto?.concepto || "-"} | Categoría: ${gasto?.categoria || "-"} | Monto: ${Number(gasto?.monto || 0)} ${gasto?.moneda || "MXN"}`,
+    });
 
     await cargarGastos();
 
@@ -353,6 +407,13 @@ export default function useFinanzas() {
       .guardarTratamientoCatalogo(
         tratamiento
       );
+
+    await registrarBitacora({
+      accion: "Crear tratamiento de catálogo",
+      modulo: "Configuración financiera",
+      detalle:
+        `Tratamiento: ${tratamiento.nombre || "-"}`,
+    });
 
     await cargarCatalogoTratamientos();
 
@@ -375,6 +436,13 @@ export default function useFinanzas() {
         cambios
       );
 
+    await registrarBitacora({
+      accion: "Editar tratamiento de catálogo",
+      modulo: "Configuración financiera",
+      detalle:
+        `Tratamiento catálogo ID: ${id}`,
+    });
+
     await cargarCatalogoTratamientos();
 
   }
@@ -389,6 +457,15 @@ export default function useFinanzas() {
         id,
         activo
       );
+
+    await registrarBitacora({
+      accion: activo
+        ? "Activar tratamiento de catálogo"
+        : "Desactivar tratamiento de catálogo",
+      modulo: "Configuración financiera",
+      detalle:
+        `Tratamiento catálogo ID: ${id}`,
+    });
 
     await cargarCatalogoTratamientos();
 
@@ -410,6 +487,13 @@ export default function useFinanzas() {
         id,
         cambios
       );
+
+    await registrarBitacora({
+      accion: "Editar configuración de pago",
+      modulo: "Configuración financiera",
+      detalle:
+        `Configuración de pago ID: ${id}`,
+    });
 
     await cargarConfiguracionPagos();
 

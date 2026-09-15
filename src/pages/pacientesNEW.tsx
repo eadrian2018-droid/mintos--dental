@@ -8,6 +8,8 @@ import { supabase } from "../lib/supabase";
 
 import { useAuth } from "../context/AuthContext";
 
+import { registrarBitacora } from "../lib/registrarBitacora";
+
 import Odontograma from "../components/Odontograma";
 
 import QRCodePaciente from "../components/QRCodePaciente";
@@ -740,6 +742,13 @@ async function guardarNotaClinica() {
 
   }
 
+  await registrarBitacora({
+    accion: "Agregar nota clínica",
+    modulo: "Pacientes",
+    detalle:
+      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Doctor: ${doctor.nombre}`,
+  });
+
   setNuevaNotaClinica("");
 
   setDoctorNotaId("");
@@ -806,7 +815,9 @@ async function guardarNotaClinica() {
   if (!confirmar)
     return;
 
-  await supabase
+  const {
+    error,
+  } = await supabase
 
     .from("citas")
 
@@ -816,6 +827,24 @@ async function guardarNotaClinica() {
       "id",
       citaId
     );
+
+  if (error) {
+
+    console.error(
+      "Error eliminando cita:",
+      error
+    );
+
+    return;
+
+  }
+
+  await registrarBitacora({
+    accion: "Eliminar cita",
+    modulo: "Pacientes",
+    detalle:
+      `Cita ID: ${citaId} | Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre}`,
+  });
 
   await cargarCitas(
     pacienteAbierto.id
@@ -891,7 +920,9 @@ async function guardarCitaPaciente() {
   citaEditando
 ) {
 
-  await supabase
+  const {
+    error,
+  } = await supabase
 
     .from("citas")
 
@@ -916,11 +947,29 @@ async function guardarCitaPaciente() {
       citaEditando
     );
 
+  if (error) {
+    console.error(
+      "Error actualizando cita:",
+      error
+    );
+    return;
+  }
+
+  await registrarBitacora({
+    accion: "Editar cita",
+    modulo: "Pacientes",
+    detalle:
+      `Cita ID: ${citaEditando} | Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Inicio: ${inicio.toISOString()} | Fin: ${fin.toISOString()}`,
+  });
+
 }
 
 else {
 
-  await supabase
+  const {
+    data,
+    error,
+  } = await supabase
 
     .from("citas")
 
@@ -948,7 +997,24 @@ else {
 
       },
 
-    ]);
+    ])
+    .select("id")
+    .single();
+
+  if (error) {
+    console.error(
+      "Error creando cita:",
+      error
+    );
+    return;
+  }
+
+  await registrarBitacora({
+    accion: "Crear cita",
+    modulo: "Pacientes",
+    detalle:
+      `Cita ID: ${data?.id || "-"} | Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Inicio: ${inicio.toISOString()} | Fin: ${fin.toISOString()}`,
+  });
 
 }
 
@@ -1029,6 +1095,13 @@ else {
       data.publicUrl
     );
 
+    await registrarBitacora({
+      accion: "Subir radiografía",
+      modulo: "Pacientes",
+      detalle:
+        `Paciente ID: ${pacienteAbierto?.id || "-"} | Paciente: ${pacienteAbierto?.nombre || "-"} | Archivo: ${archivo.name}`,
+    });
+
     alert(
       "Radiografía subida"
     );
@@ -1086,6 +1159,13 @@ console.log(
       return;
 
     }
+
+    await registrarBitacora({
+      accion: "Guardar expediente clínico",
+      modulo: "Pacientes",
+      detalle:
+        `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre}`,
+    });
 
     alert(
       "Expediente guardado"
@@ -1813,6 +1893,13 @@ const {
 
   });
 
+  await registrarBitacora({
+    accion: "Registrar cobro",
+    modulo: "Cobros",
+    detalle:
+      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Tratamiento ID: ${tratamientoCobro.id} | Tratamiento: ${tratamientoCobro.tratamiento || "-"} | Monto: ${montoCobro} ${nuevoCobro.moneda} | Método: ${nuevoCobro.metodo_pago}`,
+  });
+
   alert(
     "Cobro registrado correctamente."
   );
@@ -2521,6 +2608,13 @@ setNuevoTratamiento({
       )
     );
 
+    await registrarBitacora({
+      accion: "Editar paciente",
+      modulo: "Pacientes",
+      detalle:
+        `Paciente ID: ${pacienteAbierto.id} | Paciente: ${data.nombre}`,
+    });
+
     setMostrarEditarPaciente(
       false
     );
@@ -2534,6 +2628,13 @@ setNuevoTratamiento({
   async function abrirPaciente(
   paciente: Paciente
 ) {
+
+    await registrarBitacora({
+      accion: "Abrir expediente clínico",
+      modulo: "Pacientes",
+      detalle:
+        `Paciente ID: ${paciente.id} | Paciente: ${paciente.nombre}`,
+    });
 
     setPacienteAbierto(
       paciente
@@ -2748,6 +2849,13 @@ comision_banco:
     return;
 
   }
+
+  await registrarBitacora({
+    accion: "Cambiar estado de tratamiento",
+    modulo: "Tratamientos",
+    detalle:
+      `Tratamiento ID: ${tratamientoId} | Paciente ID: ${pacienteAbierto?.id || "-"} | Paciente: ${pacienteAbierto?.nombre || "-"} | Nuevo estado: ${nuevoEstado}`,
+  });
 
   setTratamientos(
     tratamientos.map(
@@ -4177,6 +4285,13 @@ const pacientesFiltrados =
                                     return;
 
                                   }
+
+                                  await registrarBitacora({
+                                    accion: "Eliminar tratamiento",
+                                    modulo: "Tratamientos",
+                                    detalle:
+                                      `Tratamiento ID: ${tratamientoEliminar.id} | Paciente ID: ${pacienteAbierto?.id || "-"} | Paciente: ${pacienteAbierto?.nombre || "-"} | Tratamiento: ${tratamientoEliminar.tratamiento || "-"}`,
+                                  });
 
                                   setTratamientos(
 
@@ -6059,6 +6174,13 @@ const pacientesFiltrados =
 
       return false;
     }
+
+    await registrarBitacora({
+      accion: "Guardar odontograma",
+      modulo: "Pacientes",
+      detalle:
+        `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre}`,
+    });
 
     setPacienteAbierto({
       ...pacienteAbierto,

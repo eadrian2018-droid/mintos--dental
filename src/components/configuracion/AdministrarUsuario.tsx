@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "../../lib/supabase";
 
+import { registrarBitacora } from "../../lib/registrarBitacora";
+
 type RolUsuario =
   | "admin"
   | "doctor"
-  | "recepcionista";
+  | "recepcionista"
+  | "tablet";
 
 type Perfil = {
   id: string;
@@ -21,6 +24,8 @@ type Doctor = {
 };
 
 type Permisos = {
+  registrar_pacientes: boolean;
+
   ver_agenda: boolean;
   editar_citas: boolean;
 
@@ -58,6 +63,8 @@ type Props = {
 };
 
 const permisosVacios: Permisos = {
+  registrar_pacientes: false,
+
   ver_agenda: false,
   editar_citas: false,
 
@@ -99,6 +106,7 @@ const gruposPermisos = [
   {
     titulo: "Pacientes",
     permisos: [
+      ["registrar_pacientes", "Registrar nuevos pacientes"],
       ["ver_pacientes", "Ver pacientes"],
       ["editar_pacientes", "Editar datos de pacientes"],
       ["ver_expediente", "Ver expediente clínico"],
@@ -208,6 +216,13 @@ export default function AdministrarUsuario({
   );
 
   const [
+    permisosOriginales,
+    setPermisosOriginales,
+  ] = useState<Permisos>(
+    permisosVacios
+  );
+
+  const [
     loading,
     setLoading,
   ] = useState(true);
@@ -246,6 +261,7 @@ export default function AdministrarUsuario({
         "permisos_usuarios"
       )
       .select(`
+        registrar_pacientes,
         ver_agenda,
         editar_citas,
         ver_pacientes,
@@ -294,6 +310,10 @@ export default function AdministrarUsuario({
     if (data) {
 
       setPermisos(
+        data as Permisos
+      );
+
+      setPermisosOriginales(
         data as Permisos
       );
     }
@@ -394,6 +414,15 @@ export default function AdministrarUsuario({
         return;
       }
 
+      const permisosGuardar: Permisos =
+        rol === "tablet"
+          ? {
+              ...permisosVacios,
+              registrar_pacientes:
+                true,
+            }
+          : permisos;
+
       const {
         error: permisosError,
       } = await supabase
@@ -405,7 +434,7 @@ export default function AdministrarUsuario({
             usuario_id:
               perfil.id,
 
-            ...permisos,
+            ...permisosGuardar,
 
             updated_at:
               new Date().toISOString(),
@@ -429,6 +458,87 @@ export default function AdministrarUsuario({
 
         return;
       }
+
+      const permisosModificados =
+        (
+          Object.keys(
+            permisosGuardar
+          ) as Array<
+            keyof Permisos
+          >
+        )
+          .filter(
+            (clave) =>
+              permisosGuardar[clave] !==
+              permisosOriginales[clave]
+          )
+          .map(
+            (clave) =>
+              `${clave}: ${permisosOriginales[clave] ? "Sí" : "No"} → ${permisosGuardar[clave] ? "Sí" : "No"}`
+          );
+
+      const cambiosPerfil: string[] = [];
+
+      if (
+        nombreLimpio !==
+        perfil.nombre
+      ) {
+        cambiosPerfil.push(
+          `Nombre: ${perfil.nombre} → ${nombreLimpio}`
+        );
+      }
+
+      if (
+        rol !==
+        perfil.rol
+      ) {
+        cambiosPerfil.push(
+          `Rol: ${perfil.rol} → ${rol}`
+        );
+      }
+
+      const doctorIdOriginal =
+        perfil.doctor_id
+          ? String(
+              perfil.doctor_id
+            )
+          : "";
+
+      const doctorIdNuevo =
+        rol === "doctor"
+          ? doctorId
+          : "";
+
+      if (
+        doctorIdNuevo !==
+        doctorIdOriginal
+      ) {
+        cambiosPerfil.push(
+          `Doctor ID: ${doctorIdOriginal || "-"} → ${doctorIdNuevo || "-"}`
+        );
+      }
+
+      if (
+        activo !==
+        perfil.activo
+      ) {
+        cambiosPerfil.push(
+          `Estado: ${perfil.activo ? "Activo" : "Inactivo"} → ${activo ? "Activo" : "Inactivo"}`
+        );
+      }
+
+      const cambios =
+        [
+          ...cambiosPerfil,
+          ...permisosModificados,
+        ];
+
+      await registrarBitacora({
+        accion: "Administrar usuario",
+        modulo: "Usuarios y permisos",
+        detalle:
+          `Usuario ID: ${perfil.id} | Usuario: ${nombreLimpio} | Cambios: ${cambios.length > 0 ? cambios.join(" | ") : "Sin cambios efectivos"}`,
+      });
 
       await onGuardado();
 
@@ -625,6 +735,10 @@ export default function AdministrarUsuario({
                   Recepcionista
                 </option>
 
+                <option value="tablet">
+                  Tablet de recepción
+                </option>
+
               </select>
 
             </div>
@@ -766,7 +880,40 @@ export default function AdministrarUsuario({
             </p>
 
             {
-              loading
+              rol === "tablet"
+
+                ? (
+
+                  <div
+                    className="
+                      mint-card
+                      p-4
+                    "
+                  >
+                    <p
+                      className="
+                        text-sm
+                        font-semibold
+                        mint-text-primary
+                      "
+                    >
+                      Acceso exclusivo de Tablet
+                    </p>
+
+                    <p
+                      className="
+                        text-sm
+                        mint-text-secondary
+                        mt-2
+                      "
+                    >
+                      Esta cuenta únicamente puede registrar nuevos pacientes. No tiene acceso a pacientes existentes, expedientes, agenda, finanzas, configuración ni bitácora.
+                    </p>
+                  </div>
+
+                )
+
+                : loading
 
                 ? (
 

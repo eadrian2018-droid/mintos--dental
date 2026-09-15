@@ -8,6 +8,8 @@ import {
 
 import { supabase } from "../../lib/supabase";
 
+import { registrarBitacora } from "../../lib/registrarBitacora";
+
 import AdministrarUsuario from "./AdministrarUsuario";
 
 type Perfil = {
@@ -22,7 +24,8 @@ type Perfil = {
   rol:
     "admin" |
     "doctor" |
-    "recepcionista";
+    "recepcionista" |
+    "tablet";
 
   doctor_id:
     number | null;
@@ -284,6 +287,14 @@ export default function UsuariosRoles() {
 
     }
 
+    if (
+      rol === "tablet"
+    ) {
+
+      return "Tablet de recepción";
+
+    }
+
     return "Recepcionista";
 
   }
@@ -520,6 +531,13 @@ export default function UsuariosRoles() {
         return;
 
       }
+
+      await registrarBitacora({
+        accion: "Crear usuario",
+        modulo: "Usuarios y permisos",
+        detalle:
+          `Usuario: ${nombre} | Correo: ${email} | Rol: ${rolNuevoUsuario} | Doctor ID: ${rolNuevoUsuario === "doctor" ? doctorIdNuevoUsuario : "-"} | Estado: ${activoNuevoUsuario ? "Activo" : "Inactivo"}`,
+      });
 
       await cargarPerfiles();
 
@@ -1002,6 +1020,10 @@ export default function UsuariosRoles() {
 
                   <option value="recepcionista">
                     Recepcionista
+                  </option>
+
+                  <option value="tablet">
+                    Tablet de recepción
                   </option>
 
                 </select>

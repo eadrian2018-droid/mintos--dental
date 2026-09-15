@@ -14,6 +14,9 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 import { useAuth }
   from "../../context/AuthContext";
 
@@ -463,6 +466,13 @@ async function cargarPreciosEspecialista(
 
       }
 
+      const doctorOriginal =
+        doctores.find(
+          (doctor) =>
+            doctor.id ===
+            doctorEditando
+        );
+
       setGuardando(true);
 
       const {
@@ -493,6 +503,13 @@ async function cargarPreciosEspecialista(
         return;
 
       }
+
+      await registrarBitacora({
+        accion: "Cambiar comisión de doctor",
+        modulo: "Doctores",
+        detalle:
+          `Doctor ID: ${doctorEditando} | Doctor: ${doctorOriginal?.nombre || form.nombre || "-"} | Comisión: ${doctorOriginal?.porcentaje ?? 0}% → ${porcentaje}%`,
+      });
 
       await cargarDoctores();
 
@@ -561,6 +578,15 @@ async function cargarPreciosEspecialista(
 
     }
 
+    const doctorOriginal =
+      doctorEditando !== null
+        ? doctores.find(
+            (doctor) =>
+              doctor.id ===
+              doctorEditando
+          )
+        : null;
+
     setGuardando(true);
 
     const datosDoctor = {
@@ -587,6 +613,9 @@ async function cargarPreciosEspecialista(
         form.tipo_doctor,
 
     };
+
+    let doctorCreadoId:
+      number | null = null;
 
     if (
       doctorEditando !== null
@@ -627,6 +656,7 @@ async function cargarPreciosEspecialista(
     } else {
 
       const {
+        data: doctorCreado,
         error,
       } = await supabase
 
@@ -634,7 +664,9 @@ async function cargarPreciosEspecialista(
 
         .insert([
           datosDoctor,
-        ]);
+        ])
+        .select("id")
+        .single();
 
       if (error) {
 
@@ -652,6 +684,97 @@ async function cargarPreciosEspecialista(
         return;
 
       }
+
+      doctorCreadoId =
+        doctorCreado.id;
+
+    }
+
+    if (
+      doctorEditando !== null
+    ) {
+
+      const cambios: string[] = [];
+
+      if (
+        doctorOriginal
+      ) {
+
+        if (
+          doctorOriginal.nombre !==
+          datosDoctor.nombre
+        ) {
+          cambios.push(
+            `Nombre: ${doctorOriginal.nombre} → ${datosDoctor.nombre}`
+          );
+        }
+
+        if (
+          (doctorOriginal.especialidad || null) !==
+          datosDoctor.especialidad
+        ) {
+          cambios.push(
+            `Especialidad: ${doctorOriginal.especialidad || "-"} → ${datosDoctor.especialidad || "-"}`
+          );
+        }
+
+        if (
+          Number(
+            doctorOriginal.porcentaje || 0
+          ) !==
+          Number(
+            datosDoctor.porcentaje || 0
+          )
+        ) {
+          cambios.push(
+            `Comisión: ${doctorOriginal.porcentaje ?? 0}% → ${datosDoctor.porcentaje}%`
+          );
+        }
+
+        if (
+          (doctorOriginal.telefono || null) !==
+          datosDoctor.telefono
+        ) {
+          cambios.push(
+            `WhatsApp modificado`
+          );
+        }
+
+        if (
+          doctorOriginal.activo !==
+          datosDoctor.activo
+        ) {
+          cambios.push(
+            `Estado: ${doctorOriginal.activo ? "Activo" : "Inactivo"} → ${datosDoctor.activo ? "Activo" : "Inactivo"}`
+          );
+        }
+
+        if (
+          doctorOriginal.tipo_doctor !==
+          datosDoctor.tipo_doctor
+        ) {
+          cambios.push(
+            `Tipo: ${doctorOriginal.tipo_doctor} → ${datosDoctor.tipo_doctor}`
+          );
+        }
+
+      }
+
+      await registrarBitacora({
+        accion: "Editar doctor",
+        modulo: "Doctores",
+        detalle:
+          `Doctor ID: ${doctorEditando} | Doctor: ${datosDoctor.nombre} | Cambios: ${cambios.length > 0 ? cambios.join(" | ") : "Sin cambios efectivos"}`,
+      });
+
+    } else {
+
+      await registrarBitacora({
+        accion: "Crear doctor",
+        modulo: "Doctores",
+        detalle:
+          `Doctor ID: ${doctorCreadoId ?? "-"} | Doctor: ${datosDoctor.nombre} | Tipo: ${datosDoctor.tipo_doctor} | Especialidad: ${datosDoctor.especialidad || "-"} | Comisión: ${datosDoctor.porcentaje}% | Estado: ${datosDoctor.activo ? "Activo" : "Inactivo"}`,
+      });
 
     }
 
@@ -704,7 +827,14 @@ async function cargarPreciosEspecialista(
 
     }
 
-    cargarDoctores();
+    await registrarBitacora({
+      accion: "Cambiar estado de doctor",
+      modulo: "Doctores",
+      detalle:
+        `Doctor ID: ${doctor.id} | Doctor: ${doctor.nombre} | Estado: ${doctor.activo ? "Activo" : "Inactivo"} → ${!doctor.activo ? "Activo" : "Inactivo"}`,
+    });
+
+    await cargarDoctores();
 
   }
 
@@ -815,6 +945,15 @@ async function guardarPrecioEspecialista() {
     return;
   }
 
+  const precioOriginal =
+    precioEditandoId !== null
+      ? preciosEspecialista.find(
+          (precio) =>
+            precio.id ===
+            precioEditandoId
+        )
+      : null;
+
   setGuardandoPrecio(
     true
   );
@@ -841,6 +980,9 @@ async function guardarPrecioEspecialista() {
     updated_at:
       new Date().toISOString(),
   };
+
+  let precioCreadoId:
+    number | null = null;
 
   if (
     precioEditandoId !== null
@@ -884,6 +1026,7 @@ async function guardarPrecioEspecialista() {
   } else {
 
     const {
+      data: precioCreado,
       error,
     } = await supabase
 
@@ -893,7 +1036,9 @@ async function guardarPrecioEspecialista() {
 
       .insert([
         datosPrecio,
-      ]);
+      ])
+      .select("id")
+      .single();
 
     if (error) {
 
@@ -912,6 +1057,38 @@ async function guardarPrecioEspecialista() {
 
       return;
     }
+
+    precioCreadoId =
+      precioCreado.id;
+
+  }
+
+  const especialista =
+    doctores.find(
+      (doctor) =>
+        doctor.id ===
+        doctorPreciosId
+    );
+
+  if (
+    precioEditandoId !== null
+  ) {
+
+    await registrarBitacora({
+      accion: "Editar precio de especialista",
+      modulo: "Doctores",
+      detalle:
+        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precioEditandoId} | Tratamiento: ${precioOriginal?.nombre_tratamiento || "-"} → ${nombreTratamiento} | Costo: ${precioOriginal?.costo ?? 0} ${precioOriginal?.moneda || "-"} → ${costo} ${formPrecio.moneda}`,
+    });
+
+  } else {
+
+    await registrarBitacora({
+      accion: "Crear precio de especialista",
+      modulo: "Doctores",
+      detalle:
+        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precioCreadoId ?? "-"} | Tratamiento: ${nombreTratamiento} | Costo: ${costo} ${formPrecio.moneda}`,
+    });
 
   }
 
@@ -971,6 +1148,20 @@ async function guardarPrecioEspecialista() {
       return;
 
     }
+
+    const especialista =
+      doctores.find(
+        (doctor) =>
+          doctor.id ===
+          doctorPreciosId
+      );
+
+    await registrarBitacora({
+      accion: "Cambiar estado de precio de especialista",
+      modulo: "Doctores",
+      detalle:
+        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precio.id} | Tratamiento: ${precio.nombre_tratamiento || "-"} | Estado: ${precio.activo ? "Activo" : "Inactivo"} → ${!precio.activo ? "Activo" : "Inactivo"}`,
+    });
 
     await cargarPreciosEspecialista(
       doctorPreciosId

@@ -14,6 +14,9 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 type Clinica = {
   id: number;
   nombre: string | null;
@@ -63,6 +66,13 @@ export default function ClinicaConfig() {
   const [
     form,
     setForm,
+  ] = useState(
+    formularioInicial
+  );
+
+  const [
+    formOriginal,
+    setFormOriginal,
   ] = useState(
     formularioInicial
   );
@@ -120,7 +130,7 @@ export default function ClinicaConfig() {
         clinica.id
       );
 
-      setForm({
+      const datosClinica = {
         nombre:
           clinica.nombre || "",
         telefono:
@@ -142,7 +152,15 @@ export default function ClinicaConfig() {
         zona_horaria:
           clinica.zona_horaria ||
           "America/Hermosillo",
-      });
+      };
+
+      setForm(
+        datosClinica
+      );
+
+      setFormOriginal(
+        datosClinica
+      );
 
     }
 
@@ -282,6 +300,59 @@ export default function ClinicaConfig() {
       return;
 
     }
+
+    const cambios: string[] = [];
+
+    const etiquetas: Record<
+      keyof typeof form,
+      string
+    > = {
+      nombre: "Nombre",
+      telefono: "Teléfono",
+      whatsapp: "WhatsApp",
+      email: "Correo",
+      direccion: "Dirección",
+      ciudad: "Ciudad",
+      estado: "Estado",
+      pais: "País",
+      horario: "Horario",
+      zona_horaria: "Zona horaria",
+    };
+
+    (
+      Object.keys(
+        form
+      ) as Array<
+        keyof typeof form
+      >
+    ).forEach(
+      (campo) => {
+
+        if (
+          form[campo] !==
+          formOriginal[campo]
+        ) {
+          cambios.push(
+            etiquetas[campo]
+          );
+        }
+
+      }
+    );
+
+    await registrarBitacora({
+      accion:
+        clinicaId
+          ? "Editar configuración de clínica"
+          : "Crear configuración de clínica",
+      modulo: "Configuración",
+      detalle:
+        `Clínica: ${datos.nombre} | Campos modificados: ${cambios.length > 0 ? cambios.join(", ") : "Sin cambios efectivos"}`,
+    });
+
+    setFormOriginal(
+      form
+    );
 
     alert(
       "Información de la clínica guardada."

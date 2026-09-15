@@ -22,6 +22,9 @@ import { supabase }
 import { useAuth }
   from "../../context/AuthContext";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 type PagoComision = {
   id?: number;
   tratamiento_id?: number;
@@ -647,6 +650,13 @@ export default function Comisiones({
 
     }
 
+    await registrarBitacora({
+      accion: "Pagar comisión a doctor",
+      modulo: "Comisiones",
+      detalle:
+        `Doctor ID: ${doctorPago.doctor.id} | Doctor: ${doctorPago.doctor.nombre || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago} | Registros liquidados: ${pagosPendientes.length}`,
+    });
+
     setGuardando(false);
     setDoctorPago(null);
     setMontoPagoDoctor("");
@@ -705,6 +715,13 @@ export default function Comisiones({
       );
       return;
     }
+
+    await registrarBitacora({
+      accion: "Pagar especialista",
+      modulo: "Comisiones",
+      detalle:
+        `Tratamiento ID: ${tratamientoPago.id} | Especialista ID: ${tratamientoPago.especialista_id || "-"} | Especialista: ${tratamientoPago.especialista_nombre || "-"} | Tratamiento: ${tratamientoPago.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago}`,
+    });
 
     setTratamientoPago(null);
     setMontoPagoEspecialista("");

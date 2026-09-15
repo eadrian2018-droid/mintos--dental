@@ -18,6 +18,9 @@ import { supabase }
 import { useAuth }
   from "../context/AuthContext";
 
+import { registrarBitacora }
+  from "../lib/registrarBitacora";
+
 import type {
   Presupuesto,
   PresupuestoItem,
@@ -455,6 +458,13 @@ export default function PresupuestosPage() {
 
     }
 
+    await registrarBitacora({
+      accion: "Crear presupuesto",
+      modulo: "Presupuestos",
+      detalle:
+        `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${datos.paciente_id || "-"} | Paciente: ${datos.nombre_paciente} | Total: ${total} ${datos.moneda}`,
+    });
+
     await cargarPresupuestos();
 
     setMostrandoFormulario(
@@ -555,6 +565,13 @@ export default function PresupuestosPage() {
       items,
     });
 
+    await registrarBitacora({
+      accion: "Abrir presupuesto",
+      modulo: "Presupuestos",
+      detalle:
+        `Presupuesto ID: ${presupuesto.id} | Paciente ID: ${presupuesto.paciente_id || "-"} | Paciente: ${presupuesto.paciente_nombre || presupuesto.nombre_paciente || "-"}`,
+    });
+
     setCargandoDetalle(
       false
     );
@@ -619,6 +636,13 @@ export default function PresupuestosPage() {
       return;
 
     }
+
+    await registrarBitacora({
+      accion: "Enviar presupuesto",
+      modulo: "Presupuestos",
+      detalle:
+        `Presupuesto ID: ${presupuestoSeleccionado.id} | Paciente ID: ${presupuestoSeleccionado.paciente_id || "-"} | Paciente: ${presupuestoSeleccionado.paciente_nombre || presupuestoSeleccionado.nombre_paciente || "-"} | Total: ${presupuestoSeleccionado.total} ${presupuestoSeleccionado.moneda}`,
+    });
 
     setPresupuestoSeleccionado(
       (actual) =>
@@ -776,6 +800,13 @@ export default function PresupuestosPage() {
 
         pacienteIdTratamiento =
           pacienteCreado.id;
+
+        await registrarBitacora({
+          accion: "Crear paciente desde presupuesto",
+          modulo: "Presupuestos",
+          detalle:
+            `Presupuesto ID: ${presupuestoSeleccionado.id} | Paciente ID: ${pacienteCreado.id} | Paciente: ${pacienteCreado.nombre}`,
+        });
 
         setPacientes(
           (actuales) =>
@@ -1069,6 +1100,13 @@ export default function PresupuestosPage() {
       return;
 
     }
+
+    await registrarBitacora({
+      accion: "Convertir presupuesto a tratamientos",
+      modulo: "Presupuestos",
+      detalle:
+        `Presupuesto ID: ${presupuestoSeleccionado.id} | Paciente ID: ${pacienteIdTratamiento || "-"} | Paciente: ${presupuestoSeleccionado.paciente_nombre || presupuestoSeleccionado.nombre_paciente || "-"} | Tratamientos creados: ${items.length} | Total: ${presupuestoSeleccionado.total} ${presupuestoSeleccionado.moneda}`,
+    });
 
     setPresupuestoSeleccionado(
       (actual) =>
