@@ -26,6 +26,18 @@ interface ZonaDiente {
 
 }
 
+type HistorialMedicoCambio = {
+  id: number;
+  paciente_id: number;
+  usuario_id: string;
+  alergias?: string | null;
+  enfermedades?: string | null;
+  medicamentos?: string | null;
+  historial_clinico?: any;
+  created_at: string;
+  usuario_nombre?: string | null;
+};
+
 type Paciente = {
 
   id: number;
@@ -148,6 +160,16 @@ export default function Pacientes() {
 const [tabActiva,
   setTabActiva] =
   useState("general");
+
+const [
+  historialMedicoCambios,
+  setHistorialMedicoCambios,
+] = useState<HistorialMedicoCambio[]>([]);
+
+const [
+  cargandoHistorialMedico,
+  setCargandoHistorialMedico,
+] = useState(false);
 
   const [mostrarModalTratamiento,
   setMostrarModalTratamiento] =
@@ -2711,6 +2733,96 @@ setNuevoTratamiento({
 
   }
 
+  async function cargarHistorialMedico(
+    pacienteId: number
+  ) {
+
+    setCargandoHistorialMedico(true);
+
+    const { data, error } =
+      await supabase
+        .from("historial_medico_cambios")
+        .select(`
+          id,
+          paciente_id,
+          usuario_id,
+          alergias,
+          enfermedades,
+          medicamentos,
+          historial_clinico,
+          created_at
+        `)
+        .eq("paciente_id", pacienteId)
+        .order("created_at", {
+          ascending: false,
+        });
+
+    if (error) {
+
+      console.error(
+        "Error cargando historial médico:",
+        error
+      );
+
+      setHistorialMedicoCambios([]);
+      setCargandoHistorialMedico(false);
+
+      return;
+    }
+
+    const cambios =
+      (data || []) as HistorialMedicoCambio[];
+
+    const usuariosIds = Array.from(
+      new Set(
+        cambios
+          .map((cambio) => cambio.usuario_id)
+          .filter(Boolean)
+      )
+    );
+
+    let nombresPorUsuario:
+      Record<string, string> = {};
+
+    if (usuariosIds.length > 0) {
+
+      const {
+        data: perfilesHistorial,
+        error: errorPerfilesHistorial,
+      } = await supabase
+        .from("perfiles")
+        .select("id, nombre")
+        .in("id", usuariosIds);
+
+      if (!errorPerfilesHistorial) {
+
+        nombresPorUsuario =
+          Object.fromEntries(
+            (perfilesHistorial || []).map(
+              (perfil: any) => [
+                perfil.id,
+                perfil.nombre,
+              ]
+            )
+          );
+
+      }
+
+    }
+
+    setHistorialMedicoCambios(
+      cambios.map((cambio) => ({
+        ...cambio,
+        usuario_nombre:
+          nombresPorUsuario[
+            cambio.usuario_id
+          ] || "Usuario de MintOS",
+      }))
+    );
+
+    setCargandoHistorialMedico(false);
+  }
+
   async function abrirPaciente(
   paciente: Paciente
 ) {
@@ -2731,6 +2843,10 @@ setNuevoTratamiento({
 );
 
 cargarNotasClinicas(
+  paciente.id
+);
+
+cargarHistorialMedico(
   paciente.id
 );
 
@@ -6727,6 +6843,389 @@ const pacientesFiltrados =
           </div>
 
         </div>
+
+      </div>
+
+      <div className="
+        mint-card
+        p-6
+      ">
+
+        <div className="
+          flex
+          flex-col
+          md:flex-row
+          md:items-center
+          md:justify-between
+          gap-3
+          mb-5
+        ">
+
+          <div>
+
+            <h3 className="
+              text-xl
+              font-bold
+              mint-text-primary
+            ">
+              Historial de cambios
+            </h3>
+
+            <p className="
+              text-sm
+              mint-text-secondary
+              mt-1
+            ">
+              Versiones anteriores del historial médico.
+              Este registro es de solo lectura.
+            </p>
+
+          </div>
+
+          <span className="
+            inline-flex
+            items-center
+            self-start
+            rounded-full
+            bg-[var(--mint-primary-soft)]
+            border
+            border-[var(--mint-border-primary)]
+            px-3
+            py-1
+            text-xs
+            font-semibold
+            mint-text-brand
+          ">
+            {historialMedicoCambios.length}
+            {" "}
+            {
+              historialMedicoCambios.length === 1
+                ? "versión"
+                : "versiones"
+            }
+          </span>
+
+        </div>
+
+        {
+          cargandoHistorialMedico ? (
+
+            <div className="
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
+              rounded-2xl
+              p-5
+              text-sm
+              mint-text-secondary
+            ">
+              Cargando historial de cambios...
+            </div>
+
+          ) : historialMedicoCambios.length === 0 ? (
+
+            <div className="
+              bg-[var(--mint-bg-soft)]
+              border
+              border-[var(--mint-border)]
+              rounded-2xl
+              p-5
+            ">
+
+              <p className="
+                font-semibold
+                mint-text-primary
+              ">
+                Sin cambios registrados
+              </p>
+
+              <p className="
+                text-sm
+                mint-text-secondary
+                mt-1
+              ">
+                Cuando se modifique información médica,
+                la versión anterior aparecerá aquí
+                automáticamente.
+              </p>
+
+            </div>
+
+          ) : (
+
+            <div className="
+              space-y-4
+            ">
+
+              {
+                historialMedicoCambios.map(
+                  (cambio, index) => {
+
+                    const versionMasNueva =
+                      index === 0
+                        ? pacienteAbierto
+                        : historialMedicoCambios[
+                            index - 1
+                          ];
+
+                    const valorHistorial = (
+                      registro: any,
+                      campo: string
+                    ) =>
+                      registro?.[campo] ??
+                      registro?.historial_clinico?.[
+                        campo
+                      ] ??
+                      "";
+
+                    const campos = [
+                      {
+                        clave: "alergias",
+                        etiqueta: "Alergias",
+                      },
+                      {
+                        clave: "enfermedades",
+                        etiqueta: "Enfermedades",
+                      },
+                      {
+                        clave: "medicamentos",
+                        etiqueta: "Medicamentos",
+                      },
+                      {
+                        clave: "fuma",
+                        etiqueta: "Fuma",
+                      },
+                      {
+                        clave: "alcohol",
+                        etiqueta:
+                          "Consume alcohol",
+                      },
+                      {
+                        clave: "embarazo",
+                        etiqueta: "Embarazo",
+                      },
+                    ];
+
+                    const camposModificados =
+                      campos.filter(
+                        ({ clave }) =>
+                          JSON.stringify(
+                            valorHistorial(
+                              cambio,
+                              clave
+                            )
+                          ) !==
+                          JSON.stringify(
+                            valorHistorial(
+                              versionMasNueva,
+                              clave
+                            )
+                          )
+                      );
+
+                    return (
+
+                      <div
+                        key={cambio.id}
+                        className="
+                          bg-[var(--mint-bg-soft)]
+                          border
+                          border-[var(--mint-border)]
+                          rounded-2xl
+                          p-5
+                        "
+                      >
+
+                        <div className="
+                          flex
+                          flex-col
+                          md:flex-row
+                          md:items-start
+                          md:justify-between
+                          gap-3
+                        ">
+
+                          <div>
+
+                            <p className="
+                              font-bold
+                              mint-text-primary
+                            ">
+                              Versión anterior
+                            </p>
+
+                            <p className="
+                              text-sm
+                              mint-text-secondary
+                              mt-1
+                            ">
+                              {
+                                cambio.usuario_nombre ||
+                                "Usuario de MintOS"
+                              }
+                              {" · "}
+                              {
+                                new Date(
+                                  cambio.created_at
+                                ).toLocaleString(
+                                  "es-MX",
+                                  {
+                                    dateStyle:
+                                      "medium",
+                                    timeStyle:
+                                      "short",
+                                  }
+                                )
+                              }
+                            </p>
+
+                          </div>
+
+                          <span className="
+                            inline-flex
+                            self-start
+                            rounded-full
+                            bg-white
+                            border
+                            border-[var(--mint-border)]
+                            px-3
+                            py-1
+                            text-xs
+                            font-semibold
+                            mint-text-secondary
+                          ">
+                            Solo lectura
+                          </span>
+
+                        </div>
+
+                        {
+                          camposModificados.length > 0 && (
+
+                            <div className="
+                              mt-4
+                              flex
+                              flex-wrap
+                              gap-2
+                            ">
+
+                              {
+                                camposModificados.map(
+                                  ({ clave, etiqueta }) => (
+
+                                    <span
+                                      key={clave}
+                                      className="
+                                        rounded-full
+                                        bg-[var(--mint-primary-soft)]
+                                        border
+                                        border-[var(--mint-border-primary)]
+                                        px-2.5
+                                        py-1
+                                        text-xs
+                                        font-semibold
+                                        mint-text-brand
+                                      "
+                                    >
+                                      {etiqueta} modificado
+                                    </span>
+
+                                  )
+                                )
+                              }
+
+                            </div>
+
+                          )
+                        }
+
+                        <div className="
+                          mt-4
+                          grid
+                          grid-cols-1
+                          md:grid-cols-3
+                          gap-3
+                        ">
+
+                          {
+                            [
+                              [
+                                "Alergias",
+                                valorHistorial(
+                                  cambio,
+                                  "alergias"
+                                ),
+                              ],
+                              [
+                                "Enfermedades",
+                                valorHistorial(
+                                  cambio,
+                                  "enfermedades"
+                                ),
+                              ],
+                              [
+                                "Medicamentos",
+                                valorHistorial(
+                                  cambio,
+                                  "medicamentos"
+                                ),
+                              ],
+                            ].map(
+                              ([etiqueta, valor]) => (
+
+                                <div
+                                  key={String(etiqueta)}
+                                  className="
+                                    bg-white
+                                    border
+                                    border-[var(--mint-border)]
+                                    rounded-xl
+                                    p-3
+                                  "
+                                >
+
+                                  <p className="
+                                    text-xs
+                                    font-semibold
+                                    mint-text-muted
+                                  ">
+                                    {String(etiqueta)}
+                                  </p>
+
+                                  <p className="
+                                    text-sm
+                                    font-semibold
+                                    mint-text-primary
+                                    mt-1
+                                    whitespace-pre-wrap
+                                  ">
+                                    {
+                                      valor
+                                        ? String(valor)
+                                        : "-"
+                                    }
+                                  </p>
+
+                                </div>
+
+                              )
+                            )
+                          }
+
+                        </div>
+
+                      </div>
+
+                    );
+
+                  }
+                )
+              }
+
+            </div>
+
+          )
+        }
 
       </div>
 
