@@ -284,6 +284,21 @@ const [
 ] = useState("");
 
 const [
+  notaCorrigiendoId,
+  setNotaCorrigiendoId,
+] = useState<number | null>(null);
+
+const [
+  textoCorreccionNota,
+  setTextoCorreccionNota,
+] = useState("");
+
+const [
+  doctorCorreccionId,
+  setDoctorCorreccionId,
+] = useState("");
+
+const [
   mostrarModalCobro,
   setMostrarModalCobro,
 ] = useState(false);
@@ -752,6 +767,77 @@ async function guardarNotaClinica() {
   setNuevaNotaClinica("");
 
   setDoctorNotaId("");
+
+  await cargarNotasClinicas(
+    pacienteAbierto.id
+  );
+
+}
+
+async function guardarCorreccionNotaClinica(
+  notaOriginalId: number
+) {
+
+  if (!puedeAgregarNotasClinicas) {
+    return;
+  }
+
+  if (!pacienteAbierto?.id) {
+    return;
+  }
+
+  if (!textoCorreccionNota.trim()) {
+    alert("Escribe la corrección clínica.");
+    return;
+  }
+
+  if (!doctorCorreccionId) {
+    alert("Selecciona un doctor.");
+    return;
+  }
+
+  const doctor = doctores.find(
+    (d: any) =>
+      String(d.id) === doctorCorreccionId
+  );
+
+  if (!doctor) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("notas_clinicas")
+    .insert({
+      paciente_id: pacienteAbierto.id,
+      tratamiento_id: null,
+      doctor_id: doctor.id,
+      doctor_nombre: doctor.nombre,
+      nota: textoCorreccionNota.trim(),
+      tipo: "correccion",
+      nota_original_id: notaOriginalId,
+    });
+
+  if (error) {
+    console.error(
+      "Error guardando corrección clínica:",
+      error
+    );
+    alert(
+      "Error guardando corrección clínica."
+    );
+    return;
+  }
+
+  await registrarBitacora({
+    accion: "Registrar corrección clínica",
+    modulo: "Pacientes",
+    detalle:
+      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Nota original ID: ${notaOriginalId} | Doctor: ${doctor.nombre}`,
+  });
+
+  setNotaCorrigiendoId(null);
+  setTextoCorreccionNota("");
+  setDoctorCorreccionId("");
 
   await cargarNotasClinicas(
     pacienteAbierto.id
@@ -4548,84 +4634,260 @@ const pacientesFiltrados =
 
                   {
 
-                    notasClinicas.map(
-                      (
-                        nota: any
-                      ) => (
-
-                        <div
-                          key={
-                            nota.id
-                          }
-                          className="
-                            bg-[var(--mint-bg-card)]
-                            border
-                            border-[var(--mint-border)]
-                            rounded-2xl
-                            p-4
-                          "
-                        >
-
-                          <div
-                            className="
-                              flex
-                              items-center
-                              justify-between
-                              gap-4
-                              mb-3
-                            "
-                          >
-
-                            <span
-                              className="
-                                font-semibold
-                                mint-text-primary
-                              "
-                            >
-
-                              {
-                                nota.doctor_nombre
-                              }
-
-                            </span>
-
-                            <span
-                              className="
-                                text-xs
-                                mint-text-secondary
-                              "
-                            >
-
-                              {
-                                new Date(
-                                  nota.created_at
-                                ).toLocaleString(
-                                  "es-MX"
-                                )
-                              }
-
-                            </span>
-
-                          </div>
-
-                          <p
-                            className="
-                              text-sm
-                              mint-text-primary
-                              whitespace-pre-wrap
-                            "
-                          >
-
-                            {
-                              nota.nota
-                            }
-
-                          </p>
-
-                        </div>
-
+                    notasClinicas
+                      .filter(
+                        (nota: any) =>
+                          nota.tipo !== "correccion"
                       )
-                    )
+                      .map(
+                        (nota: any) => {
+
+                          const correcciones =
+                            notasClinicas.filter(
+                              (item: any) =>
+                                item.tipo === "correccion" &&
+                                Number(item.nota_original_id) ===
+                                  Number(nota.id)
+                            );
+
+                          return (
+
+                            <div
+                              key={nota.id}
+                              className="
+                                bg-[var(--mint-bg-card)]
+                                border
+                                border-[var(--mint-border)]
+                                rounded-2xl
+                                p-4
+                              "
+                            >
+
+                              <div
+                                className="
+                                  flex
+                                  items-center
+                                  justify-between
+                                  gap-4
+                                  mb-3
+                                "
+                              >
+
+                                <div className="flex items-center gap-2">
+                                  <span
+                                    className="
+                                      font-semibold
+                                      mint-text-primary
+                                    "
+                                  >
+                                    {nota.doctor_nombre}
+                                  </span>
+
+                                  {correcciones.length > 0 && (
+                                    <span
+                                      className="
+                                        text-xs
+                                        font-semibold
+                                        px-2
+                                        py-1
+                                        rounded-full
+                                        bg-amber-50
+                                        text-amber-700
+                                        border
+                                        border-amber-200
+                                      "
+                                    >
+                                      Corregida
+                                    </span>
+                                  )}
+                                </div>
+
+                                <span
+                                  className="
+                                    text-xs
+                                    mint-text-secondary
+                                  "
+                                >
+                                  {new Date(
+                                    nota.created_at
+                                  ).toLocaleString(
+                                    "es-MX"
+                                  )}
+                                </span>
+
+                              </div>
+
+                              <p
+                                className="
+                                  text-sm
+                                  mint-text-primary
+                                  whitespace-pre-wrap
+                                "
+                              >
+                                {nota.nota}
+                              </p>
+
+                              {correcciones.length > 0 && (
+                                <div className="mt-4 space-y-3">
+                                  {correcciones
+                                    .slice()
+                                    .sort(
+                                      (a: any, b: any) =>
+                                        new Date(a.created_at).getTime() -
+                                        new Date(b.created_at).getTime()
+                                    )
+                                    .map(
+                                      (correccion: any) => (
+                                        <div
+                                          key={correccion.id}
+                                          className="
+                                            rounded-xl
+                                            border
+                                            border-amber-200
+                                            bg-amber-50/60
+                                            p-4
+                                          "
+                                        >
+                                          <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-xs font-bold uppercase tracking-wide text-amber-700">
+                                                Corrección
+                                              </span>
+                                              <span className="text-sm font-semibold mint-text-primary">
+                                                {correccion.doctor_nombre}
+                                              </span>
+                                            </div>
+
+                                            <span className="text-xs mint-text-secondary">
+                                              {new Date(
+                                                correccion.created_at
+                                              ).toLocaleString(
+                                                "es-MX"
+                                              )}
+                                            </span>
+                                          </div>
+
+                                          <p className="text-sm mint-text-primary whitespace-pre-wrap">
+                                            {correccion.nota}
+                                          </p>
+
+                                          <p className="text-xs mint-text-secondary mt-2">
+                                            Corrige la nota #{nota.id}
+                                          </p>
+                                        </div>
+                                      )
+                                    )}
+                                </div>
+                              )}
+
+                              {puedeAgregarNotasClinicas && (
+                                <div className="mt-4">
+                                  {notaCorrigiendoId === nota.id ? (
+                                    <div className="grid gap-3 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-4">
+                                      <div>
+                                        <p className="text-sm font-semibold mint-text-primary">
+                                          Registrar corrección
+                                        </p>
+                                        <p className="text-xs mint-text-secondary mt-1">
+                                          La nota original permanecerá intacta en el expediente.
+                                        </p>
+                                      </div>
+
+                                      <select
+                                        value={doctorCorreccionId}
+                                        onChange={(e) =>
+                                          setDoctorCorreccionId(
+                                            e.target.value
+                                          )
+                                        }
+                                        className="mint-input p-3 w-full"
+                                      >
+                                        <option value="">
+                                          Seleccionar Doctor
+                                        </option>
+                                        {doctores.map(
+                                          (doctor: any) => (
+                                            <option
+                                              key={doctor.id}
+                                              value={doctor.id}
+                                            >
+                                              {doctor.nombre}
+                                            </option>
+                                          )
+                                        )}
+                                      </select>
+
+                                      <textarea
+                                        value={textoCorreccionNota}
+                                        onChange={(e) =>
+                                          setTextoCorreccionNota(
+                                            e.target.value
+                                          )
+                                        }
+                                        placeholder="Escribe la corrección clínica..."
+                                        className="mint-input w-full p-3 min-h-[100px] resize-y"
+                                      />
+
+                                      <div className="flex justify-end gap-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setNotaCorrigiendoId(
+                                              null
+                                            );
+                                            setTextoCorreccionNota(
+                                              ""
+                                            );
+                                            setDoctorCorreccionId(
+                                              ""
+                                            );
+                                          }}
+                                          className="mint-btn mint-btn-secondary px-4 py-2 text-sm"
+                                        >
+                                          Cancelar
+                                        </button>
+
+                                        <button
+                                          type="button"
+                                          onClick={() =>
+                                            guardarCorreccionNotaClinica(
+                                              nota.id
+                                            )
+                                          }
+                                          className="mint-btn mint-btn-primary px-4 py-2 text-sm"
+                                        >
+                                          Guardar corrección
+                                        </button>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setNotaCorrigiendoId(
+                                          nota.id
+                                        );
+                                        setTextoCorreccionNota(
+                                          ""
+                                        );
+                                        setDoctorCorreccionId(
+                                          ""
+                                        );
+                                      }}
+                                      className="mint-btn mint-btn-secondary px-3 py-2 text-xs"
+                                    >
+                                      Registrar corrección
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
+                            </div>
+
+                          );
+
+                        }
+                      )
 
                   }
 
