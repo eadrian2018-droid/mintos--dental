@@ -1,14 +1,13 @@
 import {
-
   useRef,
-
   useState,
-
 } from "react";
 
 import SignatureCanvas from "react-signature-canvas";
 
 import { supabase } from "../lib/supabase";
+
+import { registrarBitacora } from "../lib/registrarBitacora";
 
 export default function FormularioPacientePublico() {
 
@@ -35,24 +34,28 @@ export default function FormularioPacientePublico() {
   const [direccion, setDireccion] =
     useState("");
 
-  const [observaciones,
-    setObservaciones] =
-
+  const [
+    observaciones,
+    setObservaciones,
+  ] =
     useState("");
 
-  const [consentimiento,
-    setConsentimiento] =
-
+  const [
+    consentimiento,
+    setConsentimiento,
+  ] =
     useState(false);
 
-  const [loading,
-    setLoading] =
-
+  const [
+    loading,
+    setLoading,
+  ] =
     useState(false);
 
-  const [preguntas,
-    setPreguntas] =
-
+  const [
+    preguntas,
+    setPreguntas,
+  ] =
     useState<Record<string, string>>({});
 
   const preguntasLista = [
@@ -68,7 +71,7 @@ export default function FormularioPacientePublico() {
     "¿Está embarazada?",
     "¿Ha tenido cirugías importantes?",
     "¿Fuma?",
-    "¿Consume alcohol frecuentemente?"
+    "¿Consume alcohol frecuentemente?",
 
   ];
 
@@ -81,7 +84,6 @@ export default function FormularioPacientePublico() {
       );
 
       return;
-
     }
 
     if (!consentimiento) {
@@ -91,7 +93,6 @@ export default function FormularioPacientePublico() {
       );
 
       return;
-
     }
 
     const firmaBase64 =
@@ -101,65 +102,116 @@ export default function FormularioPacientePublico() {
 
     setLoading(true);
 
-    const historial = {
+    try {
 
-      preguntas,
+      const historial = {
 
-      observaciones,
+        preguntas,
 
-    };
+        observaciones,
 
-    const {
-      error
-    } = await supabase
+      };
 
-      .from("pacientes")
+      const {
+        error,
+      } = await supabase
 
-      .insert([{
+        .from("pacientes")
 
-        nombre,
+        .insert([{
 
-        telefono,
+          nombre,
 
-        correo,
+          telefono,
 
-        edad,
+          correo,
 
-        sexo,
+          edad,
 
-        direccion,
+          sexo,
 
-        historial_clinico:
-          historial,
+          direccion,
 
-        consentimiento_firmado:
-          consentimiento,
+          historial_clinico:
+            historial,
 
-        firma_paciente:
-          firmaBase64,
+          consentimiento_firmado:
+            consentimiento,
 
-      }]);
+          firma_paciente:
+            firmaBase64,
 
-    setLoading(false);
+        }]);
 
-    if (error) {
+      if (error) {
 
-      console.error(error);
+        console.error(
+          "Error guardando paciente:",
+          error
+        );
+
+        alert(
+          "Error guardando formulario"
+        );
+
+        return;
+      }
+
+      const {
+        data: {
+          user,
+        },
+      } = await supabase.auth
+        .getUser();
+
+      if (user?.id) {
+
+        await registrarBitacora({
+
+          accion:
+            "Registrar paciente",
+
+          modulo:
+            "Pacientes",
+
+          detalle:
+            `Paciente registrado — ${nombre}`,
+
+        });
+      }
+
+      alert(
+        "Formulario enviado correctamente"
+      );
+
+      setNombre("");
+      setTelefono("");
+      setCorreo("");
+      setEdad("");
+      setSexo("");
+      setDireccion("");
+      setObservaciones("");
+      setConsentimiento(false);
+      setPreguntas({});
+
+      firmaRef.current
+        ?.clear();
+
+    } catch (error) {
+
+      console.error(
+        "Error inesperado guardando formulario:",
+        error
+      );
 
       alert(
         "Error guardando formulario"
       );
 
-      return;
+    } finally {
 
+      setLoading(false);
     }
-
-    alert(
-      "Formulario enviado correctamente"
-    );
-
-    window.location.reload();
-
   }
 
   return (
@@ -221,7 +273,7 @@ export default function FormularioPacientePublico() {
             type="text"
             placeholder="Nombre completo"
             value={nombre}
-            onChange={(e)=>
+            onChange={(e) =>
               setNombre(
                 e.target.value
               )
@@ -237,7 +289,7 @@ export default function FormularioPacientePublico() {
             type="text"
             placeholder="Teléfono"
             value={telefono}
-            onChange={(e)=>
+            onChange={(e) =>
               setTelefono(
                 e.target.value
               )
@@ -253,7 +305,7 @@ export default function FormularioPacientePublico() {
             type="email"
             placeholder="Correo"
             value={correo}
-            onChange={(e)=>
+            onChange={(e) =>
               setCorreo(
                 e.target.value
               )
@@ -269,7 +321,7 @@ export default function FormularioPacientePublico() {
             type="number"
             placeholder="Edad"
             value={edad}
-            onChange={(e)=>
+            onChange={(e) =>
               setEdad(
                 e.target.value
               )
@@ -285,7 +337,7 @@ export default function FormularioPacientePublico() {
             type="text"
             placeholder="Sexo"
             value={sexo}
-            onChange={(e)=>
+            onChange={(e) =>
               setSexo(
                 e.target.value
               )
@@ -301,7 +353,7 @@ export default function FormularioPacientePublico() {
             type="text"
             placeholder="Dirección"
             value={direccion}
-            onChange={(e)=>
+            onChange={(e) =>
               setDireccion(
                 e.target.value
               )
@@ -322,99 +374,102 @@ export default function FormularioPacientePublico() {
 
           {
 
-            preguntasLista.map((pregunta,index)=>(
+            preguntasLista.map(
+              (
+                pregunta,
+                index
+              ) => (
 
-              <div
+                <div
+                  key={index}
+                  className="
+                    border
+                    rounded-2xl
+                    p-5
+                    bg-gray-50
+                  "
+                >
 
-                key={index}
-
-                className="
-                  border
-                  rounded-2xl
-                  p-5
-                  bg-gray-50
-                "
-              >
-
-                <p className="
-                  font-semibold
-                  mb-3
-                ">
-
-                  {pregunta}
-
-                </p>
-
-                <div className="
-                  flex
-                  gap-8
-                ">
-
-                  <label className="
-                    flex
-                    items-center
-                    gap-2
+                  <p className="
+                    font-semibold
+                    mb-3
                   ">
 
-                    <input
-                      type="radio"
-                      checked={
-                        preguntas[pregunta]
-                        === "Sí"
-                      }
-                      onChange={()=>
+                    {pregunta}
 
-                        setPreguntas({
+                  </p>
 
-                          ...preguntas,
-
-                          [pregunta]:
-                            "Sí",
-
-                        })
-
-                      }
-                    />
-
-                    Sí
-
-                  </label>
-
-                  <label className="
+                  <div className="
                     flex
-                    items-center
-                    gap-2
+                    gap-8
                   ">
 
-                    <input
-                      type="radio"
-                      checked={
-                        preguntas[pregunta]
-                        === "No"
-                      }
-                      onChange={()=>
+                    <label className="
+                      flex
+                      items-center
+                      gap-2
+                    ">
 
-                        setPreguntas({
+                      <input
+                        type="radio"
+                        checked={
+                          preguntas[pregunta]
+                          === "Sí"
+                        }
+                        onChange={() =>
 
-                          ...preguntas,
+                          setPreguntas({
 
-                          [pregunta]:
-                            "No",
+                            ...preguntas,
 
-                        })
+                            [pregunta]:
+                              "Sí",
 
-                      }
-                    />
+                          })
 
-                    No
+                        }
+                      />
 
-                  </label>
+                      Sí
+
+                    </label>
+
+                    <label className="
+                      flex
+                      items-center
+                      gap-2
+                    ">
+
+                      <input
+                        type="radio"
+                        checked={
+                          preguntas[pregunta]
+                          === "No"
+                        }
+                        onChange={() =>
+
+                          setPreguntas({
+
+                            ...preguntas,
+
+                            [pregunta]:
+                              "No",
+
+                          })
+
+                        }
+                      />
+
+                      No
+
+                    </label>
+
+                  </div>
 
                 </div>
 
-              </div>
-
-            ))
+              )
+            )
 
           }
 
@@ -425,7 +480,7 @@ export default function FormularioPacientePublico() {
 Observaciones médicas...
           "
           value={observaciones}
-          onChange={(e)=>
+          onChange={(e) =>
             setObservaciones(
               e.target.value
             )
@@ -450,7 +505,7 @@ Observaciones médicas...
           <input
             type="checkbox"
             checked={consentimiento}
-            onChange={(e)=>
+            onChange={(e) =>
               setConsentimiento(
                 e.target.checked
               )
@@ -496,7 +551,8 @@ Observaciones médicas...
 
                 height: 220,
 
-                className: "w-full"
+                className:
+                  "w-full",
 
               }}
 
@@ -505,11 +561,11 @@ Observaciones médicas...
           </div>
 
           <button
-
+            type="button"
             onClick={() =>
-              firmaRef.current?.clear()
+              firmaRef.current
+                ?.clear()
             }
-
             className="
               mt-4
               bg-red-500
@@ -529,13 +585,11 @@ Observaciones médicas...
         </div>
 
         <button
-
+          type="button"
           onClick={
             enviarFormulario
           }
-
           disabled={loading}
-
           className="
             bg-teal-600
             hover:bg-teal-700
@@ -546,6 +600,7 @@ Observaciones médicas...
             font-bold
             w-full
             text-xl
+            disabled:opacity-50
           "
         >
 
@@ -553,9 +608,9 @@ Observaciones médicas...
 
             loading
 
-            ? "Enviando..."
+              ? "Enviando..."
 
-            : "Enviar Formulario"
+              : "Enviar Formulario"
 
           }
 
@@ -566,5 +621,4 @@ Observaciones médicas...
     </div>
 
   );
-
 }

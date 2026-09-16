@@ -272,22 +272,8 @@ export default function App() {
     <Routes>
 
       {/* ================================================= */}
-      {/* RUTAS PÚBLICAS */}
+      {/* RUTAS DE AUTENTICACIÓN */}
       {/* ================================================= */}
-
-      <Route
-        path="/formulario-paciente"
-        element={
-          <FormularioPacientePublico />
-        }
-      />
-
-      <Route
-        path="/registro-paciente"
-        element={
-          <FormularioPacientePublico />
-        }
-      />
 
       <Route
         path="/accept-invite"
