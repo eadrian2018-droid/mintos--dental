@@ -19,7 +19,8 @@ import { supabase } from "../lib/supabase";
 type RolUsuario =
   | "admin"
   | "doctor"
-  | "recepcionista";
+  | "recepcionista"
+  | "tablet";
 
 export type PermisosUsuario = {
   ver_agenda: boolean;
@@ -27,6 +28,7 @@ export type PermisosUsuario = {
 
   ver_pacientes: boolean;
   editar_pacientes: boolean;
+  registrar_pacientes: boolean;
 
   ver_expediente: boolean;
   agregar_notas_clinicas: boolean;
@@ -192,6 +194,7 @@ export function AuthProvider({
           editar_citas,
           ver_pacientes,
           editar_pacientes,
+          registrar_pacientes,
           ver_expediente,
           agregar_notas_clinicas,
           crear_tratamientos,

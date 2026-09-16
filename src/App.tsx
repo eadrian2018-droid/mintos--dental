@@ -231,6 +231,16 @@ export default function App() {
 
   }
 
+  const esTablet =
+
+    session &&
+    perfil?.rol === "tablet";
+
+  const tabletPuedeRegistrar =
+
+    esTablet &&
+    permisos?.registrar_pacientes === true;
+
   const puedeVerFinanzas =
 
     permisos?.registrar_cobros === true ||
@@ -293,190 +303,281 @@ export default function App() {
         }
       />
 
+      {/* ================================================= */}
+      {/* TABLET DE RECEPCIÓN */}
+      {/* ================================================= */}
+
       {
 
-        session
+        esTablet
 
           ? (
 
-            <Route
-              path="/"
-              element={
-                <Layout />
-              }
-            >
+            <>
 
               <Route
-                index
+                path="/registro-tablet"
+                element={
+
+                  tabletPuedeRegistrar
+
+                    ? (
+                      <FormularioPacientePublico />
+                    )
+
+                    : (
+                      <div
+                        className="
+                          min-h-screen
+                          flex
+                          items-center
+                          justify-center
+                          bg-gray-100
+                          p-6
+                        "
+                      >
+
+                        <div
+                          className="
+                            bg-white
+                            border
+                            border-slate-200
+                            rounded-2xl
+                            p-6
+                            max-w-md
+                            w-full
+                            text-center
+                          "
+                        >
+
+                          <h2
+                            className="
+                              text-xl
+                              font-bold
+                              text-slate-800
+                            "
+                          >
+
+                            Acceso no autorizado
+
+                          </h2>
+
+                          <p
+                            className="
+                              text-sm
+                              text-slate-500
+                              mt-2
+                            "
+                          >
+
+                            Esta cuenta no tiene permiso para registrar pacientes.
+
+                          </p>
+
+                        </div>
+
+                      </div>
+                    )
+
+                }
+              />
+
+              <Route
+                path="*"
                 element={
                   <Navigate
-                    to="/dashboard"
+                    to="/registro-tablet"
                     replace
                   />
                 }
               />
 
-              <Route
-                path="/dashboard"
-                element={
-                  <Dashboard />
-                }
-              />
-
-              <Route
-                path="/agenda"
-                element={
-
-                  permisos?.ver_agenda === true
-
-                    ? (
-                      <AgendaCalendar />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/pacientes"
-                element={
-
-                  permisos?.ver_pacientes === true
-
-                    ? (
-                      <Pacientes />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/paciente/:id"
-                element={
-
-                  permisos?.ver_expediente === true
-
-                    ? (
-                      <PacienteDetalle />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/presupuestos"
-                element={
-
-                  permisos?.ver_pacientes === true
-
-                    ? (
-                      <PresupuestosPage />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/qr-pacientes"
-                element={
-
-                  permisos?.editar_pacientes === true
-
-                    ? (
-                      <QRCodePaciente />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/finanzas"
-                element={
-
-                  puedeVerFinanzas
-
-                    ? (
-                      <Finanzas />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-              <Route
-                path="/configuracion"
-                element={
-
-                  puedeVerConfiguracion
-
-                    ? (
-                      <Configuracion />
-                    )
-
-                    : (
-                      <Navigate
-                        to="/dashboard"
-                        replace
-                      />
-                    )
-
-                }
-              />
-
-            </Route>
+            </>
 
           )
 
-          : (
+          : session
 
-            <Route
-              path="*"
-              element={
-                <Login />
-              }
-            />
+            ? (
 
-          )
+              <Route
+                path="/"
+                element={
+                  <Layout />
+                }
+              >
+
+                <Route
+                  index
+                  element={
+                    <Navigate
+                      to="/dashboard"
+                      replace
+                    />
+                  }
+                />
+
+                <Route
+                  path="/dashboard"
+                  element={
+                    <Dashboard />
+                  }
+                />
+
+                <Route
+                  path="/agenda"
+                  element={
+
+                    permisos?.ver_agenda === true
+
+                      ? (
+                        <AgendaCalendar />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/pacientes"
+                  element={
+
+                    permisos?.ver_pacientes === true
+
+                      ? (
+                        <Pacientes />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/paciente/:id"
+                  element={
+
+                    permisos?.ver_expediente === true
+
+                      ? (
+                        <PacienteDetalle />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/presupuestos"
+                  element={
+
+                    permisos?.ver_pacientes === true
+
+                      ? (
+                        <PresupuestosPage />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/qr-pacientes"
+                  element={
+
+                    permisos?.editar_pacientes === true
+
+                      ? (
+                        <QRCodePaciente />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/finanzas"
+                  element={
+
+                    puedeVerFinanzas
+
+                      ? (
+                        <Finanzas />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                <Route
+                  path="/configuracion"
+                  element={
+
+                    puedeVerConfiguracion
+
+                      ? (
+                        <Configuracion />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+              </Route>
+
+            )
+
+            : (
+
+              <Route
+                path="*"
+                element={
+                  <Login />
+                }
+              />
+
+            )
 
       }
 

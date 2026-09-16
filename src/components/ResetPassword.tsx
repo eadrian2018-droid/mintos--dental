@@ -7,11 +7,8 @@ import { useAuth } from "../context/AuthContext";
 export default function ResetPassword() {
 
   const {
-
     user,
-
     recargarPerfil,
-
   } = useAuth();
 
   const [
@@ -41,7 +38,6 @@ export default function ResetPassword() {
       );
 
       return;
-
     }
 
     if (
@@ -54,7 +50,6 @@ export default function ResetPassword() {
       );
 
       return;
-
     }
 
     if (
@@ -66,7 +61,6 @@ export default function ResetPassword() {
       );
 
       return;
-
     }
 
     if (
@@ -78,97 +72,100 @@ export default function ResetPassword() {
       );
 
       return;
-
     }
 
     setLoading(
       true
     );
 
-    const {
-      error:
-        passwordError,
-    } = await supabase.auth
-      .updateUser({
+    try {
 
-        password,
+      const {
+        error: passwordError,
+      } = await supabase.auth
+        .updateUser({
+          password,
+        });
 
-      });
-
-    if (
-      passwordError
-    ) {
-
-      setLoading(
-        false
-      );
-
-      console.error(
+      if (
         passwordError
+      ) {
+
+        console.error(
+          "Error actualizando contraseña:",
+          passwordError
+        );
+
+        if (
+          passwordError.message
+            .toLowerCase()
+            .includes(
+              "different from the old password"
+            )
+        ) {
+
+          alert(
+            "La nueva contraseña debe ser diferente a la contraseña actual."
+          );
+
+        } else {
+
+          alert(
+            "No se pudo actualizar la contraseña."
+          );
+        }
+
+        return;
+      }
+
+      const {
+        error: perfilError,
+      } = await supabase.rpc(
+        "marcar_password_configurado"
+      );
+
+      if (
+        perfilError
+      ) {
+
+        console.error(
+          "Error marcando contraseña como configurada:",
+          perfilError
+        );
+
+        alert(
+          "La contraseña fue actualizada, pero no se pudo completar la configuración del usuario."
+        );
+
+        return;
+      }
+
+      await recargarPerfil();
+
+      alert(
+        "Contraseña actualizada correctamente."
+      );
+
+      window.location.href =
+        "/dashboard";
+
+    } catch (error) {
+
+      console.error(
+        "Error inesperado actualizando contraseña:",
+        error
       );
 
       alert(
-        "No se pudo actualizar la contraseña."
+        "Ocurrió un error al actualizar la contraseña."
       );
 
-      return;
-
-    }
-
-    const {
-      error:
-        perfilError,
-    } = await supabase
-
-      .from(
-        "perfiles"
-      )
-
-      .update({
-
-        password_configurado:
-          true,
-
-      })
-
-      .eq(
-        "id",
-        user.id
-      );
-
-    if (
-      perfilError
-    ) {
+    } finally {
 
       setLoading(
         false
       );
-
-      console.error(
-        perfilError
-      );
-
-      alert(
-        "La contraseña fue actualizada, pero no se pudo actualizar el perfil."
-      );
-
-      return;
-
     }
-
-    await recargarPerfil();
-
-    setLoading(
-      false
-    );
-
-    alert(
-      "Contraseña actualizada correctamente."
-    );
-
-    window.location.href =
-  "/dashboard";
-
   }
 
   return (
@@ -302,7 +299,5 @@ export default function ResetPassword() {
       </div>
 
     </div>
-
   );
-
 }
