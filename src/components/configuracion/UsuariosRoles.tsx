@@ -25,7 +25,8 @@ type Perfil = {
     "admin" |
     "doctor" |
     "recepcionista" |
-    "tablet";
+    "tablet" |
+    "registro";
 
   doctor_id:
     number | null;
@@ -292,6 +293,14 @@ export default function UsuariosRoles() {
     ) {
 
       return "Tablet de recepción";
+
+    }
+
+    if (
+      rol === "registro"
+    ) {
+
+      return "Registro QR";
 
     }
 
@@ -1024,6 +1033,10 @@ export default function UsuariosRoles() {
 
                   <option value="tablet">
                     Tablet de recepción
+                  </option>
+
+                  <option value="registro">
+                    Registro QR
                   </option>
 
                 </select>

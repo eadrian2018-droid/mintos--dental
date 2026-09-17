@@ -241,6 +241,16 @@ export default function App() {
     esTablet &&
     permisos?.registrar_pacientes === true;
 
+  const esRegistro =
+
+    session &&
+    perfil?.rol === "registro";
+
+  const registroPuedeRegistrar =
+
+    esRegistro &&
+    permisos?.registrar_pacientes === true;
+
   const puedeVerFinanzas =
 
     permisos?.registrar_cobros === true ||
@@ -373,6 +383,48 @@ export default function App() {
                 element={
                   <Navigate
                     to="/registro-tablet"
+                    replace
+                  />
+                }
+              />
+
+            </>
+
+          )
+
+          : esRegistro
+
+          ? (
+
+            <>
+
+              <Route
+                path="/registro-paciente"
+                element={
+                  registroPuedeRegistrar
+                    ? (
+                      <FormularioPacientePublico />
+                    )
+                    : (
+                      <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+                        <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full text-center">
+                          <h2 className="text-xl font-bold text-slate-800">
+                            Acceso no autorizado
+                          </h2>
+                          <p className="text-sm text-slate-500 mt-2">
+                            Esta cuenta no tiene permiso para registrar pacientes.
+                          </p>
+                        </div>
+                      </div>
+                    )
+                }
+              />
+
+              <Route
+                path="*"
+                element={
+                  <Navigate
+                    to="/registro-paciente"
                     replace
                   />
                 }

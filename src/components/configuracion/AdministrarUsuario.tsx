@@ -8,7 +8,8 @@ type RolUsuario =
   | "admin"
   | "doctor"
   | "recepcionista"
-  | "tablet";
+  | "tablet"
+  | "registro";
 
 type Perfil = {
   id: string;
@@ -415,7 +416,8 @@ export default function AdministrarUsuario({
       }
 
       const permisosGuardar: Permisos =
-        rol === "tablet"
+        rol === "tablet" ||
+        rol === "registro"
           ? {
               ...permisosVacios,
               registrar_pacientes:
@@ -739,6 +741,10 @@ export default function AdministrarUsuario({
                   Tablet de recepción
                 </option>
 
+                <option value="registro">
+                  Registro QR
+                </option>
+
               </select>
 
             </div>
@@ -880,7 +886,8 @@ export default function AdministrarUsuario({
             </p>
 
             {
-              rol === "tablet"
+              rol === "tablet" ||
+              rol === "registro"
 
                 ? (
 
@@ -897,7 +904,9 @@ export default function AdministrarUsuario({
                         mint-text-primary
                       "
                     >
-                      Acceso exclusivo de Tablet
+                      {rol === "tablet"
+                        ? "Acceso exclusivo de Tablet"
+                        : "Acceso exclusivo de Registro QR"}
                     </p>
 
                     <p

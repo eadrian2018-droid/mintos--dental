@@ -20,7 +20,8 @@ type RolUsuario =
   | "admin"
   | "doctor"
   | "recepcionista"
-  | "tablet";
+  | "tablet"
+  | "registro";
 
 export type PermisosUsuario = {
   ver_agenda: boolean;
