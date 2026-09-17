@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# MintOS database backups - NEVER commit patient data
+backups/
