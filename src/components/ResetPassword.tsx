@@ -52,16 +52,16 @@ export default function ResetPassword() {
       return;
     }
 
-    if (
-      password.length < 8
-    ) {
+   if (
+  password.length < 10
+) {
 
-      alert(
-        "La contraseña debe tener al menos 8 caracteres."
-      );
+  alert(
+    "La contraseña debe tener al menos 10 caracteres."
+  );
 
-      return;
-    }
+  return;
+}
 
     if (
       !user?.id

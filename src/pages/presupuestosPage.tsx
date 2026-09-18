@@ -40,6 +40,7 @@ type DatosNuevoPresupuesto = {
   paciente_id: number | null;
   nombre_paciente: string;
   moneda: "MXN" | "USD";
+  descuento: number;
   notas: string;
   items: {
     id: number;
@@ -325,8 +326,22 @@ export default function PresupuestosPage() {
         0
       );
 
+    const descuento =
+      Math.min(
+        Math.max(
+          Number(
+            datos.descuento || 0
+          ),
+          0
+        ),
+        subtotal
+      );
+
     const total =
-      subtotal;
+      Math.max(
+        subtotal - descuento,
+        0
+      );
 
     const {
       data: presupuestoCreado,
@@ -351,7 +366,7 @@ export default function PresupuestosPage() {
 
           subtotal,
 
-          descuento: 0,
+          descuento,
 
           total,
 
@@ -462,7 +477,7 @@ export default function PresupuestosPage() {
       accion: "Crear presupuesto",
       modulo: "Presupuestos",
       detalle:
-        `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${datos.paciente_id || "-"} | Paciente: ${datos.nombre_paciente} | Total: ${total} ${datos.moneda}`,
+        `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${datos.paciente_id || "-"} | Paciente: ${datos.nombre_paciente} | Subtotal: ${subtotal} ${datos.moneda} | Descuento: ${descuento} ${datos.moneda} | Total: ${total} ${datos.moneda}`,
     });
 
     await cargarPresupuestos();
@@ -981,21 +996,112 @@ export default function PresupuestosPage() {
 
     }
 
+    const subtotalPresupuesto =
+      Number(
+        presupuestoSeleccionado.subtotal ||
+        items.reduce(
+          (
+            acumulado,
+            item
+          ) =>
+            acumulado +
+            Number(
+              item.total || 0
+            ),
+          0
+        )
+      );
+
+    const totalFinalPresupuesto =
+      Math.max(
+        Number(
+          presupuestoSeleccionado.total ||
+          0
+        ),
+        0
+      );
+
     const tratamientosInsertar =
       items.map(
-        (item) => {
+        (
+          item,
+          index
+        ) => {
 
-          const totalOriginal =
+          const totalItemOriginal =
             Number(
               item.total || 0
             );
 
+          let totalOriginal =
+            subtotalPresupuesto > 0
+              ? totalFinalPresupuesto *
+                (
+                  totalItemOriginal /
+                  subtotalPresupuesto
+                )
+              : 0;
+
+          if (
+            index ===
+            items.length - 1
+          ) {
+
+            const totalAsignado =
+              items
+                .slice(
+                  0,
+                  -1
+                )
+                .reduce(
+                  (
+                    acumulado,
+                    itemAnterior
+                  ) =>
+                    acumulado +
+                    (
+                      subtotalPresupuesto > 0
+                        ? totalFinalPresupuesto *
+                          (
+                            Number(
+                              itemAnterior.total ||
+                              0
+                            ) /
+                            subtotalPresupuesto
+                          )
+                        : 0
+                    ),
+                  0
+                );
+
+            totalOriginal =
+              Math.max(
+                totalFinalPresupuesto -
+                  totalAsignado,
+                0
+              );
+
+          }
+
+          totalOriginal =
+            Number(
+              totalOriginal.toFixed(
+                2
+              )
+            );
+
           const totalContable =
-            presupuestoSeleccionado.moneda ===
-            "USD"
-              ? totalOriginal *
-                tipoCambioPresupuesto
-              : totalOriginal;
+            Number(
+              (
+                presupuestoSeleccionado.moneda ===
+                "USD"
+                  ? totalOriginal *
+                    tipoCambioPresupuesto
+                  : totalOriginal
+              ).toFixed(
+                2
+              )
+            );
 
           const nombreTratamiento =
             item.diente

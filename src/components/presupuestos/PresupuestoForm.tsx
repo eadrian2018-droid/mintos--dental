@@ -6,9 +6,20 @@ import {
 } from "lucide-react";
 
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
+
+import { supabase } from "../../lib/supabase";
+
+type CatalogoTratamiento = {
+  id: number;
+  nombre: string;
+  precio_mxn: number | null;
+  precio_usd: number | null;
+  activo: boolean;
+};
 
 type Paciente = {
   id: number;
@@ -30,6 +41,7 @@ type PresupuestoFormProps = {
     paciente_id: number | null;
     nombre_paciente: string;
     moneda: "MXN" | "USD";
+    descuento: number;
     notas: string;
     items: ItemFormulario[];
   }) => Promise<void>;
@@ -71,9 +83,26 @@ export default function PresupuestoForm({
   ] = useState("");
 
   const [
+    tipoDescuento,
+    setTipoDescuento,
+  ] = useState<"monto" | "porcentaje">(
+    "monto"
+  );
+
+  const [
+    valorDescuento,
+    setValorDescuento,
+  ] = useState("");
+
+  const [
     guardando,
     setGuardando,
   ] = useState(false);
+
+  const [
+    catalogoTratamientos,
+    setCatalogoTratamientos,
+  ] = useState<CatalogoTratamiento[]>([]);
 
   const [
     items,
@@ -87,6 +116,111 @@ export default function PresupuestoForm({
       precio_unitario: 0,
     },
   ]);
+
+  useEffect(() => {
+    cargarCatalogoTratamientos();
+  }, []);
+
+  async function cargarCatalogoTratamientos() {
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("catalogo_tratamientos")
+      .select(`
+        id,
+        nombre,
+        precio_mxn,
+        precio_usd,
+        activo
+      `)
+      .eq("activo", true)
+      .order("nombre", {
+        ascending: true,
+      });
+
+    if (error) {
+      console.error(
+        "Error cargando catálogo de tratamientos:",
+        error
+      );
+      return;
+    }
+
+    setCatalogoTratamientos(
+      (data || []) as CatalogoTratamiento[]
+    );
+  }
+
+  function obtenerPrecioCatalogo(
+    tratamiento: CatalogoTratamiento,
+    monedaSeleccionada: "MXN" | "USD"
+  ) {
+    return Number(
+      monedaSeleccionada === "USD"
+        ? tratamiento.precio_usd || 0
+        : tratamiento.precio_mxn || 0
+    );
+  }
+
+  function seleccionarTratamiento(
+    itemId: number,
+    nombreTratamiento: string
+  ) {
+    const tratamientoSeleccionado =
+      catalogoTratamientos.find(
+        (tratamiento) =>
+          tratamiento.nombre === nombreTratamiento
+      );
+
+    setItems((actuales) =>
+      actuales.map((item) =>
+        item.id === itemId
+          ? {
+              ...item,
+              tratamiento: nombreTratamiento,
+              precio_unitario:
+                tratamientoSeleccionado
+                  ? obtenerPrecioCatalogo(
+                      tratamientoSeleccionado,
+                      moneda
+                    )
+                  : 0,
+            }
+          : item
+      )
+    );
+  }
+
+  function cambiarMoneda(
+    nuevaMoneda: "MXN" | "USD"
+  ) {
+    setMoneda(nuevaMoneda);
+
+    setItems((actuales) =>
+      actuales.map((item) => {
+        const tratamientoCatalogo =
+          catalogoTratamientos.find(
+            (tratamiento) =>
+              tratamiento.nombre ===
+              item.tratamiento
+          );
+
+        if (!tratamientoCatalogo) {
+          return item;
+        }
+
+        return {
+          ...item,
+          precio_unitario:
+            obtenerPrecioCatalogo(
+              tratamientoCatalogo,
+              nuevaMoneda
+            ),
+        };
+      })
+    );
+  }
 
   const subtotal =
     useMemo(
@@ -115,7 +249,28 @@ export default function PresupuestoForm({
       ]
     );
 
-  const total = subtotal;
+  const descuentoCalculado =
+    useMemo(
+      () => {
+        const valor = Math.max(
+          0,
+          Number(valorDescuento || 0)
+        );
+
+        const descuento =
+          tipoDescuento === "porcentaje"
+            ? subtotal * Math.min(valor, 100) / 100
+            : valor;
+
+        return Math.min(descuento, subtotal);
+      },
+      [subtotal, tipoDescuento, valorDescuento]
+    );
+
+  const total = Math.max(
+    subtotal - descuentoCalculado,
+    0
+  );
 
   function actualizarItem(
     id: number,
@@ -281,6 +436,8 @@ export default function PresupuestoForm({
             : nombrePacienteNuevo
                 .trim(),
         moneda,
+        descuento:
+          descuentoCalculado,
         notas:
           notas.trim(),
         items:
@@ -625,7 +782,7 @@ export default function PresupuestoForm({
                 <button
                   type="button"
                   onClick={() =>
-                    setMoneda(
+                    cambiarMoneda(
                       "MXN"
                     )
                   }
@@ -657,7 +814,7 @@ export default function PresupuestoForm({
                 <button
                   type="button"
                   onClick={() =>
-                    setMoneda(
+                    cambiarMoneda(
                       "USD"
                     )
                   }
@@ -921,8 +1078,7 @@ export default function PresupuestoForm({
                               "
                             >
 
-                              <input
-                                type="text"
+                              <select
                                 value={
                                   item.tratamiento
                                 }
@@ -930,13 +1086,11 @@ export default function PresupuestoForm({
                                   (
                                     e
                                   ) =>
-                                    actualizarItem(
+                                    seleccionarTratamiento(
                                       item.id,
-                                      "tratamiento",
                                       e.target.value
                                     )
                                 }
-                                placeholder="Ej. Corona de zirconia"
                                 className="
                                   w-full
                                   min-w-[240px]
@@ -948,7 +1102,30 @@ export default function PresupuestoForm({
                                   bg-[var(--mint-bg-card)]
                                   mint-text-primary
                                 "
-                              />
+                              >
+                                <option value="">
+                                  Seleccionar tratamiento
+                                </option>
+
+                                {
+                                  catalogoTratamientos.map(
+                                    (tratamiento) => (
+                                      <option
+                                        key={
+                                          tratamiento.id
+                                        }
+                                        value={
+                                          tratamiento.nombre
+                                        }
+                                      >
+                                        {
+                                          tratamiento.nombre
+                                        }
+                                      </option>
+                                    )
+                                  )
+                                }
+                              </select>
 
                             </td>
 
@@ -1198,6 +1375,84 @@ export default function PresupuestoForm({
                 </strong>
               </div>
 
+
+
+              <div
+                className="
+                  pt-4
+                  border-t
+                  border-[var(--mint-border)]
+                  space-y-3
+                "
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm font-semibold mint-text-secondary">
+                    Descuento
+                  </span>
+
+                  <div className="inline-flex rounded-xl bg-[var(--mint-bg-card)] border border-[var(--mint-border)] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setTipoDescuento("monto")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        tipoDescuento === "monto"
+                          ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
+                          : "mint-text-secondary"
+                      }`}
+                    >
+                      {moneda}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setTipoDescuento("porcentaje")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
+                        tipoDescuento === "porcentaje"
+                          ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
+                          : "mint-text-secondary"
+                      }`}
+                    >
+                      %
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max={tipoDescuento === "porcentaje" ? 100 : subtotal}
+                    step="0.01"
+                    value={valorDescuento}
+                    onChange={(e) =>
+                      setValorDescuento(
+                        e.target.value
+                      )
+                    }
+                    className="w-full rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-card)] px-3 py-2.5 text-sm mint-text-primary"
+                  />
+
+                  <span className="text-sm font-bold mint-text-secondary whitespace-nowrap">
+                    {tipoDescuento === "porcentaje" ? "%" : moneda}
+                  </span>
+                </div>
+
+                <div className="flex justify-between gap-4 text-sm">
+                  <span className="mint-text-secondary">
+                    Descuento aplicado
+                  </span>
+
+                  <strong className="text-[var(--mint-danger)]">
+                    -${descuentoCalculado.toLocaleString(
+                      "es-MX",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
+                  </strong>
+                </div>
+              </div>
 
 
               <div

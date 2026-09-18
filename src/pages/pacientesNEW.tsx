@@ -71,6 +71,14 @@ export default function Pacientes() {
   const puedeRegistrarCobros =
     permisos?.registrar_cobros === true;
 
+  const puedeAplicarDescuentos =
+    (
+      permisos as
+        | Record<string, boolean>
+        | null
+        | undefined
+    )?.aplicar_descuentos === true;
+
   const puedeAnularTratamientos =
     permisos?.anular_tratamientos === true;
 
@@ -341,6 +349,18 @@ const [
   especialista: "",
   comision_banco: "",
 });
+
+const [
+  tipoDescuentoCobro,
+  setTipoDescuentoCobro,
+] = useState<"monto" | "porcentaje">(
+  "monto"
+);
+
+const [
+  valorDescuentoCobro,
+  setValorDescuentoCobro,
+] = useState("");
 
 const [
   configuracionPagosCobro,
@@ -1455,19 +1475,35 @@ async function abrirModalCobro(
     tratamiento.moneda ||
     "MXN";
 
-  const saldoPendienteOriginal =
-    Number(
-      tratamiento.resta_original ??
-      tratamiento.pendiente ??
-      tratamiento.total_original ??
-      tratamiento.total ??
-      0
-    );
-
   const montoInicial =
     String(
-      saldoPendienteOriginal
+      Math.max(
+        Number(
+          tratamiento.resta_original ??
+          (
+            Number(
+              tratamiento.total_original ??
+              tratamiento.total ??
+              0
+            ) -
+            Number(
+              tratamiento.pagado_original ??
+              tratamiento.pagado ??
+              0
+            )
+          )
+        ),
+        0
+      )
     );
+
+  setTipoDescuentoCobro(
+    "monto"
+  );
+
+  setValorDescuentoCobro(
+    ""
+  );
 
   setTratamientoCobro(
     tratamiento
@@ -1510,6 +1546,63 @@ async function abrirModalCobro(
   );
 
 }
+
+const monedaPrecioCobro =
+  tratamientoCobro?.moneda_precio ||
+  "MXN";
+
+const totalOriginalCobro =
+  Number(
+    tratamientoCobro?.total_original ??
+    tratamientoCobro?.total ??
+    0
+  );
+
+const pagadoOriginalCobro =
+  Number(
+    tratamientoCobro?.pagado_original ??
+    tratamientoCobro?.pagado ??
+    0
+  );
+
+const pendienteOriginalCobro =
+  Math.max(
+    Number(
+      tratamientoCobro?.resta_original ??
+      totalOriginalCobro -
+        pagadoOriginalCobro
+    ),
+    0
+  );
+
+const valorDescuentoCobroSeguro =
+  Math.max(
+    Number(
+      valorDescuentoCobro || 0
+    ),
+    0
+  );
+
+const descuentoOriginalCobro =
+  Math.min(
+    tipoDescuentoCobro ===
+    "porcentaje"
+      ? totalOriginalCobro *
+        Math.min(
+          valorDescuentoCobroSeguro,
+          100
+        ) /
+        100
+      : valorDescuentoCobroSeguro,
+    pendienteOriginalCobro
+  );
+
+const totalOriginalDespuesDescuentoCobro =
+  Math.max(
+    totalOriginalCobro -
+      descuentoOriginalCobro,
+    pagadoOriginalCobro
+  );
 
 const configuracionPagoSeleccionada =
   configuracionPagosCobro.find(
@@ -1568,7 +1661,9 @@ const comisionBancoActual =
 const netoCobroActual =
   montoCobroActualMXN -
   comisionBancoActual;
-async function registrarCobro() {
+async function registrarCobro(
+  modo: "cobro" | "descuento"
+) {
 
   if (
     !tratamientoCobro?.id ||
@@ -1577,10 +1672,97 @@ async function registrarCobro() {
     return;
   }
 
-  const montoCobro =
-    Number(
-      nuevoCobro.monto || 0
+  if (
+    modo === "descuento" &&
+    !puedeAplicarDescuentos
+  ) {
+    alert(
+      "No tienes permiso para aplicar descuentos."
     );
+    return;
+  }
+
+  const montoCobro =
+    modo === "cobro"
+      ? Number(
+          nuevoCobro.monto || 0
+        )
+      : 0;
+
+  const monedaPrecioTratamiento =
+    tratamientoCobro.moneda_precio ||
+    "MXN";
+
+  const totalOriginalActual =
+    Number(
+      tratamientoCobro.total_original ??
+      tratamientoCobro.total ??
+      0
+    );
+
+  const pagadoOriginalAnterior =
+    Number(
+      tratamientoCobro.pagado_original ??
+      0
+    );
+
+  const pendienteOriginalAnterior =
+    Math.max(
+      Number(
+        tratamientoCobro.resta_original ??
+        totalOriginalActual -
+          pagadoOriginalAnterior
+      ),
+      0
+    );
+
+  const valorDescuento =
+    Math.max(
+      Number(
+        valorDescuentoCobro || 0
+      ),
+      0
+    );
+
+  const descuentoOriginalAplicar =
+    modo === "descuento"
+      ? Math.min(
+          tipoDescuentoCobro ===
+          "porcentaje"
+            ? totalOriginalActual *
+              Math.min(
+                valorDescuento,
+                100
+              ) /
+              100
+            : valorDescuento,
+          pendienteOriginalAnterior
+        )
+      : 0;
+
+  if (
+    modo === "cobro" &&
+    montoCobro <= 0
+  ) {
+
+    alert(
+      "Ingresa un monto de cobro válido."
+    );
+
+    return;
+  }
+
+  if (
+    modo === "descuento" &&
+    descuentoOriginalAplicar <= 0
+  ) {
+
+    alert(
+      "Ingresa un descuento válido."
+    );
+
+    return;
+  }
 
   const tipoCambioAplicado =
     nuevoCobro.moneda === "USD"
@@ -1588,6 +1770,7 @@ async function registrarCobro() {
       : 1;
 
   if (
+    montoCobro > 0 &&
     nuevoCobro.moneda === "USD" &&
     tipoCambioAplicado <= 0
   ) {
@@ -1597,28 +1780,22 @@ async function registrarCobro() {
     );
 
     return;
-
   }
 
-  const montoCobroMXN =
-    nuevoCobro.moneda === "USD"
-      ? montoCobro *
-        tipoCambioAplicado
-      : montoCobro;
-
   if (
-    montoCobro <= 0
+    monedaPrecioTratamiento === "USD" &&
+    tipoCambioCobro <= 0
   ) {
 
     alert(
-      "Ingresa un monto válido."
+      "No hay un tipo de cambio válido configurado."
     );
 
     return;
-
   }
 
   if (
+    montoCobro > 0 &&
     !nuevoCobro.metodo_pago
   ) {
 
@@ -1627,10 +1804,10 @@ async function registrarCobro() {
     );
 
     return;
-
   }
 
   if (
+    montoCobro > 0 &&
     !nuevoCobro.moneda
   ) {
 
@@ -1639,43 +1816,69 @@ async function registrarCobro() {
     );
 
     return;
-
   }
 
-  const monedaPrecioTratamiento =
-    tratamientoCobro.moneda_precio ||
-    "MXN";
+  const montoCobroMXN =
+    montoCobro > 0
+      ? nuevoCobro.moneda === "USD"
+        ? montoCobro *
+          tipoCambioAplicado
+        : montoCobro
+      : 0;
 
-  const totalOriginalTratamiento =
+  const totalTratamientoActual =
     Number(
-      tratamientoCobro.total_original ??
-      tratamientoCobro.total ??
-      0
+      tratamientoCobro.total || 0
     );
 
-  if (
-    monedaPrecioTratamiento === "USD" &&
-    tipoCambioCobro <= 0
-  ) {
-    alert(
-      "No hay un tipo de cambio válido configurado."
-    );
-    return;
-  }
-
-  const pagadoOriginalAnterior =
+  const pagadoAnterior =
     Number(
-      tratamientoCobro.pagado_original ??
-      0
+      tratamientoCobro.pagado || 0
+    );
+
+  const descuentoMXNAplicar =
+    totalOriginalActual > 0
+      ? Math.min(
+          totalTratamientoActual *
+            (
+              descuentoOriginalAplicar /
+              totalOriginalActual
+            ),
+          Math.max(
+            totalTratamientoActual -
+              pagadoAnterior,
+            0
+          )
+        )
+      : 0;
+
+  const nuevoTotalOriginalTratamiento =
+    Number(
+      Math.max(
+        totalOriginalActual -
+          descuentoOriginalAplicar,
+        pagadoOriginalAnterior
+      ).toFixed(2)
+    );
+
+  const nuevoTotalTratamiento =
+    Number(
+      Math.max(
+        totalTratamientoActual -
+          descuentoMXNAplicar,
+        pagadoAnterior
+      ).toFixed(2)
     );
 
   const montoAplicadoOriginal =
-    monedaPrecioTratamiento === "USD"
-      ? nuevoCobro.moneda === "USD"
-        ? montoCobro
-        : montoCobro /
-          tipoCambioCobro
-      : montoCobroMXN;
+    montoCobro > 0
+      ? monedaPrecioTratamiento === "USD"
+        ? nuevoCobro.moneda === "USD"
+          ? montoCobro
+          : montoCobro /
+            tipoCambioCobro
+        : montoCobroMXN
+      : 0;
 
   const nuevoPagadoOriginalSinAjuste =
     pagadoOriginalAnterior +
@@ -1688,59 +1891,92 @@ async function registrarCobro() {
 
   const diferenciaExcedenteOriginal =
     nuevoPagadoOriginalSinAjuste -
-    totalOriginalTratamiento;
+    nuevoTotalOriginalTratamiento;
 
   if (
-    totalOriginalTratamiento > 0 &&
+    nuevoTotalOriginalTratamiento > 0 &&
     diferenciaExcedenteOriginal >
       toleranciaOriginal
   ) {
+
     alert(
-      "El cobro supera el saldo pendiente del tratamiento."
+      "El cobro supera el saldo pendiente después de aplicar el descuento."
     );
+
     return;
   }
 
   const nuevoPagadoOriginal =
-    totalOriginalTratamiento > 0 &&
+    nuevoTotalOriginalTratamiento > 0 &&
     nuevoPagadoOriginalSinAjuste >
-      totalOriginalTratamiento
-      ? totalOriginalTratamiento
+      nuevoTotalOriginalTratamiento
+      ? nuevoTotalOriginalTratamiento
       : nuevoPagadoOriginalSinAjuste;
 
   const nuevoPendienteOriginal =
     Math.max(
-      totalOriginalTratamiento -
+      nuevoTotalOriginalTratamiento -
         nuevoPagadoOriginal,
       0
-    );
-
-  const totalTratamiento =
-    Number(
-      tratamientoCobro.total || 0
-    );
-
-  const pagadoAnterior =
-    Number(
-      tratamientoCobro.pagado || 0
     );
 
   const nuevoTotalPagado =
     Math.min(
       pagadoAnterior +
         montoCobroMXN,
-      totalTratamiento
+      nuevoTotalTratamiento
     );
 
   const nuevoPendiente =
     Math.max(
-      totalTratamiento -
+      nuevoTotalTratamiento -
         nuevoTotalPagado,
       0
     );
 
+  const totalAntesDescuento =
+    Number(
+      tratamientoCobro.total_antes_descuento ??
+      totalTratamientoActual
+    );
+
+  const totalOriginalAntesDescuento =
+    Number(
+      tratamientoCobro
+        .total_original_antes_descuento ??
+      totalOriginalActual
+    );
+
+  const descuentoAnterior =
+    Number(
+      tratamientoCobro.descuento || 0
+    );
+
+  const descuentoOriginalAnterior =
+    Number(
+      tratamientoCobro.descuento_original || 0
+    );
+
+  const nuevoDescuento =
+    Number(
+      (
+        descuentoAnterior +
+        descuentoMXNAplicar
+      ).toFixed(2)
+    );
+
+  const nuevoDescuentoOriginal =
+    Number(
+      (
+        descuentoOriginalAnterior +
+        descuentoOriginalAplicar
+      ).toFixed(2)
+    );
+
   const comisionBancoCobro =
-    comisionBancoActual;
+    montoCobro > 0
+      ? comisionBancoActual
+      : 0;
 
   const comisionBancoAnterior =
     Number(
@@ -1748,92 +1984,97 @@ async function registrarCobro() {
         .comision_banco || 0
     );
 
-const nuevaComisionBanco =
-  comisionBancoAnterior +
-  comisionBancoCobro;
+  const nuevaComisionBanco =
+    comisionBancoAnterior +
+    comisionBancoCobro;
 
-const doctorCobro =
-  doctores.find(
-    (doctor: any) =>
-      doctor.id ===
-      tratamientoCobro.doctor_id
-  );
+  const doctorCobro =
+    doctores.find(
+      (doctor: any) =>
+        doctor.id ===
+        tratamientoCobro.doctor_id
+    );
 
-const porcentajeDoctorCobro =
-  Number(
-    doctorCobro?.porcentaje || 0
-  );
-
-const {
-  error: errorPago,
-} = await supabase
-
-  .from(
-    "pagos"
-  )
-
-  .insert({
-
-    paciente_id:
-      pacienteAbierto.id,
-
-    tratamiento_id:
-      tratamientoCobro.id,
-
-    metodo_pago:
-      nuevoCobro.metodo_pago,
-
-    moneda:
-      nuevoCobro.moneda,
-
-    monto_original:
-      montoCobro,
-
-    tipo_cambio:
-      nuevoCobro.moneda === "USD"
-        ? tipoCambioAplicado
-        : null,
-
-    monto_mxn:
-      montoCobroMXN,
-
-    comision_porcentaje:
-      porcentajeComisionActual,
-
-    iva_comision_porcentaje:
-      porcentajeIvaComisionActual,
-
-    comision_base:
-      comisionBaseActual,
-
-    iva_comision:
-      ivaComisionActual,
-
-    comision_banco:
-      comisionBancoCobro,
-
-    neto_recibido:
-      netoCobroActual,
-
-    comision_doctor_porcentaje:
-      porcentajeDoctorCobro,
-
-  });
+  const porcentajeDoctorCobro =
+    Number(
+      doctorCobro?.porcentaje || 0
+    );
 
   if (
-    errorPago
+    montoCobro > 0
   ) {
 
-    console.error(
-      "Error guardando pago:",
+    const {
+      error: errorPago,
+    } = await supabase
+
+      .from(
+        "pagos"
+      )
+
+      .insert({
+
+        paciente_id:
+          pacienteAbierto.id,
+
+        tratamiento_id:
+          tratamientoCobro.id,
+
+        metodo_pago:
+          nuevoCobro.metodo_pago,
+
+        moneda:
+          nuevoCobro.moneda,
+
+        monto_original:
+          montoCobro,
+
+        tipo_cambio:
+          nuevoCobro.moneda === "USD"
+            ? tipoCambioAplicado
+            : null,
+
+        monto_mxn:
+          montoCobroMXN,
+
+        comision_porcentaje:
+          porcentajeComisionActual,
+
+        iva_comision_porcentaje:
+          porcentajeIvaComisionActual,
+
+        comision_base:
+          comisionBaseActual,
+
+        iva_comision:
+          ivaComisionActual,
+
+        comision_banco:
+          comisionBancoCobro,
+
+        neto_recibido:
+          netoCobroActual,
+
+        comision_doctor_porcentaje:
+          porcentajeDoctorCobro,
+
+      });
+
+    if (
       errorPago
-    );
+    ) {
 
-    alert(
-      "Error registrando el pago."
-    );
+      console.error(
+        "Error guardando pago:",
+        errorPago
+      );
 
-    return;
+      alert(
+        "Error registrando el pago."
+      );
+
+      return;
+    }
 
   }
 
@@ -1848,39 +2089,67 @@ const {
     .update({
 
       metodo_pago:
-        nuevoCobro.metodo_pago,
+        montoCobro > 0
+          ? nuevoCobro.metodo_pago
+          : tratamientoCobro.metodo_pago,
 
       moneda:
-        nuevoCobro.moneda,
+        montoCobro > 0
+          ? nuevoCobro.moneda
+          : tratamientoCobro.moneda,
 
       tipo_cambio:
+        montoCobro > 0 &&
         nuevoCobro.moneda === "USD"
           ? tipoCambioAplicado
-          : null,
+          : tratamientoCobro.tipo_cambio,
 
       equivalente_mxn:
-        montoCobroMXN,
+        montoCobro > 0
+          ? montoCobroMXN
+          : tratamientoCobro.equivalente_mxn,
 
       laboratorio:
         Number(
-          nuevoCobro.laboratorio ||
-          0
+          nuevoCobro.laboratorio || 0
         ),
 
       especialista:
         Number(
-          nuevoCobro.especialista ||
-          0
+          nuevoCobro.especialista || 0
         ),
 
       comision_banco:
         nuevaComisionBanco,
+
+      total_antes_descuento:
+        descuentoOriginalAplicar > 0
+          ? totalAntesDescuento
+          : tratamientoCobro.total_antes_descuento,
+
+      descuento:
+        nuevoDescuento,
+
+      total_original_antes_descuento:
+        descuentoOriginalAplicar > 0
+          ? totalOriginalAntesDescuento
+          : tratamientoCobro
+              .total_original_antes_descuento,
+
+      descuento_original:
+        nuevoDescuentoOriginal,
+
+      total_original:
+        nuevoTotalOriginalTratamiento,
 
       pagado_original:
         nuevoPagadoOriginal,
 
       resta_original:
         nuevoPendienteOriginal,
+
+      total:
+        nuevoTotalTratamiento,
 
       pago:
         nuevoTotalPagado,
@@ -1908,11 +2177,12 @@ const {
     );
 
     alert(
-      "El pago se registró, pero ocurrió un error actualizando el tratamiento."
+      montoCobro > 0
+        ? "El pago se registró, pero ocurrió un error actualizando el tratamiento."
+        : "Ocurrió un error aplicando el descuento."
     );
 
     return;
-
   }
 
   setTratamientos(
@@ -1930,39 +2200,67 @@ const {
               ...tratamiento,
 
               metodo_pago:
-                nuevoCobro.metodo_pago,
+                montoCobro > 0
+                  ? nuevoCobro.metodo_pago
+                  : tratamiento.metodo_pago,
 
               moneda:
-                nuevoCobro.moneda,
+                montoCobro > 0
+                  ? nuevoCobro.moneda
+                  : tratamiento.moneda,
 
               tipo_cambio:
+                montoCobro > 0 &&
                 nuevoCobro.moneda === "USD"
                   ? tipoCambioAplicado
-                  : null,
+                  : tratamiento.tipo_cambio,
 
               equivalente_mxn:
-                montoCobroMXN,
+                montoCobro > 0
+                  ? montoCobroMXN
+                  : tratamiento.equivalente_mxn,
 
               laboratorio:
                 Number(
-                  nuevoCobro.laboratorio ||
-                  0
+                  nuevoCobro.laboratorio || 0
                 ),
 
               especialista:
                 Number(
-                  nuevoCobro.especialista ||
-                  0
+                  nuevoCobro.especialista || 0
                 ),
 
               comision_banco:
                 nuevaComisionBanco,
+
+              total_antes_descuento:
+                descuentoOriginalAplicar > 0
+                  ? totalAntesDescuento
+                  : tratamiento.total_antes_descuento,
+
+              descuento:
+                nuevoDescuento,
+
+              total_original_antes_descuento:
+                descuentoOriginalAplicar > 0
+                  ? totalOriginalAntesDescuento
+                  : tratamiento
+                      .total_original_antes_descuento,
+
+              descuento_original:
+                nuevoDescuentoOriginal,
+
+              total_original:
+                nuevoTotalOriginalTratamiento,
 
               pagado_original:
                 nuevoPagadoOriginal,
 
               resta_original:
                 nuevoPendienteOriginal,
+
+              total:
+                nuevoTotalTratamiento,
 
               pagado:
                 nuevoTotalPagado,
@@ -1985,6 +2283,14 @@ const {
     null
   );
 
+  setTipoDescuentoCobro(
+    "monto"
+  );
+
+  setValorDescuentoCobro(
+    ""
+  );
+
   setNuevoCobro({
 
     metodo_pago: "",
@@ -2002,14 +2308,25 @@ const {
   });
 
   await registrarBitacora({
-    accion: "Registrar cobro",
+    accion:
+      montoCobro > 0 &&
+      descuentoOriginalAplicar > 0
+        ? "Registrar cobro con descuento"
+        : montoCobro > 0
+          ? "Registrar cobro"
+          : "Aplicar descuento",
     modulo: "Cobros",
     detalle:
-      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Tratamiento ID: ${tratamientoCobro.id} | Tratamiento: ${tratamientoCobro.tratamiento || "-"} | Monto: ${montoCobro} ${nuevoCobro.moneda} | Método: ${nuevoCobro.metodo_pago}`,
+      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Tratamiento ID: ${tratamientoCobro.id} | Tratamiento: ${tratamientoCobro.tratamiento || "-"} | Descuento: ${descuentoOriginalAplicar.toFixed(2)} ${monedaPrecioTratamiento} | Cobro real: ${montoCobro.toFixed(2)} ${nuevoCobro.moneda}${montoCobro > 0 ? ` | Método: ${nuevoCobro.metodo_pago}` : ""}`,
   });
 
   alert(
-    "Cobro registrado correctamente."
+    montoCobro > 0 &&
+    descuentoOriginalAplicar > 0
+      ? "Descuento y cobro registrados correctamente."
+      : montoCobro > 0
+        ? "Cobro registrado correctamente."
+        : "Descuento aplicado correctamente."
   );
 
 }
@@ -2439,6 +2756,18 @@ notas:
     moneda_precio:
       data.moneda_precio ||
       "MXN",
+
+    total_antes_descuento:
+      data.total_antes_descuento,
+
+    descuento:
+      data.descuento || 0,
+
+    total_original_antes_descuento:
+      data.total_original_antes_descuento,
+
+    descuento_original:
+      data.descuento_original || 0,
 
     total_original:
       data.total_original ||
@@ -2955,6 +3284,18 @@ moneda:
 
 moneda_precio:
   t.moneda_precio || "MXN",
+
+total_antes_descuento:
+  t.total_antes_descuento,
+
+descuento:
+  t.descuento ?? 0,
+
+total_original_antes_descuento:
+  t.total_original_antes_descuento,
+
+descuento_original:
+  t.descuento_original ?? 0,
 
 total_original:
   t.total_original ?? t.total ?? 0,
@@ -5839,6 +6180,197 @@ const pacientesFiltrados =
             />
           </div>
 
+          {
+            puedeAplicarDescuentos && (
+          <div
+            className="
+              bg-[var(--mint-primary-soft)]
+              border
+              border-[var(--mint-border-primary)]
+              rounded-2xl
+              p-4
+              space-y-3
+            "
+          >
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                gap-3
+              "
+            >
+              <div>
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    mint-text-primary
+                  "
+                >
+                  Descuento
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-secondary
+                    mt-1
+                  "
+                >
+                  No se registra como pago.
+                </p>
+              </div>
+
+              <div
+                className="
+                  inline-flex
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg-card)]
+                  p-1
+                "
+              >
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTipoDescuentoCobro(
+                      "monto"
+                    )
+                  }
+                  className={`
+                    px-3
+                    py-1.5
+                    rounded-lg
+                    text-xs
+                    font-bold
+                    transition
+                    ${
+                      tipoDescuentoCobro ===
+                      "monto"
+                        ? "bg-[var(--mint-primary)] text-white"
+                        : "mint-text-secondary"
+                    }
+                  `}
+                >
+                  {monedaPrecioCobro}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTipoDescuentoCobro(
+                      "porcentaje"
+                    )
+                  }
+                  className={`
+                    px-3
+                    py-1.5
+                    rounded-lg
+                    text-xs
+                    font-bold
+                    transition
+                    ${
+                      tipoDescuentoCobro ===
+                      "porcentaje"
+                        ? "bg-[var(--mint-primary)] text-white"
+                        : "mint-text-secondary"
+                    }
+                  `}
+                >
+                  %
+                </button>
+              </div>
+            </div>
+
+            <input
+              type="number"
+              min="0"
+              max={
+                tipoDescuentoCobro ===
+                "porcentaje"
+                  ? 100
+                  : pendienteOriginalCobro
+              }
+              step="0.01"
+              value={
+                valorDescuentoCobro
+              }
+              onChange={(e) =>
+                setValorDescuentoCobro(
+                  e.target.value
+                )
+              }
+              className="
+                mint-input
+                w-full
+                p-3
+              "
+              placeholder="0.00"
+            />
+
+            <div
+              className="
+                flex
+                justify-between
+                gap-4
+                text-sm
+              "
+            >
+              <span
+                className="
+                  mint-text-secondary
+                "
+              >
+                Descuento aplicado
+              </span>
+
+              <strong
+                className="
+                  text-[var(--mint-danger)]
+                "
+              >
+                -$
+                {descuentoOriginalCobro.toLocaleString(
+                  "es-MX",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
+                {" "}
+                {monedaPrecioCobro}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                registrarCobro(
+                  "descuento"
+                )
+              }
+              disabled={
+                descuentoOriginalCobro <= 0
+              }
+              className="
+                mint-btn
+                mint-btn-primary
+                w-full
+                px-4
+                py-2.5
+                text-sm
+                disabled:opacity-50
+                disabled:cursor-not-allowed
+              "
+            >
+              Aplicar descuento
+            </button>
+          </div>
+            )
+          }
+
           <div
             className="
               grid
@@ -6010,6 +6542,107 @@ const pacientesFiltrados =
                   mint-text-secondary
                 "
               >
+                Total actual
+              </span>
+
+              <strong
+                className="
+                  mint-text-primary
+                "
+              >
+                $
+                {totalOriginalCobro.toLocaleString(
+                  "es-MX",
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }
+                )}
+                {" "}
+                {monedaPrecioCobro}
+              </strong>
+            </div>
+
+            {
+              descuentoOriginalCobro > 0 && (
+                <>
+                  <div
+                    className="
+                      flex
+                      justify-between
+                      text-sm
+                      mb-2
+                    "
+                  >
+                    <span
+                      className="
+                        mint-text-secondary
+                      "
+                    >
+                      Descuento nuevo
+                    </span>
+
+                    <strong
+                      className="
+                        text-[var(--mint-danger)]
+                      "
+                    >
+                      -$
+                      {descuentoOriginalCobro.toLocaleString(
+                        "es-MX",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                      {" "}
+                      {monedaPrecioCobro}
+                    </strong>
+                  </div>
+
+                  <div
+                    className="
+                      flex
+                      justify-between
+                      text-sm
+                      mb-2
+                    "
+                  >
+                    <span
+                      className="
+                        mint-text-secondary
+                      "
+                    >
+                      Total a cobrar
+                    </span>
+
+                    <strong
+                      className="
+                        mint-text-brand
+                      "
+                    >
+                      $
+                      {totalOriginalDespuesDescuentoCobro.toLocaleString(
+                        "es-MX",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}
+                      {" "}
+                      {monedaPrecioCobro}
+                    </strong>
+                  </div>
+                </>
+              )
+            }
+
+            <div
+              className="
+                hidden
+              "
+            >
+              <span>
                 Total tratamiento
               </span>
 
@@ -6244,6 +6877,14 @@ const pacientesFiltrados =
                 null
               );
 
+              setTipoDescuentoCobro(
+                "monto"
+              );
+
+              setValorDescuentoCobro(
+                ""
+              );
+
             }}
             className="
               mint-btn
@@ -6258,8 +6899,10 @@ const pacientesFiltrados =
 
           <button
             type="button"
-            onClick={
-              registrarCobro
+            onClick={() =>
+              registrarCobro(
+                "cobro"
+              )
             }
             className="
               mint-btn

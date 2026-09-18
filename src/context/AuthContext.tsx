@@ -39,6 +39,7 @@ export type PermisosUsuario = {
   anular_tratamientos: boolean;
 
   registrar_cobros: boolean;
+  aplicar_descuentos: boolean;
   registrar_gastos: boolean;
   anular_cobros: boolean;
   anular_gastos: boolean;
@@ -202,6 +203,7 @@ export function AuthProvider({
           cambiar_estado_tratamientos,
           anular_tratamientos,
           registrar_cobros,
+          aplicar_descuentos,
           registrar_gastos,
           anular_cobros,
           anular_gastos,

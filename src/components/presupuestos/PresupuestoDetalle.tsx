@@ -639,7 +639,7 @@ export default function PresupuestoDetalle({
       xResumen,
       y,
       anchoResumen,
-      35,
+      45,
       3,
       3,
       "F"
@@ -705,17 +705,58 @@ export default function PresupuestoDetalle({
       }
     );
 
+    pdf.setTextColor(
+      ...muted
+    );
+
+    pdf.setFont(
+      "helvetica",
+      "normal"
+    );
+
+    pdf.setFontSize(
+      8.5
+    );
+
+    pdf.text(
+      "Descuento",
+      xResumen + 6,
+      y + 23
+    );
+
+    pdf.setTextColor(
+      ...slate
+    );
+
+    pdf.setFont(
+      "helvetica",
+      "bold"
+    );
+
+    pdf.text(
+      `-${formatoPDF(
+        presupuesto.descuento || 0
+      )}`,
+      xResumen +
+        anchoResumen -
+        6,
+      y + 23,
+      {
+        align: "right",
+      }
+    );
+
     pdf.setDrawColor(
       ...border
     );
 
     pdf.line(
       xResumen + 6,
-      y + 21,
+      y + 29,
       xResumen +
         anchoResumen -
         6,
-      y + 21
+      y + 29
     );
 
     pdf.setTextColor(
@@ -729,7 +770,7 @@ export default function PresupuestoDetalle({
     pdf.text(
       "TOTAL",
       xResumen + 6,
-      y + 30
+      y + 39
     );
 
     pdf.text(
@@ -739,13 +780,13 @@ export default function PresupuestoDetalle({
       xResumen +
         anchoResumen -
         6,
-      y + 30,
+      y + 39,
       {
         align: "right",
       }
     );
 
-    y += 45;
+    y += 55;
 
     // Notas del presupuesto
     if (
@@ -1715,6 +1756,35 @@ export default function PresupuestoDetalle({
                   </strong>
                 </div>
 
+                <div
+                  className="
+                    flex
+                    justify-between
+                    gap-4
+                    text-sm
+                  "
+                >
+                  <span
+                    className="
+                      mint-text-secondary
+                    "
+                  >
+                    Descuento
+                  </span>
+
+                  <strong
+                    className="
+                      text-[var(--mint-danger)]
+                    "
+                  >
+                    -{
+                      formatoMonto(
+                        presupuesto.descuento ||
+                        0
+                      )
+                    }
+                  </strong>
+                </div>
 
               </div>
 

@@ -41,6 +41,7 @@ type Permisos = {
   anular_tratamientos: boolean;
 
   registrar_cobros: boolean;
+  aplicar_descuentos: boolean;
   registrar_gastos: boolean;
   anular_cobros: boolean;
   anular_gastos: boolean;
@@ -80,6 +81,7 @@ const permisosVacios: Permisos = {
   anular_tratamientos: false,
 
   registrar_cobros: false,
+  aplicar_descuentos: false,
   registrar_gastos: false,
   anular_cobros: false,
   anular_gastos: false,
@@ -134,6 +136,7 @@ const gruposPermisos = [
     titulo: "Cobros y gastos",
     permisos: [
       ["registrar_cobros", "Registrar cobros y abonos"],
+      ["aplicar_descuentos", "Aplicar descuentos"],
       ["registrar_gastos", "Registrar gastos"],
       ["anular_cobros", "Anular cobros"],
       ["anular_gastos", "Anular gastos"],
@@ -273,6 +276,7 @@ export default function AdministrarUsuario({
         cambiar_estado_tratamientos,
         anular_tratamientos,
         registrar_cobros,
+        aplicar_descuentos,
         registrar_gastos,
         anular_cobros,
         anular_gastos,
