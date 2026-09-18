@@ -1,4 +1,10 @@
 import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
+
+import {
 
   Routes,
 
@@ -34,6 +40,8 @@ import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
 import Configuracion from "./pages/configuracion";
 
+import AdminMFA from "./components/AdminMFA";
+
 import { useAuth } from "./context/AuthContext";
 
 export default function App() {
@@ -49,6 +57,24 @@ export default function App() {
     loading,
 
   } = useAuth();
+
+  const [
+    adminMfaVerified,
+    setAdminMfaVerified,
+  ] = useState(false);
+
+  useEffect(() => {
+
+    setAdminMfaVerified(false);
+
+  }, [session?.user.id]);
+
+  const confirmarAdminMfa =
+    useCallback(() => {
+
+      setAdminMfaVerified(true);
+
+    }, []);
 
   if (
     loading
@@ -227,6 +253,22 @@ export default function App() {
 
       </Routes>
 
+    );
+
+  }
+
+  if (
+    session &&
+    perfil?.rol === "admin" &&
+    !adminMfaVerified
+  ) {
+
+    return (
+      <AdminMFA
+        onVerified={
+          confirmarAdminMfa
+        }
+      />
     );
 
   }
