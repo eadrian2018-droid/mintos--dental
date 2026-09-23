@@ -1,5 +1,6 @@
 import {
   Save,
+  Plus,
   Trash2,
   X,
 } from "lucide-react";
@@ -396,6 +397,30 @@ export default function PresupuestoForm({
           : item
       )
     );
+  }
+
+  function agregarItem() {
+
+    const nuevoItem: ItemFormulario = {
+      id: Date.now(),
+      diente: "",
+      tratamiento: "",
+      catalogo_tratamiento_id: null,
+      dientes: [],
+      arcada: null,
+      cantidad: 1,
+      precio_unitario: 0,
+    };
+
+    setItems((actuales) => [
+      ...actuales,
+      nuevoItem,
+    ]);
+
+    setItemDentalActivoId(
+      nuevoItem.id
+    );
+
   }
 
   function eliminarItem(
@@ -1242,57 +1267,91 @@ export default function PresupuestoForm({
                               "
                             >
 
-                              <select
-                                value={
-                                  item.catalogo_tratamiento_id || ""
-                                }
-                                onChange={
-                                  (
-                                    e
-                                  ) =>
-                                    seleccionarTratamiento(
-                                      item.id,
-                                      e.target.value
-                                    )
-                                }
-                                className="
-                                  w-full
-                                  min-w-[240px]
-                                  rounded-lg
-                                  border
-                                  border-[var(--mint-border)]
-                                  px-3
-                                  py-2
-                                  bg-[var(--mint-bg-card)]
-                                  mint-text-primary
-                                "
-                              >
-                                <option value="">
-                                  {es ? "Seleccionar tratamiento" : "Select treatment"}
-                                </option>
+                              <div className="flex items-center gap-2 min-w-[290px]">
+                                <select
+                                  value={
+                                    item.catalogo_tratamiento_id || ""
+                                  }
+                                  onChange={
+                                    (
+                                      e
+                                    ) =>
+                                      seleccionarTratamiento(
+                                        item.id,
+                                        e.target.value
+                                      )
+                                  }
+                                  className="
+                                    w-full
+                                    min-w-[240px]
+                                    rounded-lg
+                                    border
+                                    border-[var(--mint-border)]
+                                    px-3
+                                    py-2
+                                    bg-[var(--mint-bg-card)]
+                                    mint-text-primary
+                                  "
+                                >
+                                  <option value="">
+                                    {es ? "Seleccionar tratamiento" : "Select treatment"}
+                                  </option>
 
-                                {
-                                  catalogoTratamientos.map(
-                                    (tratamiento) => (
-                                      <option
-                                        key={
-                                          tratamiento.id
-                                        }
-                                        value={
-                                          tratamiento.id
-                                        }
-                                      >
-                                        {
-                                          idiomaDocumento === "en" &&
-                                          tratamiento.nombre_en
-                                            ? tratamiento.nombre_en
-                                            : tratamiento.nombre
-                                        }
-                                      </option>
+                                  {
+                                    catalogoTratamientos.map(
+                                      (tratamiento) => (
+                                        <option
+                                          key={
+                                            tratamiento.id
+                                          }
+                                          value={
+                                            tratamiento.id
+                                          }
+                                        >
+                                          {
+                                            idiomaDocumento === "en" &&
+                                            tratamiento.nombre_en
+                                              ? tratamiento.nombre_en
+                                              : tratamiento.nombre
+                                          }
+                                        </option>
+                                      )
                                     )
-                                  )
-                                }
-                              </select>
+                                  }
+                                </select>
+
+                                {itemDentalActivoId === item.id && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      agregarItem();
+                                    }}
+                                    disabled={!item.catalogo_tratamiento_id}
+                                    title={es ? "Agregar otro tratamiento" : "Add another treatment"}
+                                    aria-label={es ? "Agregar otro tratamiento" : "Add another treatment"}
+                                    className="
+                                      shrink-0
+                                      w-10
+                                      h-10
+                                      rounded-lg
+                                      border
+                                      border-[var(--mint-primary)]
+                                      bg-[var(--mint-primary)]
+                                      text-white
+                                      inline-flex
+                                      items-center
+                                      justify-center
+                                      hover:opacity-90
+                                      disabled:opacity-30
+                                      disabled:cursor-not-allowed
+                                      transition
+                                    "
+                                  >
+                                    <Plus size={17} />
+                                  </button>
+                                )}
+                              </div>
 
                             </td>
 
