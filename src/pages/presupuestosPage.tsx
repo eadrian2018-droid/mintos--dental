@@ -40,12 +40,16 @@ type DatosNuevoPresupuesto = {
   paciente_id: number | null;
   nombre_paciente: string;
   moneda: "MXN" | "USD";
+  idioma: "es" | "en";
   descuento: number;
   notas: string;
   items: {
     id: number;
     diente: string;
     tratamiento: string;
+    catalogo_tratamiento_id: number | null;
+    dientes: number[];
+    arcada: "superior" | "inferior" | null;
     cantidad: number;
     precio_unitario: number;
   }[];
@@ -222,6 +226,11 @@ export default function PresupuestosPage() {
           moneda:
             presupuesto.moneda,
 
+        idioma:
+  presupuesto.idioma === "en"
+    ? ("en" as const)
+    : ("es" as const),
+
           subtotal:
             Number(
               presupuesto.subtotal ||
@@ -364,6 +373,9 @@ export default function PresupuestosPage() {
           moneda:
             datos.moneda,
 
+          idioma:
+            datos.idioma,
+
           subtotal,
 
           descuento,
@@ -415,6 +427,15 @@ export default function PresupuestosPage() {
           tratamiento:
             item.tratamiento
               .trim(),
+
+          catalogo_tratamiento_id:
+            item.catalogo_tratamiento_id,
+
+          dientes:
+            item.dientes,
+
+          arcada:
+            item.arcada,
 
           cantidad:
             Number(
@@ -477,7 +498,7 @@ export default function PresupuestosPage() {
       accion: "Crear presupuesto",
       modulo: "Presupuestos",
       detalle:
-        `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${datos.paciente_id || "-"} | Paciente: ${datos.nombre_paciente} | Subtotal: ${subtotal} ${datos.moneda} | Descuento: ${descuento} ${datos.moneda} | Total: ${total} ${datos.moneda}`,
+        `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${datos.paciente_id || "-"} | Paciente: ${datos.nombre_paciente} | Idioma: ${datos.idioma} | Subtotal: ${subtotal} ${datos.moneda} | Descuento: ${descuento} ${datos.moneda} | Total: ${total} ${datos.moneda}`,
     });
 
     await cargarPresupuestos();
@@ -551,6 +572,23 @@ export default function PresupuestosPage() {
 
           tratamiento:
             item.tratamiento,
+
+          catalogo_tratamiento_id:
+            item.catalogo_tratamiento_id ?? null,
+
+          dientes:
+            Array.isArray(item.dientes)
+              ? item.dientes.map(
+                  (diente: unknown) =>
+                    Number(diente)
+                )
+              : [],
+
+          arcada:
+            item.arcada === "superior" ||
+            item.arcada === "inferior"
+              ? item.arcada
+              : null,
 
           cantidad:
             Number(
@@ -1103,9 +1141,27 @@ export default function PresupuestosPage() {
               )
             );
 
+          const dientesItem =
+            Array.isArray(item.dientes)
+              ? item.dientes
+                  .map((diente) => Number(diente))
+                  .filter((diente) => Number.isFinite(diente))
+              : [];
+
+          const referenciaDental =
+            item.arcada === "superior"
+              ? "Arcada superior"
+              : item.arcada === "inferior"
+                ? "Arcada inferior"
+                : dientesItem.length > 0
+                  ? `Diente${dientesItem.length > 1 ? "s" : ""} ${dientesItem.join(", ")}`
+                  : item.diente
+                    ? `Diente ${item.diente}`
+                    : "";
+
           const nombreTratamiento =
-            item.diente
-              ? `${item.tratamiento} · Diente ${item.diente}`
+            referenciaDental
+              ? `${item.tratamiento} · ${referenciaDental}`
               : item.tratamiento;
 
           return {

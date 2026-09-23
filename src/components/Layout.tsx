@@ -26,6 +26,9 @@ import { supabase }
 import { useAuth }
   from "../context/AuthContext";
 
+import { useLanguage }
+  from "../context/LanguageContext";
+
 type MenuAbierto =
   | "pacientes"
   | "finanzas"
@@ -44,6 +47,14 @@ export default function Layout() {
     perfil,
     permisos,
   } = useAuth();
+
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
+
 
   const [
     menuAbierto,
@@ -239,7 +250,7 @@ export default function Layout() {
       perfil?.rol === "admin"
     ) {
 
-      return "Administrador";
+      return es ? "Administrador" : "Administrator";
 
     }
 
@@ -247,7 +258,7 @@ export default function Layout() {
       perfil?.rol === "doctor"
     ) {
 
-      return "Doctor";
+      return es ? "Doctor" : "Doctor";
 
     }
 
@@ -256,7 +267,7 @@ export default function Layout() {
       "recepcionista"
     ) {
 
-      return "Recepcionista";
+      return es ? "Recepcionista" : "Receptionist";
 
     }
 
@@ -295,22 +306,7 @@ export default function Layout() {
       true;
 
   const puedeVerConfiguracion =
-
-    permisos
-      ?.configurar_precios_costos ===
-      true ||
-
-    permisos
-      ?.configurar_comisiones ===
-      true ||
-
-    permisos
-      ?.administrar_usuarios ===
-      true ||
-
-    permisos
-      ?.ver_bitacora ===
-      true;
+    true;
 
   const esAdmin =
     perfil?.rol === "admin";
@@ -370,7 +366,9 @@ export default function Layout() {
       );
 
       alert(
-        "No se pudo cerrar la sesión."
+        es
+          ? "No se pudo cerrar la sesión."
+          : "Could not sign out."
       );
 
       return;
@@ -469,7 +467,7 @@ export default function Layout() {
               size={18}
             />
 
-            Dashboard
+            {es ? "Dashboard" : "Dashboard"}
 
           </Link>
 
@@ -491,7 +489,7 @@ export default function Layout() {
                   size={18}
                 />
 
-                Agenda
+                {es ? "Agenda" : "Schedule"}
 
               </Link>
 
@@ -553,7 +551,7 @@ export default function Layout() {
                       size={18}
                     />
 
-                    Pacientes
+                    {es ? "Pacientes" : "Patients"}
 
                   </span>
 
@@ -599,7 +597,7 @@ export default function Layout() {
                         }
                       >
 
-                        Lista de pacientes
+                        {es ? "Lista de pacientes" : "Patient list"}
 
                       </Link>
 
@@ -612,7 +610,7 @@ export default function Layout() {
                         }
                       >
 
-                        Presupuestos
+                        {es ? "Presupuestos" : "Estimates"}
 
                       </Link>
 
@@ -679,7 +677,7 @@ export default function Layout() {
                       size={18}
                     />
 
-                    Finanzas
+                    {es ? "Finanzas" : "Finances"}
 
                   </span>
 
@@ -728,7 +726,7 @@ export default function Layout() {
                         }
                       >
 
-                        Resumen financiero
+                        {es ? "Resumen financiero" : "Financial summary"}
 
                       </Link>
 
@@ -748,7 +746,7 @@ export default function Layout() {
                         }
                       >
 
-                        Cobros
+                        {es ? "Cobros" : "Payments"}
 
                       </Link>
 
@@ -768,7 +766,7 @@ export default function Layout() {
                         }
                       >
 
-                        Gastos
+                        {es ? "Gastos" : "Expenses"}
 
                       </Link>
 
@@ -788,7 +786,7 @@ export default function Layout() {
                         }
                       >
 
-                        Comisiones
+                        {es ? "Comisiones" : "Commissions"}
 
                       </Link>
 
@@ -808,7 +806,7 @@ export default function Layout() {
                         }
                       >
 
-                        Reportes
+                        {es ? "Reportes" : "Reports"}
 
                       </Link>
 
@@ -828,7 +826,7 @@ export default function Layout() {
                         }
                       >
 
-                        Cierre mensual
+                        {es ? "Cierre mensual" : "Monthly close"}
 
                       </Link>
 
@@ -898,7 +896,7 @@ export default function Layout() {
                       size={18}
                     />
 
-                    Configuración
+                    {es ? "Configuración" : "Settings"}
 
                   </span>
 
@@ -950,7 +948,7 @@ export default function Layout() {
                             }
                           >
 
-                            Usuarios y Roles
+                            {es ? "Usuarios y Roles" : "Users & Roles"}
 
                           </Link>
 
@@ -982,7 +980,7 @@ export default function Layout() {
                                 size={14}
                               />
 
-                              Doctores
+                              {es ? "Doctores" : "Doctors"}
 
                             </span>
 
@@ -1004,7 +1002,7 @@ export default function Layout() {
                             }
                           >
 
-                            Clínica
+                            {es ? "Clínica" : "Clinic"}
 
                           </Link>
 
@@ -1024,7 +1022,7 @@ export default function Layout() {
                             }
                           >
 
-                            Finanzas
+                            {es ? "Finanzas" : "Finances"}
 
                           </Link>
 
@@ -1046,7 +1044,7 @@ export default function Layout() {
                             }
                           >
 
-                            Bitácora
+                            {es ? "Bitácora" : "Audit Log"}
 
                           </Link>
 
@@ -1066,12 +1064,26 @@ export default function Layout() {
                             }
                           >
 
-                            Seguridad
+                            {es ? "Seguridad" : "Security"}
 
                           </Link>
 
                         )
                       }
+
+                      <Link
+                        to="/configuracion?seccion=ajustes"
+                        className={
+                          submenuClasses(
+                            "/configuracion",
+                            "ajustes"
+                          )
+                        }
+                      >
+
+                        {es ? "Ajustes" : "Settings"}
+
+                      </Link>
 
                     </div>
 
@@ -1112,7 +1124,7 @@ export default function Layout() {
 
               {
                 perfil?.nombre ||
-                "Usuario"
+                (es ? "Usuario" : "User")
               }
 
             </p>
@@ -1152,7 +1164,7 @@ export default function Layout() {
             "
           >
 
-            Cerrar sesión
+            {es ? "Cerrar sesión" : "Sign out"}
 
           </button>
 

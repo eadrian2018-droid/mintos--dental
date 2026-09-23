@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
 
 import Incisor from "./teeth/Incisor";
 import Canino from "./teeth/Canino";
@@ -51,6 +52,49 @@ export default function Odontograma({
   onGuardar,
 }: Props) {
 
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  const tratamientoLabel: Record<string, string> = {
+    caries: "Caries",
+    resina: es ? "Resina" : "Composite",
+    extraccion: es ? "Extracción" : "Extraction",
+    corona: es ? "Corona" : "Crown",
+    implante: es ? "Implante" : "Implant",
+    endodoncia: es ? "Endodoncia" : "Root canal",
+    carillas: es ? "Carillas" : "Veneers",
+    puente: es ? "Puente" : "Bridge",
+    protesis: es ? "Prótesis" : "Prosthesis",
+    sellador: es ? "Sellador" : "Sealant",
+    limpieza: es ? "Limpieza" : "Cleaning",
+    blanqueamiento: es ? "Blanqueamiento" : "Whitening",
+    brackets: es ? "Brackets" : "Braces",
+    incrustacion: es ? "Incrustación" : "Inlay / Onlay",
+    amalgama: es ? "Amalgama" : "Amalgam",
+    fractura: es ? "Fractura" : "Fracture",
+    movilidad: es ? "Movilidad" : "Mobility",
+    ausente: es ? "Ausente" : "Missing",
+  };
+
+  const zonaLabel: Record<keyof ZonaDiente, string> = {
+    oclusal: es ? "Oclusal" : "Occlusal",
+    vestibular: es ? "Vestibular" : "Buccal",
+    distal: "Distal",
+    mesial: "Mesial",
+  };
+
+  const tratamientosFrecuentes = [
+    "caries",
+    "resina",
+    "extraccion",
+    "corona",
+    "implante",
+    "endodoncia",
+  ];
+
+  const [mostrarMasTratamientos, setMostrarMasTratamientos] =
+    useState(false);
+
   const [
     tratamiento,
     setTratamiento,
@@ -62,6 +106,20 @@ export default function Odontograma({
   ] = useState<number | null>(
     null
   );
+
+  const [
+    dientesSeleccionados,
+    setDientesSeleccionados,
+  ] = useState<number[]>([]);
+
+  const arrastreActivoRef =
+    useRef(false);
+
+  const arrastreMovidoRef =
+    useRef(false);
+
+  const dienteInicioArrastreRef =
+    useRef<number | null>(null);
 
   /*
     NUEVO:
@@ -171,9 +229,193 @@ export default function Odontograma({
     Copiamos sus datos actuales
     a estadoTemporal
   */
+  function iniciarSeleccionDiente(
+    numero: number,
+    event: React.PointerEvent<HTMLDivElement>
+  ) {
+
+    if (event.button !== 0) {
+      return;
+    }
+
+    arrastreActivoRef.current = true;
+    arrastreMovidoRef.current = false;
+    dienteInicioArrastreRef.current = numero;
+
+    setDientesSeleccionados([
+      numero,
+    ]);
+
+
+  }
+
+  function moverSeleccionDiente(
+    event: React.PointerEvent<HTMLDivElement>
+  ) {
+
+    if (!arrastreActivoRef.current) {
+      return;
+    }
+
+    const elemento =
+      document.elementFromPoint(
+        event.clientX,
+        event.clientY
+      )?.closest(
+        "[data-odontograma-diente]"
+      ) as HTMLElement | null;
+
+    if (!elemento) {
+      return;
+    }
+
+    const numero = Number(
+      elemento.dataset.odontogramaDiente
+    );
+
+    if (!Number.isFinite(numero)) {
+      return;
+    }
+
+    if (
+      numero !==
+      dienteInicioArrastreRef.current
+    ) {
+      arrastreMovidoRef.current = true;
+    }
+
+    setDientesSeleccionados(
+      (actuales) =>
+        actuales.includes(numero)
+          ? actuales
+          : [
+              ...actuales,
+              numero,
+            ]
+    );
+
+  }
+
+  function entrarSeleccionDiente(
+    numero: number
+  ) {
+
+    if (!arrastreActivoRef.current) {
+      return;
+    }
+
+    if (
+      numero !==
+      dienteInicioArrastreRef.current
+    ) {
+      arrastreMovidoRef.current = true;
+    }
+
+    setDientesSeleccionados(
+      (actuales) =>
+        actuales.includes(numero)
+          ? actuales
+          : [
+              ...actuales,
+              numero,
+            ]
+    );
+
+    setDienteSeleccionado(numero);
+
+  }
+
+  function terminarSeleccionDiente(
+    numero: number,
+    _event: React.PointerEvent<HTMLDivElement>
+  ) {
+
+    if (!arrastreActivoRef.current) {
+      return;
+    }
+
+    const fueArrastre =
+      arrastreMovidoRef.current;
+
+    arrastreActivoRef.current = false;
+    arrastreMovidoRef.current = false;
+    dienteInicioArrastreRef.current = null;
+
+
+    if (!fueArrastre) {
+      abrirDiente(numero);
+    }
+
+  }
+
+  function cancelarSeleccionDiente() {
+
+    arrastreActivoRef.current = false;
+    arrastreMovidoRef.current = false;
+    dienteInicioArrastreRef.current = null;
+
+  }
+
+
+  function seleccionarArcada(
+    dientes: number[]
+  ) {
+
+    const todosSeleccionados =
+      dientes.every(
+        (numero) =>
+          dientesSeleccionados.includes(
+            numero
+          )
+      );
+
+    setDientesSeleccionados(
+      (actuales) =>
+        todosSeleccionados
+          ? actuales.filter(
+              (numero) =>
+                !dientes.includes(numero)
+            )
+          : Array.from(
+              new Set([
+                ...actuales,
+                ...dientes,
+              ])
+            )
+    );
+
+  }
+
+  function limpiarSeleccion() {
+
+    setDientesSeleccionados([]);
+    setDienteSeleccionado(null);
+
+  }
+
+  function abrirModalSeleccion() {
+
+    if (
+      dientesSeleccionados.length === 0
+    ) {
+      return;
+    }
+
+    setEstadoTemporal({});
+    setObservacionTemporal("");
+    setTratamiento("caries");
+    setMostrarMasTratamientos(false);
+    setModalAbierto(true);
+
+  }
+
   function abrirDiente(
     numero: number
   ) {
+
+    setDientesSeleccionados([
+      numero,
+    ]);
 
     setDienteSeleccionado(
       numero
@@ -213,6 +455,8 @@ export default function Odontograma({
     setTratamiento(
       "caries"
     );
+
+    setMostrarMasTratamientos(false);
 
     setModalAbierto(
       true
@@ -268,7 +512,7 @@ export default function Odontograma({
     ) {
 
       alert(
-        "Máximo 4 tratamientos por zona"
+        es ? "Máximo 4 tratamientos por zona" : "Maximum 4 findings per surface"
       );
 
       return;
@@ -324,8 +568,8 @@ export default function Odontograma({
   async function guardarModal() {
 
     if (
-      dienteSeleccionado ===
-      null
+      dientesSeleccionados.length ===
+      0
     ) {
 
       return;
@@ -333,22 +577,91 @@ export default function Odontograma({
     }
 
     const nuevosEstados = {
-
       ...estadoDientes,
-
-      [dienteSeleccionado]:
-        estadoTemporal,
-
     };
 
     const nuevasObservaciones = {
-
       ...observacionesDientes,
-
-      [dienteSeleccionado]:
-        observacionTemporal,
-
     };
+
+    dientesSeleccionados.forEach(
+      (numero) => {
+
+        const estadoActual =
+          estadoDientes[
+            numero
+          ] || {};
+
+        const estadoCombinado:
+          ZonaDiente = {
+            ...estadoActual,
+        };
+
+        (
+          [
+            "oclusal",
+            "vestibular",
+            "distal",
+            "mesial",
+          ] as Array<
+            keyof ZonaDiente
+          >
+        ).forEach(
+          (zona) => {
+
+            const actuales =
+              estadoActual[
+                zona
+              ] || [];
+
+            const nuevos =
+              estadoTemporal[
+                zona
+              ] || [];
+
+            if (
+              nuevos.length >
+              0
+            ) {
+
+              estadoCombinado[
+                zona
+              ] = Array.from(
+                new Set([
+                  ...actuales,
+                  ...nuevos,
+                ])
+              );
+
+            }
+
+          }
+        );
+
+        nuevosEstados[
+          numero
+        ] = estadoCombinado;
+
+        if (
+          observacionTemporal.trim()
+        ) {
+
+          const observacionActual =
+            observacionesDientes[
+              numero
+            ]?.trim();
+
+          nuevasObservaciones[
+            numero
+          ] =
+            observacionActual
+              ? `${observacionActual}\n${observacionTemporal.trim()}`
+              : observacionTemporal.trim();
+
+        }
+
+      }
+    );
 
     if (onGuardar) {
 
@@ -383,6 +696,8 @@ export default function Odontograma({
     setObservacionTemporal(
       ""
     );
+
+    limpiarSeleccion();
 
   }
 
@@ -597,11 +912,7 @@ export default function Odontograma({
       invertido,
 
       onZonaClick:
-        () =>
-
-          abrirDiente(
-            numero
-          ),
+        () => {},
 
     };
 
@@ -673,8 +984,9 @@ export default function Odontograma({
     }
 
     const seleccionado =
-      dienteSeleccionado ===
-      numero;
+      dientesSeleccionados.includes(
+        numero
+      );
 
     return (
 
@@ -682,10 +994,32 @@ export default function Odontograma({
 
         key={numero}
 
-        onClick={() =>
-          abrirDiente(
+        data-odontograma-diente={numero}
+
+        onPointerDown={(event) =>
+          iniciarSeleccionDiente(
+            numero,
+            event
+          )
+        }
+
+        onPointerMove={moverSeleccionDiente}
+
+        onPointerEnter={() =>
+          entrarSeleccionDiente(
             numero
           )
+        }
+
+        onPointerUp={(event) =>
+          terminarSeleccionDiente(
+            numero,
+            event
+          )
+        }
+
+        onPointerCancel={
+          cancelarSeleccionDiente
         }
 
         className={`
@@ -710,6 +1044,8 @@ export default function Odontograma({
           minWidth: "46px",
           marginLeft: "0px",
           marginRight: "0px",
+          touchAction: "none",
+          userSelect: "none",
         }}
 
       >
@@ -768,7 +1104,7 @@ export default function Odontograma({
               mint-text-brand
             "
           >
-            Expediente Clínico
+            {es ? "Expediente Clínico" : "Clinical Record"}
           </p>
 
           <h2
@@ -779,7 +1115,7 @@ export default function Odontograma({
               mt-1
             "
           >
-            Odontograma
+            {es ? "Odontograma" : "Odontogram"}
           </h2>
 
           <p
@@ -789,9 +1125,7 @@ export default function Odontograma({
               mt-1
             "
           >
-            Selecciona un diente
-            para registrar o consultar
-            sus hallazgos clínicos.
+            {es ? "Haz clic en un diente para registrar un hallazgo, o arrastra sobre varios para seleccionarlos juntos." : "Click a tooth to record a finding, or drag across several teeth to select them together."}
           </p>
 
         </div>
@@ -823,17 +1157,27 @@ export default function Odontograma({
               mint-text-brand
             "
           >
-            Maxilar Superior
+            {es ? "Maxilar Superior" : "Upper Arch"}
           </h3>
 
-          <span
-            className="
-              text-xs
-              mint-text-muted
-            "
-          >
-            18 — 28
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs mint-text-muted">
+              18 — 28
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                seleccionarArcada(superiores)
+              }
+              className="mint-btn mint-btn-neutral mint-btn-sm"
+            >
+              {superiores.every((numero) =>
+                dientesSeleccionados.includes(numero)
+              )
+                ? es ? "Quitar arcada" : "Clear arch"
+                : es ? "Seleccionar arcada" : "Select arch"}
+            </button>
+          </div>
 
         </div>
 
@@ -881,17 +1225,27 @@ export default function Odontograma({
               mint-text-brand
             "
           >
-            Maxilar Inferior
+            {es ? "Maxilar Inferior" : "Lower Arch"}
           </h3>
 
-          <span
-            className="
-              text-xs
-              mint-text-muted
-            "
-          >
-            48 — 38
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs mint-text-muted">
+              48 — 38
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                seleccionarArcada(inferiores)
+              }
+              className="mint-btn mint-btn-neutral mint-btn-sm"
+            >
+              {inferiores.every((numero) =>
+                dientesSeleccionados.includes(numero)
+              )
+                ? es ? "Quitar arcada" : "Clear arch"
+                : es ? "Seleccionar arcada" : "Select arch"}
+            </button>
+          </div>
 
         </div>
 
@@ -914,7 +1268,58 @@ export default function Odontograma({
 
       </div>
 
-            <div
+      {
+        dientesSeleccionados.length > 0 && (
+
+          <div className="mint-card p-4 border border-[var(--mint-border-primary)] bg-[var(--mint-primary-soft)]">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+
+              <div>
+                <p className="text-sm font-bold mint-text-primary">
+                  {dientesSeleccionados.length} {
+                    es
+                      ? dientesSeleccionados.length === 1
+                        ? "diente seleccionado"
+                        : "dientes seleccionados"
+                      : dientesSeleccionados.length === 1
+                        ? "tooth selected"
+                        : "teeth selected"
+                  }
+                </p>
+
+                <p className="text-xs mint-text-secondary mt-1">
+                  {dientesSeleccionados
+                    .slice()
+                    .sort((a, b) => a - b)
+                    .join(", ")}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={limpiarSeleccion}
+                  className="mint-btn mint-btn-neutral mint-btn-sm"
+                >
+                  {es ? "Limpiar selección" : "Clear selection"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={abrirModalSeleccion}
+                  className="mint-btn mint-btn-primary mint-btn-sm"
+                >
+                  {es ? "Registrar hallazgo" : "Record finding"}
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        )
+      }
+
+      <div
         className="
           grid
           grid-cols-1
@@ -949,7 +1354,7 @@ export default function Odontograma({
                   mint-text-primary
                 "
               >
-                Hallazgos
+                {es ? "Hallazgos" : "Findings"}
               </h3>
 
               <p
@@ -959,8 +1364,7 @@ export default function Odontograma({
                   mt-1
                 "
               >
-                Dientes con tratamientos
-                u observaciones registradas.
+                {es ? "Dientes con tratamientos u observaciones registradas." : "Teeth with recorded findings or clinical notes."}
               </p>
 
             </div>
@@ -1005,7 +1409,7 @@ export default function Odontograma({
                       mint-text-secondary
                     "
                   >
-                    Sin hallazgos
+                    {es ? "Sin hallazgos" : "No findings"}
                   </p>
 
                   <p
@@ -1015,8 +1419,7 @@ export default function Odontograma({
                       mt-1
                     "
                   >
-                    Selecciona un diente
-                    del odontograma para comenzar.
+                    {es ? "Selecciona un diente del odontograma para comenzar." : "Select a tooth on the odontogram to begin."}
                   </p>
 
                 </div>
@@ -1130,12 +1533,12 @@ export default function Odontograma({
 
                               {
                                 cantidad > 0
-                                  ? `${cantidad} hallazgo${
-                                      cantidad === 1
-                                        ? ""
-                                        : "s"
-                                    }`
-                                  : "Observación clínica"
+                                  ? es
+                                    ? `${cantidad} hallazgo${cantidad === 1 ? "" : "s"}`
+                                    : `${cantidad} finding${cantidad === 1 ? "" : "s"}`
+                                  : es
+                                    ? "Observación clínica"
+                                    : "Clinical note"
                               }
 
                             </p>
@@ -1216,8 +1619,7 @@ export default function Odontograma({
                         mt-1
                       "
                     >
-                      Aquí podrás consultar
-                      sus hallazgos registrados.
+                      {es ? "Aquí podrás consultar sus hallazgos registrados." : "Its recorded findings will appear here."}
                     </p>
 
                   </div>
@@ -1251,7 +1653,7 @@ export default function Odontograma({
                           mint-text-brand
                         "
                       >
-                        Detalle
+                        {es ? "Detalle" : "Details"}
                       </p>
 
                       <h3
@@ -1286,7 +1688,7 @@ export default function Odontograma({
                       "
 
                     >
-                      Limpiar diente
+                      {es ? "Limpiar diente" : "Clear tooth"}
                     </button>
 
                   </div>
@@ -1326,7 +1728,7 @@ export default function Odontograma({
                           return (
 
                             <div
-                              key={zona}
+                              key={zonaLabel[zona]}
                               className="
                                 border
                                 border-[var(--mint-border)]
@@ -1346,7 +1748,7 @@ export default function Odontograma({
                                   mb-2
                                 "
                               >
-                                {zona}
+                                {zonaLabel[zona]}
                               </p>
 
                               <div
@@ -1364,7 +1766,7 @@ export default function Odontograma({
                                       <div
 
                                         key={
-                                          `${dienteSeleccionado}-${zona}-${t}`
+                                          `${dienteSeleccionado}-${zonaLabel[zona]}-${tratamientoLabel[t] || t}`
                                         }
 
                                         className="
@@ -1394,7 +1796,7 @@ export default function Odontograma({
                                             capitalize
                                           "
                                         >
-                                          {t}
+                                          {tratamientoLabel[t] || t}
                                         </span>
 
                                         <button
@@ -1458,8 +1860,7 @@ export default function Odontograma({
                             mint-text-muted
                           "
                         >
-                          Este diente no tiene
-                          tratamientos registrados.
+                          {es ? "Este diente no tiene tratamientos registrados." : "This tooth has no recorded findings."}
                         </div>
 
                       )
@@ -1480,7 +1881,7 @@ export default function Odontograma({
                         mb-2
                       "
                     >
-                      Observación clínica
+                      {es ? "Observación clínica" : "Clinical note"}
                     </label>
 
                     <textarea
@@ -1511,7 +1912,7 @@ export default function Odontograma({
                         text-sm
                       "
 
-                      placeholder="Agregar observación clínica..."
+                      placeholder={es ? "Agregar observación clínica..." : "Add a clinical note..."}
 
                     />
 
@@ -1595,7 +1996,7 @@ export default function Odontograma({
                       mint-text-brand
                     "
                   >
-                    Registrar hallazgo
+                    {es ? "Registrar hallazgo" : "Record finding"}
                   </p>
 
                   <h3
@@ -1618,8 +2019,13 @@ export default function Odontograma({
                       mt-1
                     "
                   >
-                    Selecciona el tratamiento
-                    y después la zona.
+                    {dientesSeleccionados.length > 1
+                      ? es
+                        ? `Se aplicará a: ${dientesSeleccionados.slice().sort((a, b) => a - b).join(", ")}`
+                        : `Will apply to: ${dientesSeleccionados.slice().sort((a, b) => a - b).join(", ")}`
+                      : es
+                        ? "Selecciona el tratamiento y después la zona."
+                        : "Select the finding and then the tooth surface."}
                   </p>
 
                 </div>
@@ -1675,7 +2081,7 @@ export default function Odontograma({
                           mint-text-primary
                         "
                       >
-                        1. Tratamiento
+                        {es ? "1. Hallazgo / Tratamiento" : "1. Finding / Treatment"}
                       </p>
 
                       <p
@@ -1685,8 +2091,7 @@ export default function Odontograma({
                           mt-0.5
                         "
                       >
-                        Selecciona el hallazgo
-                        que deseas registrar.
+                        {es ? "Selecciona el hallazgo que deseas registrar." : "Select the finding you want to record."}
                       </p>
 
                     </div>
@@ -1727,7 +2132,7 @@ export default function Odontograma({
                           capitalize
                         "
                       >
-                        {tratamiento}
+                        {tratamientoLabel[tratamiento] || tratamiento}
                       </span>
 
                     </span>
@@ -1745,9 +2150,13 @@ export default function Odontograma({
                   >
 
                     {
-                      Object.keys(
-                        coloresTratamientos
-                      ).map(
+                      Object.keys(coloresTratamientos)
+                        .filter(
+                          (t) =>
+                            mostrarMasTratamientos ||
+                            tratamientosFrecuentes.includes(t)
+                        )
+                        .map(
                         (t) => {
 
                           const activo =
@@ -1758,7 +2167,7 @@ export default function Odontograma({
 
                             <button
 
-                              key={t}
+                              key={tratamientoLabel[t] || t}
 
                               type="button"
 
@@ -1813,7 +2222,7 @@ export default function Odontograma({
                                   truncate
                                 "
                               >
-                                {t}
+                                {tratamientoLabel[t] || t}
                               </span>
 
                             </button>
@@ -1824,6 +2233,20 @@ export default function Odontograma({
                       )
                     }
 
+                  </div>
+
+                  <div className="mt-3 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setMostrarMasTratamientos((actual) => !actual)
+                      }
+                      className="mint-btn mint-btn-neutral mint-btn-sm"
+                    >
+                      {mostrarMasTratamientos
+                        ? es ? "Mostrar frecuentes" : "Show common"
+                        : es ? "Más opciones" : "More options"}
+                    </button>
                   </div>
 
                 </div>
@@ -1843,7 +2266,7 @@ export default function Odontograma({
                       mint-text-primary
                     "
                   >
-                    2. Zona
+                    {es ? "2. Zona" : "2. Surface"}
                   </p>
 
                   <p
@@ -1854,8 +2277,7 @@ export default function Odontograma({
                       mb-3
                     "
                   >
-                    Toca una zona para agregar
-                    el tratamiento seleccionado.
+                    {es ? "Toca una zona para agregar el tratamiento seleccionado." : "Select a surface to add the selected finding."}
                   </p>
 
                   <div
@@ -1893,7 +2315,7 @@ export default function Odontograma({
 
                             <button
 
-                              key={zona}
+                              key={zonaLabel[zona]}
 
                               type="button"
 
@@ -1921,7 +2343,7 @@ export default function Odontograma({
                               `}
 
                             >
-                              {zona}
+                              {zonaLabel[zona]}
                             </button>
 
                           );
@@ -1961,7 +2383,7 @@ export default function Odontograma({
                           mint-text-primary
                         "
                       >
-                        Hallazgos del diente
+                        {es ? "Hallazgos del diente" : "Tooth findings"}
                       </p>
 
                       <p
@@ -1971,8 +2393,7 @@ export default function Odontograma({
                           mt-0.5
                         "
                       >
-                        Puedes quitar un hallazgo
-                        únicamente con ×.
+                        {es ? "Puedes quitar un hallazgo únicamente con ×." : "Remove a finding only by using ×."}
                       </p>
 
                     </div>
@@ -2014,7 +2435,7 @@ export default function Odontograma({
                           return (
 
                             <div
-                              key={zona}
+                              key={zonaLabel[zona]}
                               className="
                                 bg-[var(--mint-bg-soft)]
                                 border
@@ -2034,7 +2455,7 @@ export default function Odontograma({
                                   mb-2
                                 "
                               >
-                                {zona}
+                                {zonaLabel[zona]}
                               </p>
 
                               <div
@@ -2051,7 +2472,7 @@ export default function Odontograma({
 
                                       <div
                                         key={
-                                          `${zona}-${t}`
+                                          `${zonaLabel[zona]}-${tratamientoLabel[t] || t}`
                                         }
                                         className="
                                           inline-flex
@@ -2078,7 +2499,7 @@ export default function Odontograma({
                                             capitalize
                                           "
                                         >
-                                          {t}
+                                          {tratamientoLabel[t] || t}
                                         </span>
 
                                         <button
@@ -2143,8 +2564,7 @@ export default function Odontograma({
                               mint-text-muted
                             "
                           >
-                            Todavía no hay hallazgos
-                            seleccionados.
+                            {es ? "Todavía no hay hallazgos seleccionados." : "No findings selected yet."}
                           </p>
 
                         </div>
@@ -2171,7 +2591,7 @@ export default function Odontograma({
                       mb-2
                     "
                   >
-                    Observación clínica
+                    {es ? "Observación clínica" : "Clinical note"}
                   </label>
 
                   <textarea
@@ -2195,7 +2615,7 @@ export default function Odontograma({
                       text-sm
                     "
 
-                    placeholder="Agregar observación clínica..."
+                    placeholder={es ? "Agregar observación clínica..." : "Add a clinical note..."}
 
                   />
 
@@ -2234,7 +2654,7 @@ export default function Odontograma({
                   "
 
                 >
-                  Cancelar
+                  {es ? "Cancelar" : "Cancel"}
                 </button>
 
                 <button
@@ -2252,7 +2672,7 @@ export default function Odontograma({
                   "
 
                 >
-                  Guardar
+                  {es ? "Guardar" : "Save"}
                 </button>
 
               </div>

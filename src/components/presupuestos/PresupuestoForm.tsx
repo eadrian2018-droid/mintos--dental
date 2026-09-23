@@ -12,10 +12,13 @@ import {
 } from "react";
 
 import { supabase } from "../../lib/supabase";
+import { useLanguage } from "../../context/LanguageContext";
+import SelectorDientesPresupuesto from "./SelectorDientesPresupuesto";
 
 type CatalogoTratamiento = {
   id: number;
   nombre: string;
+  nombre_en: string | null;
   precio_mxn: number | null;
   precio_usd: number | null;
   activo: boolean;
@@ -30,6 +33,9 @@ type ItemFormulario = {
   id: number;
   diente: string;
   tratamiento: string;
+  catalogo_tratamiento_id: number | null;
+  dientes: number[];
+  arcada: "superior" | "inferior" | null;
   cantidad: number;
   precio_unitario: number;
 };
@@ -41,6 +47,7 @@ type PresupuestoFormProps = {
     paciente_id: number | null;
     nombre_paciente: string;
     moneda: "MXN" | "USD";
+    idioma: "es" | "en";
     descuento: number;
     notas: string;
     items: ItemFormulario[];
@@ -52,6 +59,14 @@ export default function PresupuestoForm({
   onCancelar,
   onGuardar,
 }: PresupuestoFormProps) {
+
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  const [
+    idiomaDocumento,
+    setIdiomaDocumento,
+  ] = useState<"es" | "en">("es");
 
   const [
     pacienteId,
@@ -112,10 +127,20 @@ export default function PresupuestoForm({
       id: Date.now(),
       diente: "",
       tratamiento: "",
+      catalogo_tratamiento_id: null,
+      dientes: [],
+      arcada: null,
       cantidad: 1,
       precio_unitario: 0,
     },
   ]);
+
+  const [
+    itemDentalActivoId,
+    setItemDentalActivoId,
+  ] = useState<number>(
+    items[0].id
+  );
 
   useEffect(() => {
     cargarCatalogoTratamientos();
@@ -130,6 +155,7 @@ export default function PresupuestoForm({
       .select(`
         id,
         nombre,
+        nombre_en,
         precio_mxn,
         precio_usd,
         activo
@@ -165,12 +191,18 @@ export default function PresupuestoForm({
 
   function seleccionarTratamiento(
     itemId: number,
-    nombreTratamiento: string
+    catalogoId: string
   ) {
+    const idSeleccionado =
+      catalogoId
+        ? Number(catalogoId)
+        : null;
+
     const tratamientoSeleccionado =
       catalogoTratamientos.find(
         (tratamiento) =>
-          tratamiento.nombre === nombreTratamiento
+          Number(tratamiento.id) ===
+          idSeleccionado
       );
 
     setItems((actuales) =>
@@ -178,7 +210,10 @@ export default function PresupuestoForm({
         item.id === itemId
           ? {
               ...item,
-              tratamiento: nombreTratamiento,
+              catalogo_tratamiento_id:
+                tratamientoSeleccionado?.id || null,
+              tratamiento:
+                tratamientoSeleccionado?.nombre || "",
               precio_unitario:
                 tratamientoSeleccionado
                   ? obtenerPrecioCatalogo(
@@ -202,8 +237,10 @@ export default function PresupuestoForm({
         const tratamientoCatalogo =
           catalogoTratamientos.find(
             (tratamiento) =>
-              tratamiento.nombre ===
-              item.tratamiento
+              Number(tratamiento.id) ===
+              Number(
+                item.catalogo_tratamiento_id
+              )
           );
 
         if (!tratamientoCatalogo) {
@@ -302,24 +339,88 @@ export default function PresupuestoForm({
 
   }
 
+  const itemDentalActivo =
+    items.find(
+      (item) =>
+        item.id === itemDentalActivoId
+    ) || items[0];
+
+  function actualizarDientesItem(
+    dientes: number[]
+  ) {
+    if (!itemDentalActivo) {
+      return;
+    }
+
+    setItems((actuales) =>
+      actuales.map((item) =>
+        item.id === itemDentalActivo.id
+          ? {
+              ...item,
+              dientes,
+              diente:
+                dientes.length === 1
+                  ? String(dientes[0])
+                  : dientes.join(", "),
+              arcada: null,
+            }
+          : item
+      )
+    );
+  }
+
+  function actualizarArcadaItem(
+    arcada:
+      | "superior"
+      | "inferior"
+      | null
+  ) {
+    if (!itemDentalActivo) {
+      return;
+    }
+
+    setItems((actuales) =>
+      actuales.map((item) =>
+        item.id === itemDentalActivo.id
+          ? {
+              ...item,
+              arcada,
+              diente:
+                arcada === "superior"
+                  ? "Arcada superior"
+                  : arcada === "inferior"
+                    ? "Arcada inferior"
+                    : item.dientes.length === 1
+                      ? String(item.dientes[0])
+                      : item.dientes.join(", "),
+            }
+          : item
+      )
+    );
+  }
+
   function agregarItem() {
+    const nuevoId = Date.now();
 
     setItems(
-      (
-        actuales
-      ) => [
+      (actuales) => [
         ...actuales,
         {
-          id:
-            Date.now(),
+          id: nuevoId,
           diente: "",
           tratamiento: "",
+          catalogo_tratamiento_id: null,
+          dientes: [],
+          arcada: null,
           cantidad: 1,
           precio_unitario: 0,
         },
       ]
     );
 
+    setItemDentalActivoId(
+      nuevoId
+    );
   }
 
   function eliminarItem(
@@ -334,17 +435,22 @@ export default function PresupuestoForm({
 
     }
 
-    setItems(
-      (
-        actuales
-      ) =>
-        actuales.filter(
-          (
-            item
-          ) =>
-            item.id !== id
-        )
-    );
+    const restantes =
+      items.filter(
+        (item) =>
+          item.id !== id
+      );
+
+    setItems(restantes);
+
+    if (
+      itemDentalActivoId === id &&
+      restantes.length > 0
+    ) {
+      setItemDentalActivoId(
+        restantes[0].id
+      );
+    }
 
   }
 
@@ -357,7 +463,7 @@ export default function PresupuestoForm({
     ) {
 
       alert(
-        "Selecciona un paciente."
+        es ? "Selecciona un paciente." : "Select a patient."
       );
 
       return;
@@ -371,7 +477,7 @@ export default function PresupuestoForm({
     ) {
 
       alert(
-        "Escribe el nombre del paciente."
+        es ? "Escribe el nombre del paciente." : "Enter the patient name."
       );
 
       return;
@@ -398,7 +504,7 @@ export default function PresupuestoForm({
     ) {
 
       alert(
-        "Agrega al menos un tratamiento."
+        es ? "Agrega al menos un tratamiento." : "Add at least one treatment."
       );
 
       return;
@@ -436,6 +542,8 @@ export default function PresupuestoForm({
             : nombrePacienteNuevo
                 .trim(),
         moneda,
+        idioma:
+          idiomaDocumento,
         descuento:
           descuentoCalculado,
         notas:
@@ -493,7 +601,7 @@ export default function PresupuestoForm({
                 mint-text-brand
               "
             >
-              Presupuestos
+              {es ? "Presupuestos" : "Estimates"}
             </p>
 
             <h2
@@ -505,7 +613,7 @@ export default function PresupuestoForm({
                 mt-1
               "
             >
-              Nuevo presupuesto
+              {es ? "Nuevo presupuesto" : "New estimate"}
             </h2>
 
             <p
@@ -515,8 +623,9 @@ export default function PresupuestoForm({
                 mt-1
               "
             >
-              Crea una propuesta de tratamiento
-              para el paciente.
+              {es
+                ? "Crea una propuesta de tratamiento para el paciente."
+                : "Create a treatment estimate for the patient."}
             </p>
 
           </div>
@@ -537,7 +646,7 @@ export default function PresupuestoForm({
               size={17}
             />
 
-            Cancelar
+            {es ? "Cancelar" : "Cancel"}
           </button>
 
         </div>
@@ -569,7 +678,7 @@ export default function PresupuestoForm({
                   mb-2
                 "
               >
-                Paciente
+                {es ? "Paciente" : "Patient"}
               </label>
 
               <div
@@ -613,7 +722,7 @@ export default function PresupuestoForm({
                     }
                   `}
                 >
-                  Registrado
+                  {es ? "Registrado" : "Registered"}
                 </button>
 
                 <button
@@ -645,7 +754,7 @@ export default function PresupuestoForm({
                     }
                   `}
                 >
-                  Paciente nuevo
+                  {es ? "Paciente nuevo" : "New patient"}
                 </button>
 
               </div>
@@ -681,7 +790,7 @@ export default function PresupuestoForm({
                       <option
                         value=""
                       >
-                        Seleccionar paciente
+                        {es ? "Seleccionar paciente" : "Select patient"}
                       </option>
 
                       {
@@ -723,7 +832,7 @@ export default function PresupuestoForm({
                               e.target.value
                             )
                         }
-                        placeholder="Nombre del paciente"
+                        placeholder={es ? "Nombre del paciente" : "Patient name"}
                         className="
                           w-full
                           rounded-xl
@@ -744,7 +853,7 @@ export default function PresupuestoForm({
                           mint-text-muted
                         "
                       >
-                        Puedes crear el presupuesto sin registrar todavía un expediente.
+                        {es ? "Puedes crear el presupuesto sin registrar todavía un expediente." : "You can create the estimate before registering a patient record."}
                       </p>
 
                     </div>
@@ -765,7 +874,7 @@ export default function PresupuestoForm({
                   mb-2
                 "
               >
-                Moneda
+                {es ? "Moneda" : "Currency"}
               </label>
 
               <div
@@ -851,6 +960,59 @@ export default function PresupuestoForm({
 
           <div
             className="
+              rounded-2xl
+              border
+              border-[var(--mint-border)]
+              bg-[var(--mint-bg-soft)]
+              p-4
+              flex
+              flex-col
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
+              gap-4
+            "
+          >
+            <div>
+              <p className="text-sm font-bold mint-text-primary">
+                {es ? "Idioma del presupuesto" : "Estimate language"}
+              </p>
+              <p className="text-xs mint-text-secondary mt-1">
+                {es
+                  ? "Este idioma es independiente del idioma de MintOS."
+                  : "This language is independent from the MintOS interface language."}
+              </p>
+            </div>
+
+            <div className="inline-flex rounded-xl bg-[var(--mint-bg-card)] border border-[var(--mint-border)] p-1">
+              <button
+                type="button"
+                onClick={() => setIdiomaDocumento("es")}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                  idiomaDocumento === "es"
+                    ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)] shadow-sm"
+                    : "mint-text-secondary"
+                }`}
+              >
+                Español
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIdiomaDocumento("en")}
+                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
+                  idiomaDocumento === "en"
+                    ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)] shadow-sm"
+                    : "mint-text-secondary"
+                }`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+
+          <div
+            className="
               border
               border-[var(--mint-border)]
               rounded-2xl
@@ -880,7 +1042,7 @@ export default function PresupuestoForm({
                     mint-text-primary
                   "
                 >
-                  Tratamientos
+                  {es ? "Tratamientos" : "Treatments"}
                 </h3>
 
                 <p
@@ -917,6 +1079,36 @@ export default function PresupuestoForm({
 
             </div>
 
+            <div className="p-5 border-b border-[var(--mint-border)]">
+              <div className="mb-4">
+                <p className="text-sm font-bold mint-text-primary">
+                  {es ? "Renglón activo" : "Active line item"}
+                </p>
+                <p className="text-xs mint-text-secondary mt-1">
+                  {es
+                    ? "La selección dental se aplicará al tratamiento resaltado en la tabla."
+                    : "The dental selection will be applied to the highlighted treatment row."}
+                </p>
+              </div>
+
+              {itemDentalActivo && (
+                <SelectorDientesPresupuesto
+                  dientesSeleccionados={
+                    itemDentalActivo.dientes
+                  }
+                  onChange={
+                    actualizarDientesItem
+                  }
+                  arcada={
+                    itemDentalActivo.arcada
+                  }
+                  onArcadaChange={
+                    actualizarArcadaItem
+                  }
+                />
+              )}
+            </div>
+
             <div
               className="
                 overflow-x-auto
@@ -947,7 +1139,7 @@ export default function PresupuestoForm({
                         mint-text-muted
                       "
                     >
-                      Diente
+                      {es ? "Diente / Arcada" : "Tooth / Arch"}
                     </th>
 
                     <th
@@ -959,7 +1151,7 @@ export default function PresupuestoForm({
                         mint-text-muted
                       "
                     >
-                      Tratamiento
+                      {es ? "Tratamiento" : "Treatment"}
                     </th>
 
                     <th
@@ -971,7 +1163,7 @@ export default function PresupuestoForm({
                         mint-text-muted
                       "
                     >
-                      Cantidad
+                      {es ? "Cantidad" : "Quantity"}
                     </th>
 
                     <th
@@ -983,7 +1175,7 @@ export default function PresupuestoForm({
                         mint-text-muted
                       "
                     >
-                      Precio unitario
+                      {es ? "Precio unitario" : "Unit price"}
                     </th>
 
                     <th
@@ -1030,10 +1222,20 @@ export default function PresupuestoForm({
                             key={
                               item.id
                             }
-                            className="
+                            onClick={() =>
+                              setItemDentalActivoId(
+                                item.id
+                              )
+                            }
+                            className={`
                               border-t
                               border-[var(--mint-border)]
-                            "
+                              ${
+                                itemDentalActivoId === item.id
+                                  ? "bg-[var(--mint-primary-soft)]"
+                                  : ""
+                              }
+                            `}
                           >
 
                             <td
@@ -1042,33 +1244,37 @@ export default function PresupuestoForm({
                               "
                             >
 
-                              <input
-                                type="text"
-                                value={
-                                  item.diente
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setItemDentalActivoId(
+                                    item.id
+                                  )
                                 }
-                                onChange={
-                                  (
-                                    e
-                                  ) =>
-                                    actualizarItem(
-                                      item.id,
-                                      "diente",
-                                      e.target.value
-                                    )
-                                }
-                                placeholder="Ej. 11"
-                                className="
-                                  w-24
+                                className={`
+                                  min-w-[150px]
+                                  text-left
                                   rounded-lg
                                   border
-                                  border-[var(--mint-border)]
                                   px-3
                                   py-2
-                                  bg-[var(--mint-bg-card)]
-                                  mint-text-primary
-                                "
-                              />
+                                  text-sm
+                                  transition
+                                  ${
+                                    itemDentalActivoId === item.id
+                                      ? "border-[var(--mint-primary)] bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
+                                      : "border-[var(--mint-border)] bg-[var(--mint-bg-card)] mint-text-primary"
+                                  }
+                                `}
+                              >
+                                {item.arcada
+                                  ? item.arcada === "superior"
+                                    ? es ? "Arcada superior" : "Upper arch"
+                                    : es ? "Arcada inferior" : "Lower arch"
+                                  : item.dientes.length > 0
+                                    ? item.dientes.slice().sort((a, b) => a - b).join(", ")
+                                    : es ? "Seleccionar" : "Select"}
+                              </button>
 
                             </td>
 
@@ -1080,7 +1286,7 @@ export default function PresupuestoForm({
 
                               <select
                                 value={
-                                  item.tratamiento
+                                  item.catalogo_tratamiento_id || ""
                                 }
                                 onChange={
                                   (
@@ -1104,7 +1310,7 @@ export default function PresupuestoForm({
                                 "
                               >
                                 <option value="">
-                                  Seleccionar tratamiento
+                                  {es ? "Seleccionar tratamiento" : "Select treatment"}
                                 </option>
 
                                 {
@@ -1115,11 +1321,14 @@ export default function PresupuestoForm({
                                           tratamiento.id
                                         }
                                         value={
-                                          tratamiento.nombre
+                                          tratamiento.id
                                         }
                                       >
                                         {
-                                          tratamiento.nombre
+                                          idiomaDocumento === "en" &&
+                                          tratamiento.nombre_en
+                                            ? tratamiento.nombre_en
+                                            : tratamiento.nombre
                                         }
                                       </option>
                                     )
@@ -1219,7 +1428,7 @@ export default function PresupuestoForm({
                               {
                                 totalItem
                                   .toLocaleString(
-                                    "es-MX",
+                                    es ? "es-MX" : "en-US",
                                     {
                                       minimumFractionDigits: 2,
                                       maximumFractionDigits: 2,
@@ -1297,7 +1506,7 @@ export default function PresupuestoForm({
                   mb-2
                 "
               >
-                Notas
+                {es ? "Notas" : "Notes"}
               </label>
 
               <textarea
@@ -1313,7 +1522,7 @@ export default function PresupuestoForm({
                     )
                 }
                 rows={5}
-                placeholder="Notas u observaciones del presupuesto..."
+                placeholder={es ? "Notas u observaciones del presupuesto..." : "Estimate notes or observations..."}
                 className="
                   w-full
                   rounded-xl
@@ -1365,7 +1574,7 @@ export default function PresupuestoForm({
                   $
                   {
                     subtotal.toLocaleString(
-                      "es-MX",
+                      es ? "es-MX" : "en-US",
                       {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -1387,7 +1596,7 @@ export default function PresupuestoForm({
               >
                 <div className="flex items-center justify-between gap-3">
                   <span className="text-sm font-semibold mint-text-secondary">
-                    Descuento
+                    {es ? "Descuento" : "Discount"}
                   </span>
 
                   <div className="inline-flex rounded-xl bg-[var(--mint-bg-card)] border border-[var(--mint-border)] p-1">
@@ -1439,12 +1648,12 @@ export default function PresupuestoForm({
 
                 <div className="flex justify-between gap-4 text-sm">
                   <span className="mint-text-secondary">
-                    Descuento aplicado
+                    {es ? "Descuento aplicado" : "Applied discount"}
                   </span>
 
                   <strong className="text-[var(--mint-danger)]">
                     -${descuentoCalculado.toLocaleString(
-                      "es-MX",
+                      es ? "es-MX" : "en-US",
                       {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -1492,7 +1701,7 @@ export default function PresupuestoForm({
                     $
                     {
                       total.toLocaleString(
-                        "es-MX",
+                        es ? "es-MX" : "en-US",
                         {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -1536,7 +1745,7 @@ export default function PresupuestoForm({
                 mint-btn
               "
             >
-              Cancelar
+              {es ? "Cancelar" : "Cancel"}
             </button>
 
             <button
@@ -1563,8 +1772,8 @@ export default function PresupuestoForm({
 
               {
                 guardando
-                  ? "Guardando..."
-                  : "Guardar borrador"
+                  ? es ? "Guardando..." : "Saving..."
+                  : es ? "Guardar borrador" : "Save draft"
               }
 
             </button>

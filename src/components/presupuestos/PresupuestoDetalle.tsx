@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 
 import jsPDF from "jspdf";
+import { useLanguage } from "../../context/LanguageContext";
 
 import type {
   Presupuesto,
@@ -37,6 +38,11 @@ export default function PresupuestoDetalle({
   puedeConvertir = false,
 }: PresupuestoDetalleProps) {
 
+  const { language } = useLanguage();
+  const es = language === "es";
+  const documentoEnIngles =
+    presupuesto.idioma === "en";
+
   const formatoMonto =
     (
       valor: number
@@ -44,7 +50,7 @@ export default function PresupuestoDetalle({
       `$${Number(
         valor || 0
       ).toLocaleString(
-        "es-MX",
+        es ? "es-MX" : "en-US",
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -58,7 +64,7 @@ export default function PresupuestoDetalle({
       new Date(
         fecha
       ).toLocaleDateString(
-        "es-MX",
+        es ? "es-MX" : "en-US",
         {
           day: "2-digit",
           month: "long",
@@ -162,12 +168,36 @@ export default function PresupuestoDetalle({
         `$${Number(
           valor || 0
         ).toLocaleString(
-          "es-MX",
+          documentoEnIngles ? "en-US" : "es-MX",
           {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
           }
         )} ${presupuesto.moneda}`;
+
+    const etiquetaDientePDF =
+      (item: NonNullable<Presupuesto["items"]>[number]) => {
+        if (item.arcada === "superior") {
+          return documentoEnIngles
+            ? "Upper arch"
+            : "Arcada superior";
+        }
+
+        if (item.arcada === "inferior") {
+          return documentoEnIngles
+            ? "Lower arch"
+            : "Arcada inferior";
+        }
+
+        if (item.dientes?.length) {
+          return item.dientes
+            .slice()
+            .sort((a, b) => a - b)
+            .join(", ");
+        }
+
+        return item.diente || "—";
+      };
 
     let y = 16;
 
@@ -269,7 +299,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "PRESUPUESTO",
+      documentoEnIngles ? "TREATMENT ESTIMATE" : "PRESUPUESTO",
       bloqueDerechoX,
       y + 10,
       {
@@ -311,7 +341,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      `Moneda: ${presupuesto.moneda}`,
+      `${documentoEnIngles ? "Currency" : "Moneda"}: ${presupuesto.moneda}`,
       bloqueDerechoX,
       y + 33,
       {
@@ -350,7 +380,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "PACIENTE",
+      documentoEnIngles ? "PATIENT" : "PACIENTE",
       margen + 6,
       y + 7
     );
@@ -365,7 +395,7 @@ export default function PresupuestoDetalle({
 
     pdf.text(
       presupuesto.paciente_nombre ||
-        `Paciente #${presupuesto.paciente_id}`,
+        `${documentoEnIngles ? "Patient" : "Paciente"} #${presupuesto.paciente_id}`,
       margen + 6,
       y + 14
     );
@@ -384,7 +414,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "Propuesta personalizada de tratamiento dental",
+      documentoEnIngles ? "Personalized dental treatment estimate" : "Propuesta personalizada de tratamiento dental",
       margen + 6,
       y + 20
     );
@@ -406,7 +436,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "DETALLE DEL TRATAMIENTO",
+      documentoEnIngles ? "TREATMENT DETAILS" : "DETALLE DEL TRATAMIENTO",
       margen,
       y
     );
@@ -444,19 +474,19 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "Diente",
+      documentoEnIngles ? "Tooth / Arch" : "Diente / Arcada",
       xDiente,
       y + 6.5
     );
 
     pdf.text(
-      "Tratamiento",
+      documentoEnIngles ? "Treatment" : "Tratamiento",
       xTratamiento,
       y + 6.5
     );
 
     pdf.text(
-      "Cant.",
+      documentoEnIngles ? "Qty." : "Cant.",
       xCantidad,
       y + 6.5,
       {
@@ -465,7 +495,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "Precio",
+      documentoEnIngles ? "Price" : "Precio",
       xPrecio,
       y + 6.5,
       {
@@ -540,7 +570,7 @@ export default function PresupuestoDetalle({
         );
 
         pdf.text(
-          item.diente || "—",
+          etiquetaDientePDF(item),
           xDiente,
           y + 4
         );
@@ -659,7 +689,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "RESUMEN",
+      documentoEnIngles ? "SUMMARY" : "RESUMEN",
       xResumen + 6,
       y + 7
     );
@@ -719,7 +749,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "Descuento",
+      documentoEnIngles ? "Discount" : "Descuento",
       xResumen + 6,
       y + 23
     );
@@ -839,7 +869,7 @@ export default function PresupuestoDetalle({
       );
 
       pdf.text(
-        "NOTAS Y OBSERVACIONES",
+        documentoEnIngles ? "NOTES AND OBSERVATIONS" : "NOTAS Y OBSERVACIONES",
         margen + 6,
         y + 8
       );
@@ -901,7 +931,7 @@ export default function PresupuestoDetalle({
     );
 
     pdf.text(
-      "Información importante",
+      documentoEnIngles ? "Important information" : "Información importante",
       margen + 5,
       y + 5
     );
@@ -921,7 +951,9 @@ export default function PresupuestoDetalle({
 
     const aviso =
       pdf.splitTextToSize(
-        "Este presupuesto corresponde a los tratamientos descritos y puede ajustarse si durante la evaluación clínica se identifican necesidades adicionales. Nuestro equipo está disponible para resolver cualquier duda antes de iniciar su tratamiento.",
+        documentoEnIngles
+          ? "This estimate applies to the treatments described and may be adjusted if additional needs are identified during the clinical evaluation. Our team is available to answer any questions before treatment begins."
+          : "Este presupuesto corresponde a los tratamientos descritos y puede ajustarse si durante la evaluación clínica se identifican necesidades adicionales. Nuestro equipo está disponible para resolver cualquier duda antes de iniciar su tratamiento.",
         anchoContenido - 8
       );
 
@@ -985,7 +1017,7 @@ export default function PresupuestoDetalle({
       );
 
       pdf.text(
-        `Página ${pagina} de ${totalPaginas}`,
+        `${documentoEnIngles ? "Page" : "Página"} ${pagina} ${documentoEnIngles ? "of" : "de"} ${totalPaginas}`,
         anchoPagina - margen,
         altoPagina - 8,
         {
@@ -1011,7 +1043,7 @@ export default function PresupuestoDetalle({
         );
 
     pdf.save(
-      `presupuesto-${presupuesto.id}-${pacienteArchivo}.pdf`
+      `${documentoEnIngles ? "treatment-estimate" : "presupuesto"}-${presupuesto.id}-${pacienteArchivo}.pdf`
     );
 
   }
@@ -1160,7 +1192,7 @@ export default function PresupuestoDetalle({
                   mt-1
                 "
               >
-                Presupuesto #
+                {es ? "Presupuesto" : "Estimate"} #
                 {presupuesto.id}
               </h2>
 
@@ -1173,7 +1205,7 @@ export default function PresupuestoDetalle({
               >
                 {
                   presupuesto.paciente_nombre ||
-                  `Paciente #${presupuesto.paciente_id}`
+                  `${es ? "Paciente" : "Patient"} #${presupuesto.paciente_id}`
                 }
               </p>
 
@@ -1276,8 +1308,8 @@ export default function PresupuestoDetalle({
 
                     {
                       convirtiendo
-                        ? "Convirtiendo..."
-                        : "Convertir a tratamiento"
+                        ? es ? "Convirtiendo..." : "Converting..."
+                        : es ? "Convertir a tratamiento" : "Convert to treatment"
                     }
                   </button>
 
@@ -1297,7 +1329,13 @@ export default function PresupuestoDetalle({
                 ${estadoClasses()}
               `}
             >
-              {presupuesto.estado}
+              {
+                presupuesto.estado === "Borrador"
+                  ? es ? "Borrador" : "Draft"
+                  : presupuesto.estado === "Enviado"
+                    ? es ? "Enviado" : "Sent"
+                    : es ? "Convertido" : "Converted"
+              }
             </span>
 
           </div>
@@ -1380,8 +1418,9 @@ export default function PresupuestoDetalle({
                     mt-0.5
                   "
                 >
-                  Procedimientos incluidos
-                  en este presupuesto.
+                  {es
+                    ? "Procedimientos incluidos en este presupuesto."
+                    : "Procedures included in this estimate."}
                 </p>
 
               </div>
@@ -1512,8 +1551,16 @@ export default function PresupuestoDetalle({
                                 "
                               >
                                 {
-                                  item.diente ||
-                                  "—"
+                                  item.arcada === "superior"
+                                    ? es ? "Arcada superior" : "Upper arch"
+                                    : item.arcada === "inferior"
+                                      ? es ? "Arcada inferior" : "Lower arch"
+                                      : item.dientes?.length
+                                        ? item.dientes
+                                            .slice()
+                                            .sort((a, b) => a - b)
+                                            .join(", ")
+                                        : item.diente || "—"
                                 }
                               </td>
 
@@ -1613,8 +1660,9 @@ export default function PresupuestoDetalle({
                       mint-text-muted
                     "
                   >
-                    No hay tratamientos
-                    registrados en este presupuesto.
+                    {es
+                      ? "No hay tratamientos registrados en este presupuesto."
+                      : "No treatments are registered in this estimate."}
                   </p>
 
                 </div>
@@ -1716,6 +1764,25 @@ export default function PresupuestoDetalle({
                   }
                 </span>
 
+              </div>
+
+              <div
+                className="
+                  flex
+                  justify-between
+                  gap-4
+                  text-sm
+                "
+              >
+                <span className="mint-text-secondary">
+                  {es ? "Idioma del documento" : "Document language"}
+                </span>
+
+                <span className="font-semibold mint-text-primary">
+                  {presupuesto.idioma === "en"
+                    ? "English"
+                    : "Español"}
+                </span>
               </div>
 
               <div
@@ -1858,7 +1925,9 @@ export default function PresupuestoDetalle({
             >
               {
                 presupuesto.notas ||
-                "Sin notas registradas."
+                (es
+                  ? "Sin notas registradas."
+                  : "No notes recorded.")
               }
             </p>
 

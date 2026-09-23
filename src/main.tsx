@@ -16,6 +16,14 @@ import {
   AuthProvider,
 } from "./context/AuthContext";
 
+import {
+  LanguageProvider,
+} from "./context/LanguageContext";
+
+import {
+  ThemeProvider,
+} from "./context/ThemeContext";
+
 ReactDOM.createRoot(
   document.getElementById("root")!
 ).render(
@@ -24,11 +32,19 @@ ReactDOM.createRoot(
 
     <BrowserRouter>
 
-      <AuthProvider>
+      <LanguageProvider>
 
-        <App />
+        <ThemeProvider>
 
-      </AuthProvider>
+          <AuthProvider>
+
+            <App />
+
+          </AuthProvider>
+
+        </ThemeProvider>
+
+      </LanguageProvider>
 
     </BrowserRouter>
 

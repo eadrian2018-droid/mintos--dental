@@ -5,14 +5,29 @@ import {
 } from "react";
 
 import {
+  Bell,
+  Check,
   Clock3,
-  DollarSign,
+  Plus,
   Stethoscope,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import { supabase } from "../lib/supabase";
 
+import {
+  useLanguage,
+} from "../context/LanguageContext";
+
 export default function Dashboard() {
+
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
 
   const [
     ,
@@ -29,16 +44,36 @@ export default function Dashboard() {
     setCitasHoy,
   ] = useState<any[]>([]);
 
-  const [
-    cobrosHoy,
-    setCobrosHoy,
-  ] = useState(0);
-
   const [, setPacientesNuevosMes] = useState(0);
-  const [saldoPendiente, setSaldoPendiente] = useState(0);
   const [, setTratamientosPendientes] = useState(0);
-  const [, setPresupuestosActivos] = useState(0);
-  const [tipoCambio, setTipoCambio] = useState(0);
+  const [, setCobrosHoy] = useState(0);
+  const [, setSaldoPendiente] = useState(0);
+  const [, setTipoCambio] = useState(0);
+
+  const [
+    recordatorios,
+    setRecordatorios,
+  ] = useState<any[]>([]);
+
+  const [
+    mostrarNuevoRecordatorio,
+    setMostrarNuevoRecordatorio,
+  ] = useState(false);
+
+  const [
+    mensajeRecordatorio,
+    setMensajeRecordatorio,
+  ] = useState("");
+
+  const [
+    prioridadRecordatorio,
+    setPrioridadRecordatorio,
+  ] = useState("normal");
+
+  const [
+    guardandoRecordatorio,
+    setGuardandoRecordatorio,
+  ] = useState(false);
 
   const [
     ,
@@ -90,8 +125,8 @@ export default function Dashboard() {
       pagosHoyResponse,
       pacientesMesResponse,
       tratamientosResponse,
-      presupuestosResponse,
       tipoCambioResponse,
+      recordatoriosResponse,
     ] =
       await Promise.all([
 
@@ -164,24 +199,16 @@ export default function Dashboard() {
           .select("resta, pendiente"),
 
         supabase
-          .from("presupuestos")
-          .select(
-            "*",
-            {
-              count: "exact",
-              head: true,
-            }
-          )
-          .in(
-            "estado",
-            ["Borrador", "Enviado"]
-          ),
-
-        supabase
           .from("configuracion_finanzas")
           .select("valor")
           .eq("clave", "tipo_cambio_usd_mxn")
           .maybeSingle(),
+
+        supabase
+          .from("recordatorios")
+          .select("*")
+          .order("completado", { ascending: true })
+          .order("created_at", { ascending: false }),
 
       ]);
 
@@ -240,24 +267,181 @@ export default function Dashboard() {
       )
     );
 
-    setPresupuestosActivos(
-      presupuestosResponse.count || 0
-    );
-
     setTipoCambio(
       Number(tipoCambioResponse.data?.valor || 0)
+    );
+
+    setRecordatorios(
+      recordatoriosResponse.data || []
     );
 
     setCargando(false);
 
   }
 
+  async function crearRecordatorio() {
+
+    const mensaje =
+      mensajeRecordatorio.trim();
+
+    if (!mensaje) {
+      return;
+    }
+
+    setGuardandoRecordatorio(true);
+
+    const {
+      data: usuarioData,
+    } = await supabase.auth.getUser();
+
+    const usuario =
+      usuarioData.user;
+
+    if (!usuario) {
+      setGuardandoRecordatorio(false);
+      return;
+    }
+
+    const nombre =
+      usuario.user_metadata?.nombre ||
+      usuario.user_metadata?.full_name ||
+      usuario.email ||
+      (es ? "Usuario" : "User");
+
+    const { error } =
+      await supabase
+        .from("recordatorios")
+        .insert({
+          mensaje,
+          creado_por: usuario.id,
+          creado_por_nombre: nombre,
+          asignado_a: "Todos",
+          prioridad: prioridadRecordatorio,
+        });
+
+    setGuardandoRecordatorio(false);
+
+    if (error) {
+      window.alert(
+        es
+          ? "No se pudo guardar el recordatorio."
+          : "The reminder could not be saved."
+      );
+      return;
+    }
+
+    setMensajeRecordatorio("");
+    setPrioridadRecordatorio("normal");
+    setMostrarNuevoRecordatorio(false);
+    await cargarRecordatorios();
+
+  }
+
+  async function cargarRecordatorios() {
+
+    const { data } =
+      await supabase
+        .from("recordatorios")
+        .select("*")
+        .order("completado", { ascending: true })
+        .order("created_at", { ascending: false });
+
+    setRecordatorios(data || []);
+
+  }
+
+  async function completarRecordatorio(
+    recordatorio: any
+  ) {
+
+    const nuevoEstado =
+      !recordatorio.completado;
+
+    const {
+      data: usuarioData,
+    } = await supabase.auth.getUser();
+
+    const { error } =
+      await supabase
+        .from("recordatorios")
+        .update({
+          completado: nuevoEstado,
+          completado_at: nuevoEstado
+            ? new Date().toISOString()
+            : null,
+          completado_por: nuevoEstado
+            ? usuarioData.user?.id || null
+            : null,
+        })
+        .eq("id", recordatorio.id);
+
+    if (error) {
+      window.alert(
+        es
+          ? "No se pudo actualizar el recordatorio."
+          : "The reminder could not be updated."
+      );
+      return;
+    }
+
+    await cargarRecordatorios();
+
+  }
+
+  async function eliminarRecordatorio(
+    id: number
+  ) {
+
+    const confirmar =
+      window.confirm(
+        es
+          ? "¿Eliminar este recordatorio?"
+          : "Delete this reminder?"
+      );
+
+    if (!confirmar) {
+      return;
+    }
+
+    const { error } =
+      await supabase
+        .from("recordatorios")
+        .delete()
+        .eq("id", id);
+
+    if (error) {
+      window.alert(
+        es
+          ? "Solo quien creó el recordatorio puede eliminarlo."
+          : "Only the person who created the reminder can delete it."
+      );
+      return;
+    }
+
+    await cargarRecordatorios();
+
+  }
+
+  const recordatoriosPendientes =
+    recordatorios.filter(
+      (recordatorio) =>
+        !recordatorio.completado
+    );
+
+  const recordatoriosCompletados =
+    recordatorios.filter(
+      (recordatorio) =>
+        recordatorio.completado
+    );
+
   const fechaActual =
     useMemo(
       () =>
         new Date()
           .toLocaleDateString(
-            "es-MX",
+            es
+              ? "es-MX"
+              : "en-US",
             {
               weekday: "long",
               day: "numeric",
@@ -265,7 +449,9 @@ export default function Dashboard() {
               year: "numeric",
             }
           ),
-      []
+      [
+        es,
+      ]
     );
 
   const citasPendientes =
@@ -288,24 +474,6 @@ export default function Dashboard() {
         .filter(Boolean)
     ).size;
 
-  function formatoMoneda(
-    valor: number
-  ) {
-
-    return new Intl.NumberFormat(
-      "es-MX",
-      {
-        style: "currency",
-        currency: "MXN",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }
-    ).format(
-      valor
-    );
-
-  }
-
   function obtenerEstadoCita(
     estado: string
   ) {
@@ -323,7 +491,7 @@ export default function Dashboard() {
     ) {
 
       return {
-        texto: "Confirmada",
+        texto: es ? "Confirmada" : "Confirmed",
         clase:
           "bg-[var(--mint-success-bg)] text-[var(--mint-success)] border-[var(--mint-success-border)]",
       };
@@ -338,7 +506,7 @@ export default function Dashboard() {
     ) {
 
       return {
-        texto: "Cancelada",
+        texto: es ? "Cancelada" : "Cancelled",
         clase:
           "bg-[var(--mint-danger-bg)] text-[var(--mint-danger)] border-[var(--mint-danger-border)]",
       };
@@ -357,7 +525,7 @@ export default function Dashboard() {
     ) {
 
       return {
-        texto: "Completada",
+        texto: es ? "Completada" : "Completed",
         clase:
           "bg-[var(--mint-info-bg)] text-[var(--mint-info)] border-[var(--mint-info-border)]",
       };
@@ -365,7 +533,7 @@ export default function Dashboard() {
     }
 
     return {
-      texto: "Pendiente",
+      texto: es ? "Pendiente" : "Pending",
       clase:
         "bg-[var(--mint-warning-bg)] text-[var(--mint-warning)] border-[var(--mint-warning-border)]",
     };
@@ -414,7 +582,7 @@ export default function Dashboard() {
               size={14}
             />
 
-            Vista general
+            {es ? "Vista general" : "Overview"}
           </div>
 
           <h1
@@ -487,7 +655,7 @@ export default function Dashboard() {
                 mint-text-muted
               "
             >
-              Operación de hoy
+              {es ? "Operación de hoy" : "Today's operation"}
             </p>
 
             <p
@@ -498,7 +666,7 @@ export default function Dashboard() {
                 mt-0.5
               "
             >
-              {citasHoy.length} citas · {doctoresHoy} doctores
+              {citasHoy.length} {es ? "citas" : "appointments"} · {doctoresHoy} {es ? "doctores" : "doctors"}
             </p>
 
           </div>
@@ -511,8 +679,9 @@ export default function Dashboard() {
         className="
           grid
           grid-cols-1
-          md:grid-cols-3
+          xl:grid-cols-[260px_minmax(0,1fr)]
           gap-4
+          items-stretch
         "
       >
 
@@ -543,15 +712,15 @@ export default function Dashboard() {
                   mint-text-muted
                 "
               >
-                Citas hoy
+                {es ? "Citas hoy" : "Appointments today"}
               </p>
 
               <p
                 className="
-                  text-3xl
+                  text-4xl
                   font-bold
                   mint-text-primary
-                  mt-2
+                  mt-3
                 "
               >
                 {citasHoy.length}
@@ -564,7 +733,7 @@ export default function Dashboard() {
                   mt-1
                 "
               >
-                {citasPendientes} activas
+                {citasPendientes} {es ? "activas" : "active"}
               </p>
 
             </div>
@@ -583,9 +752,7 @@ export default function Dashboard() {
                 text-[var(--mint-warning)]
               "
             >
-              <Clock3
-                size={20}
-              />
+              <Clock3 size={20} />
             </div>
 
           </div>
@@ -595,228 +762,578 @@ export default function Dashboard() {
         <div
           className="
             mint-card
-            p-5
+            overflow-hidden
           "
         >
 
           <div
             className="
+              px-5
+              sm:px-6
+              py-5
+              border-b
+              border-[var(--mint-border)]
               flex
-              items-start
-              justify-between
+              flex-col
+              sm:flex-row
+              sm:items-center
+              sm:justify-between
               gap-4
             "
           >
 
-            <div>
-
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  mint-text-muted
-                "
-              >
-                Cobros hoy
-              </p>
-
-              <p
-                className="
-                  text-2xl
-                  font-bold
-                  text-[var(--mint-success)]
-                  mt-2
-                "
-              >
-                {
-                  formatoMoneda(
-                    cobrosHoy
-                  )
-                }
-              </p>
-
-              <p
-                className="
-                  text-xs
-                  mint-text-secondary
-                  mt-1
-                "
-              >
-                Ingreso registrado
-              </p>
-
-            </div>
-
             <div
               className="
-                w-11
-                h-11
-                rounded-2xl
-                bg-[var(--mint-success-bg)]
-                border
-                border-[var(--mint-success-border)]
                 flex
                 items-center
-                justify-center
-                text-[var(--mint-success)]
+                gap-3
               "
             >
-              <DollarSign
-                size={20}
-              />
-            </div>
-
-          </div>
-
-        </div>
-
-        <div
-          className="
-            mint-card
-            p-5
-          "
-        >
-
-          <div
-            className="
-              flex
-              items-start
-              justify-between
-              gap-4
-            "
-          >
-
-            <div
-              className="
-                min-w-0
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  font-semibold
-                  uppercase
-                  tracking-wide
-                  mint-text-muted
-                "
-              >
-                Saldo pendiente
-              </p>
 
               <div
                 className="
+                  w-11
+                  h-11
+                  rounded-2xl
+                  bg-[var(--mint-primary-soft)]
+                  border
+                  border-[var(--mint-border-primary)]
                   flex
-                  items-baseline
-                  gap-2
-                  mt-2
-                  whitespace-nowrap
+                  items-center
+                  justify-center
+                  text-[var(--mint-primary)]
                 "
               >
+                <Bell size={20} />
+              </div>
 
-                <p
+              <div>
+                <h2
                   className="
-                    text-lg
+                    text-xl
                     font-bold
-                    text-[var(--mint-danger)]
+                    mint-text-primary
                   "
                 >
-                  {
-                    formatoMoneda(
-                      saldoPendiente
-                    )
-                  }
-                </p>
-
-                <span
-                  className="
-                    text-xs
-                    font-semibold
-                    mint-text-muted
-                  "
-                >
-                  MXN
-                </span>
-
-                <span
-                  className="
-                    text-xs
-                    mint-text-muted
-                  "
-                >
-                  |
-                </span>
+                  {es ? "Recordatorios" : "Reminders"}
+                </h2>
 
                 <p
                   className="
                     text-sm
-                    font-bold
-                    text-[var(--mint-primary)]
+                    mint-text-secondary
+                    mt-0.5
                   "
                 >
-                  {
-                    tipoCambio > 0
-                      ? new Intl.NumberFormat(
-                          "en-US",
-                          {
-                            style: "currency",
-                            currency: "USD",
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 2,
-                          }
-                        ).format(
-                          saldoPendiente /
-                          tipoCambio
-                        )
-                      : "$0"
-                  }
+                  {recordatoriosPendientes.length} {es ? "pendientes" : "pending"}
                 </p>
+              </div>
 
-                <span
+            </div>
+
+            <button
+              type="button"
+              onClick={() =>
+                setMostrarNuevoRecordatorio(true)
+              }
+              className="
+                inline-flex
+                items-center
+                justify-center
+                gap-2
+                px-4
+                py-2.5
+                rounded-xl
+                bg-[var(--mint-primary)]
+                text-white
+                text-sm
+                font-bold
+                hover:opacity-90
+                transition
+              "
+            >
+              <Plus size={17} />
+              {es ? "Agregar recordatorio" : "Add reminder"}
+            </button>
+
+          </div>
+
+          {mostrarNuevoRecordatorio && (
+            <div
+              className="
+                px-5
+                sm:px-6
+                py-5
+                bg-[var(--mint-bg-soft)]
+                border-b
+                border-[var(--mint-border)]
+              "
+            >
+
+              <div
+                className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                  mb-4
+                "
+              >
+                <div>
+                  <p className="text-sm font-bold mint-text-primary">
+                    {es ? "Nuevo recordatorio" : "New reminder"}
+                  </p>
+                  <p className="text-xs mint-text-secondary mt-1">
+                    {es ? "Visible para todo el equipo" : "Visible to the entire team"}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMostrarNuevoRecordatorio(false);
+                    setMensajeRecordatorio("");
+                    setPrioridadRecordatorio("normal");
+                  }}
                   className="
-                    text-xs
-                    font-semibold
-                    mint-text-muted
+                    w-9
+                    h-9
+                    rounded-xl
+                    border
+                    border-[var(--mint-border)]
+                    mint-text-secondary
+                    flex
+                    items-center
+                    justify-center
+                    hover:bg-[var(--mint-bg)]
+                    transition
+                  "
+                  aria-label={es ? "Cerrar" : "Close"}
+                >
+                  <X size={17} />
+                </button>
+              </div>
+
+              <textarea
+                value={mensajeRecordatorio}
+                onChange={(event) =>
+                  setMensajeRecordatorio(
+                    event.target.value
+                  )
+                }
+                rows={3}
+                placeholder={
+                  es
+                    ? "Ej. Llamar a Roberto para confirmar su cita de mañana..."
+                    : "E.g. Call Roberto to confirm tomorrow's appointment..."
+                }
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg)]
+                  mint-text-primary
+                  px-4
+                  py-3
+                  text-sm
+                  outline-none
+                  focus:border-[var(--mint-primary)]
+                  resize-none
+                "
+              />
+
+              <div
+                className="
+                  flex
+                  flex-col
+                  sm:flex-row
+                  sm:items-center
+                  sm:justify-between
+                  gap-3
+                  mt-4
+                "
+              >
+
+                <div
+                  className="
+                    inline-flex
+                    p-1
+                    rounded-xl
+                    bg-[var(--mint-bg)]
+                    border
+                    border-[var(--mint-border)]
                   "
                 >
-                  USD
-                </span>
+                  {[
+                    ["normal", es ? "Normal" : "Normal"],
+                    ["importante", es ? "Importante" : "Important"],
+                    ["urgente", es ? "Urgente" : "Urgent"],
+                  ].map(([valor, etiqueta]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      onClick={() =>
+                        setPrioridadRecordatorio(valor)
+                      }
+                      className={`
+                        px-3
+                        py-1.5
+                        rounded-lg
+                        text-xs
+                        font-bold
+                        transition
+                        ${
+                          prioridadRecordatorio === valor
+                            ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
+                            : "mint-text-secondary"
+                        }
+                      `}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={crearRecordatorio}
+                  disabled={
+                    guardandoRecordatorio ||
+                    !mensajeRecordatorio.trim()
+                  }
+                  className="
+                    inline-flex
+                    items-center
+                    justify-center
+                    gap-2
+                    px-4
+                    py-2.5
+                    rounded-xl
+                    bg-[var(--mint-primary)]
+                    text-white
+                    text-sm
+                    font-bold
+                    disabled:opacity-50
+                    disabled:cursor-not-allowed
+                    hover:opacity-90
+                    transition
+                  "
+                >
+                  <Bell size={16} />
+                  {guardandoRecordatorio
+                    ? (es ? "Guardando..." : "Saving...")
+                    : (es ? "Guardar recordatorio" : "Save reminder")}
+                </button>
 
               </div>
 
-              <p
+            </div>
+          )}
+
+          <div
+            className="
+              p-4
+              sm:p-5
+              max-h-[430px]
+              overflow-y-auto
+            "
+          >
+
+            {recordatoriosPendientes.length === 0 ? (
+              <div
                 className="
-                  text-xs
-                  mint-text-secondary
-                  mt-1
+                  py-10
+                  text-center
                 "
               >
-                Tratamientos con saldo
-              </p>
+                <div
+                  className="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-[var(--mint-primary-soft)]
+                    border
+                    border-[var(--mint-border-primary)]
+                    text-[var(--mint-primary)]
+                    flex
+                    items-center
+                    justify-center
+                    mx-auto
+                    mb-3
+                  "
+                >
+                  <Check size={20} />
+                </div>
+                <p className="text-sm font-bold mint-text-primary">
+                  {es ? "No hay recordatorios pendientes" : "No pending reminders"}
+                </p>
+                <p className="text-xs mint-text-secondary mt-1">
+                  {es ? "El equipo está al día." : "The team is up to date."}
+                </p>
+              </div>
+            ) : (
+              <div
+                className="
+                  space-y-3
+                "
+              >
+                {recordatoriosPendientes.map(
+                  (recordatorio) => (
+                    <div
+                      key={recordatorio.id}
+                      className={`
+                        rounded-2xl
+                        border
+                        p-4
+                        ${
+                          recordatorio.prioridad === "urgente"
+                            ? "bg-[var(--mint-danger-bg)] border-[var(--mint-danger-border)]"
+                            : recordatorio.prioridad === "importante"
+                              ? "bg-[var(--mint-warning-bg)] border-[var(--mint-warning-border)]"
+                              : "bg-[var(--mint-bg-soft)] border-[var(--mint-border)]"
+                        }
+                      `}
+                    >
 
-            </div>
+                      <div
+                        className="
+                          flex
+                          flex-col
+                          lg:flex-row
+                          lg:items-center
+                          gap-4
+                        "
+                      >
 
-            <div
-              className="
-                w-11
-                h-11
-                rounded-2xl
-                bg-[var(--mint-danger-bg)]
-                border
-                border-[var(--mint-danger-border)]
-                flex
-                items-center
-                justify-center
-                text-[var(--mint-danger)]
-                shrink-0
-              "
-            >
-              <DollarSign
-                size={20}
-              />
-            </div>
+                        <div className="flex-1 min-w-0">
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              flex-wrap
+                              mb-1.5
+                            "
+                          >
+                            {recordatorio.prioridad !== "normal" && (
+                              <span
+                                className={`
+                                  inline-flex
+                                  px-2.5
+                                  py-1
+                                  rounded-full
+                                  text-[10px]
+                                  uppercase
+                                  tracking-wide
+                                  font-bold
+                                  ${
+                                    recordatorio.prioridad === "urgente"
+                                      ? "text-[var(--mint-danger)] border border-[var(--mint-danger-border)]"
+                                      : "text-[var(--mint-warning)] border border-[var(--mint-warning-border)]"
+                                  }
+                                `}
+                              >
+                                {recordatorio.prioridad === "urgente"
+                                  ? (es ? "Urgente" : "Urgent")
+                                  : (es ? "Importante" : "Important")}
+                              </span>
+                            )}
+                          </div>
+
+                          <p
+                            className="
+                              text-sm
+                              font-semibold
+                              mint-text-primary
+                              leading-relaxed
+                            "
+                          >
+                            {recordatorio.mensaje}
+                          </p>
+
+                          <p
+                            className="
+                              text-xs
+                              mint-text-muted
+                              mt-2
+                            "
+                          >
+                            {recordatorio.creado_por_nombre || (es ? "Usuario" : "User")}
+                            {" · "}
+                            {new Date(recordatorio.created_at).toLocaleString(
+                              es ? "es-MX" : "en-US",
+                              {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              }
+                            )}
+                          </p>
+                        </div>
+
+                        <div
+                          className="
+                            flex
+                            items-center
+                            gap-2
+                            shrink-0
+                          "
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              completarRecordatorio(recordatorio)
+                            }
+                            className="
+                              inline-flex
+                              items-center
+                              justify-center
+                              gap-2
+                              px-3.5
+                              py-2
+                              rounded-xl
+                              bg-[var(--mint-primary-soft)]
+                              border
+                              border-[var(--mint-border-primary)]
+                              text-[var(--mint-primary)]
+                              text-xs
+                              font-bold
+                              hover:opacity-80
+                              transition
+                            "
+                          >
+                            <Check size={15} />
+                            {es ? "Completar" : "Complete"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() =>
+                              eliminarRecordatorio(recordatorio.id)
+                            }
+                            className="
+                              w-9
+                              h-9
+                              rounded-xl
+                              border
+                              border-[var(--mint-border)]
+                              text-[var(--mint-danger)]
+                              flex
+                              items-center
+                              justify-center
+                              hover:bg-[var(--mint-danger-bg)]
+                              transition
+                            "
+                            aria-label={es ? "Eliminar recordatorio" : "Delete reminder"}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+
+            {recordatoriosCompletados.length > 0 && (
+              <details className="mt-4">
+                <summary
+                  className="
+                    cursor-pointer
+                    text-xs
+                    font-bold
+                    mint-text-muted
+                    select-none
+                  "
+                >
+                  {es ? "Completados" : "Completed"} ({recordatoriosCompletados.length})
+                </summary>
+
+                <div className="space-y-2 mt-3">
+                  {recordatoriosCompletados.map(
+                    (recordatorio) => (
+                      <div
+                        key={recordatorio.id}
+                        className="
+                          flex
+                          flex-col
+                          sm:flex-row
+                          sm:items-center
+                          gap-3
+                          px-4
+                          py-3
+                          rounded-xl
+                          bg-[var(--mint-bg-soft)]
+                          border
+                          border-[var(--mint-border)]
+                          opacity-70
+                        "
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            completarRecordatorio(recordatorio)
+                          }
+                          className="
+                            w-8
+                            h-8
+                            rounded-lg
+                            bg-[var(--mint-primary-soft)]
+                            border
+                            border-[var(--mint-border-primary)]
+                            text-[var(--mint-primary)]
+                            flex
+                            items-center
+                            justify-center
+                            shrink-0
+                          "
+                          aria-label={es ? "Reabrir recordatorio" : "Reopen reminder"}
+                        >
+                          <Check size={14} />
+                        </button>
+
+                        <p
+                          className="
+                            flex-1
+                            text-xs
+                            mint-text-secondary
+                            line-through
+                          "
+                        >
+                          {recordatorio.mensaje}
+                        </p>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            eliminarRecordatorio(recordatorio.id)
+                          }
+                          className="
+                            w-8
+                            h-8
+                            rounded-lg
+                            text-[var(--mint-danger)]
+                            flex
+                            items-center
+                            justify-center
+                            hover:bg-[var(--mint-danger-bg)]
+                            transition
+                          "
+                          aria-label={es ? "Eliminar recordatorio" : "Delete reminder"}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )
+                  )}
+                </div>
+              </details>
+            )}
 
           </div>
 
@@ -855,7 +1372,7 @@ export default function Dashboard() {
                 mint-text-primary
               "
             >
-              Agenda de hoy
+              {es ? "Agenda de hoy" : "Today's schedule"}
             </h2>
 
             <p
@@ -865,7 +1382,7 @@ export default function Dashboard() {
                 mt-1
               "
             >
-              Próximas citas programadas
+              {es ? "Próximas citas programadas" : "Upcoming scheduled appointments"}
             </p>
 
           </div>
@@ -883,7 +1400,7 @@ export default function Dashboard() {
               font-bold
             "
           >
-            {citasHoy.length} citas
+            {citasHoy.length} {es ? "citas" : "appointments"}
           </div>
 
         </div>
@@ -906,7 +1423,7 @@ export default function Dashboard() {
                     py-12
                   "
                 >
-                  No hay citas programadas para hoy
+                  {es ? "No hay citas programadas para hoy" : "No appointments scheduled for today"}
                 </div>
 
               )
@@ -966,7 +1483,9 @@ export default function Dashboard() {
                                   new Date(
                                     cita.inicio
                                   ).toLocaleTimeString(
-                                    "es-MX",
+                                    es
+                                      ? "es-MX"
+                                      : "en-US",
                                     {
                                       hour: "2-digit",
                                       minute: "2-digit",
@@ -994,7 +1513,7 @@ export default function Dashboard() {
                               >
                                 {
                                   cita.paciente ||
-                                  "Paciente"
+                                  (es ? "Paciente" : "Patient")
                                 }
                               </h3>
 
@@ -1007,7 +1526,7 @@ export default function Dashboard() {
                               >
                                 {
                                   cita.doctor ||
-                                  "Doctor sin asignar"
+                                  (es ? "Doctor sin asignar" : "Unassigned doctor")
                                 }
                               </p>
 

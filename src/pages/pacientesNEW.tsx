@@ -8,6 +8,8 @@ import { supabase } from "../lib/supabase";
 
 import { useAuth } from "../context/AuthContext";
 
+import { useLanguage } from "../context/LanguageContext";
+
 import { registrarBitacora } from "../lib/registrarBitacora";
 
 import Odontograma from "../components/Odontograma";
@@ -67,6 +69,22 @@ type Paciente = {
 export default function Pacientes() {
 
   const { permisos } = useAuth();
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
+
+  function textoEstado(valor: any) {
+    const estado = String(valor || "").toLowerCase();
+
+    if (estado === "pendiente") return es ? "Pendiente" : "Pending";
+    if (estado === "confirmado" || estado === "confirmada") return es ? "Confirmado" : "Confirmed";
+    if (estado === "completado" || estado === "completada") return es ? "Completado" : "Completed";
+    if (estado === "cancelado" || estado === "cancelada") return es ? "Cancelado" : "Cancelled";
+    if (estado === "tratamiento") return es ? "Tratamiento" : "Treatment";
+
+    return valor || "-";
+  }
 
   const puedeRegistrarCobros =
     permisos?.registrar_cobros === true;
@@ -723,7 +741,7 @@ async function guardarNotaClinica() {
   ) {
 
     alert(
-      "Escribe una nota clínica."
+      es ? "Escribe una nota clínica." : "Write a clinical note."
     );
 
     return;
@@ -735,7 +753,7 @@ async function guardarNotaClinica() {
   ) {
 
     alert(
-      "Selecciona un doctor."
+      es ? "Selecciona un doctor." : "Select a doctor."
     );
 
     return;
@@ -792,7 +810,7 @@ async function guardarNotaClinica() {
     );
 
     alert(
-      "Error guardando nota clínica."
+      es ? "Error guardando nota clínica." : "Error saving clinical note."
     );
 
     return;
@@ -829,12 +847,12 @@ async function guardarCorreccionNotaClinica(
   }
 
   if (!textoCorreccionNota.trim()) {
-    alert("Escribe la corrección clínica.");
+    alert(es ? "Escribe la corrección clínica." : "Write the clinical correction.");
     return;
   }
 
   if (!doctorCorreccionId) {
-    alert("Selecciona un doctor.");
+    alert(es ? "Selecciona un doctor." : "Select a doctor.");
     return;
   }
 
@@ -865,7 +883,7 @@ async function guardarCorreccionNotaClinica(
       error
     );
     alert(
-      "Error guardando corrección clínica."
+      es ? "Error guardando corrección clínica." : "Error saving clinical correction."
     );
     return;
   }
@@ -937,7 +955,7 @@ async function guardarCorreccionNotaClinica(
   const confirmar =
 
     window.confirm(
-      "¿Eliminar esta cita?"
+      es ? "¿Eliminar esta cita?" : "Delete this appointment?"
     );
 
   if (!confirmar)
@@ -1201,7 +1219,7 @@ else {
     if (error) {
 
       alert(
-        "Error subiendo imagen"
+        es ? "Error subiendo imagen" : "Error uploading image"
       );
 
       return;
@@ -1231,7 +1249,7 @@ else {
     });
 
     alert(
-      "Radiografía subida"
+      es ? "Radiografía subida" : "X-ray uploaded"
     );
 
   }
@@ -1281,7 +1299,7 @@ console.log(
     if (error) {
 
       alert(
-        "Error guardando expediente"
+        es ? "Error guardando expediente" : "Error saving patient record"
       );
 
       return;
@@ -1296,7 +1314,7 @@ console.log(
     });
 
     alert(
-      "Expediente guardado"
+      es ? "Expediente guardado" : "Patient record saved"
     );
 
   }
@@ -1378,7 +1396,7 @@ console.log(
     } catch {
 
       alert(
-        "Error generando PDF"
+        es ? "Error generando PDF" : "Error generating PDF"
       );
 
     }
@@ -1677,7 +1695,7 @@ async function registrarCobro(
     !puedeAplicarDescuentos
   ) {
     alert(
-      "No tienes permiso para aplicar descuentos."
+      es ? "No tienes permiso para aplicar descuentos." : "You do not have permission to apply discounts."
     );
     return;
   }
@@ -1746,7 +1764,7 @@ async function registrarCobro(
   ) {
 
     alert(
-      "Ingresa un monto de cobro válido."
+      es ? "Ingresa un monto de cobro válido." : "Enter a valid payment amount."
     );
 
     return;
@@ -1758,7 +1776,7 @@ async function registrarCobro(
   ) {
 
     alert(
-      "Ingresa un descuento válido."
+      es ? "Ingresa un descuento válido." : "Enter a valid discount."
     );
 
     return;
@@ -1800,7 +1818,7 @@ async function registrarCobro(
   ) {
 
     alert(
-      "Selecciona un método de pago."
+      es ? "Selecciona un método de pago." : "Select a payment method."
     );
 
     return;
@@ -1812,7 +1830,7 @@ async function registrarCobro(
   ) {
 
     alert(
-      "Selecciona una moneda."
+      es ? "Selecciona una moneda." : "Select a currency."
     );
 
     return;
@@ -1900,7 +1918,7 @@ async function registrarCobro(
   ) {
 
     alert(
-      "El cobro supera el saldo pendiente después de aplicar el descuento."
+      es ? "El cobro supera el saldo pendiente después de aplicar el descuento." : "The payment exceeds the remaining balance after the discount."
     );
 
     return;
@@ -2070,7 +2088,7 @@ async function registrarCobro(
       );
 
       alert(
-        "Error registrando el pago."
+        es ? "Error registrando el pago." : "Error recording payment."
       );
 
       return;
@@ -2178,8 +2196,8 @@ async function registrarCobro(
 
     alert(
       montoCobro > 0
-        ? "El pago se registró, pero ocurrió un error actualizando el tratamiento."
-        : "Ocurrió un error aplicando el descuento."
+        ? es ? "El pago se registró, pero ocurrió un error actualizando el tratamiento." : "The payment was recorded, but the treatment could not be updated."
+        : es ? "Ocurrió un error aplicando el descuento." : "An error occurred while applying the discount."
     );
 
     return;
@@ -2323,10 +2341,10 @@ async function registrarCobro(
   alert(
     montoCobro > 0 &&
     descuentoOriginalAplicar > 0
-      ? "Descuento y cobro registrados correctamente."
+      ? es ? "Descuento y cobro registrados correctamente." : "Discount and payment recorded successfully."
       : montoCobro > 0
-        ? "Cobro registrado correctamente."
-        : "Descuento aplicado correctamente."
+        ? es ? "Cobro registrado correctamente." : "Payment recorded successfully."
+        : es ? "Descuento aplicado correctamente." : "Discount applied successfully."
   );
 
 }
@@ -2369,7 +2387,7 @@ async function guardarTratamiento() {
   ) {
 
     alert(
-      "Completa fecha, tratamiento y doctor."
+      es ? "Completa fecha, tratamiento y doctor." : "Complete the date, treatment, and doctor."
     );
 
     return;
@@ -2597,7 +2615,7 @@ notas:
         );
 
         alert(
-          "Error actualizando tratamiento."
+          es ? "Error actualizando tratamiento." : "Error updating treatment."
         );
 
         return;
@@ -2715,7 +2733,7 @@ notas:
       );
 
       alert(
-        "Error guardando tratamiento."
+        es ? "Error guardando tratamiento." : "Error saving treatment."
       );
 
       return;
@@ -2964,7 +2982,7 @@ setNuevoTratamiento({
     if (!nombre) {
 
       alert(
-        "El nombre del paciente es obligatorio."
+        es ? "El nombre del paciente es obligatorio." : "Patient name is required."
       );
 
       return;
@@ -3018,7 +3036,7 @@ setNuevoTratamiento({
       );
 
       alert(
-        "No se pudieron actualizar los datos del paciente."
+        es ? "No se pudieron actualizar los datos del paciente." : "Patient information could not be updated."
       );
 
       return;
@@ -3057,7 +3075,7 @@ setNuevoTratamiento({
     );
 
     alert(
-      "Datos del paciente actualizados."
+      es ? "Datos del paciente actualizados." : "Patient information updated."
     );
 
   }
@@ -3386,7 +3404,7 @@ comision_banco:
     );
 
     alert(
-      "Error actualizando estado."
+      es ? "Error actualizando estado." : "Error updating status."
     );
 
     return;
@@ -3500,7 +3518,7 @@ const pacientesFiltrados =
           text-sm
         "
       >
-        ← Todos los pacientes
+        {es ? "← Todos los pacientes" : "← All patients"}
       </button>
 
       <button
@@ -3620,7 +3638,7 @@ const pacientesFiltrados =
               font-semibold
             ">
 
-              Expediente #{pacienteAbierto.id}
+              {es ? "Expediente" : "Record"} #{pacienteAbierto.id}
 
             </span>
 
@@ -3640,7 +3658,7 @@ const pacientesFiltrados =
                     text-xs
                   "
                 >
-                  Editar paciente
+                  {es ? "Editar paciente" : "Edit patient"}
                 </button>
 
               )
@@ -3665,7 +3683,7 @@ const pacientesFiltrados =
                 mint-text-primary
                 font-semibold
               ">
-                Edad:
+                {es ? "Edad:" : "Age:"}
               </strong>
 
               {" "}
@@ -3680,7 +3698,7 @@ const pacientesFiltrados =
                 mint-text-primary
                 font-semibold
               ">
-                Sexo:
+                {es ? "Sexo:" : "Sex:"}
               </strong>
 
               {" "}
@@ -3710,7 +3728,7 @@ const pacientesFiltrados =
                 mint-text-primary
                 font-semibold
               ">
-                Correo:
+                {es ? "Correo:" : "Email:"}
               </strong>
 
               {" "}
@@ -3743,7 +3761,7 @@ const pacientesFiltrados =
           font-semibold
           mint-text-muted
         ">
-          Próxima cita
+          {es ? "Próxima cita" : "Next appointment"}
         </p>
 
         <p className="
@@ -3767,7 +3785,7 @@ const pacientesFiltrados =
                   }
                 )
 
-              : "Sin citas programadas"
+              : (es ? "Sin citas programadas" : "No appointments scheduled")
           }
 
         </p>
@@ -3835,7 +3853,7 @@ const pacientesFiltrados =
         }
       `}
     >
-      General
+      {es ? "General" : "General"}
     </button>
 
     <button
@@ -3856,7 +3874,7 @@ const pacientesFiltrados =
         }
       `}
     >
-      Expediente Clínico
+      {es ? "Expediente Clínico" : "Clinical Record"}
     </button>
 
     <button
@@ -3877,7 +3895,7 @@ const pacientesFiltrados =
         }
       `}
     >
-      Historial Médico
+      {es ? "Historial Médico" : "Medical History"}
     </button>
 
     <button
@@ -3898,7 +3916,7 @@ const pacientesFiltrados =
         }
       `}
     >
-      Citas
+      {es ? "Citas" : "Appointments"}
     </button>
 
   </div>
@@ -3941,7 +3959,7 @@ const pacientesFiltrados =
               tracking-wide
               mint-text-muted
             ">
-              Tratamientos
+              {es ? "Tratamientos" : "Treatments"}
             </p>
 
             <h3 className="
@@ -3958,7 +3976,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mt-1
             ">
-              Registrados
+              {es ? "Registrados" : "Registered"}
             </p>
 
           </div>
@@ -4003,7 +4021,7 @@ const pacientesFiltrados =
               tracking-wide
               mint-text-muted
             ">
-              Total Pagado
+              {es ? "Total Pagado" : "Total Paid"}
             </p>
 
             <h3 className="
@@ -4033,7 +4051,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mt-1
             ">
-              Pagos recibidos
+              {es ? "Pagos recibidos" : "Payments received"}
             </p>
 
           </div>
@@ -4078,7 +4096,7 @@ const pacientesFiltrados =
               tracking-wide
               mint-text-muted
             ">
-              Saldo Pendiente
+              {es ? "Saldo Pendiente" : "Outstanding Balance"}
             </p>
 
             <h3 className="
@@ -4147,7 +4165,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mt-1
             ">
-              Por cobrar
+              {es ? "Por cobrar" : "Outstanding"}
             </p>
 
           </div>
@@ -4193,7 +4211,7 @@ const pacientesFiltrados =
             mint-text-primary
           ">
 
-            Tratamientos
+            {es ? "Tratamientos" : "Treatments"}
 
           </h3>
 
@@ -4215,7 +4233,7 @@ const pacientesFiltrados =
                 "
               >
 
-                + Agregar
+                {es ? "+ Agregar" : "+ Add"}
 
               </button>
 
@@ -4250,7 +4268,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Fecha
+                  {es ? "Fecha" : "Date"}
                 </th>
 
                 <th className="
@@ -4262,7 +4280,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Tratamiento
+                  {es ? "Tratamiento" : "Treatment"}
                 </th>
 
                 <th className="
@@ -4274,7 +4292,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Doctor
+                  {es ? "Doctor" : "Doctor"}
                 </th>
 
                 <th className="
@@ -4286,7 +4304,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Total
+                  {es ? "Total" : "Total"}
                 </th>
 
                 <th className="
@@ -4298,7 +4316,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Pagado
+                  {es ? "Pagado" : "Paid"}
                 </th>
 
                 <th className="
@@ -4310,7 +4328,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Pendiente
+                  {es ? "Pendiente" : "Pending"}
                 </th>
 
                 <th className="
@@ -4322,7 +4340,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Estado
+                  {es ? "Estado" : "Status"}
                 </th>
 
                 <th className="
@@ -4334,7 +4352,7 @@ const pacientesFiltrados =
                   tracking-wide
                   mint-text-secondary
                 ">
-                  Acciones
+                  {es ? "Acciones" : "Actions"}
                 </th>
 
               </tr>
@@ -4359,7 +4377,7 @@ const pacientesFiltrados =
                           mint-text-muted
                         "
                       >
-                        No hay tratamientos registrados
+                        {es ? "No hay tratamientos registrados" : "No treatments registered"}
                       </td>
 
                     </tr>
@@ -4551,7 +4569,7 @@ const pacientesFiltrados =
                                     font-semibold
                                     whitespace-nowrap
                                   ">
-                                    Finalizado
+                                    {es ? "Finalizado" : "Completed"}
                                   </span>
 
                                 )
@@ -4574,7 +4592,7 @@ const pacientesFiltrados =
                                       font-semibold
                                       whitespace-nowrap
                                     ">
-                                      En proceso
+                                      {es ? "En proceso" : "In progress"}
                                     </span>
 
                                   )
@@ -4597,7 +4615,7 @@ const pacientesFiltrados =
                                         font-semibold
                                         whitespace-nowrap
                                       ">
-                                        Confirmado
+                                        {es ? "Confirmado" : "Confirmed"}
                                       </span>
 
                                     )
@@ -4620,7 +4638,7 @@ const pacientesFiltrados =
                                           font-semibold
                                           whitespace-nowrap
                                         ">
-                                          Cancelado
+                                          {es ? "Cancelado" : "Cancelled"}
                                         </span>
 
                                       )
@@ -4640,7 +4658,7 @@ const pacientesFiltrados =
                                           font-semibold
                                           whitespace-nowrap
                                         ">
-                                          Pendiente
+                                          {es ? "Pendiente" : "Pending"}
                                         </span>
 
                                       )
@@ -4682,23 +4700,23 @@ const pacientesFiltrados =
                                   >
 
                                     <option value="Pendiente">
-                                      Pendiente
+                                      {es ? "Pendiente" : "Pending"}
                                     </option>
 
                                     <option value="Confirmado">
-                                      Confirmado
+                                      {es ? "Confirmado" : "Confirmed"}
                                     </option>
 
                                     <option value="En proceso">
-                                      En proceso
+                                      {es ? "En proceso" : "In progress"}
                                     </option>
 
                                     <option value="Finalizado">
-                                      Finalizado
+                                      {es ? "Finalizado" : "Completed"}
                                     </option>
 
                                     <option value="Cancelado">
-                                      Cancelado
+                                      {es ? "Cancelado" : "Cancelled"}
                                     </option>
 
                                   </select>
@@ -4724,7 +4742,7 @@ const pacientesFiltrados =
                                       text-xs
                                     "
                                   >
-                                    Registrar cobro
+                                    {es ? "Registrar cobro" : "Record payment"}
                                   </button>
 
                                 )
@@ -4759,7 +4777,7 @@ const pacientesFiltrados =
                                       text-xs
                                     "
                                   >
-                                    Editar
+                                    {es ? "Editar" : "Edit"}
                                   </button>
 
                                 )
@@ -4785,7 +4803,7 @@ const pacientesFiltrados =
 
                                   const confirmar =
                                     window.confirm(
-                                      "¿Seguro que deseas eliminar este tratamiento?"
+                                      es ? "¿Seguro que deseas eliminar este tratamiento?" : "Are you sure you want to delete this treatment?"
                                     );
 
                                   if (
@@ -4822,7 +4840,7 @@ const pacientesFiltrados =
                                     );
 
                                     alert(
-                                      "No tienes permiso para eliminar tratamientos."
+                                      es ? "No tienes permiso para eliminar tratamientos." : "You do not have permission to delete treatments."
                                     );
 
                                     return;
@@ -4857,7 +4875,7 @@ const pacientesFiltrados =
                                   text-xs
                                 "
                               >
-                                Eliminar
+                                {es ? "Eliminar" : "Delete"}
                               </button>
 
                                 )
@@ -4910,7 +4928,7 @@ const pacientesFiltrados =
               "
             >
 
-              Evolución Clínica
+              {es ? "Evolución Clínica" : "Clinical Progress"}
 
             </h3>
 
@@ -4922,7 +4940,7 @@ const pacientesFiltrados =
               "
             >
 
-              Historial de notas y observaciones clínicas del paciente.
+              {es ? "Historial de notas y observaciones clínicas del paciente." : "History of patient clinical notes and observations."}
 
             </p>
 
@@ -4959,7 +4977,7 @@ const pacientesFiltrados =
 
             <option value="">
 
-              Seleccionar Doctor
+              {es ? "Seleccionar Doctor" : "Select Doctor"}
 
             </option>
 
@@ -4997,7 +5015,7 @@ const pacientesFiltrados =
                 e.target.value
               )
             }
-            placeholder="Agregar nueva nota clínica..."
+            placeholder={es ? "Agregar nueva nota clínica..." : "Add a new clinical note..."}
             className="
               mint-input
               w-full
@@ -5028,7 +5046,7 @@ const pacientesFiltrados =
               "
             >
 
-              Guardar Nota Clínica
+              {es ? "Guardar Nota Clínica" : "Save Clinical Note"}
 
             </button>
 
@@ -5055,7 +5073,7 @@ const pacientesFiltrados =
             "
           >
 
-            Historial
+            {es ? "Historial" : "History"}
 
           </h4>
 
@@ -5075,7 +5093,7 @@ const pacientesFiltrados =
                   "
                 >
 
-                  No hay notas clínicas registradas.
+                  {es ? "No hay notas clínicas registradas." : "No clinical notes recorded."}
 
                 </div>
 
@@ -5208,7 +5226,7 @@ const pacientesFiltrados =
                                           <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                                             <div className="flex items-center gap-2">
                                               <span className="text-xs font-bold uppercase tracking-wide text-amber-700">
-                                                Corrección
+                                                {es ? "Corrección" : "Correction"}
                                               </span>
                                               <span className="text-sm font-semibold mint-text-primary">
                                                 {correccion.doctor_nombre}
@@ -5229,7 +5247,7 @@ const pacientesFiltrados =
                                           </p>
 
                                           <p className="text-xs mint-text-secondary mt-2">
-                                            Corrige la nota #{nota.id}
+                                            {es ? "Corrige la nota" : "Correct note"} #{nota.id}
                                           </p>
                                         </div>
                                       )
@@ -5243,10 +5261,10 @@ const pacientesFiltrados =
                                     <div className="grid gap-3 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-4">
                                       <div>
                                         <p className="text-sm font-semibold mint-text-primary">
-                                          Registrar corrección
+                                          {es ? "Registrar corrección" : "Record correction"}
                                         </p>
                                         <p className="text-xs mint-text-secondary mt-1">
-                                          La nota original permanecerá intacta en el expediente.
+                                          {es ? "La nota original permanecerá intacta en el expediente." : "The original note will remain unchanged in the record."}
                                         </p>
                                       </div>
 
@@ -5260,7 +5278,7 @@ const pacientesFiltrados =
                                         className="mint-input p-3 w-full"
                                       >
                                         <option value="">
-                                          Seleccionar Doctor
+                                          {es ? "Seleccionar Doctor" : "Select Doctor"}
                                         </option>
                                         {doctores.map(
                                           (doctor: any) => (
@@ -5281,7 +5299,7 @@ const pacientesFiltrados =
                                             e.target.value
                                           )
                                         }
-                                        placeholder="Escribe la corrección clínica..."
+                                        placeholder={es ? "Escribe la corrección clínica..." : "Write the clinical correction..."}
                                         className="mint-input w-full p-3 min-h-[100px] resize-y"
                                       />
 
@@ -5301,7 +5319,7 @@ const pacientesFiltrados =
                                           }}
                                           className="mint-btn mint-btn-secondary px-4 py-2 text-sm"
                                         >
-                                          Cancelar
+                                          {es ? "Cancelar" : "Cancel"}
                                         </button>
 
                                         <button
@@ -5313,7 +5331,7 @@ const pacientesFiltrados =
                                           }
                                           className="mint-btn mint-btn-primary px-4 py-2 text-sm"
                                         >
-                                          Guardar corrección
+                                          {es ? "Guardar corrección" : "Save correction"}
                                         </button>
                                       </div>
                                     </div>
@@ -5333,7 +5351,7 @@ const pacientesFiltrados =
                                       }}
                                       className="mint-btn mint-btn-secondary px-3 py-2 text-xs"
                                     >
-                                      Registrar corrección
+                                      {es ? "Registrar corrección" : "Record correction"}
                                     </button>
                                   )}
                                 </div>
@@ -5396,7 +5414,7 @@ const pacientesFiltrados =
           "
         >
 
-          Nuevo Tratamiento
+          {es ? "Nuevo Tratamiento" : "New Treatment"}
 
         </h2>
 
@@ -5431,7 +5449,7 @@ const pacientesFiltrados =
               "
             >
 
-              Fecha
+              {es ? "Fecha" : "Date"}
 
             </label>
 
@@ -5468,7 +5486,7 @@ const pacientesFiltrados =
               "
             >
 
-              Doctor
+              {es ? "Doctor" : "Doctor"}
 
             </label>
 
@@ -5514,7 +5532,7 @@ const pacientesFiltrados =
 
               <option value="">
 
-                Seleccionar Doctor
+                {es ? "Seleccionar Doctor" : "Select Doctor"}
 
               </option>
 
@@ -5559,7 +5577,7 @@ const pacientesFiltrados =
               "
             >
 
-              Tratamiento
+              {es ? "Tratamiento" : "Treatment"}
 
             </label>
 
@@ -5757,7 +5775,7 @@ const pacientesFiltrados =
               "
             >
 
-              Estado
+              {es ? "Estado" : "Status"}
 
             </label>
 
@@ -5786,7 +5804,7 @@ const pacientesFiltrados =
 
               <option value="Pendiente">
 
-                Pendiente
+                {es ? "Pendiente" : "Pending"}
 
               </option>
 
@@ -5885,7 +5903,7 @@ const pacientesFiltrados =
             "
           >
 
-            Cancelar
+            {es ? "Cancelar" : "Cancel"}
 
           </button>
 
@@ -5903,7 +5921,7 @@ const pacientesFiltrados =
             "
           >
 
-            Guardar Tratamiento
+            {es ? "Guardar Tratamiento" : "Save Treatment"}
 
           </button>
 
@@ -5945,7 +5963,7 @@ const pacientesFiltrados =
             mb-2
           "
         >
-          Registrar cobro
+          {es ? "Registrar cobro" : "Record payment"}
         </h2>
 
         <p
@@ -5978,7 +5996,7 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-              Método de pago
+              {es ? "Método de pago" : "Payment method"}
             </label>
 
             <select
@@ -6000,19 +6018,19 @@ const pacientesFiltrados =
               "
             >
               <option value="">
-                Seleccionar método
+                {es ? "Seleccionar método" : "Select method"}
               </option>
 
               <option value="Efectivo">
-                Efectivo
+                {es ? "Efectivo" : "Cash"}
               </option>
 
               <option value="Tarjeta">
-                Tarjeta
+                {es ? "Tarjeta" : "Card"}
               </option>
 
               <option value="Transferencia">
-                Transferencia
+                {es ? "Transferencia" : "Bank transfer"}
               </option>
 
               <option value="Cheque">
@@ -6031,7 +6049,7 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-              Moneda
+              {es ? "Moneda" : "Currency"}
             </label>
 
             <select
@@ -6107,7 +6125,7 @@ const pacientesFiltrados =
           mint-text-brand
         "
       >
-        Tipo de cambio:
+        {es ? "Tipo de cambio:" : "Exchange rate:"}
         {" "}
         1 USD = ${tipoCambioCobro.toFixed(2)} MXN
       </p>
@@ -6154,7 +6172,7 @@ const pacientesFiltrados =
                 mb-2
               "
             >
-              Monto del cobro
+              {es ? "Monto del cobro" : "Payment amount"}
             </label>
 
             <input
@@ -6208,7 +6226,7 @@ const pacientesFiltrados =
                     mint-text-primary
                   "
                 >
-                  Descuento
+                  {es ? "Descuento" : "Discount"}
                 </p>
 
                 <p
@@ -6218,7 +6236,7 @@ const pacientesFiltrados =
                     mt-1
                   "
                 >
-                  No se registra como pago.
+                  {es ? "No se registra como pago." : "It is not recorded as a payment."}
                 </p>
               </div>
 
@@ -6323,7 +6341,7 @@ const pacientesFiltrados =
                   mint-text-secondary
                 "
               >
-                Descuento aplicado
+                {es ? "Descuento aplicado" : "Discount applied"}
               </span>
 
               <strong
@@ -6365,7 +6383,7 @@ const pacientesFiltrados =
                 disabled:cursor-not-allowed
               "
             >
-              Aplicar descuento
+              {es ? "Aplicar descuento" : "Apply discount"}
             </button>
           </div>
             )
@@ -6390,7 +6408,7 @@ const pacientesFiltrados =
                   mb-2
                 "
               >
-                Laboratorio
+                {es ? "Laboratorio" : "Laboratory"}
               </label>
 
               <input
@@ -6426,7 +6444,7 @@ const pacientesFiltrados =
                   mb-2
                 "
               >
-                Especialista
+                {es ? "Especialista" : "Specialist"}
               </label>
 
               <input
@@ -6463,7 +6481,7 @@ const pacientesFiltrados =
       mb-2
     "
   >
-    Comisión banco
+    {es ? "Comisión banco" : "Bank fee"}
   </label>
 
   <input
@@ -6542,7 +6560,7 @@ const pacientesFiltrados =
                   mint-text-secondary
                 "
               >
-                Total actual
+                {es ? "Total actual" : "Current total"}
               </span>
 
               <strong
@@ -6579,7 +6597,7 @@ const pacientesFiltrados =
                         mint-text-secondary
                       "
                     >
-                      Descuento nuevo
+                      {es ? "Descuento nuevo" : "New discount"}
                     </span>
 
                     <strong
@@ -6613,7 +6631,7 @@ const pacientesFiltrados =
                         mint-text-secondary
                       "
                     >
-                      Total a cobrar
+                      {es ? "Total a cobrar" : "Amount to charge"}
                     </span>
 
                     <strong
@@ -6643,7 +6661,7 @@ const pacientesFiltrados =
               "
             >
               <span>
-                Total tratamiento
+                {es ? "Total tratamiento" : "Treatment total"}
               </span>
 
               <strong
@@ -6688,7 +6706,7 @@ const pacientesFiltrados =
                   mint-text-secondary
                 "
               >
-                Pagado
+                {es ? "Pagado" : "Paid"}
               </span>
 
               <strong
@@ -6733,7 +6751,7 @@ const pacientesFiltrados =
       mint-text-secondary
     "
   >
-    Pendiente
+    {es ? "Pendiente" : "Pending"}
   </span>
 
   <div
@@ -6894,7 +6912,7 @@ const pacientesFiltrados =
               text-sm
             "
           >
-            Cancelar
+            {es ? "Cancelar" : "Cancel"}
           </button>
 
           <button
@@ -6912,7 +6930,7 @@ const pacientesFiltrados =
               text-sm
             "
           >
-            Registrar cobro
+            {es ? "Registrar cobro" : "Record payment"}
           </button>
 
         </div>
@@ -6949,7 +6967,7 @@ const pacientesFiltrados =
           mb-5
         ">
 
-          Nueva Cita
+          {es ? "Nueva Cita" : "New Appointment"}
 
         </h2>
 
@@ -7034,11 +7052,11 @@ const pacientesFiltrados =
   >
 
     <option value="pendiente">
-      Pendiente
+      {es ? "Pendiente" : "Pending"}
     </option>
 
     <option value="confirmada">
-      Confirmada
+      {es ? "Confirmada" : "Confirmed"}
     </option>
 
     <option value="cancelada">
@@ -7046,7 +7064,7 @@ const pacientesFiltrados =
     </option>
 
     <option value="tratamiento">
-      Tratamiento
+      {es ? "Tratamiento" : "Treatment"}
     </option>
 
   </select>
@@ -7070,9 +7088,7 @@ const pacientesFiltrados =
       p-3
     "
 
-    placeholder="
-      Doctor
-    "
+    placeholder={es ? "Doctor" : "Doctor"}
 
   />
 
@@ -7103,7 +7119,7 @@ const pacientesFiltrados =
 
           >
 
-            Cancelar
+            {es ? "Cancelar" : "Cancel"}
 
           </button>
 
@@ -7123,7 +7139,7 @@ const pacientesFiltrados =
 
           >
 
-            Guardar
+            {es ? "Guardar" : "Save"}
 
           </button>
 
@@ -7190,7 +7206,7 @@ const pacientesFiltrados =
       );
 
       alert(
-        "Error guardando odontograma"
+        es ? "Error guardando odontograma" : "Error saving odontogram"
       );
 
       return false;
@@ -7266,7 +7282,7 @@ const pacientesFiltrados =
           mint-text-primary
         ">
 
-          Historial Médico
+          {es ? "Historial Médico" : "Medical History"}
 
         </h3>
 
@@ -7288,7 +7304,7 @@ const pacientesFiltrados =
               text-sm
               mint-text-secondary
             ">
-              Fuma
+              {es ? "Fuma" : "Smokes"}
             </p>
 
             <p className="
@@ -7300,7 +7316,7 @@ const pacientesFiltrados =
                   ?.historial_clinico
                   ?.fuma
 
-                  ? "Sí"
+                  ? (es ? "Sí" : "Yes")
 
                   : "No"
               }
@@ -7318,7 +7334,7 @@ const pacientesFiltrados =
               text-sm
               mint-text-secondary
             ">
-              Consume Alcohol
+              {es ? "Consume alcohol" : "Consumes alcohol"}
             </p>
 
             <p className="
@@ -7330,7 +7346,7 @@ const pacientesFiltrados =
                   ?.historial_clinico
                   ?.alcohol
 
-                  ? "Sí"
+                  ? (es ? "Sí" : "Yes")
 
                   : "No"
               }
@@ -7348,7 +7364,7 @@ const pacientesFiltrados =
               text-sm
               mint-text-secondary
             ">
-              Embarazo
+              {es ? "Embarazo" : "Pregnancy"}
             </p>
 
             <p className="
@@ -7360,7 +7376,7 @@ const pacientesFiltrados =
                   ?.historial_clinico
                   ?.embarazo
 
-                  ? "Sí"
+                  ? (es ? "Sí" : "Yes")
 
                   : "No"
               }
@@ -7378,7 +7394,7 @@ const pacientesFiltrados =
               text-sm
               mint-text-secondary
             ">
-              Consentimiento
+              {es ? "Consentimiento" : "Consent"}
             </p>
 
             <p className="
@@ -7390,7 +7406,7 @@ const pacientesFiltrados =
                   ?.historial_clinico
                   ?.consentimiento
 
-                  ? "Firmado"
+                  ? (es ? "Firmado" : "Signed")
 
                   : "No"
               }
@@ -7411,7 +7427,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mb-1
             ">
-              Alergias
+              {es ? "Alergias" : "Allergies"}
             </p>
 
             <div className="
@@ -7438,7 +7454,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mb-1
             ">
-              Enfermedades
+              {es ? "Enfermedades" : "Conditions"}
             </p>
 
             <div className="
@@ -7465,7 +7481,7 @@ const pacientesFiltrados =
               mint-text-secondary
               mb-1
             ">
-              Medicamentos
+              {es ? "Medicamentos" : "Medications"}
             </p>
 
             <div className="
@@ -7511,7 +7527,7 @@ const pacientesFiltrados =
               font-bold
               mint-text-primary
             ">
-              Historial de cambios
+              {es ? "Historial de cambios" : "Change history"}
             </h3>
 
             <p className="
@@ -7519,8 +7535,8 @@ const pacientesFiltrados =
               mint-text-secondary
               mt-1
             ">
-              Versiones anteriores del historial médico.
-              Este registro es de solo lectura.
+              {es ? "Versiones anteriores del historial médico." : "Previous versions of the medical history."}
+              {es ? "Este registro es de solo lectura." : "This record is read-only."}
             </p>
 
           </div>
@@ -7543,8 +7559,8 @@ const pacientesFiltrados =
             {" "}
             {
               historialMedicoCambios.length === 1
-                ? "versión"
-                : "versiones"
+                ? (es ? "versión" : "version")
+                : (es ? "versiones" : "versions")
             }
           </span>
 
@@ -7562,7 +7578,7 @@ const pacientesFiltrados =
               text-sm
               mint-text-secondary
             ">
-              Cargando historial de cambios...
+              {es ? "Cargando historial de cambios..." : "Loading change history..."}
             </div>
 
           ) : historialMedicoCambios.length === 0 ? (
@@ -7579,7 +7595,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-primary
               ">
-                Sin cambios registrados
+                {es ? "Sin cambios registrados" : "No changes recorded"}
               </p>
 
               <p className="
@@ -7587,9 +7603,9 @@ const pacientesFiltrados =
                 mint-text-secondary
                 mt-1
               ">
-                Cuando se modifique información médica,
-                la versión anterior aparecerá aquí
-                automáticamente.
+                {es
+                  ? "Cuando se modifique información médica, la versión anterior aparecerá aquí automáticamente."
+                  : "When medical information changes, the previous version will appear here automatically."}
               </p>
 
             </div>
@@ -7624,11 +7640,11 @@ const pacientesFiltrados =
                     const campos = [
                       {
                         clave: "alergias",
-                        etiqueta: "Alergias",
+                        etiqueta: es ? "Alergias" : "Allergies",
                       },
                       {
                         clave: "enfermedades",
-                        etiqueta: "Enfermedades",
+                        etiqueta: es ? "Enfermedades" : "Conditions",
                       },
                       {
                         clave: "medicamentos",
@@ -7793,14 +7809,14 @@ const pacientesFiltrados =
                           {
                             [
                               [
-                                "Alergias",
+                                es ? "Alergias" : "Allergies",
                                 valorHistorial(
                                   cambio,
                                   "alergias"
                                 ),
                               ],
                               [
-                                "Enfermedades",
+                                es ? "Enfermedades" : "Conditions",
                                 valorHistorial(
                                   cambio,
                                   "enfermedades"
@@ -7899,7 +7915,7 @@ const pacientesFiltrados =
     mint-text-primary
   ">
 
-    Citas
+    {es ? "Citas" : "Appointments"}
 
   </h3>
 
@@ -7930,7 +7946,7 @@ const pacientesFiltrados =
 
       >
 
-        + Agregar
+        {es ? "+ Agregar" : "+ Add"}
 
       </button>
 
@@ -7962,7 +7978,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-secondary
               ">
-                Fecha
+                {es ? "Fecha" : "Date"}
               </th>
 
               <th className="
@@ -7972,7 +7988,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-secondary
               ">
-                Hora
+                {es ? "Hora" : "Time"}
               </th>
 
               <th className="
@@ -7982,7 +7998,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-secondary
               ">
-                Estado
+                {es ? "Estado" : "Status"}
               </th>
 
               <th className="
@@ -7992,7 +8008,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-secondary
               ">
-                Doctor
+                {es ? "Doctor" : "Doctor"}
               </th>
 
               <th className="
@@ -8002,7 +8018,7 @@ const pacientesFiltrados =
                 font-semibold
                 mint-text-secondary
               ">
-                Acciones
+                {es ? "Acciones" : "Actions"}
               </th>
 
             </tr>
@@ -8028,7 +8044,7 @@ const pacientesFiltrados =
                       "
                     >
 
-                      No hay citas registradas
+                      {es ? "No hay citas registradas" : "No appointments recorded"}
 
                     </td>
 
@@ -8089,7 +8105,7 @@ const pacientesFiltrados =
                         mint-text-secondary
                       ">
 
-                        {cita.estado}
+                        {textoEstado(cita.estado)}
 
                       </td>
 
@@ -8132,7 +8148,7 @@ const pacientesFiltrados =
 
                                 >
 
-                                  Editar
+                                  {es ? "Editar" : "Edit"}
 
                                 </button>
 
@@ -8154,7 +8170,7 @@ const pacientesFiltrados =
 
                                 >
 
-                                  Eliminar
+                                  {es ? "Eliminar" : "Delete"}
 
                                 </button>
 
@@ -8201,7 +8217,7 @@ const pacientesFiltrados =
                   mint-text-primary
                 ">
 
-                  Radiografías / Fotos
+                  {es ? "Radiografías / Fotos" : "X-rays / Photos"}
 
                 </h3>
 
@@ -8235,7 +8251,7 @@ const pacientesFiltrados =
 
                     <img
                       src={imagenPreview}
-                      alt="Radiografía"
+                      alt={es ? "Radiografía" : "X-ray"}
                       className="
                         mt-5
                         rounded-2xl
@@ -8290,7 +8306,7 @@ const pacientesFiltrados =
                     text-sm
                   "
                 >
-                  Guardar
+                  {es ? "Guardar" : "Save"}
                 </button>
 
               </div>
@@ -8334,7 +8350,7 @@ const pacientesFiltrados =
                       mint-text-brand
                     "
                   >
-                    Pacientes
+                    {es ? "Pacientes" : "Patients"}
                   </p>
 
                   <h2
@@ -8345,7 +8361,7 @@ const pacientesFiltrados =
                       mt-1
                     "
                   >
-                    Buscar expediente
+                    {es ? "Buscar expediente" : "Search patient records"}
                   </h2>
 
                   <p
@@ -8355,8 +8371,8 @@ const pacientesFiltrados =
                       mt-2
                     "
                   >
-                    Encuentra rápidamente un paciente por nombre
-                    o número de teléfono.
+                    {es ? "Encuentra rápidamente un paciente por nombre" : "Quickly find a patient by name"}
+                    {es ? "o número de teléfono." : "or phone number."}
                   </p>
 
                 </div>
@@ -8405,7 +8421,7 @@ const pacientesFiltrados =
                       mint-text-muted
                     "
                   >
-                    Pacientes registrados
+                    {es ? "Pacientes registrados" : "Registered patients"}
                   </p>
 
                   <p
@@ -8435,7 +8451,7 @@ const pacientesFiltrados =
                       mint-text-muted
                     "
                   >
-                    Nuevos este mes
+                    {es ? "Nuevos este mes" : "New this month"}
                   </p>
 
                   <p
@@ -8465,7 +8481,7 @@ const pacientesFiltrados =
                       mint-text-muted
                     "
                   >
-                    Con saldo pendiente
+                    {es ? "Con saldo pendiente" : "With outstanding balance"}
                   </p>
 
                   <p
@@ -8495,7 +8511,7 @@ const pacientesFiltrados =
                       mint-text-muted
                     "
                   >
-                    Tratamientos pendientes
+                    {es ? "Tratamientos pendientes" : "Pending treatments"}
                   </p>
 
                   <p
@@ -8540,7 +8556,7 @@ const pacientesFiltrados =
                         mint-label
                       "
                     >
-                      Buscar por nombre
+                      {es ? "Buscar por nombre" : "Search by name"}
                     </label>
 
                     <input
@@ -8550,7 +8566,7 @@ const pacientesFiltrados =
                           e.target.value
                         )
                       }
-                      placeholder="Ej. María López"
+                      placeholder={es ? "Ej. María López" : "E.g. Maria Lopez"}
                       className="
                         mint-input
                         w-full
@@ -8573,7 +8589,7 @@ const pacientesFiltrados =
                         mint-label
                       "
                     >
-                      Buscar por teléfono
+                      {es ? "Buscar por teléfono" : "Search by phone"}
                     </label>
 
                     <input
@@ -8583,7 +8599,7 @@ const pacientesFiltrados =
                           e.target.value
                         )
                       }
-                      placeholder="Ej. 6531234567"
+                      placeholder={es ? "Ej. 6531234567" : "E.g. 6531234567"}
                       className="
                         mint-input
                         w-full
@@ -8615,7 +8631,7 @@ const pacientesFiltrados =
                       mint-text-primary
                     "
                   >
-                    Resultados
+                    {es ? "Resultados" : "Results"}
                   </h3>
 
                   <span
@@ -8624,7 +8640,7 @@ const pacientesFiltrados =
                       mint-badge-primary
                     "
                   >
-                    {pacientesFiltrados.length} pacientes
+                    {pacientesFiltrados.length} {es ? "pacientes" : "patients"}
                   </span>
 
                 </div>
@@ -8640,7 +8656,7 @@ const pacientesFiltrados =
                           py-10
                         "
                       >
-                        No encontramos pacientes con esos datos.
+                        {es ? "No encontramos pacientes con esos datos." : "No patients found with that information."}
                       </div>
 
                     )
@@ -8753,7 +8769,7 @@ const pacientesFiltrados =
                                       mint-text-muted
                                     "
                                   >
-                                    Expediente
+                                    {es ? "Expediente" : "Record"}
                                   </p>
 
                                   <p
@@ -8783,7 +8799,7 @@ const pacientesFiltrados =
                                     shrink-0
                                   "
                                 >
-                                  Abrir expediente
+                                  {es ? "Abrir expediente" : "Open record"}
                                 </button>
 
                               </div>
@@ -8857,7 +8873,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-muted
                   ">
-                    Expediente #{pacienteAbierto.id}
+                    {es ? "Expediente" : "Record"} #{pacienteAbierto.id}
                   </p>
 
                   <h3 className="
@@ -8866,7 +8882,7 @@ const pacientesFiltrados =
                     mint-text-primary
                     mt-1
                   ">
-                    Editar paciente
+                    {es ? "Editar paciente" : "Edit patient"}
                   </h3>
 
                   <p className="
@@ -8874,7 +8890,7 @@ const pacientesFiltrados =
                     mint-text-secondary
                     mt-1
                   ">
-                    Actualiza los datos generales del paciente.
+                    {es ? "Actualiza los datos generales del paciente." : "Update the patient’s general information."}
                   </p>
 
                 </div>
@@ -8921,7 +8937,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Nombre
+                    {es ? "Nombre" : "Name"}
                   </span>
 
                   <input
@@ -8962,7 +8978,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Teléfono
+                    {es ? "Teléfono" : "Phone"}
                   </span>
 
                   <input
@@ -9003,7 +9019,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Correo
+                    {es ? "Correo" : "Email"}
                   </span>
 
                   <input
@@ -9044,7 +9060,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Edad
+                    {es ? "Edad" : "Age"}
                   </span>
 
                   <input
@@ -9085,7 +9101,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Sexo
+                    {es ? "Sexo" : "Sex"}
                   </span>
 
                   <input
@@ -9127,7 +9143,7 @@ const pacientesFiltrados =
                     font-semibold
                     mint-text-primary
                   ">
-                    Dirección
+                    {es ? "Dirección" : "Address"}
                   </span>
 
                   <input
@@ -9184,7 +9200,7 @@ const pacientesFiltrados =
                     text-sm
                   "
                 >
-                  Cancelar
+                  {es ? "Cancelar" : "Cancel"}
                 </button>
 
                 <button
@@ -9200,7 +9216,7 @@ const pacientesFiltrados =
                     text-sm
                   "
                 >
-                  Guardar cambios
+                  {es ? "Guardar cambios" : "Save changes"}
                 </button>
 
               </div>
@@ -9280,7 +9296,7 @@ const pacientesFiltrados =
                     mint-text-brand
                   "
                 >
-                  Registro de pacientes
+                  {es ? "Registro de pacientes" : "Patient registration"}
                 </p>
 
                 <h2
@@ -9291,7 +9307,7 @@ const pacientesFiltrados =
                     mt-2
                   "
                 >
-                  Código QR
+                  {es ? "Código QR" : "QR Code"}
                 </h2>
 
                 <p
@@ -9301,8 +9317,8 @@ const pacientesFiltrados =
                     mt-2
                   "
                 >
-                  Escanea este código desde un teléfono
-                  para abrir el formulario de registro.
+                  {es ? "Escanea este código desde un teléfono" : "Scan this code from a phone"}
+                  {es ? "para abrir el formulario de registro." : "to open the registration form."}
                 </p>
 
                 <div

@@ -18,6 +18,9 @@ import SeguridadConfig
 import BitacoraConfig
   from "../components/configuracion/BitacoraConfig";
 
+import AjustesConfig
+  from "../components/configuracion/AjustesConfig";
+
 import ConfiguracionFinanzas
   from "../components/finanzas/ConfiguracionFinanzas";
 
@@ -33,7 +36,8 @@ type Seccion =
   | "seguridad"
   | "bitacora"
   | "clinica"
-  | "finanzas";
+  | "finanzas"
+  | "ajustes";
 
 export default function Configuracion() {
 
@@ -72,6 +76,14 @@ export default function Configuracion() {
     esAdmin ||
     permisos?.ver_bitacora ===
       true;
+
+  /*
+   * Ajustes contiene preferencias
+   * personales de MintOS, como
+   * idioma y apariencia.
+   */
+  const puedeVerAjustes =
+    true;
 
   const finanzas =
     useFinanzas();
@@ -150,6 +162,14 @@ export default function Configuracion() {
     seccion =
       "finanzas";
 
+  } else if (
+    parametroSeccion ===
+    "ajustes"
+  ) {
+
+    seccion =
+      "ajustes";
+
   }
 
   function tieneAcceso(
@@ -210,6 +230,15 @@ export default function Configuracion() {
 
     }
 
+    if (
+      seccionEvaluada ===
+      "ajustes"
+    ) {
+
+      return puedeVerAjustes;
+
+    }
+
     return false;
 
   }
@@ -259,6 +288,13 @@ export default function Configuracion() {
 
     primeraSeccionPermitida =
       "seguridad";
+
+  } else if (
+    puedeVerAjustes
+  ) {
+
+    primeraSeccionPermitida =
+      "ajustes";
 
   }
 
@@ -413,6 +449,16 @@ export default function Configuracion() {
             }
 
           />
+
+        )
+      }
+
+      {
+        seccion ===
+          "ajustes" &&
+        puedeVerAjustes && (
+
+          <AjustesConfig />
 
         )
       }

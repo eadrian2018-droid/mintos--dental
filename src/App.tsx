@@ -309,16 +309,6 @@ export default function App() {
 
     permisos?.ver_comisiones === true;
 
-  const puedeVerConfiguracion =
-
-    permisos?.configurar_precios_costos === true ||
-
-    permisos?.configurar_comisiones === true ||
-
-    permisos?.administrar_usuarios === true ||
-
-    permisos?.ver_bitacora === true;
-
   return (
 
     <Routes>
@@ -627,20 +617,7 @@ export default function App() {
                 <Route
                   path="/configuracion"
                   element={
-
-                    puedeVerConfiguracion
-
-                      ? (
-                        <Configuracion />
-                      )
-
-                      : (
-                        <Navigate
-                          to="/dashboard"
-                          replace
-                        />
-                      )
-
+                    <Configuracion />
                   }
                 />
 
