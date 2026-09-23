@@ -2,7 +2,15 @@ import {
   Eye,
   FileText,
   Plus,
+  Search,
 } from "lucide-react";
+
+import {
+  useMemo,
+  useState,
+} from "react";
+
+import { useLanguage } from "../../context/LanguageContext";
 
 import type {
   Presupuesto,
@@ -28,6 +36,60 @@ export default function Presupuestos({
   onAbrirPresupuesto,
   puedeCrear = false,
 }: PresupuestosProps) {
+
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  const [
+    busqueda,
+    setBusqueda,
+  ] = useState("");
+
+  const presupuestosFiltrados = useMemo(
+    () => {
+      const termino = busqueda
+        .trim()
+        .toLocaleLowerCase(
+          es ? "es-MX" : "en-US"
+        );
+
+      if (!termino) {
+        return presupuestos;
+      }
+
+      return presupuestos.filter(
+        (presupuesto) => {
+          const numeroPresupuesto =
+            String(presupuesto.id);
+
+          const nombrePaciente =
+            (
+              presupuesto.paciente_nombre ||
+              presupuesto.nombre_paciente ||
+              ""
+            )
+              .trim()
+              .toLocaleLowerCase(
+                es ? "es-MX" : "en-US"
+              );
+
+          return (
+            numeroPresupuesto.includes(
+              termino
+            ) ||
+            nombrePaciente.includes(
+              termino
+            )
+          );
+        }
+      );
+    },
+    [
+      busqueda,
+      presupuestos,
+      es,
+    ]
+  );
 
   const formatoMonto =
     (
@@ -276,6 +338,70 @@ export default function Presupuestos({
 
         </div>
 
+        {presupuestos.length > 0 && (
+          <div
+            className="
+              px-6
+              py-4
+              border-b
+              border-[var(--mint-border)]
+              bg-[var(--mint-bg-soft)]
+            "
+          >
+            <div
+              className="
+                relative
+                w-full
+                sm:max-w-sm
+              "
+            >
+              <Search
+                size={17}
+                className="
+                  absolute
+                  left-3.5
+                  top-1/2
+                  -translate-y-1/2
+                  mint-text-muted
+                  pointer-events-none
+                "
+              />
+
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(e) =>
+                  setBusqueda(
+                    e.target.value
+                  )
+                }
+                placeholder={
+                  es
+                    ? "Buscar por número o paciente..."
+                    : "Search by number or patient..."
+                }
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg-card)]
+                  pl-10
+                  pr-4
+                  py-2.5
+                  text-sm
+                  mint-text-primary
+                  outline-none
+                  transition
+                  focus:border-[var(--mint-primary)]
+                  focus:ring-2
+                  focus:ring-[var(--mint-primary-soft)]
+                "
+              />
+            </div>
+          </div>
+        )}
+
         {
           presupuestos.length === 0
 
@@ -332,6 +458,64 @@ export default function Presupuestos({
                   para comenzar.
                 </p>
 
+              </div>
+
+            )
+
+            : presupuestosFiltrados.length === 0
+
+            ? (
+
+              <div
+                className="
+                  px-6
+                  py-12
+                  text-center
+                "
+              >
+                <div
+                  className="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-[var(--mint-primary-soft)]
+                    flex
+                    items-center
+                    justify-center
+                    mx-auto
+                  "
+                >
+                  <Search
+                    size={21}
+                    className="
+                      text-[var(--mint-primary)]
+                    "
+                  />
+                </div>
+
+                <p
+                  className="
+                    mt-4
+                    font-semibold
+                    mint-text-primary
+                  "
+                >
+                  {es
+                    ? "No encontramos presupuestos."
+                    : "No estimates found."}
+                </p>
+
+                <p
+                  className="
+                    text-sm
+                    mint-text-secondary
+                    mt-1
+                  "
+                >
+                  {es
+                    ? "Prueba con otro número o nombre de paciente."
+                    : "Try another estimate number or patient name."}
+                </p>
               </div>
 
             )
@@ -444,7 +628,7 @@ export default function Presupuestos({
                   <tbody>
 
                     {
-                      presupuestos.map(
+                      presupuestosFiltrados.map(
                         (
                           presupuesto
                         ) => (

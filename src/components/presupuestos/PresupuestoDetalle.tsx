@@ -6,8 +6,14 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
+import {
+  useEffect,
+  useState,
+} from "react";
+
 import jsPDF from "jspdf";
 import { useLanguage } from "../../context/LanguageContext";
+import { supabase } from "../../lib/supabase";
 
 import type {
   Presupuesto,
@@ -17,6 +23,12 @@ type PresupuestoConPaciente =
   Presupuesto & {
     paciente_nombre?: string;
   };
+
+type NombreCatalogo = {
+  id: number;
+  nombre: string;
+  nombre_en: string | null;
+};
 
 type PresupuestoDetalleProps = {
   presupuesto: PresupuestoConPaciente;
@@ -42,6 +54,104 @@ export default function PresupuestoDetalle({
   const es = language === "es";
   const documentoEnIngles =
     presupuesto.idioma === "en";
+
+  const [
+    nombresCatalogo,
+    setNombresCatalogo,
+  ] = useState<NombreCatalogo[]>([]);
+
+  useEffect(() => {
+    const idsCatalogo = Array.from(
+      new Set(
+        (presupuesto.items || [])
+          .map(
+            (item) =>
+              item.catalogo_tratamiento_id
+          )
+          .filter(
+            (id): id is number =>
+              typeof id === "number"
+          )
+      )
+    );
+
+    if (idsCatalogo.length === 0) {
+      setNombresCatalogo([]);
+      return;
+    }
+
+    let activo = true;
+
+    async function cargarNombresCatalogo() {
+      const {
+        data,
+        error,
+      } = await supabase
+        .from("catalogo_tratamientos")
+        .select("id, nombre, nombre_en")
+        .in("id", idsCatalogo);
+
+      if (error) {
+        console.error(
+          "Error cargando traducciones del catálogo:",
+          error
+        );
+        return;
+      }
+
+      if (activo) {
+        setNombresCatalogo(
+          (data || []) as NombreCatalogo[]
+        );
+      }
+    }
+
+    cargarNombresCatalogo();
+
+    return () => {
+      activo = false;
+    };
+  }, [presupuesto.items]);
+
+  const formatoFechaDocumento =
+    (
+      fecha: string
+    ) =>
+      new Date(
+        fecha
+      ).toLocaleDateString(
+        documentoEnIngles
+          ? "en-US"
+          : "es-MX",
+        {
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }
+      );
+
+  const nombreTratamientoDocumento =
+    (
+      item: NonNullable<Presupuesto["items"]>[number]
+    ) => {
+      if (!documentoEnIngles) {
+        return item.tratamiento;
+      }
+
+      const tratamientoCatalogo =
+        nombresCatalogo.find(
+          (tratamiento) =>
+            Number(tratamiento.id) ===
+            Number(
+              item.catalogo_tratamiento_id
+            )
+        );
+
+      return (
+        tratamientoCatalogo?.nombre_en?.trim() ||
+        item.tratamiento
+      );
+    };
 
   const formatoMonto =
     (
@@ -74,12 +184,11 @@ export default function PresupuestoDetalle({
 
   function generarPDF() {
 
-    const pdf =
-      new jsPDF(
-        "p",
-        "mm",
-        "a4"
-      );
+    const pdf = new jsPDF(
+      "p",
+      "mm",
+      "a4"
+    );
 
     const anchoPagina =
       pdf.internal.pageSize.getWidth();
@@ -87,79 +196,27 @@ export default function PresupuestoDetalle({
     const altoPagina =
       pdf.internal.pageSize.getHeight();
 
-    const margen = 16;
+    const margen = 15;
     const anchoContenido =
       anchoPagina - margen * 2;
 
-    const teal: [
-      number,
-      number,
-      number
-    ] = [
-      15,
-      118,
-      110,
-    ];
+    const tealOscuro: [number, number, number] =
+      [17, 94, 89];
 
-    const tealOscuro: [
-      number,
-      number,
-      number
-    ] = [
-      10,
-      79,
-      74,
-    ];
+    const slate: [number, number, number] =
+      [30, 41, 59];
 
-    const slate: [
-      number,
-      number,
-      number
-    ] = [
-      30,
-      41,
-      59,
-    ];
+    const muted: [number, number, number] =
+      [100, 116, 139];
 
-    const muted: [
-      number,
-      number,
-      number
-    ] = [
-      100,
-      116,
-      139,
-    ];
+    const border: [number, number, number] =
+      [226, 232, 240];
 
-    const border: [
-      number,
-      number,
-      number
-    ] = [
-      226,
-      232,
-      240,
-    ];
+    const soft: [number, number, number] =
+      [248, 250, 252];
 
-    const soft: [
-      number,
-      number,
-      number
-    ] = [
-      248,
-      250,
-      252,
-    ];
-
-    const tealSoft: [
-      number,
-      number,
-      number
-    ] = [
-      240,
-      253,
-      250,
-    ];
+    const tealSoft: [number, number, number] =
+      [240, 253, 250];
 
     const formatoPDF =
       (
@@ -168,7 +225,9 @@ export default function PresupuestoDetalle({
         `$${Number(
           valor || 0
         ).toLocaleString(
-          documentoEnIngles ? "en-US" : "es-MX",
+          documentoEnIngles
+            ? "en-US"
+            : "es-MX",
           {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -176,7 +235,10 @@ export default function PresupuestoDetalle({
         )} ${presupuesto.moneda}`;
 
     const etiquetaDientePDF =
-      (item: NonNullable<Presupuesto["items"]>[number]) => {
+      (
+        item: NonNullable<Presupuesto["items"]>[number]
+      ) => {
+
         if (item.arcada === "superior") {
           return documentoEnIngles
             ? "Upper arch"
@@ -199,7 +261,76 @@ export default function PresupuestoDetalle({
         return item.diente || "—";
       };
 
-    let y = 16;
+    const pacienteNombre =
+      presupuesto.paciente_nombre ||
+      presupuesto.nombre_paciente ||
+      `${documentoEnIngles ? "Patient" : "Paciente"} #${presupuesto.paciente_id}`;
+
+    let y = 14;
+
+    const dibujarEncabezadoPagina = () => {
+      pdf.setFillColor(...tealOscuro);
+      pdf.rect(0, 0, anchoPagina, 5, "F");
+
+      pdf.setTextColor(...tealOscuro);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(15);
+      pdf.text(
+        "Dra. Marlene Group",
+        margen,
+        17
+      );
+
+      pdf.setTextColor(...muted);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7.5);
+      pdf.text(
+        "Modern Dental Care in Mexico",
+        margen,
+        22
+      );
+
+      pdf.text(
+        "San Luis Río Colorado, Sonora, México  ·  +52 653 208 0587  ·  dra.marlene.v@gmail.com",
+        margen,
+        27
+      );
+
+      pdf.setTextColor(...tealOscuro);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(8);
+      pdf.text(
+        documentoEnIngles
+          ? "TREATMENT ESTIMATE"
+          : "PRESUPUESTO DE TRATAMIENTO",
+        anchoPagina - margen,
+        17,
+        {
+          align: "right",
+        }
+      );
+
+      pdf.setFontSize(12);
+      pdf.text(
+        `#${presupuesto.id}`,
+        anchoPagina - margen,
+        24,
+        {
+          align: "right",
+        }
+      );
+
+      pdf.setDrawColor(...border);
+      pdf.setLineWidth(0.3);
+      pdf.line(
+        margen,
+        32,
+        anchoPagina - margen,
+        32
+      );
+
+      y = 39;
+    };
 
     const nuevaPaginaSiHaceFalta =
       (
@@ -207,312 +338,152 @@ export default function PresupuestoDetalle({
       ) => {
 
         if (
-          y +
-          alturaNecesaria >
+          y + alturaNecesaria >
           altoPagina - 22
         ) {
-
           pdf.addPage();
-          y = 20;
-
+          dibujarEncabezadoPagina();
         }
-
       };
 
-    // Encabezado premium de la clínica
-    pdf.setFillColor(
-      ...tealOscuro
-    );
+    dibujarEncabezadoPagina();
 
+    // Información principal del presupuesto
+    pdf.setFillColor(...soft);
     pdf.roundedRect(
       margen,
       y,
       anchoContenido,
-      42,
-      4,
-      4,
-      "F"
-    );
-
-    pdf.setTextColor(
-      255,
-      255,
-      255
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      18
-    );
-
-    pdf.text(
-      "Dra. Marlene Group",
-      margen + 7,
-      y + 11
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setFontSize(
-      8.5
-    );
-
-    pdf.text(
-      "Modern Dental Care in Mexico",
-      margen + 7,
-      y + 17
-    );
-
-    pdf.setFontSize(
-      7.8
-    );
-
-    pdf.text(
-      "San Luis Río Colorado, Sonora, México",
-      margen + 7,
-      y + 25
-    );
-
-    pdf.text(
-      "+52 653 208 0587  ·  dra.marlene.v@gmail.com",
-      margen + 7,
-      y + 31
-    );
-
-    const bloqueDerechoX =
-      anchoPagina - margen - 7;
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      8
-    );
-
-    pdf.text(
-      documentoEnIngles ? "TREATMENT ESTIMATE" : "PRESUPUESTO",
-      bloqueDerechoX,
-      y + 10,
-      {
-        align: "right",
-      }
-    );
-
-    pdf.setFontSize(
-      17
-    );
-
-    pdf.text(
-      `#${presupuesto.id}`,
-      bloqueDerechoX,
-      y + 18,
-      {
-        align: "right",
-      }
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setFontSize(
-      7.8
-    );
-
-    pdf.text(
-      `Fecha: ${formatoFecha(
-        presupuesto.fecha
-      )}`,
-      bloqueDerechoX,
-      y + 27,
-      {
-        align: "right",
-      }
-    );
-
-    pdf.text(
-      `${documentoEnIngles ? "Currency" : "Moneda"}: ${presupuesto.moneda}`,
-      bloqueDerechoX,
-      y + 33,
-      {
-        align: "right",
-      }
-    );
-
-    y += 51;
-
-    // Información del paciente
-    pdf.setFillColor(
-      ...tealSoft
-    );
-
-    pdf.roundedRect(
-      margen,
-      y,
-      anchoContenido,
-      24,
+      25,
       3,
       3,
       "F"
     );
 
-    pdf.setTextColor(
-      ...teal
-    );
+    const mitad =
+      margen + anchoContenido / 2;
 
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      7.5
-    );
-
+    pdf.setTextColor(...muted);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7);
     pdf.text(
       documentoEnIngles ? "PATIENT" : "PACIENTE",
       margen + 6,
       y + 7
     );
 
-    pdf.setTextColor(
-      ...slate
-    );
-
-    pdf.setFontSize(
-      12
-    );
-
     pdf.text(
-      presupuesto.paciente_nombre ||
-        `${documentoEnIngles ? "Patient" : "Paciente"} #${presupuesto.paciente_id}`,
+      documentoEnIngles ? "DATE" : "FECHA",
+      mitad + 4,
+      y + 7
+    );
+
+    pdf.setTextColor(...slate);
+    pdf.setFontSize(10.5);
+    pdf.text(
+      pacienteNombre,
       margen + 6,
       y + 14
     );
 
-    pdf.setFont(
-      "helvetica",
-      "normal"
+    pdf.setFontSize(9);
+    pdf.text(
+      formatoFechaDocumento(
+        presupuesto.fecha
+      ),
+      mitad + 4,
+      y + 14
     );
 
-    pdf.setFontSize(
-      8
-    );
-
-    pdf.setTextColor(
-      ...muted
+    pdf.setTextColor(...muted);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.text(
+      documentoEnIngles
+        ? "Personalized treatment plan"
+        : "Plan de tratamiento personalizado",
+      margen + 6,
+      y + 20
     );
 
     pdf.text(
-      documentoEnIngles ? "Personalized dental treatment estimate" : "Propuesta personalizada de tratamiento dental",
-      margen + 6,
+      `${documentoEnIngles ? "Currency" : "Moneda"}: ${presupuesto.moneda}`,
+      mitad + 4,
       y + 20
     );
 
     y += 34;
 
-    // Tratamientos
-    pdf.setTextColor(
-      ...teal
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      9
-    );
-
+    // Título de tratamientos
+    pdf.setTextColor(...slate);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(10);
     pdf.text(
-      documentoEnIngles ? "TREATMENT DETAILS" : "DETALLE DEL TRATAMIENTO",
+      documentoEnIngles
+        ? "Treatment plan"
+        : "Plan de tratamiento",
       margen,
       y
     );
 
     y += 6;
 
-    pdf.setFillColor(
-      ...slate
-    );
-
+    // Encabezado de tabla
+    pdf.setFillColor(...tealOscuro);
     pdf.roundedRect(
       margen,
       y,
       anchoContenido,
-      10,
+      9,
       2,
       2,
       "F"
     );
 
     const xDiente = margen + 4;
-    const xTratamiento = margen + 25;
-    const xCantidad = anchoPagina - margen - 64;
-    const xPrecio = anchoPagina - margen - 35;
+    const xTratamiento = margen + 31;
+    const xCantidad = anchoPagina - margen - 67;
+    const xPrecio = anchoPagina - margen - 36;
     const xTotal = anchoPagina - margen - 4;
 
-    pdf.setTextColor(
-      255,
-      255,
-      255
-    );
-
-    pdf.setFontSize(
-      7.8
-    );
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7.2);
 
     pdf.text(
       documentoEnIngles ? "Tooth / Arch" : "Diente / Arcada",
       xDiente,
-      y + 6.5
+      y + 5.8
     );
 
     pdf.text(
       documentoEnIngles ? "Treatment" : "Tratamiento",
       xTratamiento,
-      y + 6.5
+      y + 5.8
     );
 
     pdf.text(
       documentoEnIngles ? "Qty." : "Cant.",
       xCantidad,
-      y + 6.5,
-      {
-        align: "right",
-      }
+      y + 5.8,
+      { align: "right" }
     );
 
     pdf.text(
-      documentoEnIngles ? "Price" : "Precio",
+      documentoEnIngles ? "Unit price" : "Precio",
       xPrecio,
-      y + 6.5,
-      {
-        align: "right",
-      }
+      y + 5.8,
+      { align: "right" }
     );
 
     pdf.text(
       "Total",
       xTotal,
-      y + 6.5,
-      {
-        align: "right",
-      }
+      y + 5.8,
+      { align: "right" }
     );
 
-    y += 14;
+    y += 12;
 
     (presupuesto.items || []).forEach(
       (
@@ -520,32 +491,29 @@ export default function PresupuestoDetalle({
         index
       ) => {
 
+        const nombreTratamiento =
+          nombreTratamientoDocumento(
+            item
+          );
+
         const lineasTratamiento =
           pdf.splitTextToSize(
-            item.tratamiento,
-            67
+            nombreTratamiento,
+            64
           );
 
         const alturaFila =
           Math.max(
             10,
-            lineasTratamiento.length *
-              4.4 +
-              4
+            lineasTratamiento.length * 4 + 4
           );
 
         nuevaPaginaSiHaceFalta(
-          alturaFila + 5
+          alturaFila + 3
         );
 
-        if (
-          index % 2 === 1
-        ) {
-
-          pdf.setFillColor(
-            ...soft
-          );
-
+        if (index % 2 === 1) {
+          pdf.setFillColor(...soft);
           pdf.rect(
             margen,
             y - 2,
@@ -553,21 +521,11 @@ export default function PresupuestoDetalle({
             alturaFila,
             "F"
           );
-
         }
 
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
-
-        pdf.setFontSize(
-          8.4
-        );
-
-        pdf.setTextColor(
-          ...slate
-        );
+        pdf.setTextColor(...slate);
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
 
         pdf.text(
           etiquetaDientePDF(item),
@@ -575,31 +533,20 @@ export default function PresupuestoDetalle({
           y + 4
         );
 
-        pdf.setFont(
-          "helvetica",
-          "bold"
-        );
-
+        pdf.setFont("helvetica", "bold");
         pdf.text(
           lineasTratamiento,
           xTratamiento,
           y + 4
         );
 
-        pdf.setFont(
-          "helvetica",
-          "normal"
-        );
+        pdf.setFont("helvetica", "normal");
 
         pdf.text(
-          String(
-            item.cantidad
-          ),
+          String(item.cantidad),
           xCantidad,
           y + 4,
-          {
-            align: "right",
-          }
+          { align: "right" }
         );
 
         pdf.text(
@@ -608,33 +555,23 @@ export default function PresupuestoDetalle({
           ),
           xPrecio,
           y + 4,
-          {
-            align: "right",
-          }
+          { align: "right" }
         );
 
-        pdf.setFont(
-          "helvetica",
-          "bold"
-        );
-
+        pdf.setFont("helvetica", "bold");
         pdf.text(
           formatoPDF(
             item.total
           ),
           xTotal,
           y + 4,
-          {
-            align: "right",
-          }
+          { align: "right" }
         );
 
         y += alturaFila;
 
-        pdf.setDrawColor(
-          ...border
-        );
-
+        pdf.setDrawColor(...border);
+        pdf.setLineWidth(0.2);
         pdf.line(
           margen,
           y - 2,
@@ -642,327 +579,225 @@ export default function PresupuestoDetalle({
           y - 2
         );
 
-        y += 2;
-
+        y += 1;
       }
     );
 
+    y += 5;
+
+    // Resumen y notas en una composición más compacta
+    const anchoResumen = 78;
+    const gap = 7;
+    const anchoNotas =
+      anchoContenido - anchoResumen - gap;
+
+    const notasTexto =
+      presupuesto.notas?.trim() || "";
+
+    const lineasNotas =
+      notasTexto
+        ? pdf.splitTextToSize(
+            notasTexto,
+            anchoNotas - 12
+          )
+        : [];
+
+    const alturaBloque =
+      Math.max(
+        45,
+        lineasNotas.length * 4 + 18
+      );
+
     nuevaPaginaSiHaceFalta(
-      56
+      alturaBloque + 8
     );
 
-    y += 7;
+    // Notas / observaciones
+    pdf.setDrawColor(...border);
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(
+      margen,
+      y,
+      anchoNotas,
+      alturaBloque,
+      3,
+      3,
+      "FD"
+    );
 
-    // Resumen de inversión
+    pdf.setTextColor(...tealOscuro);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7.5);
+    pdf.text(
+      documentoEnIngles
+        ? "NOTES"
+        : "NOTAS",
+      margen + 6,
+      y + 8
+    );
+
+    pdf.setTextColor(...slate);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+
+    if (lineasNotas.length > 0) {
+      pdf.text(
+        lineasNotas,
+        margen + 6,
+        y + 15
+      );
+    } else {
+      pdf.setTextColor(...muted);
+      pdf.text(
+        documentoEnIngles
+          ? "No additional notes."
+          : "Sin notas adicionales.",
+        margen + 6,
+        y + 15
+      );
+    }
+
+    // Totales
     const xResumen =
-      anchoPagina -
-      margen -
-      82;
+      margen + anchoNotas + gap;
 
-    const anchoResumen = 82;
-
-    pdf.setFillColor(
-      ...tealSoft
-    );
-
+    pdf.setFillColor(...tealSoft);
     pdf.roundedRect(
       xResumen,
       y,
       anchoResumen,
-      45,
+      alturaBloque,
       3,
       3,
       "F"
     );
 
-    pdf.setTextColor(
-      ...tealOscuro
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      7.5
-    );
-
+    pdf.setTextColor(...tealOscuro);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7.5);
     pdf.text(
-      documentoEnIngles ? "SUMMARY" : "RESUMEN",
+      documentoEnIngles
+        ? "ESTIMATE SUMMARY"
+        : "RESUMEN",
       xResumen + 6,
-      y + 7
+      y + 8
     );
 
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setFontSize(
-      8.5
-    );
-
-    pdf.setTextColor(
-      ...muted
-    );
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8);
+    pdf.setTextColor(...muted);
 
     pdf.text(
       "Subtotal",
       xResumen + 6,
-      y + 15
+      y + 17
     );
 
-    pdf.setTextColor(
-      ...slate
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
+    pdf.setTextColor(...slate);
+    pdf.setFont("helvetica", "bold");
     pdf.text(
       formatoPDF(
         presupuesto.subtotal
       ),
-      xResumen +
-        anchoResumen -
-        6,
-      y + 15,
-      {
-        align: "right",
-      }
+      xResumen + anchoResumen - 6,
+      y + 17,
+      { align: "right" }
     );
 
-    pdf.setTextColor(
-      ...muted
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setFontSize(
-      8.5
-    );
-
+    pdf.setTextColor(...muted);
+    pdf.setFont("helvetica", "normal");
     pdf.text(
-      documentoEnIngles ? "Discount" : "Descuento",
+      documentoEnIngles
+        ? "Discount"
+        : "Descuento",
       xResumen + 6,
-      y + 23
+      y + 25
     );
 
-    pdf.setTextColor(
-      ...slate
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
+    pdf.setTextColor(...slate);
+    pdf.setFont("helvetica", "bold");
     pdf.text(
-      `-${formatoPDF(
-        presupuesto.descuento || 0
-      )}`,
-      xResumen +
-        anchoResumen -
-        6,
-      y + 23,
-      {
-        align: "right",
-      }
+      presupuesto.descuento > 0
+        ? `-${formatoPDF(
+            presupuesto.descuento
+          )}`
+        : formatoPDF(0),
+      xResumen + anchoResumen - 6,
+      y + 25,
+      { align: "right" }
     );
 
-    pdf.setDrawColor(
-      ...border
-    );
-
+    pdf.setDrawColor(...border);
     pdf.line(
       xResumen + 6,
-      y + 29,
-      xResumen +
-        anchoResumen -
-        6,
-      y + 29
+      y + 31,
+      xResumen + anchoResumen - 6,
+      y + 31
     );
 
-    pdf.setTextColor(
-      ...tealOscuro
-    );
-
-    pdf.setFontSize(
-      11
-    );
-
+    pdf.setTextColor(...tealOscuro);
+    pdf.setFontSize(8);
     pdf.text(
       "TOTAL",
       xResumen + 6,
       y + 39
     );
 
+    pdf.setFontSize(11);
     pdf.text(
       formatoPDF(
         presupuesto.total
       ),
-      xResumen +
-        anchoResumen -
-        6,
+      xResumen + anchoResumen - 6,
       y + 39,
-      {
-        align: "right",
-      }
+      { align: "right" }
     );
 
-    y += 55;
+    y += alturaBloque + 8;
 
-    // Notas del presupuesto
-    if (
-      presupuesto.notas
-    ) {
+    // Información importante
+    nuevaPaginaSiHaceFalta(27);
 
-      const lineasNotas =
-        pdf.splitTextToSize(
-          presupuesto.notas,
-          anchoContenido - 12
-        );
-
-      const alturaNotas =
-        Math.max(
-          24,
-          lineasNotas.length *
-            4.3 +
-            15
-        );
-
-      nuevaPaginaSiHaceFalta(
-        alturaNotas + 8
-      );
-
-      pdf.setFillColor(
-        ...soft
-      );
-
-      pdf.roundedRect(
-        margen,
-        y,
-        anchoContenido,
-        alturaNotas,
-        3,
-        3,
-        "F"
-      );
-
-      pdf.setTextColor(
-        ...teal
-      );
-
-      pdf.setFont(
-        "helvetica",
-        "bold"
-      );
-
-      pdf.setFontSize(
-        8
-      );
-
-      pdf.text(
-        documentoEnIngles ? "NOTES AND OBSERVATIONS" : "NOTAS Y OBSERVACIONES",
-        margen + 6,
-        y + 8
-      );
-
-      pdf.setTextColor(
-        ...slate
-      );
-
-      pdf.setFont(
-        "helvetica",
-        "normal"
-      );
-
-      pdf.setFontSize(
-        8.5
-      );
-
-      pdf.text(
-        lineasNotas,
-        margen + 6,
-        y + 15
-      );
-
-      y += alturaNotas + 9;
-
-    }
-
-    // Aviso profesional
-    nuevaPaginaSiHaceFalta(
-      32
-    );
-
-    pdf.setDrawColor(
-      ...teal
-    );
-
-    pdf.setLineWidth(
-      0.7
-    );
-
-    pdf.line(
+    pdf.setFillColor(...soft);
+    pdf.roundedRect(
       margen,
       y,
-      margen,
-      y + 20
+      anchoContenido,
+      22,
+      3,
+      3,
+      "F"
     );
 
-    pdf.setTextColor(
-      ...slate
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "bold"
-    );
-
-    pdf.setFontSize(
-      8
-    );
-
+    pdf.setTextColor(...tealOscuro);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(7.5);
     pdf.text(
-      documentoEnIngles ? "Important information" : "Información importante",
-      margen + 5,
-      y + 5
-    );
-
-    pdf.setFont(
-      "helvetica",
-      "normal"
-    );
-
-    pdf.setTextColor(
-      ...muted
-    );
-
-    pdf.setFontSize(
-      7.8
+      documentoEnIngles
+        ? "IMPORTANT INFORMATION"
+        : "INFORMACIÓN IMPORTANTE",
+      margen + 6,
+      y + 7
     );
 
     const aviso =
       pdf.splitTextToSize(
         documentoEnIngles
-          ? "This estimate applies to the treatments described and may be adjusted if additional needs are identified during the clinical evaluation. Our team is available to answer any questions before treatment begins."
-          : "Este presupuesto corresponde a los tratamientos descritos y puede ajustarse si durante la evaluación clínica se identifican necesidades adicionales. Nuestro equipo está disponible para resolver cualquier duda antes de iniciar su tratamiento.",
-        anchoContenido - 8
+          ? "This estimate applies to the treatments described and may be adjusted if additional needs are identified during the clinical evaluation. Please contact our team with any questions before treatment begins."
+          : "Este presupuesto corresponde a los tratamientos descritos y puede ajustarse si durante la evaluación clínica se identifican necesidades adicionales. Contáctanos si tienes alguna duda antes de iniciar el tratamiento.",
+        anchoContenido - 12
       );
 
+    pdf.setTextColor(...muted);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
     pdf.text(
       aviso,
-      margen + 5,
-      y + 11
+      margen + 6,
+      y + 13
     );
 
+    // Pie de página
     const totalPaginas =
       pdf.getNumberOfPages();
 
@@ -972,66 +807,39 @@ export default function PresupuestoDetalle({
       pagina++
     ) {
 
-      pdf.setPage(
-        pagina
-      );
+      pdf.setPage(pagina);
 
-      pdf.setDrawColor(
-        ...border
-      );
-
-      pdf.setLineWidth(
-        0.2
-      );
-
+      pdf.setDrawColor(...border);
+      pdf.setLineWidth(0.2);
       pdf.line(
         margen,
-        altoPagina - 16,
+        altoPagina - 15,
         anchoPagina - margen,
-        altoPagina - 16
+        altoPagina - 15
       );
 
-      pdf.setFont(
-        "helvetica",
-        "normal"
-      );
-
-      pdf.setFontSize(
-        7.2
-      );
-
-      pdf.setTextColor(
-        ...muted
-      );
+      pdf.setTextColor(...muted);
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(7);
 
       pdf.text(
         "Dra. Marlene Group · San Luis Río Colorado, Sonora, México",
         margen,
-        altoPagina - 10
-      );
-
-      pdf.text(
-        "+52 653 208 0587 · dra.marlene.v@gmail.com",
-        margen,
-        altoPagina - 6
+        altoPagina - 9
       );
 
       pdf.text(
         `${documentoEnIngles ? "Page" : "Página"} ${pagina} ${documentoEnIngles ? "of" : "de"} ${totalPaginas}`,
         anchoPagina - margen,
-        altoPagina - 8,
+        altoPagina - 9,
         {
           align: "right",
         }
       );
-
     }
 
     const pacienteArchivo =
-      (
-        presupuesto.paciente_nombre ||
-        `paciente-${presupuesto.paciente_id}`
-      )
+      pacienteNombre
         .trim()
         .replace(
           /[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+/g,

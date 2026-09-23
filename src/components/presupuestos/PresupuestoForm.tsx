@@ -1,5 +1,4 @@
 import {
-  Plus,
   Save,
   Trash2,
   X,
@@ -396,30 +395,6 @@ export default function PresupuestoForm({
             }
           : item
       )
-    );
-  }
-
-  function agregarItem() {
-    const nuevoId = Date.now();
-
-    setItems(
-      (actuales) => [
-        ...actuales,
-        {
-          id: nuevoId,
-          diente: "",
-          tratamiento: "",
-          catalogo_tratamiento_id: null,
-          dientes: [],
-          arcada: null,
-          cantidad: 1,
-          precio_unitario: 0,
-        },
-      ]
-    );
-
-    setItemDentalActivoId(
-      nuevoId
     );
   }
 
@@ -1058,24 +1033,7 @@ export default function PresupuestoForm({
 
               </div>
 
-              <button
-                type="button"
-                onClick={
-                  agregarItem
-                }
-                className="
-                  mint-btn
-                  inline-flex
-                  items-center
-                  gap-2
-                "
-              >
-                <Plus
-                  size={16}
-                />
 
-                Agregar
-              </button>
 
             </div>
 
