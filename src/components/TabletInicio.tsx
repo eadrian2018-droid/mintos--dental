@@ -69,19 +69,12 @@ export default function TabletInicio({
 
         try {
           const { data, error } =
-            await supabase
-              .from("pacientes")
-              .select(
-                "id, nombre, telefono, correo"
-              )
-              .ilike(
-                "nombre",
-                `%${termino}%`
-              )
-              .order("nombre", {
-                ascending: true,
-              })
-              .limit(8);
+            await supabase.rpc(
+              "buscar_pacientes_tablet",
+              {
+                p_busqueda: termino,
+              }
+            );
 
           if (error) {
             console.error(

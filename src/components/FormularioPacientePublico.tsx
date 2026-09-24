@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useRef,
   useState,
 } from "react";
@@ -34,6 +35,12 @@ I also understand that certain procedures, including surgeries, implants, or oth
 I confirm that I have read and understood this information and voluntarily authorize my dental care.`;
 
 type Idioma = "es" | "en";
+
+type FormularioPacientePublicoProps = {
+  idiomaInicial?: Idioma;
+  pacienteId?: number | null;
+  onFinalizar?: () => void;
+};
 
 type Pregunta = {
   id: string;
@@ -221,10 +228,14 @@ const preguntasHabitos: Pregunta[] = [
   },
 ];
 
-export default function FormularioPacientePublico() {
+export default function FormularioPacientePublico({
+  idiomaInicial = "es",
+  pacienteId = null,
+  onFinalizar,
+}: FormularioPacientePublicoProps) {
 
   const [idioma, setIdioma] =
-    useState<Idioma>("es");
+    useState<Idioma>(idiomaInicial);
 
   const esIngles = idioma === "en";
 
@@ -308,6 +319,75 @@ export default function FormularioPacientePublico() {
     loading,
     setLoading,
   ] = useState(false);
+
+  const [
+    cargandoPaciente,
+    setCargandoPaciente,
+  ] = useState(false);
+
+  useEffect(() => {
+    setIdioma(idiomaInicial);
+  }, [idiomaInicial]);
+
+  useEffect(() => {
+
+    if (!pacienteId) {
+      return;
+    }
+
+    let activo = true;
+
+    async function cargarPaciente() {
+
+      setCargandoPaciente(true);
+
+      const { data, error } = await supabase.rpc(
+        "obtener_paciente_tablet",
+        {
+          p_paciente_id: pacienteId,
+        }
+      );
+
+      const paciente = data?.[0] ?? null;
+
+      if (!activo) {
+        return;
+      }
+
+      if (error || !paciente) {
+
+        console.error(
+          "Error cargando paciente:",
+          error
+        );
+
+        alert(
+          idiomaInicial === "en"
+            ? "The patient information could not be loaded."
+            : "No se pudo cargar la información del paciente."
+        );
+
+        setCargandoPaciente(false);
+        return;
+      }
+
+      setNombre(paciente.nombre || "");
+      setEdad(paciente.edad || "");
+      setSexo(paciente.sexo || "");
+      setTelefono(paciente.telefono || "");
+      setCorreo(paciente.correo || "");
+      setDireccion(paciente.direccion || "");
+
+      setCargandoPaciente(false);
+    }
+
+    void cargarPaciente();
+
+    return () => {
+      activo = false;
+    };
+
+  }, [pacienteId, idiomaInicial]);
 
   function responder(
     id: string,
@@ -463,46 +543,37 @@ export default function FormularioPacientePublico() {
 
     try {
 
+      const parametrosFormulario = {
+        p_nombre: nombre.trim(),
+        p_telefono: telefono.trim(),
+        p_correo: correo.trim(),
+        p_edad: edad.trim(),
+        p_sexo: sexo.trim(),
+        p_direccion: direccion.trim(),
+        p_fecha_nacimiento: fechaNacimiento || null,
+        p_historial_declarado: historialDeclarado,
+        p_consentimiento_firmado: consentimiento,
+        p_firma_paciente: firmaBase64,
+        p_texto_consentimiento: textoConsentimiento,
+      };
+
+      const resultado = pacienteId
+        ? await supabase.rpc(
+            "completar_paciente_existente",
+            {
+              p_paciente_id: pacienteId,
+              ...parametrosFormulario,
+            }
+          )
+        : await supabase.rpc(
+            "registrar_paciente_inicial",
+            parametrosFormulario
+          );
+
       const {
-        data: pacienteId,
+        data: pacienteGuardadoId,
         error,
-      } = await supabase.rpc(
-        "registrar_paciente_inicial",
-        {
-          p_nombre:
-            nombre.trim(),
-
-          p_telefono:
-            telefono.trim(),
-
-          p_correo:
-            correo.trim(),
-
-          p_edad:
-            edad.trim(),
-
-          p_sexo:
-            sexo.trim(),
-
-          p_direccion:
-            direccion.trim(),
-
-          p_fecha_nacimiento:
-            fechaNacimiento || null,
-
-          p_historial_declarado:
-            historialDeclarado,
-
-          p_consentimiento_firmado:
-            consentimiento,
-
-          p_firma_paciente:
-            firmaBase64,
-
-          p_texto_consentimiento:
-            textoConsentimiento,
-        }
-      );
+      } = resultado;
 
       if (error) {
 
@@ -529,20 +600,29 @@ export default function FormularioPacientePublico() {
 
         await registrarBitacora({
           accion:
-            "Registrar paciente",
+            pacienteId
+              ? "Completar expediente paciente"
+              : "Registrar paciente",
           modulo:
             "Pacientes",
           detalle:
-            `Paciente ID: ${pacienteId} | Paciente: ${nombre.trim()}`,
+            `Paciente ID: ${pacienteGuardadoId} | Paciente: ${nombre.trim()}`,
         });
 
       }
 
       alert(
-        esIngles ? "Form submitted successfully" : "Formulario enviado correctamente"
+        esIngles
+          ? pacienteId
+            ? "Patient record completed successfully"
+            : "Form submitted successfully"
+          : pacienteId
+            ? "Expediente del paciente completado correctamente"
+            : "Formulario enviado correctamente"
       );
 
       limpiarFormulario();
+      onFinalizar?.();
 
     } catch (error) {
 
@@ -782,7 +862,13 @@ export default function FormularioPacientePublico() {
             font-bold
             mb-2
           ">
-            {esIngles ? "New Patient Registration" : "Registro de Nuevo Paciente"}
+            {pacienteId
+              ? esIngles
+                ? "Existing Patient"
+                : "Paciente existente"
+              : esIngles
+                ? "New Patient Registration"
+                : "Registro de Nuevo Paciente"}
           </p>
 
           <h1 className="
@@ -1303,7 +1389,7 @@ export default function FormularioPacientePublico() {
           <button
             type="button"
             onClick={enviarFormulario}
-            disabled={loading}
+            disabled={loading || cargandoPaciente}
             className="
               bg-teal-600
               hover:bg-teal-700
@@ -1320,13 +1406,17 @@ export default function FormularioPacientePublico() {
             "
           >
             {
-              loading
+              cargandoPaciente
                 ? esIngles
-                  ? "Submitting..."
-                  : "Enviando..."
-                : esIngles
-                  ? "Submit form"
-                  : "Enviar formulario"
+                  ? "Loading patient..."
+                  : "Cargando paciente..."
+                : loading
+                  ? esIngles
+                    ? "Submitting..."
+                    : "Enviando..."
+                  : esIngles
+                    ? "Submit form"
+                    : "Enviar formulario"
             }
           </button>
 

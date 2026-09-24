@@ -5,13 +5,10 @@ import {
 } from "react";
 
 import {
-
   Routes,
-
   Route,
-
   Navigate,
-
+  useLocation,
 } from "react-router-dom";
 
 import Layout from "./components/Layout";
@@ -49,16 +46,14 @@ import { useAuth } from "./context/AuthContext";
 export default function App() {
 
   const {
-
     session,
-
     perfil,
-
     permisos,
-
     loading,
-
   } = useAuth();
+
+  const location =
+    useLocation();
 
   const [
     adminMfaVerified,
@@ -77,6 +72,78 @@ export default function App() {
       setAdminMfaVerified(true);
 
     }, []);
+
+  /*
+   * Las rutas de invitación y configuración
+   * de contraseña deben tener prioridad.
+   *
+   * Supabase puede crear la sesión antes de
+   * que AuthContext termine de cargar el perfil.
+   */
+
+  if (
+    location.pathname ===
+    "/accept-invite"
+  ) {
+
+    return (
+
+      <Routes>
+
+        <Route
+          path="/accept-invite"
+          element={
+            <AcceptInvite />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/accept-invite"
+              replace
+            />
+          }
+        />
+
+      </Routes>
+
+    );
+
+  }
+
+  if (
+    location.pathname ===
+    "/reset-password"
+  ) {
+
+    return (
+
+      <Routes>
+
+        <Route
+          path="/reset-password"
+          element={
+            <ResetPassword />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/reset-password"
+              replace
+            />
+          }
+        />
+
+      </Routes>
+
+    );
+
+  }
 
   if (
     loading
@@ -351,9 +418,9 @@ export default function App() {
 
                   tabletPuedeRegistrar
 
-  ? (
-    <TabletRegistro />
-  )
+                    ? (
+                      <TabletRegistro />
+                    )
 
                     : (
                       <div

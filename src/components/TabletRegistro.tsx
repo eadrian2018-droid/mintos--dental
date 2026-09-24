@@ -37,6 +37,12 @@ export default function TabletRegistro() {
     tipo: "inicio",
   });
 
+  function regresarInicio() {
+    setVista({
+      tipo: "inicio",
+    });
+  }
+
   if (vista.tipo === "inicio") {
     return (
       <TabletInicio
@@ -62,96 +68,18 @@ export default function TabletRegistro() {
 
   if (vista.tipo === "nuevo") {
     return (
-      <FormularioPacientePublico />
+      <FormularioPacientePublico
+        idiomaInicial={vista.idioma}
+        onFinalizar={regresarInicio}
+      />
     );
   }
 
   return (
-    <div
-      className="
-        min-h-screen
-        bg-slate-100
-        p-6
-        flex
-        items-center
-        justify-center
-      "
-    >
-      <div
-        className="
-          w-full
-          max-w-lg
-          bg-white
-          border
-          border-slate-200
-          rounded-3xl
-          shadow-xl
-          p-8
-          text-center
-        "
-      >
-        <p
-          className="
-            text-sm
-            font-bold
-            uppercase
-            tracking-wider
-            text-teal-700
-          "
-        >
-          {vista.idioma === "en"
-            ? "Existing Patient"
-            : "Paciente existente"}
-        </p>
-
-        <h1
-          className="
-            text-2xl
-            font-bold
-            text-slate-900
-            mt-2
-          "
-        >
-          {vista.paciente.nombre}
-        </h1>
-
-        <p
-          className="
-            text-slate-500
-            mt-3
-          "
-        >
-          {vista.idioma === "en"
-            ? "The patient was selected correctly. The next step will open their existing record for completion."
-            : "El paciente fue seleccionado correctamente. El siguiente paso abrirá su expediente existente para completarlo."}
-        </p>
-
-        <button
-          type="button"
-          onClick={() =>
-            setVista({
-              tipo: "inicio",
-            })
-          }
-          className="
-            mt-6
-            w-full
-            border
-            border-slate-300
-            bg-white
-            hover:bg-slate-50
-            text-slate-700
-            px-5
-            py-3
-            rounded-xl
-            font-bold
-          "
-        >
-          {vista.idioma === "en"
-            ? "Back"
-            : "Regresar"}
-        </button>
-      </div>
-    </div>
+    <FormularioPacientePublico
+      idiomaInicial={vista.idioma}
+      pacienteId={vista.paciente.id}
+      onFinalizar={regresarInicio}
+    />
   );
 }
