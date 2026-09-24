@@ -38,6 +38,8 @@ import QRCodePaciente from "./components/QRCodePaciente";
 
 import FormularioPacientePublico from "./components/FormularioPacientePublico";
 
+import TabletRegistro from "./components/TabletRegistro";
+
 import Configuracion from "./pages/configuracion";
 
 import AdminMFA from "./components/AdminMFA";
@@ -349,9 +351,9 @@ export default function App() {
 
                   tabletPuedeRegistrar
 
-                    ? (
-                      <FormularioPacientePublico />
-                    )
+  ? (
+    <TabletRegistro />
+  )
 
                     : (
                       <div
