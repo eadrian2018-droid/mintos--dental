@@ -3,7 +3,6 @@ import {
   Download,
   FileText,
   Send,
-  CheckCircle2,
 } from "lucide-react";
 
 import {
@@ -34,20 +33,14 @@ type PresupuestoDetalleProps = {
   presupuesto: PresupuestoConPaciente;
   onVolver: () => void;
   onMarcarEnviado?: () => void | Promise<void>;
-  onConvertirTratamiento?: () => void | Promise<void>;
-  convirtiendo?: boolean;
   puedeEnviar?: boolean;
-  puedeConvertir?: boolean;
 };
 
 export default function PresupuestoDetalle({
   presupuesto,
   onVolver,
   onMarcarEnviado,
-  onConvertirTratamiento,
-  convirtiendo = false,
   puedeEnviar = false,
-  puedeConvertir = false,
 }: PresupuestoDetalleProps) {
 
   const { language } = useLanguage();
@@ -269,67 +262,76 @@ export default function PresupuestoDetalle({
     let y = 14;
 
     const dibujarEncabezadoPagina = () => {
+      // Encabezado premium: limpio, compacto y con acento de marca.
       pdf.setFillColor(...tealOscuro);
-      pdf.rect(0, 0, anchoPagina, 5, "F");
+      pdf.rect(margen, 11, 1.6, 18, "F");
 
       pdf.setTextColor(...tealOscuro);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(15);
       pdf.text(
         "Dra. Marlene Group",
-        margen,
-        17
+        margen + 5,
+        16
+      );
+
+      pdf.setTextColor(...slate);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7.5);
+      pdf.text(
+        documentoEnIngles
+          ? "Dr. Marlene Verdugo"
+          : "Dra. Marlene Verdugo",
+        margen + 5,
+        21
       );
 
       pdf.setTextColor(...muted);
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(7.5);
+      pdf.setFontSize(6.5);
       pdf.text(
-        "Modern Dental Care in Mexico",
-        margen,
-        22
+        "Cjon Juarez y 6ta No. 350, B · San Luis Río Colorado, Son. Mexico",
+        margen + 5,
+        25
       );
 
       pdf.text(
-        "San Luis Río Colorado, Sonora, México  ·  +52 653 208 0587  ·  dra.marlene.v@gmail.com",
-        margen,
-        27
+        "+52 653 208 0587 · dra.marlene.v@gmail.com · drmarlenedentalgroup.com",
+        margen + 5,
+        29
       );
 
-      pdf.setTextColor(...tealOscuro);
+      pdf.setTextColor(...muted);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(8);
+      pdf.setFontSize(6.5);
       pdf.text(
         documentoEnIngles
           ? "TREATMENT ESTIMATE"
           : "PRESUPUESTO DE TRATAMIENTO",
         anchoPagina - margen,
-        17,
-        {
-          align: "right",
-        }
+        15,
+        { align: "right" }
       );
 
-      pdf.setFontSize(12);
+      pdf.setTextColor(...tealOscuro);
+      pdf.setFontSize(16);
       pdf.text(
         `#${presupuesto.id}`,
         anchoPagina - margen,
-        24,
-        {
-          align: "right",
-        }
+        23,
+        { align: "right" }
       );
 
       pdf.setDrawColor(...border);
-      pdf.setLineWidth(0.3);
+      pdf.setLineWidth(0.25);
       pdf.line(
         margen,
-        32,
+        34,
         anchoPagina - margen,
-        32
+        34
       );
 
-      y = 39;
+      y = 40;
     };
 
     const nuevaPaginaSiHaceFalta =
@@ -349,33 +351,43 @@ export default function PresupuestoDetalle({
     dibujarEncabezadoPagina();
 
     // Información principal del presupuesto
-    pdf.setFillColor(...soft);
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(...border);
+    pdf.setLineWidth(0.3);
     pdf.roundedRect(
       margen,
       y,
       anchoContenido,
-      25,
-      3,
-      3,
-      "F"
+      21,
+      2.5,
+      2.5,
+      "FD"
     );
 
     const mitad =
       margen + anchoContenido / 2;
 
+    pdf.setDrawColor(...border);
+    pdf.line(
+      mitad,
+      y + 4,
+      mitad,
+      y + 17
+    );
+
     pdf.setTextColor(...muted);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(7);
+    pdf.setFontSize(6.5);
     pdf.text(
       documentoEnIngles ? "PATIENT" : "PACIENTE",
       margen + 6,
-      y + 7
+      y + 6
     );
 
     pdf.text(
       documentoEnIngles ? "DATE" : "FECHA",
-      mitad + 4,
-      y + 7
+      mitad + 6,
+      y + 6
     );
 
     pdf.setTextColor(...slate);
@@ -383,7 +395,7 @@ export default function PresupuestoDetalle({
     pdf.text(
       pacienteNombre,
       margen + 6,
-      y + 14
+      y + 12.5
     );
 
     pdf.setFontSize(9);
@@ -391,42 +403,297 @@ export default function PresupuestoDetalle({
       formatoFechaDocumento(
         presupuesto.fecha
       ),
-      mitad + 4,
-      y + 14
+      mitad + 6,
+      y + 12.5
     );
 
     pdf.setTextColor(...muted);
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(7.5);
+    pdf.setFontSize(6.8);
     pdf.text(
       documentoEnIngles
-        ? "Personalized treatment plan"
-        : "Plan de tratamiento personalizado",
+        ? "Personalized treatment proposal"
+        : "Propuesta de tratamiento personalizada",
       margen + 6,
-      y + 20
+      y + 17.5
     );
 
     pdf.text(
-      `${documentoEnIngles ? "Currency" : "Moneda"}: ${presupuesto.moneda}`,
-      mitad + 4,
-      y + 20
+      `${documentoEnIngles ? "Currency" : "Moneda"} · ${presupuesto.moneda}`,
+      mitad + 6,
+      y + 17.5
     );
 
-    y += 34;
+    y += 29;
+
+    // Odontograma visual del presupuesto
+    const dientesPresupuestados = new Set<number>();
+
+    (presupuesto.items || []).forEach((item) => {
+      if (item.arcada === "superior") {
+        [
+          18, 17, 16, 15, 14, 13, 12, 11,
+          21, 22, 23, 24, 25, 26, 27, 28,
+        ].forEach((diente) => dientesPresupuestados.add(diente));
+      } else if (item.arcada === "inferior") {
+        [
+          48, 47, 46, 45, 44, 43, 42, 41,
+          31, 32, 33, 34, 35, 36, 37, 38,
+        ].forEach((diente) => dientesPresupuestados.add(diente));
+      } else {
+        (item.dientes || []).forEach((diente) =>
+          dientesPresupuestados.add(Number(diente))
+        );
+      }
+    });
+
+    if (dientesPresupuestados.size > 0) {
+      nuevaPaginaSiHaceFalta(55);
+
+      pdf.setTextColor(...slate);
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(9.5);
+      pdf.text(
+        documentoEnIngles
+          ? "Teeth included in this estimate"
+          : "Dientes incluidos en este presupuesto",
+        margen,
+        y
+      );
+
+      y += 5;
+
+      const superiores = [
+        18, 17, 16, 15, 14, 13, 12, 11,
+        21, 22, 23, 24, 25, 26, 27, 28,
+      ];
+
+      const inferiores = [
+        48, 47, 46, 45, 44, 43, 42, 41,
+        31, 32, 33, 34, 35, 36, 37, 38,
+      ];
+
+      const espacio = anchoContenido / 16;
+      const escala = 0.065;
+
+      const tipoDiente = (numero: number) => {
+        if ([11, 12, 21, 22, 31, 32, 41, 42].includes(numero)) {
+          return "incisor";
+        }
+        if ([13, 23, 33, 43].includes(numero)) {
+          return "canino";
+        }
+        if ([14, 15, 24, 25, 34, 35, 44, 45].includes(numero)) {
+          return "premolar";
+        }
+        return "molar";
+      };
+
+      const dibujarFormaDiente = (
+        numero: number,
+        centroX: number,
+        yBase: number,
+        superior: boolean
+      ) => {
+        const tipo = tipoDiente(numero);
+        const seleccionado = dientesPresupuestados.has(numero);
+
+        const dimensiones: Record<string, [number, number]> = {
+          incisor: [60, 155],
+          canino: [62, 160],
+          premolar: [72, 155],
+          molar: [92, 165],
+        };
+
+        const [w, h] = dimensiones[tipo];
+        const ancho = w * escala;
+        const alto = h * escala;
+        const x = centroX - ancho / 2;
+
+        // Silueta basada en las mismas anatomías SVG usadas por MintOS.
+        const puntos: Record<string, Array<[number, number]>> = {
+          incisor: [
+            [18,10],[13,13],[10,22],[10,34],[12,61],[16,70],
+            [21,84],[23,124],[30,151],[37,124],[39,84],[44,70],
+            [50,34],[50,22],[42,10],[30,8]
+          ],
+          canino: [
+            [31,5],[18,22],[11,39],[11,51],[17,77],[24,88],
+            [25,126],[31,157],[38,126],[39,88],[46,77],[52,51],
+            [52,39],[44,22]
+          ],
+          premolar: [
+            [20,17],[10,28],[10,40],[16,73],[25,87],[27,127],
+            [36,153],[45,127],[47,87],[56,73],[62,40],[52,17],
+            [36,7]
+          ],
+          molar: [
+            [20,20],[9,31],[9,43],[15,79],[24,91],[21,128],
+            [28,162],[38,128],[46,104],[54,128],[64,162],[71,128],
+            [68,91],[77,79],[83,43],[72,20],[55,11],[46,17],[37,11]
+          ],
+        };
+
+        const pts = puntos[tipo].map(([px, py]) => {
+          const xx = x + px * escala;
+          const yy = yBase + py * escala;
+          return [
+            xx,
+            superior ? yBase + alto - (yy - yBase) : yy,
+          ] as [number, number];
+        });
+
+        pdf.setDrawColor(
+          ...(seleccionado ? tealOscuro : ([124, 135, 151] as [number, number, number]))
+        );
+        pdf.setFillColor(
+          ...(seleccionado ? tealSoft : ([255, 253, 247] as [number, number, number]))
+        );
+        pdf.setLineWidth(seleccionado ? 0.45 : 0.25);
+
+        const movimientos = pts.slice(1).map(([px, py], i) => [
+          px - pts[i][0],
+          py - pts[i][1],
+        ] as [number, number]);
+
+        pdf.lines(
+          movimientos,
+          pts[0][0],
+          pts[0][1],
+          [1, 1],
+          "FD",
+          true
+        );
+
+        // Línea central y cuello: conserva el aspecto anatómico del sistema.
+        pdf.setDrawColor(203, 213, 225);
+        pdf.setLineWidth(0.18);
+        pdf.line(
+          centroX,
+          yBase + alto * 0.18,
+          centroX,
+          yBase + alto * 0.72
+        );
+
+        pdf.setTextColor(...(seleccionado ? tealOscuro : muted));
+        pdf.setFont("helvetica", seleccionado ? "bold" : "normal");
+        pdf.setFontSize(5.7);
+        pdf.text(
+          String(numero),
+          centroX,
+          yBase + alto + 2.4,
+          { align: "center" }
+        );
+      };
+
+      const altoOdontograma = 42;
+      const mitadOdontograma = y + altoOdontograma / 2;
+
+      pdf.setFillColor(255, 255, 255);
+      pdf.setDrawColor(...border);
+      pdf.setLineWidth(0.3);
+      pdf.roundedRect(
+        margen,
+        y,
+        anchoContenido,
+        altoOdontograma,
+        3,
+        3,
+        "FD"
+      );
+
+      pdf.setDrawColor(...border);
+      pdf.setLineWidth(0.2);
+      pdf.line(
+        margen + 5,
+        mitadOdontograma,
+        anchoPagina - margen - 5,
+        mitadOdontograma
+      );
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(6);
+      pdf.setTextColor(...tealOscuro);
+      pdf.text(
+        documentoEnIngles ? "UPPER ARCH" : "MAXILAR SUPERIOR",
+        margen + 4,
+        y + 4
+      );
+
+      pdf.setTextColor(...muted);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        "18 — 28",
+        anchoPagina - margen - 4,
+        y + 4,
+        { align: "right" }
+      );
+
+      superiores.forEach((numero, index) => {
+        dibujarFormaDiente(
+          numero,
+          margen + espacio * index + espacio / 2,
+          y + 5.5,
+          true
+        );
+      });
+
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(...tealOscuro);
+      pdf.text(
+        documentoEnIngles ? "LOWER ARCH" : "MAXILAR INFERIOR",
+        margen + 4,
+        mitadOdontograma + 4
+      );
+
+      pdf.setTextColor(...muted);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(
+        "48 — 38",
+        anchoPagina - margen - 4,
+        mitadOdontograma + 4,
+        { align: "right" }
+      );
+
+      inferiores.forEach((numero, index) => {
+        dibujarFormaDiente(
+          numero,
+          margen + espacio * index + espacio / 2,
+          mitadOdontograma + 5.5,
+          false
+        );
+      });
+
+      pdf.setFont("helvetica", "normal");
+      pdf.setFontSize(6.2);
+      pdf.setTextColor(...muted);
+      pdf.text(
+        documentoEnIngles
+          ? "Highlighted teeth are included in the proposed treatment."
+          : "Los dientes resaltados están incluidos en el tratamiento propuesto.",
+        margen,
+        y + altoOdontograma + 5
+      );
+
+      y += altoOdontograma + 11;
+    }
 
     // Título de tratamientos
+    pdf.setFillColor(...tealOscuro);
+    pdf.rect(margen, y - 3.5, 1.2, 5, "F");
+
     pdf.setTextColor(...slate);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(10);
+    pdf.setFontSize(11);
     pdf.text(
       documentoEnIngles
         ? "Treatment plan"
         : "Plan de tratamiento",
-      margen,
+      margen + 4,
       y
     );
 
-    y += 6;
+    y += 7;
 
     // Encabezado de tabla
     pdf.setFillColor(...tealOscuro);
@@ -434,9 +701,9 @@ export default function PresupuestoDetalle({
       margen,
       y,
       anchoContenido,
-      9,
-      2,
-      2,
+      8.5,
+      1.5,
+      1.5,
       "F"
     );
 
@@ -586,7 +853,7 @@ export default function PresupuestoDetalle({
     y += 5;
 
     // Resumen y notas en una composición más compacta
-    const anchoResumen = 78;
+    const anchoResumen = 82;
     const gap = 7;
     const anchoNotas =
       anchoContenido - anchoResumen - gap;
@@ -604,7 +871,7 @@ export default function PresupuestoDetalle({
 
     const alturaBloque =
       Math.max(
-        45,
+        41,
         lineasNotas.length * 4 + 18
       );
 
@@ -614,7 +881,7 @@ export default function PresupuestoDetalle({
 
     // Notas / observaciones
     pdf.setDrawColor(...border);
-    pdf.setFillColor(255, 255, 255);
+    pdf.setFillColor(...soft);
     pdf.roundedRect(
       margen,
       y,
@@ -678,7 +945,7 @@ export default function PresupuestoDetalle({
     pdf.text(
       documentoEnIngles
         ? "ESTIMATE SUMMARY"
-        : "RESUMEN",
+        : "RESUMEN DEL PRESUPUESTO",
       xResumen + 6,
       y + 8
     );
@@ -743,7 +1010,7 @@ export default function PresupuestoDetalle({
       y + 39
     );
 
-    pdf.setFontSize(11);
+    pdf.setFontSize(12.5);
     pdf.text(
       formatoPDF(
         presupuesto.total
@@ -758,15 +1025,16 @@ export default function PresupuestoDetalle({
     // Información importante
     nuevaPaginaSiHaceFalta(27);
 
-    pdf.setFillColor(...soft);
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(...border);
     pdf.roundedRect(
       margen,
       y,
       anchoContenido,
       22,
-      3,
-      3,
-      "F"
+      2.5,
+      2.5,
+      "FD"
     );
 
     pdf.setTextColor(...tealOscuro);
@@ -1084,47 +1352,6 @@ export default function PresupuestoDetalle({
                 )
             }
 
-            {
-              presupuesto.estado ===
-                "Enviado" &&
-              onConvertirTratamiento &&
-              puedeConvertir
-
-                ? (
-
-                  <button
-                    type="button"
-                    onClick={
-                      onConvertirTratamiento
-                    }
-                    disabled={
-                      convirtiendo
-                    }
-                    className="
-                      mint-btn
-                      mint-btn-primary
-                      inline-flex
-                      items-center
-                      gap-2
-                      disabled:opacity-60
-                      disabled:cursor-not-allowed
-                    "
-                  >
-                    <CheckCircle2
-                      size={16}
-                    />
-
-                    {
-                      convirtiendo
-                        ? es ? "Convirtiendo..." : "Converting..."
-                        : es ? "Convertir a tratamiento" : "Convert to treatment"
-                    }
-                  </button>
-
-                )
-
-                : null
-            }
 
             <span
               className={`

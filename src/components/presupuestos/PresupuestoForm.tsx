@@ -1115,6 +1115,12 @@ export default function PresupuestoForm({
 
                     <th
                       className="
+                        w-14
+                      "
+                    />
+
+                    <th
+                      className="
                         text-left
                         px-4
                         py-3
@@ -1224,6 +1230,44 @@ export default function PresupuestoForm({
                             <td
                               className="
                                 p-3
+                                text-center
+                              "
+                            >
+                              {itemDentalActivoId === item.id && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    agregarItem();
+                                  }}
+                                  disabled={!item.catalogo_tratamiento_id}
+                                  title={es ? "Agregar otro tratamiento" : "Add another treatment"}
+                                  aria-label={es ? "Agregar otro tratamiento" : "Add another treatment"}
+                                  className="
+                                    w-10
+                                    h-10
+                                    rounded-lg
+                                    border
+                                    border-[var(--mint-primary)]
+                                    bg-[var(--mint-primary)]
+                                    text-white
+                                    inline-flex
+                                    items-center
+                                    justify-center
+                                    hover:opacity-90
+                                    disabled:opacity-30
+                                    disabled:cursor-not-allowed
+                                    transition
+                                  "
+                                >
+                                  <Plus size={17} />
+                                </button>
+                              )}
+                            </td>
+
+                            <td
+                              className="
+                                p-3
                               "
                             >
 
@@ -1320,37 +1364,6 @@ export default function PresupuestoForm({
                                   }
                                 </select>
 
-                                {itemDentalActivoId === item.id && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      agregarItem();
-                                    }}
-                                    disabled={!item.catalogo_tratamiento_id}
-                                    title={es ? "Agregar otro tratamiento" : "Add another treatment"}
-                                    aria-label={es ? "Agregar otro tratamiento" : "Add another treatment"}
-                                    className="
-                                      shrink-0
-                                      w-10
-                                      h-10
-                                      rounded-lg
-                                      border
-                                      border-[var(--mint-primary)]
-                                      bg-[var(--mint-primary)]
-                                      text-white
-                                      inline-flex
-                                      items-center
-                                      justify-center
-                                      hover:opacity-90
-                                      disabled:opacity-30
-                                      disabled:cursor-not-allowed
-                                      transition
-                                    "
-                                  >
-                                    <Plus size={17} />
-                                  </button>
-                                )}
                               </div>
 
                             </td>
