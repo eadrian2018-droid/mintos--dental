@@ -12,6 +12,8 @@ import { registrarBitacora } from "../../lib/registrarBitacora";
 
 import AdministrarUsuario from "./AdministrarUsuario";
 
+import { useLanguage } from "../../context/LanguageContext";
+
 type Perfil = {
 
   id: string;
@@ -44,6 +46,10 @@ type Doctor = {
 };
 
 export default function UsuariosRoles() {
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const [
 
@@ -276,7 +282,7 @@ export default function UsuariosRoles() {
       rol === "admin"
     ) {
 
-      return "Administrador";
+      return es ? "Administrador" : "Administrator";
 
     }
 
@@ -292,7 +298,7 @@ export default function UsuariosRoles() {
       rol === "tablet"
     ) {
 
-      return "Tablet de recepción";
+      return es ? "Tablet de recepción" : "Reception tablet";
 
     }
 
@@ -300,11 +306,11 @@ export default function UsuariosRoles() {
       rol === "registro"
     ) {
 
-      return "Registro QR";
+      return es ? "Registro QR" : "QR registration";
 
     }
 
-    return "Recepcionista";
+    return es ? "Recepcionista" : "Receptionist";
 
   }
 
@@ -383,7 +389,7 @@ export default function UsuariosRoles() {
     if (!nombre) {
 
       setErrorNuevoUsuario(
-        "Ingresa el nombre del usuario."
+        es ? "Ingresa el nombre del usuario." : "Enter the user name."
       );
 
       return;
@@ -393,7 +399,7 @@ export default function UsuariosRoles() {
     if (!email) {
 
       setErrorNuevoUsuario(
-        "Ingresa el correo electrónico."
+        es ? "Ingresa el correo electrónico." : "Enter the email address."
       );
 
       return;
@@ -405,7 +411,7 @@ export default function UsuariosRoles() {
     ) {
 
       setErrorNuevoUsuario(
-        "Ingresa un correo electrónico válido."
+        es ? "Ingresa un correo electrónico válido." : "Enter a valid email address."
       );
 
       return;
@@ -419,7 +425,7 @@ export default function UsuariosRoles() {
     ) {
 
       setErrorNuevoUsuario(
-        "Selecciona el doctor que corresponde a esta cuenta."
+        es ? "Selecciona el doctor que corresponde a esta cuenta." : "Select the doctor associated with this account."
       );
 
       return;
@@ -447,7 +453,7 @@ export default function UsuariosRoles() {
       ) {
 
         setErrorNuevoUsuario(
-          "Tu sesión no es válida. Inicia sesión nuevamente."
+          es ? "Tu sesión no es válida. Inicia sesión nuevamente." : "Your session is not valid. Please sign in again."
         );
 
         return;
@@ -506,7 +512,7 @@ export default function UsuariosRoles() {
         );
 
         let mensaje =
-          "No se pudo crear el usuario.";
+          es ? "No se pudo crear el usuario." : "The user could not be created.";
 
         if (
           data &&
@@ -557,7 +563,7 @@ export default function UsuariosRoles() {
       limpiarFormulario();
 
       setMensajeExito(
-        "Usuario creado correctamente. Se envió una invitación a su correo para establecer su contraseña."
+        es ? "Usuario creado correctamente. Se envió una invitación a su correo para establecer su contraseña." : "User created successfully. An invitation was sent by email to set their password."
       );
 
     } catch (error) {
@@ -568,7 +574,7 @@ export default function UsuariosRoles() {
       );
 
       setErrorNuevoUsuario(
-        "Ocurrió un error inesperado al crear el usuario."
+        es ? "Ocurrió un error inesperado al crear el usuario." : "An unexpected error occurred while creating the user."
       );
 
     } finally {
@@ -614,7 +620,7 @@ export default function UsuariosRoles() {
               "
             >
 
-              Usuarios y Roles
+              {es ? "Usuarios y Roles" : "Users and Roles"}
 
             </h2>
 
@@ -626,7 +632,7 @@ export default function UsuariosRoles() {
               "
             >
 
-              Administra las cuentas y permisos de acceso a MintOS.
+              {es ? "Administra las cuentas y permisos de acceso a MintOS." : "Manage MintOS user accounts and access permissions."}
 
             </p>
 
@@ -658,7 +664,7 @@ export default function UsuariosRoles() {
             "
           >
 
-            + Nuevo usuario
+            {es ? "+ Nuevo usuario" : "+ New user"}
 
           </button>
 
@@ -701,7 +707,7 @@ export default function UsuariosRoles() {
                 "
               >
 
-                Cargando usuarios...
+                {es ? "Cargando usuarios..." : "Loading users..."}
 
               </div>
 
@@ -732,19 +738,19 @@ export default function UsuariosRoles() {
                     <tr>
 
                       <th className="p-3">
-                        Nombre
+                        {es ? "Nombre" : "Name"}
                       </th>
 
                       <th className="p-3">
-                        Rol
+                        {es ? "Rol" : "Role"}
                       </th>
 
                       <th className="p-3">
-                        Estado
+                        {es ? "Estado" : "Status"}
                       </th>
 
                       <th className="p-3">
-                        Acciones
+                        {es ? "Acciones" : "Actions"}
                       </th>
 
                     </tr>
@@ -820,9 +826,9 @@ export default function UsuariosRoles() {
                                 {
                                   perfil.activo
 
-                                    ? "Activo"
+                                    ? es ? "Activo" : "Active"
 
-                                    : "Inactivo"
+                                    : es ? "Inactivo" : "Inactive"
                                 }
 
                               </span>
@@ -846,7 +852,7 @@ export default function UsuariosRoles() {
                                   text-sm
                                 "
                               >
-                                Administrar
+                                {es ? "Administrar" : "Manage"}
                               </button>
 
                             </td>
@@ -905,7 +911,7 @@ export default function UsuariosRoles() {
                 "
               >
 
-                Nuevo usuario
+                {es ? "Nuevo usuario" : "New user"}
 
               </h3>
 
@@ -938,7 +944,7 @@ export default function UsuariosRoles() {
 
                 <input
                   type="text"
-                  placeholder="Nombre completo"
+                  placeholder={es ? "Nombre completo" : "Full name"}
                   value={
                     nombreNuevoUsuario
                   }
@@ -961,7 +967,7 @@ export default function UsuariosRoles() {
 
                 <input
                   type="email"
-                  placeholder="Correo"
+                  placeholder={es ? "Correo" : "Email"}
                   value={
                     correoNuevoUsuario
                   }
@@ -1020,7 +1026,7 @@ export default function UsuariosRoles() {
                 >
 
                   <option value="admin">
-                    Administrador
+                    {es ? "Administrador" : "Administrator"}
                   </option>
 
                   <option value="doctor">
@@ -1028,15 +1034,15 @@ export default function UsuariosRoles() {
                   </option>
 
                   <option value="recepcionista">
-                    Recepcionista
+                    {es ? "Recepcionista" : "Receptionist"}
                   </option>
 
                   <option value="tablet">
-                    Tablet de recepción
+                    {es ? "Tablet de recepción" : "Reception tablet"}
                   </option>
 
                   <option value="registro">
-                    Registro QR
+                    {es ? "Registro QR" : "QR registration"}
                   </option>
 
                 </select>
@@ -1070,7 +1076,7 @@ export default function UsuariosRoles() {
                   >
 
                     <option value="">
-                      Vincular doctor
+                      {es ? "Vincular doctor" : "Link doctor"}
                     </option>
 
                     {
@@ -1129,7 +1135,7 @@ export default function UsuariosRoles() {
                     }
                   />
 
-                  Usuario activo
+                  {es ? "Usuario activo" : "Active user"}
 
                 </label>
 
@@ -1161,7 +1167,7 @@ export default function UsuariosRoles() {
                   "
                 >
 
-                  Cancelar
+                  {es ? "Cancelar" : "Cancel"}
 
                 </button>
 
@@ -1187,9 +1193,9 @@ export default function UsuariosRoles() {
 
                     creandoUsuario
 
-                      ? "Creando..."
+                      ? es ? "Creando..." : "Creating..."
 
-                      : "Crear usuario"
+                      : es ? "Crear usuario" : "Create user"
 
                   }
 

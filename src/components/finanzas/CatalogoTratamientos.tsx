@@ -1,11 +1,15 @@
 import { useState } from "react";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 import type {
   Doctor,
 } from "../../types/Doctor";
 
 import type {
   TratamientoCatalogo,
+  TratamientoMaestro,
   TipoTratamiento,
 } from "../../types/TratamientoCatalogo";
 
@@ -15,6 +19,9 @@ type CatalogoTratamientosProps = {
 
   catalogoTratamientos:
     TratamientoCatalogo[];
+
+  catalogoMaestroTratamientos:
+    TratamientoMaestro[];
 
   guardarTratamientoCatalogo:
     (
@@ -51,6 +58,8 @@ export default function CatalogoTratamientos({
 
   catalogoTratamientos,
 
+  catalogoMaestroTratamientos,
+
   guardarTratamientoCatalogo,
 
   actualizarTratamientoCatalogo,
@@ -59,9 +68,60 @@ export default function CatalogoTratamientos({
 
 }: CatalogoTratamientosProps) {
 
+  const { language } = useLanguage();
+
+  const es = language === "es";
+
+  function traducirCategoria(
+    categoriaTratamiento: string
+  ) {
+
+    const traducciones: Record<
+      string,
+      string
+    > = es
+      ? {
+          Preventive: "Preventivo",
+          Restorative: "Restaurativo",
+          Endodontics: "Endodoncia",
+          Periodontics: "Periodoncia",
+          Surgery: "Cirugía",
+          Prosthodontics: "Prótesis",
+          Implants: "Implantes",
+          Orthodontics: "Ortodoncia",
+          Cosmetic: "Estética",
+          Diagnostic: "Diagnóstico",
+          Other: "Otro",
+        }
+      : {};
+
+    return (
+      traducciones[
+        categoriaTratamiento
+      ] ??
+      categoriaTratamiento
+    );
+
+  }
+
+  const [
+    tratamientoMaestroId,
+    setTratamientoMaestroId,
+  ] = useState("");
+
+  const [
+    esPersonalizado,
+    setEsPersonalizado,
+  ] = useState(false);
+
   const [
     nombre,
     setNombre,
+  ] = useState("");
+
+  const [
+    nombreEn,
+    setNombreEn,
   ] = useState("");
 
   const [
@@ -108,9 +168,20 @@ export default function CatalogoTratamientos({
     null
   );
 
+  const [
+    modalEdicionAbierto,
+    setModalEdicionAbierto,
+  ] = useState(false);
+
   function limpiarFormulario() {
 
+    setTratamientoMaestroId("");
+
+    setEsPersonalizado(false);
+
     setNombre("");
+
+    setNombreEn("");
 
     setCategoria("");
 
@@ -132,14 +203,54 @@ export default function CatalogoTratamientos({
       null
     );
 
+    setModalEdicionAbierto(false);
+
   }
 
   async function guardar() {
 
+    if (!tratamientoMaestroId && !esPersonalizado) {
+
+      window.alert(
+        es
+          ? "Selecciona un tratamiento del catálogo maestro o elige tratamiento personalizado."
+          : "Select a treatment from the master catalog or choose custom treatment."
+      );
+
+      return;
+
+    }
+
     if (!nombre.trim()) {
 
       window.alert(
-        "Ingresa el nombre del tratamiento."
+        es
+          ? "Ingresa el nombre del tratamiento."
+          : "Enter the treatment name."
+      );
+
+      return;
+
+    }
+
+    if (esPersonalizado && !nombreEn.trim()) {
+
+      window.alert(
+        es
+          ? "Ingresa también el nombre del tratamiento en inglés."
+          : "Also enter the treatment name in English."
+      );
+
+      return;
+
+    }
+
+    if (!categoria.trim()) {
+
+      window.alert(
+        es
+          ? "Selecciona una categoría."
+          : "Select a category."
       );
 
       return;
@@ -150,6 +261,14 @@ export default function CatalogoTratamientos({
 
       nombre:
         nombre.trim(),
+
+      nombre_en:
+        nombreEn.trim() || null,
+
+      tratamiento_maestro_id:
+        tratamientoMaestroId
+          ? Number(tratamientoMaestroId)
+          : null,
 
       categoria:
         categoria.trim(),
@@ -241,8 +360,22 @@ export default function CatalogoTratamientos({
       tratamiento.id
     );
 
+    setTratamientoMaestroId(
+      tratamiento.tratamiento_maestro_id
+        ? String(tratamiento.tratamiento_maestro_id)
+        : ""
+    );
+
+    setEsPersonalizado(
+      !tratamiento.tratamiento_maestro_id
+    );
+
     setNombre(
       tratamiento.nombre
+    );
+
+    setNombreEn(
+      tratamiento.nombre_en ?? ""
     );
 
     setCategoria(
@@ -289,10 +422,7 @@ export default function CatalogoTratamientos({
         : ""
     );
 
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setModalEdicionAbierto(true);
 
   }
 
@@ -319,7 +449,7 @@ export default function CatalogoTratamientos({
           "
         >
 
-          Catálogo de Tratamientos
+          {es ? "Catálogo de Tratamientos" : "Treatment Catalog"}
 
         </h2>
 
@@ -330,8 +460,7 @@ export default function CatalogoTratamientos({
           "
         >
 
-          Configura precios de clínica
-          y costos de especialistas
+          {es ? "Configura precios de clínica y precios de especialistas" : "Configure clinic prices and specialist prices"}
 
         </p>
 
@@ -362,39 +491,11 @@ export default function CatalogoTratamientos({
             "
           >
 
-            {
-              tratamientoEditandoId !==
-              null
-
-                ? "Editar Tratamiento"
-
-                : "Nuevo Tratamiento"
-            }
+            {es ? "Nuevo Tratamiento" : "New Treatment"}
 
           </h3>
 
-          {
-            tratamientoEditandoId !==
-            null
 
-            &&
-
-            <button
-              type="button"
-              onClick={
-                limpiarFormulario
-              }
-              className="
-                mint-btn
-                mint-btn-neutral
-                mint-btn-md
-              "
-            >
-
-              Cancelar edición
-
-            </button>
-          }
 
         </div>
 
@@ -406,65 +507,57 @@ export default function CatalogoTratamientos({
           "
         >
 
-          <input
-            type="text"
-            placeholder="Nombre del tratamiento"
-            value={nombre}
-            onChange={(e) =>
-              setNombre(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-            "
-          />
-
-          <input
-            type="text"
-            placeholder="Categoría"
-            value={categoria}
-            onChange={(e) =>
-              setCategoria(
-                e.target.value
-              )
-            }
-            className="
-              mint-input
-              w-full
-              p-3
-            "
-          />
-
           <select
-            value={tipo}
+            value={
+              esPersonalizado
+                ? "__custom__"
+                : tratamientoMaestroId
+            }
             onChange={(e) => {
 
-              const nuevoTipo =
-                e.target.value as TipoTratamiento;
+              const valor =
+                e.target.value;
 
-              setTipo(
-                nuevoTipo
-              );
+              if (valor === "__custom__") {
 
-              if (
-                nuevoTipo ===
-                "clinica"
-              ) {
+                setEsPersonalizado(true);
+                setTratamientoMaestroId("");
+                setNombre("");
+                setNombreEn("");
+                setCategoria("");
 
-                setCostoEspecialistaMXN(
-                  ""
+                return;
+
+              }
+
+              setEsPersonalizado(false);
+              setTratamientoMaestroId(valor);
+
+              const maestro =
+                catalogoMaestroTratamientos.find(
+                  (item) =>
+                    item.id === Number(valor)
                 );
 
-                setCostoEspecialistaUSD(
-                  ""
+              if (maestro) {
+
+                setNombre(
+                  maestro.nombre_es
                 );
 
-                setDoctorId(
-                  ""
+                setNombreEn(
+                  maestro.nombre_en
                 );
+
+                setCategoria(
+                  maestro.categoria
+                );
+
+              } else {
+
+                setNombre("");
+                setNombreEn("");
+                setCategoria("");
 
               }
 
@@ -473,26 +566,207 @@ export default function CatalogoTratamientos({
               mint-input
               w-full
               p-3
+              md:col-span-2
             "
           >
 
-            <option value="clinica">
-
-              Clínica
-
+            <option value="">
+              {es ? "Seleccionar tratamiento" : "Select treatment"}
             </option>
 
-            <option value="especialista">
+            {
+              catalogoMaestroTratamientos.map(
+                (tratamiento) => (
 
-              Especialista
+                  <option
+                    key={
+                      tratamiento.id
+                    }
+                    value={
+                      tratamiento.id
+                    }
+                  >
+                    {
+                      es
+                        ? tratamiento.nombre_es
+                        : tratamiento.nombre_en
+                    }
+                    {" — "}
+                    {
+                      traducirCategoria(
+                        tratamiento.categoria
+                      )
+                    }
+                  </option>
 
+                )
+              )
+            }
+
+            <option value="__custom__">
+              {es ? "+ Tratamiento personalizado" : "+ Custom treatment"}
             </option>
 
           </select>
 
+          {
+            esPersonalizado
+
+            ? (
+
+              <>
+
+                <input
+                  type="text"
+                  placeholder={es ? "Nombre en español" : "Spanish name"}
+                  value={nombre}
+                  onChange={(e) =>
+                    setNombre(
+                      e.target.value
+                    )
+                  }
+                  className="
+                    mint-input
+                    w-full
+                    p-3
+                  "
+                />
+
+                <input
+                  type="text"
+                  placeholder={es ? "Nombre en inglés" : "English name"}
+                  value={nombreEn}
+                  onChange={(e) =>
+                    setNombreEn(
+                      e.target.value
+                    )
+                  }
+                  className="
+                    mint-input
+                    w-full
+                    p-3
+                  "
+                />
+
+                <select
+                  value={categoria}
+                  onChange={(e) =>
+                    setCategoria(
+                      e.target.value
+                    )
+                  }
+                  className="
+                    mint-input
+                    w-full
+                    p-3
+                    md:col-span-2
+                  "
+                >
+
+                  <option value="">
+                    {es ? "Seleccionar categoría" : "Select category"}
+                  </option>
+
+                  <option value="Preventive">
+                    {es ? "Preventivo" : "Preventive"}
+                  </option>
+
+                  <option value="Restorative">
+                    {es ? "Restaurativo" : "Restorative"}
+                  </option>
+
+                  <option value="Endodontics">
+                    {es ? "Endodoncia" : "Endodontics"}
+                  </option>
+
+                  <option value="Periodontics">
+                    {es ? "Periodoncia" : "Periodontics"}
+                  </option>
+
+                  <option value="Surgery">
+                    {es ? "Cirugía" : "Surgery"}
+                  </option>
+
+                  <option value="Prosthodontics">
+                    {es ? "Prótesis" : "Prosthodontics"}
+                  </option>
+
+                  <option value="Implants">
+                    {es ? "Implantes" : "Implants"}
+                  </option>
+
+                  <option value="Orthodontics">
+                    {es ? "Ortodoncia" : "Orthodontics"}
+                  </option>
+
+                  <option value="Cosmetic">
+                    {es ? "Estética" : "Cosmetic"}
+                  </option>
+
+                  <option value="Diagnostic">
+                    {es ? "Diagnóstico" : "Diagnostic"}
+                  </option>
+
+                  <option value="Pediatric">
+                    {es ? "Odontopediatría" : "Pediatric"}
+                  </option>
+
+                  <option value="Other">
+                    {es ? "Otro" : "Other"}
+                  </option>
+
+                </select>
+
+              </>
+
+            )
+
+            : tratamientoMaestroId
+
+              ? (
+
+                <>
+
+                  <div
+                    className="
+                      mint-card
+                      p-4
+                    "
+                  >
+                    <p className="text-xs font-semibold mint-text-muted">
+                      {es ? "Tratamiento" : "Treatment"}
+                    </p>
+
+                    <p className="mt-1 font-semibold mint-text-primary">
+                      {es ? nombre : nombreEn}
+                    </p>
+                  </div>
+
+                  <div
+                    className="
+                      mint-card
+                      p-4
+                    "
+                  >
+                    <p className="text-xs font-semibold mint-text-muted">
+                      {es ? "Categoría" : "Category"}
+                    </p>
+
+                    <p className="mt-1 font-semibold mint-text-primary">
+                      {traducirCategoria(categoria)}
+                    </p>
+                  </div>
+
+                </>
+
+              )
+
+              : null
+          }
+
           <input
             type="number"
-            placeholder="Precio MXN"
+            placeholder={es ? "Precio clínica MXN" : "Clinic price MXN"}
             value={precioMXN}
             onChange={(e) =>
               setPrecioMXN(
@@ -508,7 +782,7 @@ export default function CatalogoTratamientos({
 
           <input
             type="number"
-            placeholder="Precio USD"
+            placeholder={es ? "Precio clínica USD" : "Clinic price USD"}
             value={precioUSD}
             onChange={(e) =>
               setPrecioUSD(
@@ -522,6 +796,79 @@ export default function CatalogoTratamientos({
             "
           />
 
+          <select
+            value={doctorId}
+            onChange={(e) => {
+
+              const nuevoDoctorId =
+                e.target.value;
+
+              setDoctorId(
+                nuevoDoctorId
+              );
+
+              if (nuevoDoctorId) {
+
+                setTipo(
+                  "especialista"
+                );
+
+              } else {
+
+                setTipo(
+                  "clinica"
+                );
+
+                setCostoEspecialistaMXN(
+                  ""
+                );
+
+                setCostoEspecialistaUSD(
+                  ""
+                );
+
+              }
+
+            }}
+            className="
+              mint-input
+              w-full
+              p-3
+              md:col-span-2
+            "
+          >
+
+            <option value="">
+
+              {es
+                ? "Sin especialista — tratamiento de clínica"
+                : "No specialist — clinic treatment"}
+
+            </option>
+
+            {
+              doctores.map(
+                (doctor) => (
+
+                  <option
+                    key={
+                      doctor.id
+                    }
+                    value={
+                      doctor.id
+                    }
+                  >
+
+                    {doctor.nombre}
+
+                  </option>
+
+                )
+              )
+            }
+
+          </select>
+
           {
             tipo ===
             "especialista"
@@ -532,7 +879,7 @@ export default function CatalogoTratamientos({
 
               <input
                 type="number"
-                placeholder="Costo especialista MXN"
+                placeholder={es ? "Precio especialista MXN" : "Specialist price MXN"}
                 value={
                   costoEspecialistaMXN
                 }
@@ -550,7 +897,7 @@ export default function CatalogoTratamientos({
 
               <input
                 type="number"
-                placeholder="Costo especialista USD"
+                placeholder={es ? "Precio especialista USD" : "Specialist price USD"}
                 value={
                   costoEspecialistaUSD
                 }
@@ -565,50 +912,6 @@ export default function CatalogoTratamientos({
                   p-3
                 "
               />
-
-              <select
-                value={doctorId}
-                onChange={(e) =>
-                  setDoctorId(
-                    e.target.value
-                  )
-                }
-                className="
-                  mint-input
-                  w-full
-                  p-3
-                  md:col-span-2
-                "
-              >
-
-                <option value="">
-
-                  Seleccionar especialista
-
-                </option>
-
-                {
-                  doctores.map(
-                    (doctor) => (
-
-                      <option
-                        key={
-                          doctor.id
-                        }
-                        value={
-                          doctor.id
-                        }
-                      >
-
-                        {doctor.nombre}
-
-                      </option>
-
-                    )
-                  )
-                }
-
-              </select>
 
             </>
           }
@@ -625,14 +928,7 @@ export default function CatalogoTratamientos({
             "
           >
 
-            {
-              tratamientoEditandoId !==
-              null
-
-                ? "Guardar cambios"
-
-                : "Guardar tratamiento"
-            }
+            {es ? "Guardar tratamiento" : "Save treatment"}
 
           </button>
 
@@ -656,7 +952,7 @@ export default function CatalogoTratamientos({
           "
         >
 
-          Tratamientos Configurados
+          {es ? "Tratamientos Configurados" : "Configured Treatments"}
 
         </h3>
 
@@ -684,55 +980,55 @@ export default function CatalogoTratamientos({
 
                 <th className="p-3 text-left">
 
-                  Tratamiento
+                  {es ? "Tratamiento" : "Treatment"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Categoría
+                  {es ? "Categoría" : "Category"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Tipo
+                  {es ? "Tipo" : "Type"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Precio MXN
+                  {es ? "Precio MXN" : "Price MXN"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Precio USD
+                  {es ? "Precio USD" : "Price USD"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Costo Especialista MXN
+                  {es ? "Precio Especialista MXN" : "Specialist Price MXN"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Costo Especialista USD
+                  {es ? "Precio Especialista USD" : "Specialist Price USD"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Estado
+                  {es ? "Estado" : "Status"}
 
                 </th>
 
                 <th className="p-3 text-left">
 
-                  Acción
+                  {es ? "Acción" : "Action"}
 
                 </th>
 
@@ -764,7 +1060,15 @@ export default function CatalogoTratamientos({
                       >
 
                         {
-                          tratamiento.nombre
+                          es
+                            ? tratamiento.nombre
+                            : tratamiento.nombre_en ||
+                              catalogoMaestroTratamientos.find(
+                                (maestro) =>
+                                  maestro.id ===
+                                  tratamiento.tratamiento_maestro_id
+                              )?.nombre_en ||
+                              tratamiento.nombre
                         }
 
                       </td>
@@ -779,7 +1083,9 @@ export default function CatalogoTratamientos({
                         >
 
                           {
-                            tratamiento.categoria
+                            traducirCategoria(
+                              tratamiento.categoria
+                            )
                           }
 
                         </span>
@@ -807,9 +1113,9 @@ export default function CatalogoTratamientos({
                             tratamiento.tipo ===
                             "clinica"
 
-                              ? "Clínica"
+                              ? es ? "Clínica" : "Clinic"
 
-                              : "Especialista"
+                              : es ? "Especialista" : "Specialist"
                           }
 
                         </span>
@@ -918,8 +1224,8 @@ export default function CatalogoTratamientos({
 
                           {
                             tratamiento.activo
-                              ? "Activo"
-                              : "Inactivo"
+                              ? es ? "Activo" : "Active"
+                              : es ? "Inactivo" : "Inactive"
                           }
 
                         </span>
@@ -949,7 +1255,7 @@ export default function CatalogoTratamientos({
                             "
                           >
 
-                            Editar
+                            {es ? "Editar" : "Edit"}
 
                           </button>
 
@@ -969,8 +1275,8 @@ export default function CatalogoTratamientos({
 
                             {
                               tratamiento.activo
-                                ? "Desactivar"
-                                : "Activar"
+                                ? es ? "Desactivar" : "Deactivate"
+                                : es ? "Activar" : "Activate"
                             }
 
                           </button>
@@ -992,6 +1298,530 @@ export default function CatalogoTratamientos({
         </div>
 
       </div>
+
+      {
+        modalEdicionAbierto &&
+        tratamientoEditandoId !== null && (
+
+          <div
+            className="
+              fixed
+              inset-0
+              z-[100]
+              flex
+              items-center
+              justify-center
+              p-4
+              bg-black/50
+              backdrop-blur-sm
+            "
+            onMouseDown={(e) => {
+              if (e.target === e.currentTarget) {
+                limpiarFormulario();
+              }
+            }}
+          >
+
+            <div
+              className="
+                mint-card
+                w-full
+                max-w-3xl
+                max-h-[90vh]
+                overflow-y-auto
+                shadow-2xl
+              "
+            >
+
+              <div
+                className="
+                  sticky
+                  top-0
+                  z-10
+                  flex
+                  items-center
+                  justify-between
+                  gap-4
+                  px-6
+                  py-5
+                  border-b
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg-card)]
+                "
+              >
+
+                <div>
+                  <p
+                    className="
+                      text-xs
+                      font-bold
+                      uppercase
+                      tracking-[0.12em]
+                      text-[var(--mint-primary)]
+                    "
+                  >
+                    {es ? "Tratamiento configurado" : "Configured treatment"}
+                  </p>
+
+                  <h3
+                    className="
+                      mt-1
+                      text-xl
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    {es ? "Editar Tratamiento" : "Edit Treatment"}
+                  </h3>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={limpiarFormulario}
+                  className="
+                    mint-btn
+                    mint-btn-ghost
+                    px-3
+                    py-2
+                    text-xl
+                    leading-none
+                  "
+                  aria-label={es ? "Cerrar" : "Close"}
+                >
+                  ×
+                </button>
+
+              </div>
+
+              <div className="p-6">
+
+                <div
+                  className="
+                    grid
+                    md:grid-cols-2
+                    gap-4
+                  "
+                >
+
+                  <select
+                    value={
+                      esPersonalizado
+                        ? "__custom__"
+                        : tratamientoMaestroId
+                    }
+                    onChange={(e) => {
+
+                      const valor =
+                        e.target.value;
+
+                      if (valor === "__custom__") {
+
+                        setEsPersonalizado(true);
+                        setTratamientoMaestroId("");
+                        setNombre("");
+                        setNombreEn("");
+                        setCategoria("");
+
+                        return;
+                      }
+
+                      setEsPersonalizado(false);
+                      setTratamientoMaestroId(valor);
+
+                      const maestro =
+                        catalogoMaestroTratamientos.find(
+                          (item) =>
+                            item.id === Number(valor)
+                        );
+
+                      if (maestro) {
+
+                        setNombre(
+                          maestro.nombre_es
+                        );
+
+                        setNombreEn(
+                          maestro.nombre_en
+                        );
+
+                        setCategoria(
+                          maestro.categoria
+                        );
+
+                      } else {
+
+                        setNombre("");
+                        setNombreEn("");
+                        setCategoria("");
+                      }
+
+                    }}
+                    className="
+                      mint-input
+                      w-full
+                      p-3
+                      md:col-span-2
+                    "
+                  >
+
+                    <option value="">
+                      {es ? "Seleccionar tratamiento" : "Select treatment"}
+                    </option>
+
+                    {
+                      catalogoMaestroTratamientos.map(
+                        (tratamiento) => (
+
+                          <option
+                            key={tratamiento.id}
+                            value={tratamiento.id}
+                          >
+                            {
+                              es
+                                ? tratamiento.nombre_es
+                                : tratamiento.nombre_en
+                            }
+                            {" — "}
+                            {
+                              traducirCategoria(
+                                tratamiento.categoria
+                              )
+                            }
+                          </option>
+
+                        )
+                      )
+                    }
+
+                    <option value="__custom__">
+                      {es ? "+ Tratamiento personalizado" : "+ Custom treatment"}
+                    </option>
+
+                  </select>
+
+                  {
+                    esPersonalizado
+
+                      ? (
+
+                        <>
+
+                          <input
+                            type="text"
+                            placeholder={es ? "Nombre en español" : "Spanish name"}
+                            value={nombre}
+                            onChange={(e) =>
+                              setNombre(
+                                e.target.value
+                              )
+                            }
+                            className="
+                              mint-input
+                              w-full
+                              p-3
+                            "
+                          />
+
+                          <input
+                            type="text"
+                            placeholder={es ? "Nombre en inglés" : "English name"}
+                            value={nombreEn}
+                            onChange={(e) =>
+                              setNombreEn(
+                                e.target.value
+                              )
+                            }
+                            className="
+                              mint-input
+                              w-full
+                              p-3
+                            "
+                          />
+
+                          <select
+                            value={categoria}
+                            onChange={(e) =>
+                              setCategoria(
+                                e.target.value
+                              )
+                            }
+                            className="
+                              mint-input
+                              w-full
+                              p-3
+                              md:col-span-2
+                            "
+                          >
+
+                            <option value="">
+                              {es ? "Seleccionar categoría" : "Select category"}
+                            </option>
+
+                            <option value="Preventive">
+                              {es ? "Preventivo" : "Preventive"}
+                            </option>
+                            <option value="Restorative">
+                              {es ? "Restaurativo" : "Restorative"}
+                            </option>
+                            <option value="Endodontics">
+                              {es ? "Endodoncia" : "Endodontics"}
+                            </option>
+                            <option value="Periodontics">
+                              {es ? "Periodoncia" : "Periodontics"}
+                            </option>
+                            <option value="Surgery">
+                              {es ? "Cirugía" : "Surgery"}
+                            </option>
+                            <option value="Prosthodontics">
+                              {es ? "Prótesis" : "Prosthodontics"}
+                            </option>
+                            <option value="Implants">
+                              {es ? "Implantes" : "Implants"}
+                            </option>
+                            <option value="Orthodontics">
+                              {es ? "Ortodoncia" : "Orthodontics"}
+                            </option>
+                            <option value="Cosmetic">
+                              {es ? "Estética" : "Cosmetic"}
+                            </option>
+                            <option value="Diagnostic">
+                              {es ? "Diagnóstico" : "Diagnostic"}
+                            </option>
+                            <option value="Pediatric">
+                              {es ? "Odontopediatría" : "Pediatric"}
+                            </option>
+                            <option value="Other">
+                              {es ? "Otro" : "Other"}
+                            </option>
+
+                          </select>
+
+                        </>
+
+                      )
+
+                      : tratamientoMaestroId
+
+                        ? (
+
+                          <>
+
+                            <div className="mint-card p-4">
+                              <p className="text-xs font-semibold mint-text-muted">
+                                {es ? "Tratamiento" : "Treatment"}
+                              </p>
+                              <p className="mt-1 font-semibold mint-text-primary">
+                                {es ? nombre : nombreEn}
+                              </p>
+                            </div>
+
+                            <div className="mint-card p-4">
+                              <p className="text-xs font-semibold mint-text-muted">
+                                {es ? "Categoría" : "Category"}
+                              </p>
+                              <p className="mt-1 font-semibold mint-text-primary">
+                                {traducirCategoria(categoria)}
+                              </p>
+                            </div>
+
+                          </>
+
+                        )
+
+                        : null
+                  }
+
+                  <input
+                    type="number"
+                    placeholder={es ? "Precio clínica MXN" : "Clinic price MXN"}
+                    value={precioMXN}
+                    onChange={(e) =>
+                      setPrecioMXN(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                      p-3
+                    "
+                  />
+
+                  <input
+                    type="number"
+                    placeholder={es ? "Precio clínica USD" : "Clinic price USD"}
+                    value={precioUSD}
+                    onChange={(e) =>
+                      setPrecioUSD(
+                        e.target.value
+                      )
+                    }
+                    className="
+                      mint-input
+                      w-full
+                      p-3
+                    "
+                  />
+
+                  <select
+                    value={doctorId}
+                    onChange={(e) => {
+
+                      const nuevoDoctorId =
+                        e.target.value;
+
+                      setDoctorId(
+                        nuevoDoctorId
+                      );
+
+                      if (nuevoDoctorId) {
+
+                        setTipo(
+                          "especialista"
+                        );
+
+                      } else {
+
+                        setTipo(
+                          "clinica"
+                        );
+
+                        setCostoEspecialistaMXN(
+                          ""
+                        );
+
+                        setCostoEspecialistaUSD(
+                          ""
+                        );
+                      }
+
+                    }}
+                    className="
+                      mint-input
+                      w-full
+                      p-3
+                      md:col-span-2
+                    "
+                  >
+
+                    <option value="">
+                      {es
+                        ? "Sin especialista — tratamiento de clínica"
+                        : "No specialist — clinic treatment"}
+                    </option>
+
+                    {
+                      doctores.map(
+                        (doctor) => (
+
+                          <option
+                            key={doctor.id}
+                            value={doctor.id}
+                          >
+                            {doctor.nombre}
+                          </option>
+
+                        )
+                      )
+                    }
+
+                  </select>
+
+                  {
+                    tipo === "especialista" && (
+
+                      <>
+
+                        <input
+                          type="number"
+                          placeholder={es ? "Precio especialista MXN" : "Specialist price MXN"}
+                          value={costoEspecialistaMXN}
+                          onChange={(e) =>
+                            setCostoEspecialistaMXN(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            mint-input
+                            w-full
+                            p-3
+                          "
+                        />
+
+                        <input
+                          type="number"
+                          placeholder={es ? "Precio especialista USD" : "Specialist price USD"}
+                          value={costoEspecialistaUSD}
+                          onChange={(e) =>
+                            setCostoEspecialistaUSD(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            mint-input
+                            w-full
+                            p-3
+                          "
+                        />
+
+                      </>
+
+                    )
+                  }
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  sticky
+                  bottom-0
+                  flex
+                  justify-end
+                  gap-3
+                  px-6
+                  py-4
+                  border-t
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-bg-card)]
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={limpiarFormulario}
+                  className="
+                    mint-btn
+                    mint-btn-neutral
+                    px-4
+                    py-2.5
+                  "
+                >
+                  {es ? "Cancelar" : "Cancel"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={guardar}
+                  className="
+                    mint-btn
+                    mint-btn-primary
+                    px-5
+                    py-2.5
+                  "
+                >
+                  {es ? "Guardar cambios" : "Save changes"}
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
     </div>
 

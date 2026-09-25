@@ -13,6 +13,13 @@ import {
 import jsPDF from "jspdf";
 import { useLanguage } from "../../context/LanguageContext";
 import { supabase } from "../../lib/supabase";
+import {
+  obtenerConfiguracionClinica,
+  obtenerDireccionCompleta,
+} from "../../lib/clinica";
+import type {
+  ConfiguracionClinica,
+} from "../../lib/clinica";
 
 import type {
   Presupuesto,
@@ -52,6 +59,43 @@ export default function PresupuestoDetalle({
     nombresCatalogo,
     setNombresCatalogo,
   ] = useState<NombreCatalogo[]>([]);
+
+  const [
+    configuracionClinica,
+    setConfiguracionClinica,
+  ] = useState<ConfiguracionClinica | null>(
+    null
+  );
+
+  useEffect(() => {
+
+    let activo = true;
+
+    async function cargarConfiguracionClinica() {
+
+      const configuracion =
+        await obtenerConfiguracionClinica();
+
+      if (activo) {
+
+        setConfiguracionClinica(
+          configuracion
+        );
+
+      }
+
+    }
+
+    cargarConfiguracionClinica();
+
+    return () => {
+
+      activo = false;
+
+    };
+
+  }, []);
+
 
   useEffect(() => {
     const idsCatalogo = Array.from(
@@ -175,7 +219,47 @@ export default function PresupuestoDetalle({
         }
       );
 
-  function generarPDF() {
+  async function generarPDF() {
+
+    const clinica =
+      configuracionClinica ||
+      await obtenerConfiguracionClinica();
+
+    const nombreClinica =
+      clinica?.nombre?.trim() ||
+      "Dra. Marlene Group";
+
+    const responsableClinica =
+      clinica?.responsable?.trim() ||
+      (
+        documentoEnIngles
+          ? "Dr. Marlene Verdugo"
+          : "Dra. Marlene Verdugo"
+      );
+
+    const direccionClinica =
+      clinica
+        ? obtenerDireccionCompleta(
+            clinica
+          )
+        : "";
+
+    const contactoClinica = [
+      clinica?.telefono?.trim(),
+      clinica?.email?.trim(),
+      clinica?.sitio_web?.trim(),
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const pieClinica = [
+      nombreClinica,
+      clinica?.ciudad?.trim(),
+      clinica?.estado?.trim(),
+      clinica?.pais?.trim(),
+    ]
+      .filter(Boolean)
+      .join(" · ");
 
     const pdf = new jsPDF(
       "p",
@@ -270,7 +354,7 @@ export default function PresupuestoDetalle({
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(15);
       pdf.text(
-        "Dra. Marlene Group",
+        nombreClinica,
         margen + 5,
         16
       );
@@ -279,9 +363,7 @@ export default function PresupuestoDetalle({
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(7.5);
       pdf.text(
-        documentoEnIngles
-          ? "Dr. Marlene Verdugo"
-          : "Dra. Marlene Verdugo",
+        responsableClinica,
         margen + 5,
         21
       );
@@ -290,13 +372,13 @@ export default function PresupuestoDetalle({
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(6.5);
       pdf.text(
-        "Cjon Juarez y 6ta No. 350, B · San Luis Río Colorado, Son. Mexico",
+        direccionClinica || "—",
         margen + 5,
         25
       );
 
       pdf.text(
-        "+52 653 208 0587 · dra.marlene.v@gmail.com · drmarlenedentalgroup.com",
+        contactoClinica || "—",
         margen + 5,
         29
       );
@@ -1091,7 +1173,7 @@ export default function PresupuestoDetalle({
       pdf.setFontSize(7);
 
       pdf.text(
-        "Dra. Marlene Group · San Luis Río Colorado, Sonora, México",
+        pieClinica,
         margen,
         altoPagina - 9
       );
@@ -1130,7 +1212,7 @@ export default function PresupuestoDetalle({
       return;
     }
 
-    generarPDF();
+    await generarPDF();
 
     if (
       presupuesto.estado ===
@@ -1146,20 +1228,6 @@ export default function PresupuestoDetalle({
 
   const estadoClasses =
     () => {
-
-      if (
-        presupuesto.estado ===
-        "Convertido"
-      ) {
-
-        return `
-          bg-[var(--mint-success-bg)]
-          text-[var(--mint-success)]
-          border
-          border-[var(--mint-success-border)]
-        `;
-
-      }
 
       if (
         presupuesto.estado ===
@@ -1367,9 +1435,7 @@ export default function PresupuestoDetalle({
               {
                 presupuesto.estado === "Borrador"
                   ? es ? "Borrador" : "Draft"
-                  : presupuesto.estado === "Enviado"
-                    ? es ? "Enviado" : "Sent"
-                    : es ? "Convertido" : "Converted"
+                  : es ? "Enviado" : "Sent"
               }
             </span>
 

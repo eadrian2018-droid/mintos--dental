@@ -1,7 +1,6 @@
 export type EstadoPresupuesto =
   | "Borrador"
-  | "Enviado"
-  | "Convertido";
+  | "Enviado";
 
 export type MonedaPresupuesto =
   | "MXN"

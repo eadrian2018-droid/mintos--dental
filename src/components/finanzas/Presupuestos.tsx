@@ -127,19 +127,6 @@ export default function Presupuestos({
     ) => {
 
       if (
-        estado === "Convertido"
-      ) {
-
-        return `
-          bg-[var(--mint-success-bg)]
-          text-[var(--mint-success)]
-          border
-          border-[var(--mint-success-border)]
-        `;
-
-      }
-
-      if (
         estado === "Enviado"
       ) {
 
@@ -224,8 +211,7 @@ export default function Presupuestos({
               "
             >
               Crea, consulta y administra propuestas
-              de tratamiento antes de convertirlas
-              en tratamientos activos.
+              de tratamiento para tus pacientes.
             </p>
 
           </div>

@@ -17,6 +17,9 @@ import { supabase }
 import { registrarBitacora }
   from "../../lib/registrarBitacora";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 type Clinica = {
   id: number;
   nombre: string | null;
@@ -29,6 +32,8 @@ type Clinica = {
   pais: string | null;
   horario: string | null;
   zona_horaria: string | null;
+  responsable: string | null;
+  sitio_web: string | null;
 };
 
 const formularioInicial = {
@@ -42,9 +47,15 @@ const formularioInicial = {
   pais: "México",
   horario: "",
   zona_horaria: "America/Hermosillo",
+  responsable: "",
+  sitio_web: "",
 };
 
 export default function ClinicaConfig() {
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const [
     cargando,
@@ -103,7 +114,9 @@ export default function ClinicaConfig() {
         estado,
         pais,
         horario,
-        zona_horaria
+        zona_horaria,
+        responsable,
+        sitio_web
       `)
       .limit(1)
       .maybeSingle();
@@ -152,6 +165,10 @@ export default function ClinicaConfig() {
         zona_horaria:
           clinica.zona_horaria ||
           "America/Hermosillo",
+        responsable:
+          clinica.responsable || "",
+        sitio_web:
+          clinica.sitio_web || "",
       };
 
       setForm(
@@ -189,7 +206,7 @@ export default function ClinicaConfig() {
     ) {
 
       alert(
-        "Ingresa el nombre del consultorio."
+        es ? "Ingresa el nombre del consultorio." : "Enter the clinic name."
       );
 
       return;
@@ -237,6 +254,14 @@ export default function ClinicaConfig() {
 
       zona_horaria:
         form.zona_horaria
+          .trim() || null,
+
+      responsable:
+        form.responsable
+          .trim() || null,
+
+      sitio_web:
+        form.sitio_web
           .trim() || null,
     };
 
@@ -294,7 +319,7 @@ export default function ClinicaConfig() {
       );
 
       alert(
-        "No se pudo guardar la información."
+        es ? "No se pudo guardar la información." : "The information could not be saved."
       );
 
       return;
@@ -317,6 +342,8 @@ export default function ClinicaConfig() {
       pais: "País",
       horario: "Horario",
       zona_horaria: "Zona horaria",
+      responsable: "Responsable",
+      sitio_web: "Sitio web",
     };
 
     (
@@ -355,7 +382,7 @@ export default function ClinicaConfig() {
     );
 
     alert(
-      "Información de la clínica guardada."
+      es ? "Información de la clínica guardada." : "Clinic information saved."
     );
 
   }
@@ -376,7 +403,7 @@ export default function ClinicaConfig() {
             mint-text-secondary
           "
         >
-          Cargando información...
+          {es ? "Cargando información..." : "Loading information..."}
         </p>
 
       </div>
@@ -444,7 +471,7 @@ export default function ClinicaConfig() {
                 mint-text-primary
               "
             >
-              Clínica
+              {es ? "Clínica" : "Clinic"}
             </h1>
 
             <p
@@ -454,8 +481,7 @@ export default function ClinicaConfig() {
                 mt-1
               "
             >
-              Información general del
-              consultorio.
+              {es ? "Información general del consultorio." : "General clinic information."}
             </p>
 
           </div>
@@ -490,8 +516,8 @@ export default function ClinicaConfig() {
 
           {
             guardando
-              ? "Guardando..."
-              : "Guardar cambios"
+              ? es ? "Guardando..." : "Saving..."
+              : es ? "Guardar cambios" : "Save changes"
           }
 
         </button>
@@ -523,7 +549,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              Nombre del consultorio
+              {es ? "Nombre del consultorio" : "Clinic name"}
             </label>
 
             <input
@@ -538,6 +564,78 @@ export default function ClinicaConfig() {
                 )
               }
               placeholder="Ej. Dra. Marlene Group"
+              className="
+                mint-input
+                w-full
+                px-3
+                py-2.5
+              "
+            />
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                mint-label
+                block
+                mb-2
+              "
+            >
+              {es ? "Responsable / Doctora principal" : "Primary doctor / Responsible person"}
+            </label>
+
+            <input
+              type="text"
+              value={
+                form.responsable
+              }
+              onChange={(e) =>
+                actualizarCampo(
+                  "responsable",
+                  e.target.value
+                )
+              }
+              placeholder={
+                es
+                  ? "Ej. Dra. Marlene Verdugo"
+                  : "E.g. Dr. Marlene Verdugo"
+              }
+              className="
+                mint-input
+                w-full
+                px-3
+                py-2.5
+              "
+            />
+
+          </div>
+
+          <div>
+
+            <label
+              className="
+                mint-label
+                block
+                mb-2
+              "
+            >
+              {es ? "Sitio web" : "Website"}
+            </label>
+
+            <input
+              type="text"
+              value={
+                form.sitio_web
+              }
+              onChange={(e) =>
+                actualizarCampo(
+                  "sitio_web",
+                  e.target.value
+                )
+              }
+              placeholder="drmarlenedentalgroup.com"
               className="
                 mint-input
                 w-full
@@ -566,7 +664,7 @@ export default function ClinicaConfig() {
                   mb-2
                 "
               >
-                Teléfono
+                {es ? "Teléfono" : "Phone"}
               </label>
 
               <div
@@ -649,8 +747,7 @@ export default function ClinicaConfig() {
                   mt-1
                 "
               >
-                Código de país y número,
-                solo dígitos.
+                {es ? "Código de país y número, solo dígitos." : "Country code and number, digits only."}
               </p>
 
             </div>
@@ -666,7 +763,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              Correo electrónico
+              {es ? "Correo electrónico" : "Email"}
             </label>
 
             <div
@@ -719,7 +816,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              Dirección
+              {es ? "Dirección" : "Address"}
             </label>
 
             <div
@@ -749,7 +846,7 @@ export default function ClinicaConfig() {
                     e.target.value
                   )
                 }
-                placeholder="Calle, número y colonia"
+                placeholder={es ? "Calle, número y colonia" : "Street, number and neighborhood"}
                 className="
                   mint-input
                   w-full
@@ -789,7 +886,7 @@ export default function ClinicaConfig() {
                   mb-2
                 "
               >
-                Ciudad
+                {es ? "Ciudad" : "City"}
               </label>
 
               <input
@@ -823,7 +920,7 @@ export default function ClinicaConfig() {
                   mb-2
                 "
               >
-                Estado
+                {es ? "Estado" : "State"}
               </label>
 
               <input
@@ -859,7 +956,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              País
+              {es ? "País" : "Country"}
             </label>
 
             <input
@@ -892,7 +989,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              Horario
+              {es ? "Horario" : "Business hours"}
             </label>
 
             <textarea
@@ -906,7 +1003,9 @@ export default function ClinicaConfig() {
                 )
               }
               placeholder={
-                "Lunes a Viernes: 9:00 AM - 1:00 PM / 4:00 PM - 8:00 PM\nSábado: 9:00 AM - 2:00 PM"
+                es
+                  ? "Lunes a Viernes: 9:00 AM - 1:00 PM / 4:00 PM - 8:00 PM\nSábado: 9:00 AM - 2:00 PM"
+                  : "Monday to Friday: 9:00 AM - 1:00 PM / 4:00 PM - 8:00 PM\nSaturday: 9:00 AM - 2:00 PM"
               }
               rows={4}
               className="
@@ -929,7 +1028,7 @@ export default function ClinicaConfig() {
                 mb-2
               "
             >
-              Zona horaria
+              {es ? "Zona horaria" : "Time zone"}
             </label>
 
             <select
@@ -965,7 +1064,7 @@ export default function ClinicaConfig() {
               <option
                 value="America/Mexico_City"
               >
-                Centro de México
+                {es ? "Centro de México" : "Central Mexico"}
               </option>
 
             </select>

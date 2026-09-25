@@ -94,6 +94,8 @@ export default function Configuracion() {
 
     catalogoTratamientos,
 
+    catalogoMaestroTratamientos,
+
     configuracionPagos,
 
     actualizarConfiguracionPago,
@@ -426,6 +428,10 @@ export default function Configuracion() {
 
             catalogoTratamientos={
               catalogoTratamientos
+            }
+
+            catalogoMaestroTratamientos={
+              catalogoMaestroTratamientos
             }
 
             configuracionPagos={

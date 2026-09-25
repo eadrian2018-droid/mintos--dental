@@ -16,6 +16,9 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 type RegistroBitacora = {
   id: number;
   usuario_nombre: string | null;
@@ -27,6 +30,10 @@ type RegistroBitacora = {
 };
 
 export default function BitacoraConfig() {
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const [
     registros,
@@ -173,6 +180,86 @@ export default function BitacoraConfig() {
       modulo,
     ]);
 
+  function traducirModulo(
+    valor: string | null
+  ) {
+
+    if (!valor || es) {
+      return valor || "-";
+    }
+
+    const traducciones: Record<string, string> = {
+      "Presupuestos": "Estimates",
+      "Configuración": "Settings",
+      "Pacientes": "Patients",
+      "Agenda": "Schedule",
+      "Citas": "Appointments",
+      "Finanzas": "Finances",
+      "Tratamientos": "Treatments",
+      "Doctores": "Doctors",
+      "Usuarios": "Users",
+      "Seguridad": "Security",
+      "Bitácora": "Activity Log",
+    };
+
+    return traducciones[valor] || valor;
+
+  }
+
+  function traducirAccion(
+    valor: string | null
+  ) {
+
+    if (!valor || es) {
+      return valor || "-";
+    }
+
+    const traducciones: Record<string, string> = {
+      "Abrir presupuesto": "Open estimate",
+      "Enviar presupuesto": "Send estimate",
+      "Crear presupuesto": "Create estimate",
+      "Editar presupuesto": "Edit estimate",
+      "Eliminar presupuesto": "Delete estimate",
+      "Editar configuración de clínica": "Edit clinic settings",
+      "Crear cita": "Create appointment",
+      "Editar cita": "Edit appointment",
+      "Cancelar cita": "Cancel appointment",
+      "Crear paciente": "Create patient",
+      "Editar paciente": "Edit patient",
+      "Eliminar paciente": "Delete patient",
+      "Guardar expediente": "Save patient record",
+      "Cambiar contraseña": "Change password",
+    };
+
+    return traducciones[valor] || valor;
+
+  }
+
+  function traducirDetalle(
+    valor: string | null
+  ) {
+
+    if (!valor || es) {
+      return valor || "-";
+    }
+
+    return valor
+      .replace(/Presupuesto ID:/g, "Estimate ID:")
+      .replace(/Paciente ID:/g, "Patient ID:")
+      .replace(/Paciente:/g, "Patient:")
+      .replace(/Clínica:/g, "Clinic:")
+      .replace(/Campos modificados:/g, "Modified fields:")
+      .replace(/Idioma:/g, "Language:")
+      .replace(/Subtotal:/g, "Subtotal:")
+      .replace(/Descuento:/g, "Discount:")
+      .replace(/Total:/g, "Total:")
+      .replace(/Fecha:/g, "Date:")
+      .replace(/Hora:/g, "Time:")
+      .replace(/Doctor:/g, "Doctor:")
+      .replace(/Estado:/g, "Status:");
+
+  }
+
   function formatearFecha(
     fecha: string
   ) {
@@ -180,7 +267,7 @@ export default function BitacoraConfig() {
     return new Date(
       fecha
     ).toLocaleString(
-      "es-MX",
+      es ? "es-MX" : "en-US",
       {
         dateStyle: "medium",
         timeStyle: "short",
@@ -215,7 +302,7 @@ export default function BitacoraConfig() {
             className="animate-spin"
           />
 
-          Cargando bitácora...
+          {es ? "Cargando bitácora..." : "Loading activity log..."}
 
         </div>
 
@@ -287,7 +374,7 @@ export default function BitacoraConfig() {
                 mint-text-primary
               "
             >
-              Bitácora
+              {es ? "Bitácora" : "Activity Log"}
             </h1>
 
             <p
@@ -297,8 +384,7 @@ export default function BitacoraConfig() {
                 mt-1
               "
             >
-              Historial de actividad
-              registrada en MintOS.
+              {es ? "Historial de actividad registrada en MintOS." : "History of activity recorded in MintOS."}
             </p>
 
           </div>
@@ -341,7 +427,7 @@ export default function BitacoraConfig() {
                   e.target.value
                 )
               }
-              placeholder="Buscar actividad..."
+              placeholder={es ? "Buscar actividad..." : "Search activity..."}
               className="
                 mint-input
                 w-full
@@ -390,7 +476,7 @@ export default function BitacoraConfig() {
             >
 
               <option value="todos">
-                Todos los módulos
+                {es ? "Todos los módulos" : "All modules"}
               </option>
 
               {
@@ -401,7 +487,7 @@ export default function BitacoraConfig() {
                       key={item}
                       value={item}
                     >
-                      {item}
+                      {traducirModulo(item)}
                     </option>
 
                   )
@@ -451,7 +537,7 @@ export default function BitacoraConfig() {
                   mint-text-secondary
                 "
               >
-                Fecha
+                {es ? "Fecha" : "Date"}
               </th>
 
               <th
@@ -466,7 +552,7 @@ export default function BitacoraConfig() {
                   mint-text-secondary
                 "
               >
-                Usuario
+                {es ? "Usuario" : "User"}
               </th>
 
               <th
@@ -481,7 +567,7 @@ export default function BitacoraConfig() {
                   mint-text-secondary
                 "
               >
-                Módulo
+                {es ? "Módulo" : "Module"}
               </th>
 
               <th
@@ -496,7 +582,7 @@ export default function BitacoraConfig() {
                   mint-text-secondary
                 "
               >
-                Acción
+                {es ? "Acción" : "Action"}
               </th>
 
               <th
@@ -511,7 +597,7 @@ export default function BitacoraConfig() {
                   mint-text-secondary
                 "
               >
-                Detalle
+                {es ? "Detalle" : "Details"}
               </th>
 
             </tr>
@@ -542,7 +628,7 @@ export default function BitacoraConfig() {
                       "
                     >
 
-                      No hay actividad registrada.
+                      {es ? "No hay actividad registrada." : "No activity recorded."}
 
                     </td>
 
@@ -633,7 +719,7 @@ export default function BitacoraConfig() {
                               >
                                 {
                                   registro.usuario_nombre ||
-                                  "Usuario"
+                                  (es ? "Usuario" : "User")
                                 }
                               </p>
 
@@ -678,8 +764,9 @@ export default function BitacoraConfig() {
                             "
                           >
                             {
-                              registro.modulo ||
-                              "-"
+                              traducirModulo(
+                                registro.modulo
+                              )
                             }
                           </span>
 
@@ -695,8 +782,9 @@ export default function BitacoraConfig() {
                           "
                         >
                           {
-                            registro.accion ||
-                            "-"
+                            traducirAccion(
+                              registro.accion
+                            )
                           }
                         </td>
 
@@ -710,8 +798,9 @@ export default function BitacoraConfig() {
                           "
                         >
                           {
-                            registro.detalle ||
-                            "-"
+                            traducirDetalle(
+                              registro.detalle
+                            )
                           }
                         </td>
 

@@ -18,6 +18,7 @@ import type {
 
 import type {
   TratamientoCatalogo,
+  TratamientoMaestro,
 } from "../types/TratamientoCatalogo";
 
 import type {
@@ -196,7 +197,7 @@ export const finanzasService = {
     }
 
   },
-  
+
   async guardarGasto(
     fecha: string,
     concepto: string,
@@ -254,6 +255,54 @@ export const finanzasService = {
 
   },
 
+  async cargarCatalogoMaestroTratamientos():
+    Promise<TratamientoMaestro[]> {
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(
+        "catalogo_maestro_tratamientos"
+      )
+      .select(
+        `
+          id,
+          codigo,
+          nombre_es,
+          nombre_en,
+          categoria,
+          activo,
+          creado_en
+        `
+      )
+      .eq(
+        "activo",
+        true
+      )
+      .order(
+        "categoria",
+        {
+          ascending: true,
+        }
+      )
+      .order(
+        "nombre_es",
+        {
+          ascending: true,
+        }
+      );
+
+    if (error) {
+      throw error;
+    }
+
+    return (
+      data ?? []
+    ) as TratamientoMaestro[];
+
+  },
+
   async cargarCatalogoTratamientos():
     Promise<TratamientoCatalogo[]> {
 
@@ -301,6 +350,10 @@ export const finanzasService = {
           nombre:
             tratamiento.nombre,
 
+          nombre_en:
+            tratamiento.nombre_en ??
+            null,
+
           categoria:
             tratamiento.categoria,
 
@@ -331,6 +384,11 @@ export const finanzasService = {
 
           doctor_id:
             tratamiento.doctor_id ??
+            null,
+
+          tratamiento_maestro_id:
+            tratamiento
+              .tratamiento_maestro_id ??
             null,
 
           activo:

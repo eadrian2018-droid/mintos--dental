@@ -7,6 +7,8 @@ export interface TratamientoCatalogo {
 
   nombre: string;
 
+  nombre_en?: string | null;
+
   categoria: string;
 
   tipo: TipoTratamiento;
@@ -21,5 +23,23 @@ export interface TratamientoCatalogo {
 
   doctor_id?: number | null;
 
+  tratamiento_maestro_id?: number | null;
+
   activo: boolean;
+}
+
+export interface TratamientoMaestro {
+  id: number;
+
+  codigo: string;
+
+  nombre_es: string;
+
+  nombre_en: string;
+
+  categoria: string;
+
+  activo: boolean;
+
+  creado_en?: string;
 }

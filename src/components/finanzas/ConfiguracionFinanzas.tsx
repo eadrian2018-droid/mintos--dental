@@ -12,6 +12,7 @@ import type {
 
 import type {
   TratamientoCatalogo,
+  TratamientoMaestro,
 } from "../../types/TratamientoCatalogo";
 
 import ComisionesCostos
@@ -33,6 +34,9 @@ import { registrarBitacora }
 import { useAuth }
   from "../../context/AuthContext";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 type SeccionConfiguracion =
   | "tratamientos"
   | "comisiones"
@@ -45,6 +49,9 @@ type ConfiguracionFinanzasProps = {
 
   catalogoTratamientos:
     TratamientoCatalogo[];
+
+  catalogoMaestroTratamientos:
+    TratamientoMaestro[];
 
   configuracionPagos:
     ConfiguracionPago[];
@@ -96,6 +103,8 @@ export default function ConfiguracionFinanzas({
 
   catalogoTratamientos,
 
+  catalogoMaestroTratamientos,
+
   configuracionPagos,
 
   actualizarConfiguracionPago,
@@ -111,6 +120,10 @@ export default function ConfiguracionFinanzas({
   const {
     perfil,
   } = useAuth();
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const esAdmin =
     perfil?.rol === "admin";
@@ -225,7 +238,9 @@ export default function ConfiguracionFinanzas({
     ) {
 
       alert(
-        "Ingresa un tipo de cambio válido."
+        es
+          ? "Ingresa un tipo de cambio válido."
+          : "Enter a valid exchange rate."
       );
 
       return;
@@ -267,7 +282,9 @@ export default function ConfiguracionFinanzas({
       );
 
       alert(
-        "Error guardando el tipo de cambio."
+        es
+          ? "Error guardando el tipo de cambio."
+          : "Error saving the exchange rate."
       );
 
       setGuardandoTipoCambio(
@@ -306,7 +323,9 @@ export default function ConfiguracionFinanzas({
     );
 
     alert(
-      "Tipo de cambio actualizado correctamente."
+      es
+        ? "Tipo de cambio actualizado correctamente."
+        : "Exchange rate updated successfully."
     );
 
   }
@@ -354,7 +373,7 @@ export default function ConfiguracionFinanzas({
             `}
           >
 
-            Tratamientos
+            {es ? "Tratamientos" : "Treatments"}
 
           </button>
 
@@ -378,7 +397,7 @@ export default function ConfiguracionFinanzas({
             `}
           >
 
-            Comisiones y costos
+            {es ? "Comisiones y costos" : "Commissions and costs"}
 
           </button>
 
@@ -407,7 +426,7 @@ export default function ConfiguracionFinanzas({
               `}
             >
 
-              Pagos
+              {es ? "Pagos" : "Payments"}
 
             </button>
           }
@@ -437,7 +456,7 @@ export default function ConfiguracionFinanzas({
               `}
             >
 
-              Tipo de cambio
+              {es ? "Tipo de cambio" : "Exchange rate"}
 
             </button>
           }
@@ -462,6 +481,10 @@ export default function ConfiguracionFinanzas({
             catalogoTratamientos
           }
 
+          catalogoMaestroTratamientos={
+            catalogoMaestroTratamientos
+          }
+
           guardarTratamientoCatalogo={
             guardarTratamientoCatalogo
           }
@@ -483,25 +506,25 @@ export default function ConfiguracionFinanzas({
 
         &&
 
-<ComisionesCostos
+        <ComisionesCostos
 
-  doctores={
-    doctores
-  }
+          doctores={
+            doctores
+          }
 
-  catalogoTratamientos={
-    catalogoTratamientos
-  }
+          catalogoTratamientos={
+            catalogoTratamientos
+          }
 
-  guardarTratamientoCatalogo={
-    guardarTratamientoCatalogo
-  }
+          guardarTratamientoCatalogo={
+            guardarTratamientoCatalogo
+          }
 
-  actualizarTratamientoCatalogo={
-    actualizarTratamientoCatalogo
-  }
+          actualizarTratamientoCatalogo={
+            actualizarTratamientoCatalogo
+          }
 
-/>
+        />
       }
 
       {
@@ -545,7 +568,7 @@ export default function ConfiguracionFinanzas({
               mint-text-primary
             "
           >
-            Tipo de cambio
+            {es ? "Tipo de cambio" : "Exchange rate"}
           </h2>
 
           <p
@@ -554,8 +577,11 @@ export default function ConfiguracionFinanzas({
               mt-2
             "
           >
-            Configura el valor utilizado para convertir
-            dólares estadounidenses a pesos mexicanos.
+            {
+              es
+                ? "Configura el valor utilizado para convertir dólares estadounidenses a pesos mexicanos."
+                : "Set the value used to convert U.S. dollars to Mexican pesos."
+            }
           </p>
 
           <div
@@ -574,7 +600,7 @@ export default function ConfiguracionFinanzas({
                 mb-2
               "
             >
-              Dólar estadounidense
+              {es ? "Dólar estadounidense" : "U.S. dollar"}
             </label>
 
             {
@@ -589,7 +615,11 @@ export default function ConfiguracionFinanzas({
                       mint-text-secondary
                     "
                   >
-                    Cargando tipo de cambio...
+                    {
+                      es
+                        ? "Cargando tipo de cambio..."
+                        : "Loading exchange rate..."
+                    }
                   </div>
 
                 )
@@ -622,7 +652,7 @@ export default function ConfiguracionFinanzas({
                             mb-2
                           "
                         >
-                          1 USD equivale a:
+                          {es ? "1 USD equivale a:" : "1 USD equals:"}
                         </p>
 
                         <div
@@ -692,9 +722,13 @@ export default function ConfiguracionFinanzas({
                         {
                           guardandoTipoCambio
 
-                            ? "Guardando..."
+                            ? es
+                              ? "Guardando..."
+                              : "Saving..."
 
-                            : "Guardar"
+                            : es
+                              ? "Guardar"
+                              : "Save"
                         }
 
                       </button>
@@ -721,7 +755,11 @@ export default function ConfiguracionFinanzas({
                           mint-text-muted
                         "
                       >
-                        Tipo de cambio actual
+                        {
+                          es
+                            ? "Tipo de cambio actual"
+                            : "Current exchange rate"
+                        }
                       </p>
 
                       <p

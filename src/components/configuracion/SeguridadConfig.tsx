@@ -17,12 +17,19 @@ import {
 import { supabase }
   from "../../lib/supabase";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 type DatosSesion = {
   email: string;
   expiracion: string;
 };
 
 export default function SeguridadConfig() {
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const [
     cargando,
@@ -117,7 +124,7 @@ export default function SeguridadConfig() {
         new Date(
           session.expires_at * 1000
         ).toLocaleString(
-          "es-MX",
+          es ? "es-MX" : "en-US",
           {
             dateStyle: "medium",
             timeStyle: "short",
@@ -140,7 +147,7 @@ export default function SeguridadConfig() {
 
     const confirmar =
       window.confirm(
-        "¿Quieres cerrar las sesiones abiertas en otros dispositivos?"
+        es ? "¿Quieres cerrar las sesiones abiertas en otros dispositivos?" : "Do you want to sign out sessions open on other devices?"
       );
 
     if (!confirmar) {
@@ -172,7 +179,7 @@ export default function SeguridadConfig() {
       );
 
       alert(
-        "No se pudieron cerrar las otras sesiones."
+        es ? "No se pudieron cerrar las otras sesiones." : "The other sessions could not be signed out."
       );
 
       return;
@@ -180,7 +187,7 @@ export default function SeguridadConfig() {
     }
 
     alert(
-      "Las demás sesiones fueron cerradas correctamente."
+      es ? "Las demás sesiones fueron cerradas correctamente." : "The other sessions were signed out successfully."
     );
 
   }
@@ -198,7 +205,7 @@ export default function SeguridadConfig() {
     ) {
 
       alert(
-        "La contraseña debe tener al menos 8 caracteres."
+        es ? "La contraseña debe tener al menos 8 caracteres." : "The password must be at least 8 characters long."
       );
 
       return;
@@ -210,7 +217,7 @@ export default function SeguridadConfig() {
     ) {
 
       alert(
-        "Las contraseñas no coinciden."
+        es ? "Las contraseñas no coinciden." : "The passwords do not match."
       );
 
       return;
@@ -219,7 +226,7 @@ export default function SeguridadConfig() {
 
     const confirmar =
       window.confirm(
-        "¿Quieres cambiar la contraseña de tu cuenta?"
+        es ? "¿Quieres cambiar la contraseña de tu cuenta?" : "Do you want to change your account password?"
       );
 
     if (!confirmar) {
@@ -251,7 +258,7 @@ export default function SeguridadConfig() {
       );
 
       alert(
-        "No se pudo cambiar la contraseña."
+        es ? "No se pudo cambiar la contraseña." : "The password could not be changed."
       );
 
       return;
@@ -262,7 +269,7 @@ export default function SeguridadConfig() {
     setConfirmarPassword("");
 
     alert(
-      "Contraseña actualizada correctamente."
+      es ? "Contraseña actualizada correctamente." : "Password updated successfully."
     );
 
   }
@@ -293,7 +300,7 @@ export default function SeguridadConfig() {
             className="animate-spin"
           />
 
-          Cargando seguridad...
+          {es ? "Cargando seguridad..." : "Loading security..."}
 
         </div>
 
@@ -360,7 +367,7 @@ export default function SeguridadConfig() {
                 mint-text-primary
               "
             >
-              Seguridad
+              {es ? "Seguridad" : "Security"}
             </h1>
 
             <p
@@ -370,8 +377,7 @@ export default function SeguridadConfig() {
                 mt-1
               "
             >
-              Administra la seguridad
-              y las sesiones de tu cuenta.
+              {es ? "Administra la seguridad y las sesiones de tu cuenta." : "Manage your account security and sessions."}
             </p>
 
           </div>
@@ -437,7 +443,7 @@ export default function SeguridadConfig() {
                       mint-text-primary
                     "
                   >
-                    Sesión actual
+                    {es ? "Sesión actual" : "Current session"}
                   </h2>
 
                   <p
@@ -460,7 +466,7 @@ export default function SeguridadConfig() {
                           mt-2
                         "
                       >
-                        Expiración de sesión:{" "}
+                        {es ? "Expiración de sesión:" : "Session expiration:"}{" "}
                         {
                           datosSesion.expiracion
                         }
@@ -489,7 +495,7 @@ export default function SeguridadConfig() {
                   size={14}
                 />
 
-                Activa
+                {es ? "Activa" : "Active"}
 
               </div>
 
@@ -553,7 +559,7 @@ export default function SeguridadConfig() {
                       mint-text-primary
                     "
                   >
-                    Otras sesiones
+                    {es ? "Otras sesiones" : "Other sessions"}
                   </h2>
 
                   <p
@@ -564,10 +570,7 @@ export default function SeguridadConfig() {
                       max-w-xl
                     "
                   >
-                    Si tu cuenta quedó abierta
-                    en otra computadora o
-                    dispositivo, puedes cerrar
-                    esas sesiones desde aquí.
+                    {es ? "Si tu cuenta quedó abierta en otra computadora o dispositivo, puedes cerrar esas sesiones desde aquí." : "If your account was left open on another computer or device, you can sign out those sessions here."}
                   </p>
 
                 </div>
@@ -611,8 +614,8 @@ export default function SeguridadConfig() {
 
                 {
                   cerrandoSesiones
-                    ? "Cerrando..."
-                    : "Cerrar otras sesiones"
+                    ? es ? "Cerrando..." : "Signing out..."
+                    : es ? "Cerrar otras sesiones" : "Sign out other sessions"
                 }
 
               </button>
@@ -667,7 +670,7 @@ export default function SeguridadConfig() {
                     mint-text-primary
                   "
                 >
-                  Cambiar contraseña
+                  {es ? "Cambiar contraseña" : "Change password"}
                 </h2>
 
                 <p
@@ -677,8 +680,7 @@ export default function SeguridadConfig() {
                     mt-1
                   "
                 >
-                  Actualiza la contraseña
-                  de tu cuenta de MintOS.
+                  {es ? "Actualiza la contraseña de tu cuenta de MintOS." : "Update your MintOS account password."}
                 </p>
 
               </div>
@@ -703,7 +705,7 @@ export default function SeguridadConfig() {
                     mb-2
                   "
                 >
-                  Nueva contraseña
+                  {es ? "Nueva contraseña" : "New password"}
                 </label>
 
                 <div
@@ -726,7 +728,7 @@ export default function SeguridadConfig() {
                         e.target.value
                       )
                     }
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder={es ? "Mínimo 8 caracteres" : "Minimum 8 characters"}
                     className="
                       mint-input
                       w-full
@@ -783,7 +785,7 @@ export default function SeguridadConfig() {
                     mb-2
                   "
                 >
-                  Confirmar contraseña
+                  {es ? "Confirmar contraseña" : "Confirm password"}
                 </label>
 
                 <div
@@ -806,7 +808,7 @@ export default function SeguridadConfig() {
                         e.target.value
                       )
                     }
-                    placeholder="Repite la contraseña"
+                    placeholder={es ? "Repite la contraseña" : "Repeat password"}
                     className="
                       mint-input
                       w-full
@@ -900,8 +902,8 @@ export default function SeguridadConfig() {
 
                 {
                   guardandoPassword
-                    ? "Actualizando..."
-                    : "Cambiar contraseña"
+                    ? es ? "Actualizando..." : "Updating..."
+                    : es ? "Cambiar contraseña" : "Change password"
                 }
 
               </button>

@@ -22,6 +22,7 @@ import type {
 
 import type {
   TratamientoCatalogo,
+  TratamientoMaestro,
 } from "../types/TratamientoCatalogo";
 
 import type {
@@ -59,6 +60,11 @@ export default function useFinanzas() {
     catalogoTratamientos,
     setCatalogoTratamientos,
   ] = useState<TratamientoCatalogo[]>([]);
+
+  const [
+    catalogoMaestroTratamientos,
+    setCatalogoMaestroTratamientos,
+  ] = useState<TratamientoMaestro[]>([]);
 
   const [
     configuracionPagos,
@@ -144,6 +150,8 @@ export default function useFinanzas() {
 
       cargarCatalogoTratamientos(),
 
+      cargarCatalogoMaestroTratamientos(),
+
       cargarConfiguracionPagos(),
 
     ]);
@@ -217,6 +225,18 @@ export default function useFinanzas() {
         .cargarCatalogoTratamientos();
 
     setCatalogoTratamientos(
+      data
+    );
+
+  }
+
+  async function cargarCatalogoMaestroTratamientos() {
+
+    const data =
+      await finanzasService
+        .cargarCatalogoMaestroTratamientos();
+
+    setCatalogoMaestroTratamientos(
       data
     );
 
@@ -513,6 +533,8 @@ export default function useFinanzas() {
 
     catalogoTratamientos,
 
+    catalogoMaestroTratamientos,
+
     configuracionPagos,
 
     nombreDoctor,
@@ -572,6 +594,8 @@ export default function useFinanzas() {
     cargarDoctores,
 
     cargarCatalogoTratamientos,
+
+    cargarCatalogoMaestroTratamientos,
 
     cargarConfiguracionPagos,
 

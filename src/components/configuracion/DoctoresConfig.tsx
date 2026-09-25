@@ -20,6 +20,9 @@ import { registrarBitacora }
 import { useAuth }
   from "../../context/AuthContext";
 
+import { useLanguage }
+  from "../../context/LanguageContext";
+
 type TipoDoctor =
   | "doctor"
   | "especialista"
@@ -48,6 +51,9 @@ type TratamientoCatalogo = {
   id: number;
   nombre: string;
   activo: boolean;
+  doctor_id: number | null;
+  costo_especialista_mxn: number;
+  costo_especialista_usd: number;
 };
 
 type PrecioEspecialista = {
@@ -95,6 +101,10 @@ export default function DoctoresConfig() {
     perfil,
     permisos,
   } = useAuth();
+
+  const { language } = useLanguage();
+
+  const es = language === "es";
 
   const esAdmin =
     perfil?.rol === "admin";
@@ -268,7 +278,10 @@ async function cargarCatalogoTratamientos() {
       `
       id,
       nombre,
-      activo
+      activo,
+      doctor_id,
+      costo_especialista_mxn,
+      costo_especialista_usd
       `
     )
 
@@ -459,7 +472,7 @@ async function cargarPreciosEspecialista(
       ) {
 
         alert(
-          "El porcentaje debe estar entre 0 y 100."
+          es ? "El porcentaje debe estar entre 0 y 100." : "The percentage must be between 0 and 100."
         );
 
         return;
@@ -495,7 +508,7 @@ async function cargarPreciosEspecialista(
         );
 
         alert(
-          "No se pudo actualizar la comisión."
+          es ? "No se pudo actualizar la comisión." : "The commission could not be updated."
         );
 
         setGuardando(false);
@@ -524,7 +537,7 @@ async function cargarPreciosEspecialista(
     if (!esAdmin) {
 
       alert(
-        "No tienes permiso para administrar doctores."
+        es ? "No tienes permiso para administrar doctores." : "You do not have permission to manage doctors."
       );
 
       return;
@@ -537,7 +550,7 @@ async function cargarPreciosEspecialista(
     if (!nombre) {
 
       alert(
-        "Escribe el nombre del doctor."
+        es ? "Escribe el nombre del doctor." : "Enter the doctor’s name."
       );
 
       return;
@@ -558,7 +571,7 @@ async function cargarPreciosEspecialista(
     ) {
 
       alert(
-        "El porcentaje no es válido."
+        es ? "El porcentaje no es válido." : "The percentage is not valid."
       );
 
       return;
@@ -571,7 +584,7 @@ async function cargarPreciosEspecialista(
     ) {
 
       alert(
-        "El porcentaje debe estar entre 0 y 100."
+        es ? "El porcentaje debe estar entre 0 y 100." : "The percentage must be between 0 and 100."
       );
 
       return;
@@ -644,7 +657,7 @@ async function cargarPreciosEspecialista(
         );
 
         alert(
-          "No se pudo actualizar el doctor."
+          es ? "No se pudo actualizar el doctor." : "The doctor could not be updated."
         );
 
         setGuardando(false);
@@ -676,7 +689,7 @@ async function cargarPreciosEspecialista(
         );
 
         alert(
-          "No se pudo crear el doctor."
+          es ? "No se pudo crear el doctor." : "The doctor could not be created."
         );
 
         setGuardando(false);
@@ -820,7 +833,7 @@ async function cargarPreciosEspecialista(
       );
 
       alert(
-        "No se pudo cambiar el estado."
+        es ? "No se pudo cambiar el estado." : "The status could not be changed."
       );
 
       return;
@@ -914,15 +927,40 @@ async function guardarPrecioEspecialista() {
     return;
   }
 
-  const nombreTratamiento =
-    formPrecio.nombre_tratamiento.trim();
+  const tratamientoId =
+    Number(
+      formPrecio.tratamiento_id
+    );
 
   if (
-    !nombreTratamiento
+    !tratamientoId ||
+    Number.isNaN(
+      tratamientoId
+    )
   ) {
 
     alert(
-      "Ingresa el nombre del tratamiento."
+      es
+        ? "Selecciona un tratamiento del catálogo."
+        : "Select a treatment from the catalog."
+    );
+
+    return;
+  }
+
+  const tratamientoCatalogo =
+    catalogoTratamientos.find(
+      (tratamiento) =>
+        tratamiento.id ===
+        tratamientoId
+    );
+
+  if (!tratamientoCatalogo) {
+
+    alert(
+      es
+        ? "No se encontró el tratamiento seleccionado."
+        : "The selected treatment was not found."
     );
 
     return;
@@ -939,128 +977,63 @@ async function guardarPrecioEspecialista() {
   ) {
 
     alert(
-      "Ingresa un costo válido."
+      es
+        ? "Ingresa un precio válido."
+        : "Enter a valid price."
     );
 
     return;
   }
 
-  const precioOriginal =
-    precioEditandoId !== null
-      ? preciosEspecialista.find(
-          (precio) =>
-            precio.id ===
-            precioEditandoId
-        )
-      : null;
-
   setGuardandoPrecio(
     true
   );
 
-  const datosPrecio = {
+  const campoPrecio =
+    formPrecio.moneda === "USD"
+      ? "costo_especialista_usd"
+      : "costo_especialista_mxn";
 
-    doctor_id:
-      doctorPreciosId,
+  const {
+    error,
+  } = await supabase
 
-    tratamiento_id:
-      null,
+    .from(
+      "catalogo_tratamientos"
+    )
 
-    nombre_tratamiento:
-      nombreTratamiento,
+    .update({
+      doctor_id:
+        doctorPreciosId,
+      tipo:
+        "especialista",
+      [campoPrecio]:
+        costo,
+    })
 
-    costo,
+    .eq(
+      "id",
+      tratamientoId
+    );
 
-    moneda:
-      formPrecio.moneda,
+  if (error) {
 
-    activo:
-      true,
+    console.error(
+      "Error actualizando precio del especialista:",
+      error
+    );
 
-    updated_at:
-      new Date().toISOString(),
-  };
+    alert(
+      es
+        ? "No se pudo actualizar el precio del especialista."
+        : "The specialist price could not be updated."
+    );
 
-  let precioCreadoId:
-    number | null = null;
+    setGuardandoPrecio(
+      false
+    );
 
-  if (
-    precioEditandoId !== null
-  ) {
-
-    const {
-      error,
-    } = await supabase
-
-      .from(
-        "especialista_tratamientos"
-      )
-
-      .update(
-        datosPrecio
-      )
-
-      .eq(
-        "id",
-        precioEditandoId
-      );
-
-    if (error) {
-
-      console.error(
-        "Error actualizando precio del especialista:",
-        error
-      );
-
-      alert(
-        "No se pudo actualizar el tratamiento."
-      );
-
-      setGuardandoPrecio(
-        false
-      );
-
-      return;
-    }
-
-  } else {
-
-    const {
-      data: precioCreado,
-      error,
-    } = await supabase
-
-      .from(
-        "especialista_tratamientos"
-      )
-
-      .insert([
-        datosPrecio,
-      ])
-      .select("id")
-      .single();
-
-    if (error) {
-
-      console.error(
-        "Error guardando tratamiento del especialista:",
-        error
-      );
-
-      alert(
-        "No se pudo guardar el tratamiento."
-      );
-
-      setGuardandoPrecio(
-        false
-      );
-
-      return;
-    }
-
-    precioCreadoId =
-      precioCreado.id;
-
+    return;
   }
 
   const especialista =
@@ -1070,27 +1043,17 @@ async function guardarPrecioEspecialista() {
         doctorPreciosId
     );
 
-  if (
-    precioEditandoId !== null
-  ) {
+  await registrarBitacora({
+    accion:
+      precioEditandoId !== null
+        ? "Editar precio de especialista"
+        : "Asignar tratamiento a especialista",
+    modulo: "Doctores",
+    detalle:
+      `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Tratamiento ID: ${tratamientoId} | Tratamiento: ${tratamientoCatalogo.nombre} | Precio especialista: ${costo} ${formPrecio.moneda}`,
+  });
 
-    await registrarBitacora({
-      accion: "Editar precio de especialista",
-      modulo: "Doctores",
-      detalle:
-        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precioEditandoId} | Tratamiento: ${precioOriginal?.nombre_tratamiento || "-"} → ${nombreTratamiento} | Costo: ${precioOriginal?.costo ?? 0} ${precioOriginal?.moneda || "-"} → ${costo} ${formPrecio.moneda}`,
-    });
-
-  } else {
-
-    await registrarBitacora({
-      accion: "Crear precio de especialista",
-      modulo: "Doctores",
-      detalle:
-        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precioCreadoId ?? "-"} | Tratamiento: ${nombreTratamiento} | Costo: ${costo} ${formPrecio.moneda}`,
-    });
-
-  }
+  await cargarCatalogoTratamientos();
 
   await cargarPreciosEspecialista(
     doctorPreciosId
@@ -1142,7 +1105,7 @@ async function guardarPrecioEspecialista() {
       );
 
       alert(
-        "No se pudo cambiar el estado del precio."
+        es ? "No se pudo cambiar el estado del precio." : "The price status could not be changed."
       );
 
       return;
@@ -1200,7 +1163,7 @@ async function guardarPrecioEspecialista() {
             "
           >
 
-            Doctores
+            {es ? "Doctores" : "Doctors"}
 
           </h2>
 
@@ -1212,9 +1175,7 @@ async function guardarPrecioEspecialista() {
             "
           >
 
-            Administra doctores,
-            especialidades,
-            porcentajes y WhatsApp.
+            {es ? "Administra doctores, especialidades, porcentajes y WhatsApp." : "Manage doctors, specialties, percentages and WhatsApp."}
 
           </p>
 
@@ -1246,7 +1207,7 @@ async function guardarPrecioEspecialista() {
             size={17}
           />
 
-          Nuevo Doctor
+          {es ? "Nuevo Doctor" : "New Doctor"}
 
         </button>
         }
@@ -1285,10 +1246,10 @@ async function guardarPrecioEspecialista() {
                   esAdmin
                     ? (
                         doctorEditando !== null
-                          ? "Editar Doctor"
-                          : "Nuevo Doctor"
+                          ? (es ? "Editar Doctor" : "Edit Doctor")
+                          : (es ? "Nuevo Doctor" : "New Doctor")
                       )
-                    : "Editar comisión"
+                    : (es ? "Editar comisión" : "Edit commission")
                 }
 
               </h3>
@@ -1339,7 +1300,7 @@ async function guardarPrecioEspecialista() {
                           mb-2
                         "
                       >
-                        Nombre
+                        {es ? "Nombre" : "Name"}
                       </label>
 
                       <input
@@ -1352,7 +1313,7 @@ async function guardarPrecioEspecialista() {
                               e.target.value,
                           })
                         }
-                        placeholder="Dr. Nombre"
+                        placeholder={es ? "Dr. Nombre" : "Dr. Name"}
                         className="
                           mint-input
                           w-full
@@ -1372,7 +1333,7 @@ async function guardarPrecioEspecialista() {
                           mb-2
                         "
                       >
-                        Especialidad
+                        {es ? "Especialidad" : "Specialty"}
                       </label>
 
                       <input
@@ -1385,7 +1346,7 @@ async function guardarPrecioEspecialista() {
                               e.target.value,
                           })
                         }
-                        placeholder="General"
+                        placeholder={es ? "General" : "General"}
                         className="
                           mint-input
                           w-full
@@ -1405,7 +1366,7 @@ async function guardarPrecioEspecialista() {
                           mb-2
                         "
                       >
-                        Tipo
+                        {es ? "Tipo" : "Type"}
                       </label>
 
                       <select
@@ -1428,10 +1389,10 @@ async function guardarPrecioEspecialista() {
                           Doctor
                         </option>
                         <option value="especialista">
-                          Especialista
+                          {es ? "Especialista" : "Specialist"}
                         </option>
                         <option value="ambos">
-                          Ambos
+                          {es ? "Ambos" : "Both"}
                         </option>
                       </select>
 
@@ -1446,7 +1407,7 @@ async function guardarPrecioEspecialista() {
                           mb-2
                         "
                       >
-                        Porcentaje %
+                        {es ? "Porcentaje %" : "Percentage %"}
                       </label>
 
                       <input
@@ -1546,7 +1507,7 @@ async function guardarPrecioEspecialista() {
                         "
                       />
 
-                      Doctor activo
+                      {es ? "Doctor activo" : "Active doctor"}
 
                     </label>
 
@@ -1570,7 +1531,7 @@ async function guardarPrecioEspecialista() {
                           text-sm
                         "
                       >
-                        Cancelar
+                        {es ? "Cancelar" : "Cancel"}
                       </button>
 
                       <button
@@ -1597,8 +1558,8 @@ async function guardarPrecioEspecialista() {
 
                         {
                           guardando
-                            ? "Guardando..."
-                            : "Guardar"
+                            ? (es ? "Guardando..." : "Saving...")
+                            : (es ? "Guardar" : "Save")
                         }
 
                       </button>
@@ -1637,7 +1598,7 @@ async function guardarPrecioEspecialista() {
                       mb-2
                     "
                   >
-                    Porcentaje de comisión
+                    {es ? "Porcentaje de comisión" : "Commission percentage"}
                   </label>
 
                   <input
@@ -1682,7 +1643,7 @@ async function guardarPrecioEspecialista() {
                         text-sm
                       "
                     >
-                      Cancelar
+                      {es ? "Cancelar" : "Cancel"}
                     </button>
 
                     <button
@@ -1709,8 +1670,8 @@ async function guardarPrecioEspecialista() {
 
                       {
                         guardando
-                          ? "Guardando..."
-                          : "Guardar comisión"
+                          ? (es ? "Guardando..." : "Saving...")
+                          : (es ? "Guardar comisión" : "Save commission")
                       }
 
                     </button>
@@ -1748,7 +1709,7 @@ async function guardarPrecioEspecialista() {
             mb-1
           "
         >
-          Personal clínico
+          {es ? "Personal clínico" : "Clinical staff"}
         </p>
 
         <h3
@@ -1758,7 +1719,7 @@ async function guardarPrecioEspecialista() {
             mint-text-primary
           "
         >
-          Doctores
+          {es ? "Doctores" : "Doctors"}
         </h3>
 
         <p
@@ -1768,7 +1729,7 @@ async function guardarPrecioEspecialista() {
             mt-1
           "
         >
-          Doctores que atienden pacientes y reciben comisión clínica.
+          {es ? "Doctores que atienden pacientes y reciben comisión clínica." : "Doctors who treat patients and receive a clinical commission."}
         </p>
 
       </div>
@@ -1814,7 +1775,7 @@ async function guardarPrecioEspecialista() {
                   font-semibold
                 "
               >
-                Especialidad
+                {es ? "Especialidad" : "Specialty"}
               </th>
 
               <th
@@ -1847,7 +1808,7 @@ async function guardarPrecioEspecialista() {
                   font-semibold
                 "
               >
-                Estado
+                {es ? "Estado" : "Status"}
               </th>
 
               <th
@@ -1858,7 +1819,7 @@ async function guardarPrecioEspecialista() {
                   font-semibold
                 "
               >
-                Acción
+                {es ? "Acción" : "Action"}
               </th>
 
             </tr>
@@ -1883,7 +1844,7 @@ async function guardarPrecioEspecialista() {
                     "
                   >
 
-                    Cargando doctores...
+                    {es ? "Cargando doctores..." : "Loading doctors..."}
 
                   </td>
 
@@ -1903,7 +1864,7 @@ async function guardarPrecioEspecialista() {
                     "
                   >
 
-                    No hay doctores registrados.
+                    {es ? "No hay doctores registrados." : "No doctors registered."}
 
                   </td>
 
@@ -1969,7 +1930,7 @@ async function guardarPrecioEspecialista() {
 
           {
             doctor.telefono ||
-            "Sin teléfono"
+            (es ? "Sin teléfono" : "No phone")
           }
 
         </td>
@@ -2024,8 +1985,8 @@ async function guardarPrecioEspecialista() {
 
             {
               doctor.activo
-                ? "Activo"
-                : "Inactivo"
+                ? (es ? "Activo" : "Active")
+                : (es ? "Inactivo" : "Inactive")
             }
 
           </button>
@@ -2048,8 +2009,8 @@ async function guardarPrecioEspecialista() {
 
                 {
                   doctor.activo
-                    ? "Activo"
-                    : "Inactivo"
+                    ? (es ? "Activo" : "Active")
+                    : (es ? "Inactivo" : "Inactive")
                 }
 
               </span>
@@ -2101,8 +2062,8 @@ async function guardarPrecioEspecialista() {
 
               {
                 esAdmin
-                  ? "Editar"
-                  : "Editar comisión"
+                  ? (es ? "Editar" : "Edit")
+                  : (es ? "Editar comisión" : "Edit commission")
               }
 
             </button>
@@ -2161,7 +2122,7 @@ async function guardarPrecioEspecialista() {
               mb-1
             "
           >
-            Servicios especializados
+            {es ? "Servicios especializados" : "Specialized services"}
           </p>
 
           <h3
@@ -2171,7 +2132,7 @@ async function guardarPrecioEspecialista() {
               mint-text-primary
             "
           >
-            Especialistas
+            {es ? "Especialistas" : "Specialists"}
           </h3>
 
           <p
@@ -2181,7 +2142,7 @@ async function guardarPrecioEspecialista() {
               mt-1
             "
           >
-            Especialistas externos con tarifario clínico configurado.
+            {es ? "Especialistas externos con tarifario clínico configurado." : "External specialists with configured clinical pricing."}
           </p>
 
         </div>
@@ -2216,7 +2177,7 @@ async function guardarPrecioEspecialista() {
                     font-semibold
                   "
                 >
-                  Especialista
+                  {es ? "Especialista" : "Specialist"}
                 </th>
 
                 <th
@@ -2227,7 +2188,7 @@ async function guardarPrecioEspecialista() {
                     font-semibold
                   "
                 >
-                  Especialidad
+                  {es ? "Especialidad" : "Specialty"}
                 </th>
 
                 <th
@@ -2249,7 +2210,7 @@ async function guardarPrecioEspecialista() {
                     font-semibold
                   "
                 >
-                  Estado
+                  {es ? "Estado" : "Status"}
                 </th>
 
                 <th
@@ -2260,7 +2221,7 @@ async function guardarPrecioEspecialista() {
                     font-semibold
                   "
                 >
-                  Acción
+                  {es ? "Acción" : "Action"}
                 </th>
 
               </tr>
@@ -2284,7 +2245,7 @@ async function guardarPrecioEspecialista() {
                         mint-text-secondary
                       "
                     >
-                      Cargando especialistas...
+                      {es ? "Cargando especialistas..." : "Loading specialists..."}
                     </td>
 
                   </tr>
@@ -2302,7 +2263,7 @@ async function guardarPrecioEspecialista() {
                         mint-text-secondary
                       "
                     >
-                      No hay especialistas registrados.
+                      {es ? "No hay especialistas registrados." : "No specialists registered."}
                     </td>
 
                   </tr>
@@ -2362,7 +2323,7 @@ async function guardarPrecioEspecialista() {
                           >
                             {
                               doctor.telefono ||
-                              "Sin teléfono"
+                              (es ? "Sin teléfono" : "No phone")
                             }
                           </td>
 
@@ -2394,8 +2355,8 @@ async function guardarPrecioEspecialista() {
                             >
                               {
                                 doctor.activo
-                                  ? "Activo"
-                                  : "Inactivo"
+                                  ? (es ? "Activo" : "Active")
+                                  : (es ? "Inactivo" : "Inactive")
                               }
                             </button>
 
@@ -2468,7 +2429,7 @@ async function guardarPrecioEspecialista() {
                                   }
                                 `}
                               >
-                                Precios
+                                {es ? "Precios" : "Prices"}
                               </button>
 
                               <button
@@ -2551,7 +2512,7 @@ async function guardarPrecioEspecialista() {
                                           mb-1
                                         "
                                       >
-                                        Tarifario especialista
+                                        {es ? "Tarifario especialista" : "Specialist fee schedule"}
                                       </p>
 
                                       <h3
@@ -2561,7 +2522,7 @@ async function guardarPrecioEspecialista() {
                                           mint-text-primary
                                         "
                                       >
-                                        Precios de{" "}
+                                        {es ? "Precios de " : "Prices for "}
                                         {
                                           doctor.nombre
                                         }
@@ -2590,7 +2551,7 @@ async function guardarPrecioEspecialista() {
                                         size={16}
                                       />
 
-                                      Agregar tratamiento
+                                      {es ? "Agregar tratamiento" : "Add treatment"}
 
                                     </button>
 
@@ -2626,8 +2587,8 @@ async function guardarPrecioEspecialista() {
                                           >
                                             {
                                               precioEditandoId !== null
-                                                ? "Editar precio"
-                                                : "Agregar tratamiento"
+                                                ? (es ? "Editar precio" : "Edit price")
+                                                : (es ? "Agregar tratamiento" : "Add treatment")
                                             }
                                           </h4>
 
@@ -2670,30 +2631,94 @@ async function guardarPrecioEspecialista() {
                                                 mb-2
                                               "
                                             >
-                                              Tratamiento
+                                              {es ? "Tratamiento" : "Treatment"}
                                             </label>
 
-                                            <input
-                                              type="text"
+                                            <select
                                               value={
-                                                formPrecio.nombre_tratamiento
+                                                formPrecio.tratamiento_id
                                               }
-                                              onChange={
-                                                (e) =>
-                                                  setFormPrecio({
-                                                    ...formPrecio,
-                                                    nombre_tratamiento:
-                                                      e.target.value,
-                                                  })
+                                              onChange={(e) => {
+
+                                                const tratamientoId =
+                                                  e.target.value;
+
+                                                const tratamiento =
+                                                  catalogoTratamientos.find(
+                                                    (item) =>
+                                                      item.id ===
+                                                      Number(
+                                                        tratamientoId
+                                                      )
+                                                  );
+
+                                                setFormPrecio({
+                                                  ...formPrecio,
+                                                  tratamiento_id:
+                                                    tratamientoId,
+                                                  nombre_tratamiento:
+                                                    tratamiento?.nombre ||
+                                                    "",
+                                                });
+
+                                              }}
+                                              disabled={
+                                                precioEditandoId !== null &&
+                                                !!formPrecio.tratamiento_id
                                               }
-                                              placeholder="Ej. Endodoncia molar"
                                               className="
                                                 mint-input
                                                 w-full
                                                 px-3
                                                 py-2.5
+                                                disabled:opacity-70
+                                                disabled:cursor-not-allowed
                                               "
-                                            />
+                                            >
+
+                                              <option value="">
+                                                {es
+                                                  ? "Seleccionar tratamiento"
+                                                  : "Select treatment"}
+                                              </option>
+
+                                              {
+                                                catalogoTratamientos
+                                                  .filter(
+                                                    (tratamiento) =>
+                                                      tratamiento.activo &&
+                                                      (
+                                                        tratamiento.doctor_id ===
+                                                          null ||
+                                                        tratamiento.doctor_id ===
+                                                          doctorPreciosId ||
+                                                        tratamiento.id ===
+                                                          Number(
+                                                            formPrecio.tratamiento_id
+                                                          )
+                                                      )
+                                                  )
+                                                  .map(
+                                                    (tratamiento) => (
+
+                                                      <option
+                                                        key={
+                                                          tratamiento.id
+                                                        }
+                                                        value={
+                                                          tratamiento.id
+                                                        }
+                                                      >
+                                                        {
+                                                          tratamiento.nombre
+                                                        }
+                                                      </option>
+
+                                                    )
+                                                  )
+                                              }
+
+                                            </select>
 
                                           </div>
 
@@ -2706,7 +2731,7 @@ async function guardarPrecioEspecialista() {
                                                 mb-2
                                               "
                                             >
-                                              Costo
+                                              {es ? "Costo" : "Cost"}
                                             </label>
 
                                             <input
@@ -2748,7 +2773,7 @@ async function guardarPrecioEspecialista() {
                                                 mint-label
                                               "
                                             >
-                                              Moneda
+                                              {es ? "Moneda" : "Currency"}
                                             </label>
 
                                             <div
@@ -2854,7 +2879,7 @@ async function guardarPrecioEspecialista() {
                                               text-sm
                                             "
                                           >
-                                            Cancelar
+                                            {es ? "Cancelar" : "Cancel"}
                                           </button>
 
                                           <button
@@ -2885,8 +2910,8 @@ async function guardarPrecioEspecialista() {
 
                                             {
                                               guardandoPrecio
-                                                ? "Guardando..."
-                                                : "Guardar precio"
+                                                ? (es ? "Guardando..." : "Saving...")
+                                                : (es ? "Guardar precio" : "Save price")
                                             }
 
                                           </button>
@@ -2956,7 +2981,7 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    Tratamiento
+                                                    {es ? "Tratamiento" : "Treatment"}
                                                   </th>
 
                                                   <th
@@ -2967,7 +2992,7 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    Costo
+                                                    {es ? "Costo" : "Cost"}
                                                   </th>
 
                                                   <th
@@ -2978,7 +3003,7 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    Moneda
+                                                    {es ? "Moneda" : "Currency"}
                                                   </th>
 
                                                   <th
@@ -2989,7 +3014,7 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    Estado
+                                                    {es ? "Estado" : "Status"}
                                                   </th>
 
                                                   <th
@@ -3000,7 +3025,7 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    Acción
+                                                    {es ? "Acción" : "Action"}
                                                   </th>
 
                                                 </tr>
@@ -3042,7 +3067,7 @@ async function guardarPrecioEspecialista() {
                                                                   precio.tratamiento_id
                                                                 )
                                                             )?.nombre ||
-                                                            "Tratamiento"
+                                                            (es ? "Tratamiento" : "Treatment")
                                                           }
                                                         </td>
 
@@ -3123,8 +3148,8 @@ async function guardarPrecioEspecialista() {
                                                           >
                                                             {
                                                               precio.activo
-                                                                ? "Activo"
-                                                                : "Inactivo"
+                                                                ? (es ? "Activo" : "Active")
+                                                                : (es ? "Inactivo" : "Inactive")
                                                             }
                                                           </button>
 
