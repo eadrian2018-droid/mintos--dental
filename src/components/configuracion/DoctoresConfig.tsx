@@ -74,8 +74,8 @@ type PrecioEspecialista = {
 type FormPrecioEspecialista = {
   tratamiento_id: string;
   nombre_tratamiento: string;
-  costo: string;
-  moneda: "MXN" | "USD";
+  costo_mxn: string;
+  costo_usd: string;
 };
 
 const formularioInicial: FormDoctor = {
@@ -91,8 +91,8 @@ const formularioPrecioInicial:
   FormPrecioEspecialista = {
     tratamiento_id: "",
     nombre_tratamiento: "",
-    costo: "",
-    moneda: "MXN",
+    costo_mxn: "",
+    costo_usd: "",
   };
 
 export default function DoctoresConfig() {
@@ -869,32 +869,29 @@ async function cargarPreciosEspecialista(
   }
 
   function editarPrecioEspecialista(
-    precio: PrecioEspecialista
+    tratamiento: TratamientoCatalogo
   ) {
 
     setPrecioEditandoId(
-      precio.id
+      tratamiento.id
     );
 
     setFormPrecio({
       tratamiento_id:
-        precio.tratamiento_id
-          ? String(
-              precio.tratamiento_id
-            )
-          : "",
+        String(tratamiento.id),
 
       nombre_tratamiento:
-        precio.nombre_tratamiento ||
-        "",
+        tratamiento.nombre || "",
 
-      costo:
-        String(
-          precio.costo
-        ),
+      costo_mxn:
+        tratamiento.costo_especialista_mxn > 0
+          ? String(tratamiento.costo_especialista_mxn)
+          : "",
 
-      moneda:
-        precio.moneda,
+      costo_usd:
+        tratamiento.costo_especialista_usd > 0
+          ? String(tratamiento.costo_especialista_usd)
+          : "",
     });
 
     setMostrarFormularioPrecio(
@@ -966,20 +963,28 @@ async function guardarPrecioEspecialista() {
     return;
   }
 
-  const costo =
-    Number(
-      formPrecio.costo
-    );
+  const costoMXN =
+    formPrecio.costo_mxn.trim()
+      ? Number(formPrecio.costo_mxn)
+      : 0;
+
+  const costoUSD =
+    formPrecio.costo_usd.trim()
+      ? Number(formPrecio.costo_usd)
+      : 0;
 
   if (
-    Number.isNaN(costo) ||
-    costo <= 0
+    Number.isNaN(costoMXN) ||
+    Number.isNaN(costoUSD) ||
+    costoMXN < 0 ||
+    costoUSD < 0 ||
+    (costoMXN === 0 && costoUSD === 0)
   ) {
 
     alert(
       es
-        ? "Ingresa un precio válido."
-        : "Enter a valid price."
+        ? "Ingresa al menos un costo válido en MXN o USD."
+        : "Enter at least one valid cost in MXN or USD."
     );
 
     return;
@@ -988,11 +993,6 @@ async function guardarPrecioEspecialista() {
   setGuardandoPrecio(
     true
   );
-
-  const campoPrecio =
-    formPrecio.moneda === "USD"
-      ? "costo_especialista_usd"
-      : "costo_especialista_mxn";
 
   const {
     error,
@@ -1007,8 +1007,10 @@ async function guardarPrecioEspecialista() {
         doctorPreciosId,
       tipo:
         "especialista",
-      [campoPrecio]:
-        costo,
+      costo_especialista_mxn:
+        costoMXN,
+      costo_especialista_usd:
+        costoUSD,
     })
 
     .eq(
@@ -1025,8 +1027,8 @@ async function guardarPrecioEspecialista() {
 
     alert(
       es
-        ? "No se pudo actualizar el precio del especialista."
-        : "The specialist price could not be updated."
+        ? "No se pudieron actualizar los costos del especialista."
+        : "The specialist costs could not be updated."
     );
 
     setGuardandoPrecio(
@@ -1046,11 +1048,11 @@ async function guardarPrecioEspecialista() {
   await registrarBitacora({
     accion:
       precioEditandoId !== null
-        ? "Editar precio de especialista"
+        ? "Editar precios de especialista"
         : "Asignar tratamiento a especialista",
     modulo: "Doctores",
     detalle:
-      `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Tratamiento ID: ${tratamientoId} | Tratamiento: ${tratamientoCatalogo.nombre} | Precio especialista: ${costo} ${formPrecio.moneda}`,
+      `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Tratamiento ID: ${tratamientoId} | Tratamiento: ${tratamientoCatalogo.nombre} | Costo MXN: ${costoMXN} | Costo USD: ${costoUSD}`,
   });
 
   await cargarCatalogoTratamientos();
@@ -1068,7 +1070,7 @@ async function guardarPrecioEspecialista() {
 }
 
   async function cambiarEstadoPrecioEspecialista(
-    precio: PrecioEspecialista
+    tratamiento: TratamientoCatalogo
   ) {
 
     if (
@@ -1076,6 +1078,20 @@ async function guardarPrecioEspecialista() {
     ) {
       return;
     }
+
+    const registros =
+      preciosEspecialista.filter(
+        (precio) =>
+          Number(precio.tratamiento_id) ===
+          Number(tratamiento.id)
+      );
+
+    const activoActual =
+      registros.length === 0
+        ? true
+        : registros.some(
+            (precio) => precio.activo
+          );
 
     const {
       error,
@@ -1087,14 +1103,19 @@ async function guardarPrecioEspecialista() {
 
       .update({
         activo:
-          !precio.activo,
+          !activoActual,
         updated_at:
           new Date().toISOString(),
       })
 
       .eq(
-        "id",
-        precio.id
+        "doctor_id",
+        doctorPreciosId
+      )
+
+      .eq(
+        "tratamiento_id",
+        tratamiento.id
       );
 
     if (error) {
@@ -1105,7 +1126,9 @@ async function guardarPrecioEspecialista() {
       );
 
       alert(
-        es ? "No se pudo cambiar el estado del precio." : "The price status could not be changed."
+        es
+          ? "No se pudo cambiar el estado del tarifario."
+          : "The fee schedule status could not be changed."
       );
 
       return;
@@ -1123,7 +1146,7 @@ async function guardarPrecioEspecialista() {
       accion: "Cambiar estado de precio de especialista",
       modulo: "Doctores",
       detalle:
-        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Registro ID: ${precio.id} | Tratamiento: ${precio.nombre_tratamiento || "-"} | Estado: ${precio.activo ? "Activo" : "Inactivo"} → ${!precio.activo ? "Activo" : "Inactivo"}`,
+        `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Tratamiento ID: ${tratamiento.id} | Tratamiento: ${tratamiento.nombre} | Estado: ${activoActual ? "Activo" : "Inactivo"} → ${!activoActual ? "Activo" : "Inactivo"}`,
     });
 
     await cargarPreciosEspecialista(
@@ -2616,7 +2639,7 @@ async function guardarPrecioEspecialista() {
                                           className="
                                             grid
                                             grid-cols-1
-                                            md:grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_auto]
+                                            md:grid-cols-[minmax(0,1.6fr)_minmax(0,0.7fr)_minmax(0,0.7fr)]
                                             gap-4
                                             items-end
                                           "
@@ -2659,6 +2682,16 @@ async function guardarPrecioEspecialista() {
                                                   nombre_tratamiento:
                                                     tratamiento?.nombre ||
                                                     "",
+                                                  costo_mxn:
+                                                    tratamiento &&
+                                                    tratamiento.costo_especialista_mxn > 0
+                                                      ? String(tratamiento.costo_especialista_mxn)
+                                                      : "",
+                                                  costo_usd:
+                                                    tratamiento &&
+                                                    tratamiento.costo_especialista_usd > 0
+                                                      ? String(tratamiento.costo_especialista_usd)
+                                                      : "",
                                                 });
 
                                               }}
@@ -2731,7 +2764,7 @@ async function guardarPrecioEspecialista() {
                                                 mb-2
                                               "
                                             >
-                                              {es ? "Costo" : "Cost"}
+                                              {es ? "Costo MXN" : "MXN Cost"}
                                             </label>
 
                                             <input
@@ -2739,13 +2772,13 @@ async function guardarPrecioEspecialista() {
                                               min="0"
                                               step="0.01"
                                               value={
-                                                formPrecio.costo
+                                                formPrecio.costo_mxn
                                               }
                                               onChange={
                                                 (e) =>
                                                   setFormPrecio({
                                                     ...formPrecio,
-                                                    costo:
+                                                    costo_mxn:
                                                       e.target.value,
                                                   })
                                               }
@@ -2760,98 +2793,41 @@ async function guardarPrecioEspecialista() {
 
                                           </div>
 
-                                          <div
-                                            className="
-                                              flex
-                                              flex-col
-                                              gap-2
-                                            "
-                                          >
+                                          <div>
 
                                             <label
                                               className="
                                                 mint-label
+                                                block
+                                                mb-2
                                               "
                                             >
-                                              {es ? "Moneda" : "Currency"}
+                                              {es ? "Costo USD" : "USD Cost"}
                                             </label>
 
-                                            <div
+                                            <input
+                                              type="number"
+                                              min="0"
+                                              step="0.01"
+                                              value={
+                                                formPrecio.costo_usd
+                                              }
+                                              onChange={
+                                                (e) =>
+                                                  setFormPrecio({
+                                                    ...formPrecio,
+                                                    costo_usd:
+                                                      e.target.value,
+                                                  })
+                                              }
+                                              placeholder="0.00"
                                               className="
-                                                inline-flex
-                                                p-1
-                                                rounded-xl
-                                                bg-[var(--mint-bg-muted)]
+                                                mint-input
+                                                w-full
+                                                px-3
+                                                py-2.5
                                               "
-                                            >
-
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  setFormPrecio({
-                                                    ...formPrecio,
-                                                    moneda: "MXN",
-                                                  })
-                                                }
-                                                className={`
-                                                  px-3
-                                                  py-2
-                                                  rounded-lg
-                                                  text-sm
-                                                  font-bold
-                                                  transition
-
-                                                  ${
-                                                    formPrecio.moneda ===
-                                                    "MXN"
-                                                      ? `
-                                                        bg-[var(--mint-bg-card)]
-                                                        text-[var(--mint-primary)]
-                                                        shadow-sm
-                                                      `
-                                                      : `
-                                                        mint-text-secondary
-                                                      `
-                                                  }
-                                                `}
-                                              >
-                                                MXN
-                                              </button>
-
-                                              <button
-                                                type="button"
-                                                onClick={() =>
-                                                  setFormPrecio({
-                                                    ...formPrecio,
-                                                    moneda: "USD",
-                                                  })
-                                                }
-                                                className={`
-                                                  px-3
-                                                  py-2
-                                                  rounded-lg
-                                                  text-sm
-                                                  font-bold
-                                                  transition
-
-                                                  ${
-                                                    formPrecio.moneda ===
-                                                    "USD"
-                                                      ? `
-                                                        bg-[var(--mint-bg-card)]
-                                                        text-[var(--mint-accent)]
-                                                        shadow-sm
-                                                      `
-                                                      : `
-                                                        mint-text-secondary
-                                                      `
-                                                  }
-                                                `}
-                                              >
-                                                USD
-                                              </button>
-
-                                            </div>
+                                            />
 
                                           </div>
 
@@ -2931,7 +2907,15 @@ async function guardarPrecioEspecialista() {
                                   >
 
                                     {
-                                      preciosEspecialista.length === 0
+                                      catalogoTratamientos.filter(
+                                        (tratamiento) =>
+                                          tratamiento.doctor_id ===
+                                          doctor.id &&
+                                          (
+                                            tratamiento.costo_especialista_mxn > 0 ||
+                                            tratamiento.costo_especialista_usd > 0
+                                          )
+                                      ).length === 0
                                         ? (
 
                                           <div
@@ -2941,7 +2925,7 @@ async function guardarPrecioEspecialista() {
                                               mint-text-secondary
                                             "
                                           >
-                                            No hay precios configurados para{" "}
+                                            {es ? "No hay precios configurados para " : "No prices configured for "}
                                             <strong>
                                               {
                                                 doctor.nombre
@@ -2992,18 +2976,18 @@ async function guardarPrecioEspecialista() {
                                                       font-semibold
                                                     "
                                                   >
-                                                    {es ? "Costo" : "Cost"}
+                                                    MXN
                                                   </th>
 
                                                   <th
                                                     className="
-                                                      text-center
+                                                      text-right
                                                       px-4
                                                       py-3
                                                       font-semibold
                                                     "
                                                   >
-                                                    {es ? "Moneda" : "Currency"}
+                                                    USD
                                                   </th>
 
                                                   <th
@@ -3035,167 +3019,184 @@ async function guardarPrecioEspecialista() {
                                               <tbody>
 
                                                 {
-                                                  preciosEspecialista.map(
-                                                    (precio) => (
+                                                  catalogoTratamientos
+                                                    .filter(
+                                                      (tratamiento) =>
+                                                        tratamiento.doctor_id ===
+                                                        doctor.id &&
+                                                        (
+                                                          tratamiento.costo_especialista_mxn > 0 ||
+                                                          tratamiento.costo_especialista_usd > 0
+                                                        )
+                                                    )
+                                                    .map(
+                                                      (tratamiento) => {
 
-                                                      <tr
-                                                        key={
-                                                          precio.id
-                                                        }
-                                                        className="
-                                                          border-t
-                                                          border-[var(--mint-border)]
-                                                        "
-                                                      >
+                                                        const registros =
+                                                          preciosEspecialista.filter(
+                                                            (precio) =>
+                                                              Number(precio.tratamiento_id) ===
+                                                              Number(tratamiento.id)
+                                                          );
 
-                                                        <td
-                                                          className="
-                                                            py-4
-                                                            pr-4
-                                                            font-semibold
-                                                            mint-text-primary
-                                                          "
-                                                        >
-                                                          {
-                                                            precio.nombre_tratamiento ||
-                                                            catalogoTratamientos.find(
-                                                              (tratamiento: any) =>
-                                                                Number(
-                                                                  tratamiento.id
-                                                                ) ===
-                                                                Number(
-                                                                  precio.tratamiento_id
-                                                                )
-                                                            )?.nombre ||
-                                                            (es ? "Tratamiento" : "Treatment")
-                                                          }
-                                                        </td>
+                                                        const activo =
+                                                          registros.length === 0
+                                                            ? true
+                                                            : registros.some(
+                                                                (precio) => precio.activo
+                                                              );
 
-                                                        <td
-                                                          className="
-                                                            px-4
-                                                            py-4
-                                                            text-right
-                                                            font-bold
-                                                            mint-text-primary
-                                                          "
-                                                        >
-                                                          ${
-                                                            Number(
-                                                              precio.costo || 0
-                                                            ).toLocaleString(
-                                                              "es-MX",
-                                                              {
-                                                                minimumFractionDigits: 2,
-                                                                maximumFractionDigits: 2,
-                                                              }
-                                                            )
-                                                          }
-                                                        </td>
+                                                        return (
 
-                                                        <td
-                                                          className="
-                                                            px-4
-                                                            py-4
-                                                            text-center
-                                                          "
-                                                        >
-
-                                                          <span
-                                                            className={`
-                                                              mint-badge
-
-                                                              ${
-                                                                precio.moneda ===
-                                                                "USD"
-                                                                  ? "mint-badge-warning"
-                                                                  : "mint-badge-info"
-                                                              }
-                                                            `}
-                                                          >
-                                                            {
-                                                              precio.moneda
-                                                            }
-                                                          </span>
-
-                                                        </td>
-
-                                                        <td
-                                                          className="
-                                                            px-4
-                                                            py-4
-                                                            text-center
-                                                          "
-                                                        >
-
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              cambiarEstadoPrecioEspecialista(
-                                                                precio
-                                                              )
-                                                            }
-                                                            className={`
-                                                              mint-badge
-                                                              cursor-pointer
-
-                                                              ${
-                                                                precio.activo
-                                                                  ? "mint-badge-success"
-                                                                  : "mint-badge-muted"
-                                                              }
-                                                            `}
-                                                          >
-                                                            {
-                                                              precio.activo
-                                                                ? (es ? "Activo" : "Active")
-                                                                : (es ? "Inactivo" : "Inactive")
-                                                            }
-                                                          </button>
-
-                                                        </td>
-
-                                                        <td
-                                                          className="
-                                                            pl-4
-                                                            py-4
-                                                            text-right
-                                                          "
-                                                        >
-
-                                                          <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                              editarPrecioEspecialista(
-                                                                precio
-                                                              )
+                                                          <tr
+                                                            key={
+                                                              tratamiento.id
                                                             }
                                                             className="
-                                                              mint-btn
-                                                              mint-btn-action-soft
-                                                              inline-flex
-                                                              items-center
-                                                              gap-2
-                                                              px-3
-                                                              py-2
-                                                              text-sm
+                                                              border-t
+                                                              border-[var(--mint-border)]
                                                             "
                                                           >
 
-                                                            <Pencil
-                                                              size={15}
-                                                            />
+                                                            <td
+                                                              className="
+                                                                py-4
+                                                                pr-4
+                                                                font-semibold
+                                                                mint-text-primary
+                                                              "
+                                                            >
+                                                              {
+                                                                tratamiento.nombre
+                                                              }
+                                                            </td>
 
-                                                            Editar
+                                                            <td
+                                                              className="
+                                                                px-4
+                                                                py-4
+                                                                text-right
+                                                                font-bold
+                                                                mint-text-primary
+                                                              "
+                                                            >
+                                                              {
+                                                                tratamiento.costo_especialista_mxn > 0
+                                                                  ? `$${Number(
+                                                                      tratamiento.costo_especialista_mxn
+                                                                    ).toLocaleString(
+                                                                      "es-MX",
+                                                                      {
+                                                                        minimumFractionDigits: 2,
+                                                                        maximumFractionDigits: 2,
+                                                                      }
+                                                                    )}`
+                                                                  : "—"
+                                                              }
+                                                            </td>
 
-                                                          </button>
+                                                            <td
+                                                              className="
+                                                                px-4
+                                                                py-4
+                                                                text-right
+                                                                font-bold
+                                                                mint-text-primary
+                                                              "
+                                                            >
+                                                              {
+                                                                tratamiento.costo_especialista_usd > 0
+                                                                  ? `$${Number(
+                                                                      tratamiento.costo_especialista_usd
+                                                                    ).toLocaleString(
+                                                                      "en-US",
+                                                                      {
+                                                                        minimumFractionDigits: 2,
+                                                                        maximumFractionDigits: 2,
+                                                                      }
+                                                                    )}`
+                                                                  : "—"
+                                                              }
+                                                            </td>
 
-                                                        </td>
+                                                            <td
+                                                              className="
+                                                                px-4
+                                                                py-4
+                                                                text-center
+                                                              "
+                                                            >
 
-                                                      </tr>
+                                                              <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                  cambiarEstadoPrecioEspecialista(
+                                                                    tratamiento
+                                                                  )
+                                                                }
+                                                                className={`
+                                                                  mint-badge
+                                                                  cursor-pointer
 
+                                                                  ${
+                                                                    activo
+                                                                      ? "mint-badge-success"
+                                                                      : "mint-badge-muted"
+                                                                  }
+                                                                `}
+                                                              >
+                                                                {
+                                                                  activo
+                                                                    ? (es ? "Activo" : "Active")
+                                                                    : (es ? "Inactivo" : "Inactive")
+                                                                }
+                                                              </button>
+
+                                                            </td>
+
+                                                            <td
+                                                              className="
+                                                                pl-4
+                                                                py-4
+                                                                text-right
+                                                              "
+                                                            >
+
+                                                              <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                  editarPrecioEspecialista(
+                                                                    tratamiento
+                                                                  )
+                                                                }
+                                                                className="
+                                                                  mint-btn
+                                                                  mint-btn-action-soft
+                                                                  inline-flex
+                                                                  items-center
+                                                                  gap-2
+                                                                  px-3
+                                                                  py-2
+                                                                  text-sm
+                                                                "
+                                                              >
+
+                                                                <Pencil
+                                                                  size={15}
+                                                                />
+
+                                                                {es ? "Editar" : "Edit"}
+
+                                                              </button>
+
+                                                            </td>
+
+                                                          </tr>
+
+                                                        );
+
+                                                      }
                                                     )
-                                                  )
                                                 }
 
                                               </tbody>

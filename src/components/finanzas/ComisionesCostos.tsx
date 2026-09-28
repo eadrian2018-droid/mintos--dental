@@ -46,8 +46,6 @@ export default function ComisionesCostos({
 
   catalogoTratamientos,
 
-  guardarTratamientoCatalogo,
-
   actualizarTratamientoCatalogo,
 
 }: ComisionesCostosProps) {
@@ -129,16 +127,6 @@ export default function ComisionesCostos({
 
     setTratamientoEditando(
       null
-    );
-
-  }
-
-  function abrirNuevo() {
-
-    limpiarFormulario();
-
-    setMostrarFormulario(
-      true
     );
 
   }
@@ -281,56 +269,26 @@ export default function ComisionesCostos({
 
     }
 
+    if (
+      tratamientoEditando ===
+      null
+    ) {
+
+      return;
+
+    }
+
     setGuardando(
       true
     );
 
     try {
 
-      if (
-        tratamientoEditando !==
-        null
-      ) {
+      await actualizarTratamientoCatalogo(
 
-        await actualizarTratamientoCatalogo(
+        tratamientoEditando,
 
-          tratamientoEditando,
-
-          {
-
-            nombre:
-              nombre.trim(),
-
-            categoria:
-              categoria.trim(),
-
-            tipo:
-              "especialista",
-
-            precio_mxn:
-              valorPrecioMXN,
-
-            precio_usd:
-              valorPrecioUSD,
-
-            costo_especialista_mxn:
-              valorCostoMXN,
-
-            costo_especialista_usd:
-              valorCostoUSD,
-
-            doctor_id:
-              Number(
-                doctorId
-              ),
-
-          }
-
-        );
-
-      } else {
-
-        await guardarTratamientoCatalogo({
+        {
 
           nombre:
             nombre.trim(),
@@ -358,11 +316,9 @@ export default function ComisionesCostos({
               doctorId
             ),
 
-          activo: true,
+        }
 
-        });
-
-      }
+      );
 
       cancelarFormulario();
 
@@ -681,423 +637,38 @@ export default function ComisionesCostos({
 
         <div
           className="
-            flex
-            flex-col
-            md:flex-row
-            md:items-center
-            md:justify-between
-            gap-4
             mb-6
           "
         >
 
-          <div>
-
-            <h3
-              className="
-                text-xl
-                font-bold
-                mint-text-primary
-                mb-2
-              "
-            >
-
-              Costos de Especialistas
-
-            </h3>
-
-            <p
-              className="
-                mint-text-secondary
-              "
-            >
-
-              Configura el precio
-              cobrado al paciente y
-              el costo real del
-              especialista.
-
-            </p>
-
-          </div>
-
-          <button
-            type="button"
-            onClick={
-              abrirNuevo
-            }
+          <h3
             className="
-              mint-btn
-              mint-btn-primary
-              px-4
-              py-3
-              whitespace-nowrap
+              text-xl
+              font-bold
+              mint-text-primary
+              mb-2
             "
           >
 
-            + Agregar especialista
+            Costos de Especialistas
 
-          </button>
+          </h3>
+
+          <p
+            className="
+              mint-text-secondary
+            "
+          >
+
+            Consulta y ajusta los
+            precios cobrados al
+            paciente y los costos
+            configurados para cada
+            especialista.
+
+          </p>
 
         </div>
-
-        {
-          mostrarFormulario && (
-
-            <div
-              className="
-                bg-[var(--mint-bg-soft)]
-                border
-                border-[var(--mint-border)]
-                rounded-2xl
-                p-5
-                mb-6
-              "
-            >
-
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-3
-                  mb-5
-                "
-              >
-
-                <h4
-                  className="
-                    text-lg
-                    font-bold
-                    mint-text-primary
-                  "
-                >
-
-                  {
-                    tratamientoEditando !==
-                    null
-
-                      ? "Editar tratamiento especialista"
-
-                      : "Nuevo tratamiento especialista"
-                  }
-
-                </h4>
-
-              </div>
-
-              <div
-                className="
-                  grid
-                  md:grid-cols-2
-                  xl:grid-cols-3
-                  gap-4
-                "
-              >
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Tratamiento
-                  </label>
-
-                  <input
-                    type="text"
-                    value={
-                      nombre
-                    }
-                    onChange={(e) =>
-                      setNombre(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                    placeholder="Ej. Endodoncia"
-                  />
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Categoría
-                  </label>
-
-                  <input
-                    type="text"
-                    value={
-                      categoria
-                    }
-                    onChange={(e) =>
-                      setCategoria(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                    placeholder="Ej. Endodoncia"
-                  />
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Especialista
-                  </label>
-
-                  <select
-                    value={
-                      doctorId
-                    }
-                    onChange={(e) =>
-                      setDoctorId(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                  >
-
-                    <option value="">
-                      Seleccionar especialista
-                    </option>
-
-                    {
-                      doctores.map(
-                        (doctor) => (
-
-                          <option
-                            key={
-                              doctor.id
-                            }
-                            value={
-                              doctor.id
-                            }
-                          >
-
-                            {
-                              doctor.nombre
-                            }
-
-                            {
-                              doctor.especialidad
-                                ? ` - ${doctor.especialidad}`
-                                : ""
-                            }
-
-                          </option>
-
-                        )
-                      )
-                    }
-
-                  </select>
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Precio paciente MXN
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={
-                      precioMXN
-                    }
-                    onChange={(e) =>
-                      setPrecioMXN(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                  />
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Precio paciente USD
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={
-                      precioUSD
-                    }
-                    onChange={(e) =>
-                      setPrecioUSD(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                  />
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Costo especialista MXN
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={
-                      costoMXN
-                    }
-                    onChange={(e) =>
-                      setCostoMXN(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                  />
-
-                </div>
-
-                <div>
-
-                  <label
-                    className="
-                      mint-label
-                    "
-                  >
-                    Costo especialista USD
-                  </label>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={
-                      costoUSD
-                    }
-                    onChange={(e) =>
-                      setCostoUSD(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                    "
-                  />
-
-                </div>
-
-              </div>
-
-              <div
-                className="
-                  flex
-                  justify-end
-                  gap-3
-                  mt-5
-                "
-              >
-
-                <button
-                  type="button"
-                  onClick={
-                    cancelarFormulario
-                  }
-                  disabled={
-                    guardando
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-secondary
-                    px-4
-                    py-2
-                  "
-                >
-
-                  Cancelar
-
-                </button>
-
-                <button
-                  type="button"
-                  onClick={
-                    guardar
-                  }
-                  disabled={
-                    guardando
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-primary
-                    px-4
-                    py-2
-                    disabled:opacity-50
-                    disabled:cursor-not-allowed
-                  "
-                >
-
-                  {
-                    guardando
-                      ? "Guardando..."
-                      : "Guardar"
-                  }
-
-                </button>
-
-              </div>
-
-            </div>
-
-          )
-        }
 
         <div
           className="
@@ -1383,6 +954,686 @@ export default function ComisionesCostos({
         </div>
 
       </div>
+
+      {
+        mostrarFormulario &&
+        tratamientoEditando !== null && (
+
+          <div
+            className="
+              fixed
+              inset-0
+              z-[100]
+              flex
+              items-center
+              justify-center
+              bg-slate-950/55
+              backdrop-blur-[2px]
+              p-4
+            "
+            onMouseDown={(e) => {
+
+              if (
+                e.target ===
+                e.currentTarget
+              ) {
+
+                cancelarFormulario();
+
+              }
+
+            }}
+          >
+
+            <div
+              className="
+                w-full
+                max-w-2xl
+                max-h-[90vh]
+                overflow-hidden
+                rounded-2xl
+                border
+                border-slate-200
+                bg-white
+                shadow-2xl
+                dark:border-slate-700
+                dark:bg-slate-900
+              "
+              onMouseDown={(e) =>
+                e.stopPropagation()
+              }
+            >
+
+              <div
+                className="
+                  flex
+                  items-start
+                  justify-between
+                  gap-4
+                  border-b
+                  border-slate-200
+                  px-6
+                  py-5
+                  dark:border-slate-700
+                "
+              >
+
+                <div>
+
+                  <p
+                    className="
+                      mb-1
+                      text-[11px]
+                      font-bold
+                      uppercase
+                      tracking-[0.12em]
+                      text-teal-700
+                      dark:text-teal-400
+                    "
+                  >
+                    Tratamiento configurado
+                  </p>
+
+                  <h4
+                    className="
+                      text-lg
+                      font-bold
+                      text-slate-900
+                      dark:text-slate-100
+                    "
+                  >
+                    Editar costos de especialista
+                  </h4>
+
+                </div>
+
+                <button
+                  type="button"
+                  onClick={
+                    cancelarFormulario
+                  }
+                  disabled={
+                    guardando
+                  }
+                  className="
+                    flex
+                    h-9
+                    w-9
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-white
+                    text-lg
+                    font-medium
+                    text-slate-500
+                    transition
+                    hover:bg-slate-100
+                    hover:text-slate-900
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    dark:border-slate-700
+                    dark:bg-slate-800
+                    dark:text-slate-300
+                    dark:hover:bg-slate-700
+                    dark:hover:text-white
+                  "
+                  aria-label="Cerrar"
+                >
+                  ×
+                </button>
+
+              </div>
+
+              <div
+                className="
+                  max-h-[calc(90vh-145px)]
+                  overflow-y-auto
+                  px-6
+                  py-5
+                "
+              >
+
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    gap-4
+                    md:grid-cols-2
+                  "
+                >
+
+                  <div>
+
+                    <label
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-semibold
+                        text-slate-500
+                        dark:text-slate-400
+                      "
+                    >
+                      Tratamiento
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        min-h-11
+                        items-center
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-slate-50
+                        px-3.5
+                        text-sm
+                        font-semibold
+                        text-slate-900
+                        dark:border-slate-700
+                        dark:bg-slate-800
+                        dark:text-slate-100
+                      "
+                    >
+                      {nombre}
+                    </div>
+
+                  </div>
+
+                  <div>
+
+                    <label
+                      className="
+                        mb-2
+                        block
+                        text-xs
+                        font-semibold
+                        text-slate-500
+                        dark:text-slate-400
+                      "
+                    >
+                      Categoría
+                    </label>
+
+                    <div
+                      className="
+                        flex
+                        min-h-11
+                        items-center
+                        rounded-xl
+                        border
+                        border-slate-200
+                        bg-slate-50
+                        px-3.5
+                        text-sm
+                        font-semibold
+                        text-slate-900
+                        dark:border-slate-700
+                        dark:bg-slate-800
+                        dark:text-slate-100
+                      "
+                    >
+                      {categoria}
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <div className="mt-6">
+
+                  <p
+                    className="
+                      mb-3
+                      text-sm
+                      font-bold
+                      text-slate-900
+                      dark:text-slate-100
+                    "
+                  >
+                    Clínica
+                  </p>
+
+                  <div
+                    className="
+                      grid
+                      grid-cols-1
+                      gap-4
+                      md:grid-cols-2
+                    "
+                  >
+
+                    <div>
+
+                      <label
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-semibold
+                          text-slate-500
+                          dark:text-slate-400
+                        "
+                      >
+                        Precio paciente MXN
+                      </label>
+
+                      <div className="relative">
+
+                        <span
+                          className="
+                            absolute
+                            left-3.5
+                            top-1/2
+                            -translate-y-1/2
+                            text-sm
+                            font-semibold
+                            text-slate-400
+                          "
+                        >
+                          $
+                        </span>
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={
+                            precioMXN
+                          }
+                          onChange={(e) =>
+                            setPrecioMXN(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            h-11
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            pl-8
+                            pr-3
+                            text-sm
+                            font-semibold
+                            text-slate-900
+                            outline-none
+                            transition
+                            focus:border-teal-500
+                            focus:ring-2
+                            focus:ring-teal-500/10
+                            dark:border-slate-700
+                            dark:bg-slate-800
+                            dark:text-slate-100
+                          "
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-semibold
+                          text-slate-500
+                          dark:text-slate-400
+                        "
+                      >
+                        Precio paciente USD
+                      </label>
+
+                      <div className="relative">
+
+                        <span
+                          className="
+                            absolute
+                            left-3.5
+                            top-1/2
+                            -translate-y-1/2
+                            text-sm
+                            font-semibold
+                            text-slate-400
+                          "
+                        >
+                          $
+                        </span>
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={
+                            precioUSD
+                          }
+                          onChange={(e) =>
+                            setPrecioUSD(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            h-11
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            pl-8
+                            pr-3
+                            text-sm
+                            font-semibold
+                            text-slate-900
+                            outline-none
+                            transition
+                            focus:border-teal-500
+                            focus:ring-2
+                            focus:ring-teal-500/10
+                            dark:border-slate-700
+                            dark:bg-slate-800
+                            dark:text-slate-100
+                          "
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+                <div
+                  className="
+                    my-6
+                    border-t
+                    border-slate-200
+                    dark:border-slate-700
+                  "
+                />
+
+                <div>
+
+                  <div className="mb-3">
+
+                    <p
+                      className="
+                        text-sm
+                        font-bold
+                        text-slate-900
+                        dark:text-slate-100
+                      "
+                    >
+                      Especialista
+                    </p>
+
+                    <p
+                      className="
+                        mt-1
+                        text-sm
+                        font-medium
+                        text-slate-500
+                        dark:text-slate-400
+                      "
+                    >
+                      {
+                        doctores.find(
+                          (doctor) =>
+                            doctor.id ===
+                            Number(doctorId)
+                        )?.nombre ||
+                        "Sin especialista"
+                      }
+                    </p>
+
+                  </div>
+
+                  <div
+                    className="
+                      grid
+                      grid-cols-1
+                      gap-4
+                      md:grid-cols-2
+                    "
+                  >
+
+                    <div>
+
+                      <label
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-semibold
+                          text-slate-500
+                          dark:text-slate-400
+                        "
+                      >
+                        Costo especialista MXN
+                      </label>
+
+                      <div className="relative">
+
+                        <span
+                          className="
+                            absolute
+                            left-3.5
+                            top-1/2
+                            -translate-y-1/2
+                            text-sm
+                            font-semibold
+                            text-slate-400
+                          "
+                        >
+                          $
+                        </span>
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={
+                            costoMXN
+                          }
+                          onChange={(e) =>
+                            setCostoMXN(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            h-11
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            pl-8
+                            pr-3
+                            text-sm
+                            font-semibold
+                            text-slate-900
+                            outline-none
+                            transition
+                            focus:border-teal-500
+                            focus:ring-2
+                            focus:ring-teal-500/10
+                            dark:border-slate-700
+                            dark:bg-slate-800
+                            dark:text-slate-100
+                          "
+                        />
+
+                      </div>
+
+                    </div>
+
+                    <div>
+
+                      <label
+                        className="
+                          mb-2
+                          block
+                          text-xs
+                          font-semibold
+                          text-slate-500
+                          dark:text-slate-400
+                        "
+                      >
+                        Costo especialista USD
+                      </label>
+
+                      <div className="relative">
+
+                        <span
+                          className="
+                            absolute
+                            left-3.5
+                            top-1/2
+                            -translate-y-1/2
+                            text-sm
+                            font-semibold
+                            text-slate-400
+                          "
+                        >
+                          $
+                        </span>
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={
+                            costoUSD
+                          }
+                          onChange={(e) =>
+                            setCostoUSD(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            h-11
+                            w-full
+                            rounded-xl
+                            border
+                            border-slate-200
+                            bg-white
+                            pl-8
+                            pr-3
+                            text-sm
+                            font-semibold
+                            text-slate-900
+                            outline-none
+                            transition
+                            focus:border-teal-500
+                            focus:ring-2
+                            focus:ring-teal-500/10
+                            dark:border-slate-700
+                            dark:bg-slate-800
+                            dark:text-slate-100
+                          "
+                        />
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  flex
+                  justify-end
+                  gap-3
+                  border-t
+                  border-slate-200
+                  bg-slate-50
+                  px-6
+                  py-4
+                  dark:border-slate-700
+                  dark:bg-slate-800/70
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={
+                    cancelarFormulario
+                  }
+                  disabled={
+                    guardando
+                  }
+                  className="
+                    rounded-xl
+                    border
+                    border-slate-200
+                    bg-white
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    text-slate-700
+                    transition
+                    hover:bg-slate-100
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                    dark:border-slate-600
+                    dark:bg-slate-800
+                    dark:text-slate-200
+                    dark:hover:bg-slate-700
+                  "
+                >
+                  Cancelar
+                </button>
+
+                <button
+                  type="button"
+                  onClick={
+                    guardar
+                  }
+                  disabled={
+                    guardando
+                  }
+                  className="
+                    rounded-xl
+                    bg-teal-600
+                    px-5
+                    py-2.5
+                    text-sm
+                    font-bold
+                    text-white
+                    shadow-sm
+                    transition
+                    hover:bg-teal-700
+                    disabled:cursor-not-allowed
+                    disabled:opacity-50
+                  "
+                >
+                  {
+                    guardando
+                      ? "Guardando..."
+                      : "Guardar cambios"
+                  }
+                </button>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        )
+      }
 
       <div
         className="

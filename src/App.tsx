@@ -43,6 +43,8 @@ import AdminMFA from "./components/AdminMFA";
 
 import { useAuth } from "./context/AuthContext";
 
+import { useLanguage } from "./context/LanguageContext";
+
 export default function App() {
 
   const {
@@ -54,6 +56,13 @@ export default function App() {
 
   const location =
     useLocation();
+
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
 
   const [
     adminMfaVerified,
@@ -167,7 +176,11 @@ export default function App() {
           "
         >
 
-          Cargando MintOS...
+          {
+            es
+              ? "Cargando MintOS..."
+              : "Loading MintOS..."
+          }
 
         </p>
 
@@ -216,7 +229,11 @@ export default function App() {
             "
           >
 
-            Perfil no configurado
+            {
+              es
+                ? "Perfil no configurado"
+                : "Profile not configured"
+            }
 
           </h2>
 
@@ -228,7 +245,11 @@ export default function App() {
             "
           >
 
-            Tu cuenta existe, pero todavía no tiene un perfil configurado en MintOS.
+            {
+              es
+                ? "Tu cuenta existe, pero todavía no tiene un perfil configurado en MintOS."
+                : "Your account exists, but it does not have a MintOS profile configured yet."
+            }
 
           </p>
 
@@ -279,7 +300,11 @@ export default function App() {
             "
           >
 
-            Usuario desactivado
+            {
+              es
+                ? "Usuario desactivado"
+                : "User deactivated"
+            }
 
           </h2>
 
@@ -291,7 +316,11 @@ export default function App() {
             "
           >
 
-            Tu cuenta no tiene acceso activo a MintOS.
+            {
+              es
+                ? "Tu cuenta no tiene acceso activo a MintOS."
+                : "Your account does not have active access to MintOS."
+            }
 
           </p>
 
@@ -455,7 +484,11 @@ export default function App() {
                             "
                           >
 
-                            Acceso no autorizado
+                            {
+                              es
+                                ? "Acceso no autorizado"
+                                : "Unauthorized access"
+                            }
 
                           </h2>
 
@@ -467,7 +500,11 @@ export default function App() {
                             "
                           >
 
-                            Esta cuenta no tiene permiso para registrar pacientes.
+                            {
+                              es
+                                ? "Esta cuenta no tiene permiso para registrar pacientes."
+                                : "This account does not have permission to register patients."
+                            }
 
                           </p>
 
@@ -510,10 +547,18 @@ export default function App() {
                       <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
                         <div className="bg-white border border-slate-200 rounded-2xl p-6 max-w-md w-full text-center">
                           <h2 className="text-xl font-bold text-slate-800">
-                            Acceso no autorizado
+                            {
+                              es
+                                ? "Acceso no autorizado"
+                                : "Unauthorized access"
+                            }
                           </h2>
                           <p className="text-sm text-slate-500 mt-2">
-                            Esta cuenta no tiene permiso para registrar pacientes.
+                            {
+                              es
+                                ? "Esta cuenta no tiene permiso para registrar pacientes."
+                                : "This account does not have permission to register patients."
+                            }
                           </p>
                         </div>
                       </div>

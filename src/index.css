@@ -1,9 +1,13 @@
 @import "tailwindcss";
 
 :root {
+
   font-size: 14px;
 
-  /* Escala global más compacta para MintOS */
+  /* =========================================================
+     MINTOS — COMPACT UI SCALE
+     ========================================================= */
+
   --spacing: 0.225rem;
 
   --text-xs: 0.70rem;
@@ -14,49 +18,369 @@
   --text-2xl: 1.38rem;
   --text-3xl: 1.68rem;
   --text-4xl: 2rem;
+
+
+  /* =========================================================
+     MINTOS DESIGN SYSTEM V13
+     Brand
+     ========================================================= */
+
+  --mint-navy: #102f4f;
+  --mint-navy-soft: #1b4f68;
+
+  --mint-teal: #0b8f80;
+  --mint-teal-medium: #249884;
+  --mint-teal-soft: #63c8b2;
+  --mint-teal-pale: #eaf8f5;
+
+  --mint-gold: #d8bd72;
+
+
+  /* =========================================================
+     SURFACES
+     ========================================================= */
+
+  --mint-app-bg: #f7faf9;
+
+  --mint-surface: #ffffff;
+
+  --mint-surface-soft: #f8fbfa;
+
+  --mint-surface-teal: #f1faf8;
+
+
+  /* =========================================================
+     TEXT
+     ========================================================= */
+
+  --mint-text-primary: #102f4f;
+
+  --mint-text-secondary: #667f90;
+
+  --mint-text-muted: #91a5af;
+
+  --mint-text-on-brand: #ffffff;
+
+
+  /* =========================================================
+     BORDERS
+     ========================================================= */
+
+  --mint-border: #dbe7e8;
+
+  --mint-border-soft: #e5eeed;
+
+  --mint-border-teal: #cfe5e1;
+
+
+  /* =========================================================
+     BRAND GRADIENTS
+     ========================================================= */
+
+  --mint-gradient-brand:
+    linear-gradient(
+      120deg,
+      #1b4f68 0%,
+      #23677a 52%,
+      #249884 100%
+    );
+
+  --mint-gradient-accent:
+    linear-gradient(
+      90deg,
+      #19a991 0%,
+      #65cdb8 55%,
+      #d8bd72 100%
+    );
+
+
+  /* =========================================================
+     SHADOWS
+     ========================================================= */
+
+  --mint-shadow-soft:
+    0 8px 24px rgba(15, 42, 65, 0.05);
+
+  --mint-shadow-card:
+    0 16px 36px rgba(15, 42, 65, 0.065);
+
+  --mint-shadow-elevated:
+    0 18px 42px rgba(15, 42, 65, 0.08);
+
+  --mint-shadow-brand:
+    0 14px 34px rgba(15, 42, 65, 0.12);
+
+
+  /* =========================================================
+     RADIUS
+     ========================================================= */
+
+  --mint-radius-sm: 12px;
+
+  --mint-radius-md: 16px;
+
+  --mint-radius-lg: 22px;
+
+  --mint-radius-xl: 24px;
+
+
+  /* =========================================================
+     SEMANTIC COLORS
+     ========================================================= */
+
+  --mint-success: #0b8f80;
+  --mint-success-bg: #eaf8f5;
+  --mint-success-border: #bfe4dc;
+
+  --mint-warning: #b87908;
+  --mint-warning-bg: #fff8e8;
+  --mint-warning-border: #f1d17c;
+
+  --mint-danger: #e53e5d;
+  --mint-danger-bg: #fff0f3;
+  --mint-danger-border: #ffc4cf;
+
+  --mint-info: #337b9c;
+  --mint-info-bg: #edf7fb;
+  --mint-info-border: #c9e4ef;
+
+
+  /* =========================================================
+     TRANSITIONS
+     ========================================================= */
+
+  --mint-transition:
+    160ms ease;
+
 }
+
+
+/* =========================================================
+   GLOBAL DOCUMENT
+   ========================================================= */
 
 html,
 body,
 #root {
+
   width: 100%;
+
   min-height: 100%;
+
 }
+
 
 html {
+
   overflow-x: hidden;
+
 }
+
 
 body {
+
   margin: 0;
+
   font-size: 0.92rem;
+
   line-height: 1.4;
+
   overflow-x: hidden;
+
+  background:
+    var(--mint-app-bg);
+
+  color:
+    var(--mint-text-primary);
+
 }
 
+
 #root {
+
   min-height: 100vh;
+
 }
+
+
+/* =========================================================
+   FORM ELEMENTS
+   ========================================================= */
 
 button,
 input,
 select,
 textarea {
+
   font-size: 0.92rem;
+
 }
+
+
+button {
+
+  transition:
+    background-color var(--mint-transition),
+    border-color var(--mint-transition),
+    color var(--mint-transition),
+    box-shadow var(--mint-transition),
+    transform var(--mint-transition);
+
+}
+
+
+/* =========================================================
+   TABLES
+   ========================================================= */
 
 table {
+
   font-size: 0.88rem;
+
 }
+
+
+/* =========================================================
+   TYPOGRAPHY
+   ========================================================= */
 
 h1 {
+
   font-size: 1.75rem;
+
 }
+
 
 h2 {
+
   font-size: 1.4rem;
+
 }
 
+
 h3 {
+
   font-size: 1.15rem;
+
+}
+
+
+/* =========================================================
+   MINTOS GLOBAL UTILITIES
+   ========================================================= */
+
+.mint-text-primary {
+
+  color:
+    var(--mint-text-primary);
+
+}
+
+
+.mint-text-secondary {
+
+  color:
+    var(--mint-text-secondary);
+
+}
+
+
+.mint-text-muted {
+
+  color:
+    var(--mint-text-muted);
+
+}
+
+
+.mint-surface {
+
+  background:
+    var(--mint-surface);
+
+  border:
+    1px solid var(--mint-border);
+
+  border-radius:
+    var(--mint-radius-xl);
+
+  box-shadow:
+    var(--mint-shadow-card);
+
+}
+
+
+.mint-brand-surface {
+
+  background:
+    var(--mint-gradient-brand);
+
+  color:
+    var(--mint-text-on-brand);
+
+  border-radius:
+    var(--mint-radius-xl);
+
+  box-shadow:
+    var(--mint-shadow-brand);
+
+}
+
+
+.mint-accent-line {
+
+  height: 3px;
+
+  background:
+    var(--mint-gradient-accent);
+
+}
+
+
+/* =========================================================
+   DARK MODE TOKENS
+   Preparados para cuando reparemos Dark Mode
+   ========================================================= */
+
+.dark {
+
+  --mint-app-bg: #081722;
+
+  --mint-surface: #102331;
+
+  --mint-surface-soft: #102936;
+
+  --mint-surface-teal: #123d3a;
+
+
+  --mint-text-primary: #f3f8fa;
+
+  --mint-text-secondary: #a9bdc7;
+
+  --mint-text-muted: #78909d;
+
+
+  --mint-border: rgba(255, 255, 255, 0.08);
+
+  --mint-border-soft: rgba(255, 255, 255, 0.06);
+
+  --mint-border-teal: #285e58;
+
+
+  --mint-success: #71dfcb;
+
+  --mint-success-bg: #123d3a;
+
+  --mint-success-border: #285e58;
+
+
+  --mint-shadow-soft:
+    0 8px 24px rgba(0, 0, 0, 0.12);
+
+  --mint-shadow-card:
+    0 16px 36px rgba(0, 0, 0, 0.16);
+
+  --mint-shadow-elevated:
+    0 18px 42px rgba(0, 0, 0, 0.20);
+
 }

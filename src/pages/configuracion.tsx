@@ -30,6 +30,9 @@ import useFinanzas
 import { useAuth }
   from "../context/AuthContext";
 
+import { useLanguage }
+  from "../context/LanguageContext";
+
 type Seccion =
   | "usuarios"
   | "doctores"
@@ -49,6 +52,13 @@ export default function Configuracion() {
     perfil,
     permisos,
   } = useAuth();
+
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
 
   const esAdmin =
     perfil?.rol === "admin";
@@ -341,7 +351,11 @@ export default function Configuracion() {
             mint-text-primary
           "
         >
-          Acceso restringido
+          {
+            es
+              ? "Acceso restringido"
+              : "Restricted access"
+          }
         </h2>
 
         <p
@@ -350,9 +364,11 @@ export default function Configuracion() {
             mint-text-secondary
           "
         >
-          Tu usuario no tiene permisos
-          para acceder a la configuración
-          del sistema.
+          {
+            es
+              ? "Tu usuario no tiene permisos para acceder a la configuración del sistema."
+              : "Your user account does not have permission to access the system settings."
+          }
         </p>
 
       </div>
