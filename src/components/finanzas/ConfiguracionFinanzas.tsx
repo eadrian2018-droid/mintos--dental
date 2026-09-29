@@ -596,16 +596,21 @@ export default function ConfiguracionFinanzas({
 
         <div
           className="
-            mint-card
+            overflow-hidden
+            rounded-[24px]
+            border
+            border-[var(--mint-border)]
+            bg-white
             p-6
+            shadow-[0_12px_34px_rgba(15,42,65,0.06)]
           "
         >
 
           <h2
             className="
-              text-2xl
+              text-xl
               font-bold
-              mint-text-primary
+              text-[var(--mint-navy)]
             "
           >
             {es ? "Moneda" : "Currency"}
@@ -644,10 +649,29 @@ export default function ConfiguracionFinanzas({
 
               : (
 
-                <div className="mt-6 max-w-2xl space-y-6">
+                <div
+                  className="
+                    mt-6
+                    max-w-4xl
+                    space-y-5
+                    rounded-[22px]
+                    border
+                    border-[var(--mint-border-soft)]
+                    bg-[var(--mint-app-bg)]
+                    p-5
+                  "
+                >
 
-                  <div>
-                    <label className="block text-sm font-semibold mint-text-primary mb-2">
+                  <div
+                    className="
+                      rounded-[18px]
+                      border
+                      border-[var(--mint-border)]
+                      bg-white
+                      p-5
+                    "
+                  >
+                    <label className="block text-sm font-bold text-[var(--mint-navy)] mb-2">
                       {es ? "Moneda principal" : "Primary currency"}
                     </label>
 
@@ -678,11 +702,11 @@ export default function ConfiguracionFinanzas({
                       items-center
                       justify-between
                       gap-4
-                      rounded-2xl
+                      rounded-[18px]
                       border
-                      border-[var(--mint-border)]
-                      bg-[var(--mint-bg-soft)]
-                      p-4
+                      border-[var(--mint-border-teal)]
+                      bg-[linear-gradient(100deg,#f1faf8_0%,#ffffff_100%)]
+                      p-5
                     "
                   >
                     <div>
@@ -698,12 +722,35 @@ export default function ConfiguracionFinanzas({
                       </p>
                     </div>
 
-                    <input
-                      type="checkbox"
-                      checked={monedaSecundariaActiva}
-                      onChange={(e) => setMonedaSecundariaActiva(e.target.checked)}
-                      className="h-5 w-5 accent-[var(--mint-primary)]"
-                    />
+                    <label className="relative inline-flex shrink-0 cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={monedaSecundariaActiva}
+                        onChange={(e) => setMonedaSecundariaActiva(e.target.checked)}
+                        className="peer sr-only"
+                      />
+                      <span
+                        className="
+                          h-7
+                          w-12
+                          rounded-full
+                          bg-slate-200
+                          transition
+                          peer-checked:bg-[var(--mint-teal)]
+                          after:absolute
+                          after:left-[3px]
+                          after:top-[3px]
+                          after:h-[22px]
+                          after:w-[22px]
+                          after:rounded-full
+                          after:bg-white
+                          after:shadow-sm
+                          after:transition
+                          after:content-['']
+                          peer-checked:after:translate-x-5
+                        "
+                      />
+                    </label>
                   </div>
 
                   {
@@ -773,18 +820,20 @@ export default function ConfiguracionFinanzas({
 
                       <div
                         className="
-                          bg-[var(--mint-primary-soft)]
+                          overflow-hidden
+                          rounded-[18px]
                           border
-                          border-[var(--mint-border-primary)]
-                          rounded-2xl
-                          p-4
+                          border-white/10
+                          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+                          p-5
+                          shadow-[0_10px_26px_rgba(15,42,65,0.12)]
                         "
                       >
-                        <p className="text-xs uppercase tracking-wide font-semibold mint-text-muted">
+                        <p className="text-xs uppercase tracking-wide font-semibold text-white/60">
                           {es ? "Tipo de cambio actual" : "Current exchange rate"}
                         </p>
 
-                        <p className="text-2xl font-bold mint-text-brand mt-1">
+                        <p className="text-2xl font-bold text-white mt-1">
                           1 {monedaSecundaria} = {Number(tipoCambio || 0).toFixed(4)} {monedaPrincipal}
                         </p>
                       </div>

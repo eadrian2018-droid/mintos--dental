@@ -153,13 +153,20 @@ export default function Presupuestos({
     <div
       className="
         space-y-6
+        rounded-[28px]
+        bg-[var(--mint-surface-teal)]
+        p-1
       "
     >
 
       <section
         className="
-          mint-card
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+          shadow-[var(--mint-shadow-brand)]
         "
       >
 
@@ -184,7 +191,7 @@ export default function Presupuestos({
                 uppercase
                 tracking-[0.14em]
                 font-bold
-                mint-text-brand
+                text-white/75
               "
             >
               Presupuestos
@@ -195,7 +202,7 @@ export default function Presupuestos({
                 text-2xl
                 font-bold
                 tracking-tight
-                mint-text-primary
+                text-white
                 mt-1
               "
             >
@@ -205,7 +212,7 @@ export default function Presupuestos({
             <p
               className="
                 text-sm
-                mint-text-secondary
+                text-white/75
                 mt-1
                 max-w-2xl
               "
@@ -224,9 +231,18 @@ export default function Presupuestos({
                   onNuevoPresupuesto
                 }
                 className="
-                  mint-btn
-                  mint-btn-primary
                   inline-flex
+                  rounded-xl
+                  border
+                  border-white/20
+                  bg-white
+                  px-4
+                  py-2.5
+                  font-bold
+                  text-[var(--mint-navy)]
+                  shadow-sm
+                  transition
+                  hover:bg-white/90
                   items-center
                   gap-2
                 "
@@ -242,13 +258,18 @@ export default function Presupuestos({
 
         </div>
 
+      <div className="h-1 bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]" />
       </section>
 
 
       <section
         className="
-          mint-card
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[var(--mint-surface)]
+          shadow-[var(--mint-shadow-card)]
         "
       >
 
@@ -297,16 +318,16 @@ export default function Presupuestos({
               px-3
               py-2
               rounded-xl
-              bg-[var(--mint-primary-soft)]
+              bg-[var(--mint-teal-pale)]
               border
-              border-[var(--mint-border-primary)]
+              border-[var(--mint-border-teal)]
             "
           >
 
             <FileText
               size={15}
               className="
-                text-[var(--mint-primary)]
+                text-[var(--mint-teal)]
               "
             />
 
@@ -314,7 +335,7 @@ export default function Presupuestos({
               className="
                 text-xs
                 font-bold
-                text-[var(--mint-primary)]
+                text-[var(--mint-teal)]
               "
             >
               {presupuestos.length}
@@ -331,7 +352,7 @@ export default function Presupuestos({
               py-4
               border-b
               border-[var(--mint-border)]
-              bg-[var(--mint-bg-soft)]
+              bg-[var(--mint-surface-teal)]
             "
           >
             <div
@@ -371,7 +392,7 @@ export default function Presupuestos({
                   rounded-xl
                   border
                   border-[var(--mint-border)]
-                  bg-[var(--mint-bg-card)]
+                  bg-[var(--mint-surface)]
                   pl-10
                   pr-4
                   py-2.5
@@ -379,9 +400,9 @@ export default function Presupuestos({
                   mint-text-primary
                   outline-none
                   transition
-                  focus:border-[var(--mint-primary)]
+                  focus:border-[var(--mint-teal)]
                   focus:ring-2
-                  focus:ring-[var(--mint-primary-soft)]
+                  focus:ring-[var(--mint-teal-pale)]
                 "
               />
             </div>
@@ -406,7 +427,7 @@ export default function Presupuestos({
                     w-12
                     h-12
                     rounded-2xl
-                    bg-[var(--mint-primary-soft)]
+                    bg-[var(--mint-teal-pale)]
                     flex
                     items-center
                     justify-center
@@ -417,7 +438,7 @@ export default function Presupuestos({
                   <FileText
                     size={22}
                     className="
-                      text-[var(--mint-primary)]
+                      text-[var(--mint-teal)]
                     "
                   />
 
@@ -464,7 +485,7 @@ export default function Presupuestos({
                     w-12
                     h-12
                     rounded-2xl
-                    bg-[var(--mint-primary-soft)]
+                    bg-[var(--mint-teal-pale)]
                     flex
                     items-center
                     justify-center
@@ -474,7 +495,7 @@ export default function Presupuestos({
                   <Search
                     size={21}
                     className="
-                      text-[var(--mint-primary)]
+                      text-[var(--mint-teal)]
                     "
                   />
                 </div>
@@ -631,7 +652,7 @@ export default function Presupuestos({
                             className="
                               border-t
                               border-[var(--mint-border)]
-                              hover:bg-[var(--mint-bg-soft)]
+                              hover:bg-[var(--mint-surface-teal)]
                               transition-colors
                             "
                           >

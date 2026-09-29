@@ -270,25 +270,25 @@ export default function Reportes({
         "Finalizado"
     ).length;
 
-const tratamientosPendientes =
-  tratamientosFiltrados.filter(
-    (tratamiento) =>
-      String(
-        tratamiento.estado || ""
-      ) !== "Finalizado"
-      &&
-      String(
-        tratamiento.estado || ""
-      ) !== "Cancelado"
-  ).length;
+  const tratamientosPendientes =
+    tratamientosFiltrados.filter(
+      (tratamiento) =>
+        String(
+          tratamiento.estado || ""
+        ) !== "Finalizado"
+        &&
+        String(
+          tratamiento.estado || ""
+        ) !== "Cancelado"
+    ).length;
 
-const tratamientosCancelados =
-  tratamientosFiltrados.filter(
-    (tratamiento) =>
-      String(
-        tratamiento.estado || ""
-      ) === "Cancelado"
-  ).length;
+  const tratamientosCancelados =
+    tratamientosFiltrados.filter(
+      (tratamiento) =>
+        String(
+          tratamiento.estado || ""
+        ) === "Cancelado"
+    ).length;
 
   const etiquetaPeriodo =
     periodo === "semana"
@@ -609,12 +609,6 @@ const tratamientosCancelados =
 
       };
 
-    /*
-    |--------------------------------------------------------------------------
-    | ENCABEZADO
-    |--------------------------------------------------------------------------
-    */
-
     pdf.setFillColor(
       ...teal
     );
@@ -697,12 +691,6 @@ const tratamientosCancelados =
     );
 
     y += 44;
-
-    /*
-    |--------------------------------------------------------------------------
-    | RESUMEN DE OPERACIÓN
-    |--------------------------------------------------------------------------
-    */
 
     tituloSeccion(
       "Resumen de operación"
@@ -823,12 +811,6 @@ const tratamientosCancelados =
     );
 
     y += 31;
-
-    /*
-    |--------------------------------------------------------------------------
-    | ESTADO DE RESULTADOS
-    |--------------------------------------------------------------------------
-    */
 
     tituloSeccion(
       "Estado de resultados MXN"
@@ -1010,12 +992,6 @@ const tratamientosCancelados =
 
     y += 24;
 
-    /*
-    |--------------------------------------------------------------------------
-    | LIQUIDEZ
-    |--------------------------------------------------------------------------
-    */
-
     tituloSeccion(
       "Liquidez"
     );
@@ -1063,12 +1039,6 @@ const tratamientosCancelados =
       "info"
     );
 
-    /*
-    |--------------------------------------------------------------------------
-    | CUENTAS POR COBRAR Y PRODUCCIÓN
-    |--------------------------------------------------------------------------
-    */
-
     y += 4;
 
     tituloSeccion(
@@ -1092,12 +1062,6 @@ const tratamientosCancelados =
       ),
       "positivo"
     );
-
-    /*
-    |--------------------------------------------------------------------------
-    | PIE
-    |--------------------------------------------------------------------------
-    */
 
     const totalPaginas =
       pdf.getNumberOfPages();
@@ -1173,7 +1137,7 @@ const tratamientosCancelados =
 
     <div
       className="
-        space-y-6
+        space-y-7
       "
     >
 
@@ -1181,14 +1145,30 @@ const tratamientosCancelados =
 
       <section
         className="
-          mint-card
+          relative
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
+          shadow-[0_12px_32px_rgba(15,42,65,0.06)]
         "
       >
 
         <div
           className="
-            px-6
+            absolute
+            left-0
+            top-0
+            h-full
+            w-1
+            bg-[linear-gradient(180deg,var(--mint-teal)_0%,var(--mint-teal-soft)_58%,var(--mint-gold)_100%)]
+          "
+        />
+
+        <div
+          className="
+            px-7
             py-6
             flex
             flex-col
@@ -1205,9 +1185,9 @@ const tratamientosCancelados =
               className="
                 text-[11px]
                 uppercase
-                tracking-[0.14em]
+                tracking-[0.16em]
                 font-bold
-                mint-text-brand
+                text-[var(--mint-teal)]
               "
             >
               Finanzas
@@ -1244,10 +1224,81 @@ const tratamientosCancelados =
             className="
               flex
               items-center
-              gap-3
+              gap-5
               flex-wrap
             "
           >
+
+            <div
+              className="
+                flex
+                items-center
+                gap-5
+                pr-5
+                border-r
+                border-[var(--mint-border-teal)]
+              "
+            >
+
+              <div>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    mint-text-muted
+                  "
+                >
+                  Tratamientos
+                </p>
+
+                <p
+                  className="
+                    text-2xl
+                    font-bold
+                    mint-text-primary
+                    mt-1
+                  "
+                >
+                  {
+                    tratamientosFiltrados.length
+                  }
+                </p>
+
+              </div>
+
+              <div>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    mint-text-muted
+                  "
+                >
+                  Finalizados
+                </p>
+
+                <p
+                  className="
+                    text-2xl
+                    font-bold
+                    text-[var(--mint-success)]
+                    mt-1
+                  "
+                >
+                  {
+                    tratamientosFinalizados
+                  }
+                </p>
+
+              </div>
+
+            </div>
 
             <button
               type="button"
@@ -1262,82 +1313,6 @@ const tratamientosCancelados =
               Exportar PDF
             </button>
 
-            <div
-              className="
-                px-4
-                py-3
-                rounded-xl
-                bg-[var(--mint-primary-soft)]
-                border
-                border-[var(--mint-border-primary)]
-              "
-            >
-
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.1em]
-                  font-bold
-                  mint-text-muted
-                "
-              >
-                Tratamientos
-              </p>
-
-              <p
-                className="
-                  text-xl
-                  font-bold
-                  text-[var(--mint-primary)]
-                  mt-1
-                "
-              >
-                {
-                  tratamientosFiltrados.length
-                }
-              </p>
-
-            </div>
-
-            <div
-              className="
-                px-4
-                py-3
-                rounded-xl
-                bg-[var(--mint-success-bg)]
-                border
-                border-[var(--mint-success-border)]
-              "
-            >
-
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.1em]
-                  font-bold
-                  mint-text-muted
-                "
-              >
-                Finalizados
-              </p>
-
-              <p
-                className="
-                  text-xl
-                  font-bold
-                  text-[var(--mint-success)]
-                  mt-1
-                "
-              >
-                {
-                  tratamientosFinalizados
-                }
-              </p>
-
-            </div>
-
           </div>
 
         </div>
@@ -1345,7 +1320,7 @@ const tratamientosCancelados =
       </section>
 
 
-      {/* RESULTADO GENERAL */}
+      {/* ESTADO FINANCIERO */}
 
       <section>
 
@@ -1386,78 +1361,80 @@ const tratamientosCancelados =
 
           </div>
 
+          <p
+            className="
+              hidden
+              md:block
+              text-xs
+              mint-text-muted
+            "
+          >
+            Comparativo MXN / USD
+          </p>
+
         </div>
 
         <div
           className="
-            grid
-            grid-cols-1
-            lg:grid-cols-2
-            gap-4
+            overflow-hidden
+            rounded-[22px]
+            border
+            border-[var(--mint-border)]
+            bg-[var(--mint-surface)]
+            shadow-[0_10px_30px_rgba(15,42,65,0.055)]
           "
         >
 
-          {/* MXN */}
+          {/* CABECERA */}
 
           <div
             className="
-              mint-card
-              overflow-hidden
+              grid
+              grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
+              items-center
+              px-6
+              py-4
+              bg-[var(--mint-surface-teal)]
+              border-b
+              border-[var(--mint-border-teal)]
             "
           >
 
+            <div>
+
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.12em]
+                  font-bold
+                  mint-text-muted
+                "
+              >
+                Concepto
+              </p>
+
+            </div>
+
             <div
               className="
-                px-6
-                py-5
-                border-b
-                border-[var(--mint-border)]
-                flex
-                items-center
-                justify-between
-                gap-4
+                text-right
+                pr-5
               "
             >
-
-              <div>
-
-                <p
-                  className="
-                    text-[11px]
-                    uppercase
-                    tracking-[0.12em]
-                    font-bold
-                    mint-text-muted
-                  "
-                >
-                  Moneda nacional
-                </p>
-
-                <h4
-                  className="
-                    text-xl
-                    font-bold
-                    mint-text-primary
-                    mt-1
-                  "
-                >
-                  Estado de resultados MXN
-                </h4>
-
-              </div>
 
               <span
                 className="
                   inline-flex
                   px-3
-                  py-1.5
-                  rounded-lg
-                  text-xs
+                  py-1
+                  rounded-full
+                  text-[10px]
                   font-bold
-                  bg-[var(--mint-primary-soft)]
-                  text-[var(--mint-primary)]
+                  bg-white
+                  text-[var(--mint-teal)]
                   border
-                  border-[var(--mint-border-primary)]
+                  border-[var(--mint-border-teal)]
                 "
               >
                 MXN
@@ -1467,202 +1444,22 @@ const tratamientosCancelados =
 
             <div
               className="
-                p-6
-                space-y-1
+                text-right
+                pl-5
+                border-l
+                border-[var(--mint-border-teal)]
               "
             >
-
-              <FilaReporte
-                titulo="Cobros recibidos"
-                subtitulo="Pagos reales registrados"
-                valor={cobradoMXN}
-                moneda="MXN"
-                formatoMonto={formatoMonto}
-                tipo="positivo"
-              />
-
-              <FilaReporte
-                titulo="Base clínica"
-                subtitulo="Resultado después de costos clínicos"
-                valor={totalBaseClinicaMXN}
-                moneda="MXN"
-                formatoMonto={formatoMonto}
-              />
-
-              <FilaReporte
-                titulo="Comisiones doctores"
-                subtitulo="Comisiones generadas por tratamientos finalizados"
-                valor={totalComisionesDoctorMXN}
-                moneda="MXN"
-                formatoMonto={formatoMonto}
-                tipo="negativo"
-              />
-
-              <FilaReporte
-                titulo="Gastos generales"
-                subtitulo="Egresos registrados en el período"
-                valor={totalGastos}
-                moneda="MXN"
-                formatoMonto={formatoMonto}
-                tipo="negativo"
-              />
-
-              <div
-                className="
-                  pt-4
-                  mt-4
-                  border-t-2
-                  border-[var(--mint-border-strong)]
-                "
-              >
-
-                <div
-                  className="
-                    flex
-                    items-end
-                    justify-between
-                    gap-4
-                  "
-                >
-
-                  <div>
-
-                    <p
-                      className="
-                        text-sm
-                        font-bold
-                        mint-text-primary
-                      "
-                    >
-                      Utilidad neta
-                    </p>
-
-                    <p
-                      className="
-                        text-xs
-                        mint-text-muted
-                        mt-1
-                      "
-                    >
-                      Resultado final del período
-                    </p>
-
-                  </div>
-
-                  <div
-                    className="
-                      text-right
-                    "
-                  >
-
-                    <p
-                      className={`
-                        text-2xl
-                        font-bold
-
-                        ${
-                          gananciaNeta >= 0
-
-                            ? `
-                                text-[var(--mint-success)]
-                              `
-
-                            : `
-                                text-[var(--mint-danger)]
-                              `
-                        }
-                      `}
-                    >
-                      $
-                      {
-                        formatoMonto(
-                          gananciaNeta
-                        )
-                      }
-                    </p>
-
-                    <p
-                      className="
-                        text-[10px]
-                        uppercase
-                        tracking-[0.08em]
-                        font-bold
-                        mint-text-muted
-                        mt-1
-                      "
-                    >
-                      MXN
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-
-          {/* USD */}
-
-          <div
-            className="
-              mint-card
-              overflow-hidden
-            "
-          >
-
-            <div
-              className="
-                px-6
-                py-5
-                border-b
-                border-[var(--mint-border)]
-                flex
-                items-center
-                justify-between
-                gap-4
-              "
-            >
-
-              <div>
-
-                <p
-                  className="
-                    text-[11px]
-                    uppercase
-                    tracking-[0.12em]
-                    font-bold
-                    mint-text-muted
-                  "
-                >
-                  Moneda extranjera
-                </p>
-
-                <h4
-                  className="
-                    text-xl
-                    font-bold
-                    mint-text-primary
-                    mt-1
-                  "
-                >
-                  Estado de resultados USD
-                </h4>
-
-              </div>
 
               <span
                 className="
                   inline-flex
                   px-3
-                  py-1.5
-                  rounded-lg
-                  text-xs
+                  py-1
+                  rounded-full
+                  text-[10px]
                   font-bold
-                  bg-[var(--mint-info-bg)]
+                  bg-white
                   text-[var(--mint-info)]
                   border
                   border-[var(--mint-info-border)]
@@ -1673,140 +1470,165 @@ const tratamientosCancelados =
 
             </div>
 
+          </div>
+
+          <FilaEstadoFinanciero
+            titulo="Cobros recibidos"
+            subtitulo="Pagos reales registrados"
+            valorMXN={cobradoMXN}
+            valorUSD={cobradoUSD}
+            formatoMonto={formatoMonto}
+            tipo="positivo"
+          />
+
+          <FilaEstadoFinanciero
+            titulo="Base clínica"
+            subtitulo="Resultado después de costos clínicos"
+            valorMXN={totalBaseClinicaMXN}
+            valorUSD={totalBaseClinicaUSD}
+            formatoMonto={formatoMonto}
+          />
+
+          <FilaEstadoFinanciero
+            titulo="Comisiones doctores"
+            subtitulo="Comisiones generadas por tratamientos finalizados"
+            valorMXN={totalComisionesDoctorMXN}
+            valorUSD={totalComisionesDoctorUSD}
+            formatoMonto={formatoMonto}
+            tipo="negativo"
+          />
+
+          <FilaEstadoFinanciero
+            titulo="Gastos generales"
+            subtitulo="Egresos registrados en el período"
+            valorMXN={totalGastos}
+            valorUSD={totalGastosUSD}
+            formatoMonto={formatoMonto}
+            tipo="negativo"
+          />
+
+          <div
+            className="
+              grid
+              grid-cols-1
+              md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
+              items-center
+              gap-3
+              px-6
+              py-5
+              bg-[linear-gradient(90deg,var(--mint-surface-teal)_0%,var(--mint-surface)_100%)]
+              border-t
+              border-[var(--mint-border-teal)]
+            "
+          >
+
+            <div>
+
+              <p
+                className="
+                  text-base
+                  font-bold
+                  mint-text-primary
+                "
+              >
+                Utilidad neta
+              </p>
+
+              <p
+                className="
+                  text-xs
+                  mint-text-muted
+                  mt-1
+                "
+              >
+                Resultado final del período
+              </p>
+
+            </div>
+
             <div
               className="
-                p-6
-                space-y-1
+                md:text-right
+                md:pr-5
               "
             >
 
-              <FilaReporte
-                titulo="Cobros recibidos"
-                subtitulo="Pagos reales recibidos en dólares"
-                valor={cobradoUSD}
-                moneda="USD"
-                formatoMonto={formatoMonto}
-                tipo="positivo"
-              />
+              <p
+                className={`
+                  text-2xl
+                  font-bold
 
-              <FilaReporte
-                titulo="Base clínica"
-                subtitulo="Resultado después de costos clínicos USD"
-                valor={totalBaseClinicaUSD}
-                moneda="USD"
-                formatoMonto={formatoMonto}
-              />
+                  ${
+                    gananciaNeta >= 0
+                      ? "text-[var(--mint-success)]"
+                      : "text-[var(--mint-danger)]"
+                  }
+                `}
+              >
+                $
+                {
+                  formatoMonto(
+                    gananciaNeta
+                  )
+                }
+              </p>
 
-              <FilaReporte
-                titulo="Comisiones doctores"
-                subtitulo="Comisiones generadas en USD"
-                valor={totalComisionesDoctorUSD}
-                moneda="USD"
-                formatoMonto={formatoMonto}
-                tipo="negativo"
-              />
-
-              <FilaReporte
-                titulo="Gastos generales"
-                subtitulo="Egresos registrados directamente en USD"
-                valor={totalGastosUSD}
-                moneda="USD"
-                formatoMonto={formatoMonto}
-                tipo="negativo"
-              />
-
-              <div
+              <p
                 className="
-                  pt-4
-                  mt-4
-                  border-t-2
-                  border-[var(--mint-border-strong)]
+                  text-[9px]
+                  uppercase
+                  tracking-[0.1em]
+                  font-bold
+                  mint-text-muted
+                  mt-1
                 "
               >
+                MXN
+              </p>
 
-                <div
-                  className="
-                    flex
-                    items-end
-                    justify-between
-                    gap-4
-                  "
-                >
+            </div>
 
-                  <div>
+            <div
+              className="
+                md:text-right
+                md:pl-5
+                md:border-l
+                border-[var(--mint-border-teal)]
+              "
+            >
 
-                    <p
-                      className="
-                        text-sm
-                        font-bold
-                        mint-text-primary
-                      "
-                    >
-                      Utilidad neta
-                    </p>
+              <p
+                className={`
+                  text-2xl
+                  font-bold
 
-                    <p
-                      className="
-                        text-xs
-                        mint-text-muted
-                        mt-1
-                      "
-                    >
-                      Resultado real conservado en USD
-                    </p>
+                  ${
+                    gananciaNetaUSD >= 0
+                      ? "text-[var(--mint-info)]"
+                      : "text-[var(--mint-danger)]"
+                  }
+                `}
+              >
+                $
+                {
+                  formatoMonto(
+                    gananciaNetaUSD
+                  )
+                }
+              </p>
 
-                  </div>
-
-                  <div
-                    className="
-                      text-right
-                    "
-                  >
-
-                    <p
-                      className={`
-                        text-2xl
-                        font-bold
-
-                        ${
-                          gananciaNetaUSD >= 0
-
-                            ? `
-                                text-[var(--mint-success)]
-                              `
-
-                            : `
-                                text-[var(--mint-danger)]
-                              `
-                        }
-                      `}
-                    >
-                      $
-                      {
-                        formatoMonto(
-                          gananciaNetaUSD
-                        )
-                      }
-                    </p>
-
-                    <p
-                      className="
-                        text-[10px]
-                        uppercase
-                        tracking-[0.08em]
-                        font-bold
-                        mint-text-muted
-                        mt-1
-                      "
-                    >
-                      USD
-                    </p>
-
-                  </div>
-
-                </div>
-
-              </div>
+              <p
+                className="
+                  text-[9px]
+                  uppercase
+                  tracking-[0.1em]
+                  font-bold
+                  mint-text-muted
+                  mt-1
+                "
+              >
+                USD
+              </p>
 
             </div>
 
@@ -1817,7 +1639,7 @@ const tratamientosCancelados =
       </section>
 
 
-      {/* LIQUIDEZ */}
+      {/* TESORERÍA */}
 
       <section>
 
@@ -1837,7 +1659,7 @@ const tratamientosCancelados =
               mb-1
             "
           >
-            Liquidez
+            Tesorería
           </p>
 
           <h3
@@ -1854,229 +1676,69 @@ const tratamientosCancelados =
 
         <div
           className="
-            grid
-            grid-cols-1
-            md:grid-cols-2
-            xl:grid-cols-4
-            gap-4
+            relative
+            overflow-hidden
+            rounded-[22px]
+            border
+            border-[var(--mint-border-teal)]
+            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_50%,var(--mint-teal)_100%)]
+            shadow-[0_14px_34px_rgba(15,42,65,0.13)]
           "
         >
-
-          <TarjetaLiquidez
-            titulo="Caja MXN"
-            valor={cajaMXN}
-            moneda="MXN"
-            descripcion="Efectivo disponible"
-            formatoMonto={formatoMonto}
-            tipo="success"
-          />
-
-          <TarjetaLiquidez
-            titulo="Caja USD"
-            valor={cajaUSD}
-            moneda="USD"
-            descripcion="Efectivo en dólares"
-            formatoMonto={formatoMonto}
-            tipo="info"
-          />
-
-          <TarjetaLiquidez
-            titulo="Tarjeta / Banco"
-            valor={totalTarjeta}
-            moneda="MXN"
-            descripcion="Neto recibido por tarjeta"
-            formatoMonto={formatoMonto}
-            tipo="neutral"
-          />
 
           <div
             className="
-              mint-card
-              p-5
+              absolute
+              left-0
+              right-0
+              top-0
+              h-[3px]
+              bg-[linear-gradient(90deg,var(--mint-teal-soft)_0%,var(--mint-gold)_100%)]
             "
-          >
-
-            <p
-              className="
-                text-xs
-                uppercase
-                tracking-[0.08em]
-                font-bold
-                mint-text-muted
-              "
-            >
-              Transferencias
-            </p>
-
-            <div
-              className="
-                mt-4
-                grid
-                grid-cols-2
-                gap-3
-              "
-            >
-
-              <div>
-
-                <p
-                  className="
-                    text-xl
-                    font-bold
-                    mint-text-primary
-                  "
-                >
-                  $
-                  {
-                    formatoMonto(
-                      totalTransferencia
-                    )
-                  }
-                </p>
-
-                <p
-                  className="
-                    text-[10px]
-                    uppercase
-                    font-bold
-                    mint-text-muted
-                    mt-1
-                  "
-                >
-                  MXN
-                </p>
-
-              </div>
-
-              <div
-                className="
-                  pl-3
-                  border-l
-                  border-[var(--mint-border)]
-                "
-              >
-
-                <p
-                  className="
-                    text-xl
-                    font-bold
-                    text-[var(--mint-info)]
-                  "
-                >
-                  $
-                  {
-                    formatoMonto(
-                      totalTransferenciaUSD
-                    )
-                  }
-                </p>
-
-                <p
-                  className="
-                    text-[10px]
-                    uppercase
-                    font-bold
-                    mint-text-muted
-                    mt-1
-                  "
-                >
-                  USD
-                </p>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
-
-
-      {/* OPERACIÓN */}
-
-      <section>
-
-        <div
-          className="
-            mb-4
-          "
-        >
-
-          <p
-            className="
-              text-[11px]
-              uppercase
-              tracking-[0.14em]
-              font-bold
-              mint-text-muted
-              mb-1
-            "
-          >
-            Operación
-          </p>
-
-          <h3
-            className="
-              text-xl
-              font-bold
-              mint-text-primary
-            "
-          >
-            Estado de tratamientos
-          </h3>
-
-        </div>
-
-        <div
-          className="
-            mint-card
-            overflow-hidden
-          "
-        >
+          />
 
           <div
             className="
               grid
               grid-cols-1
-              md:grid-cols-4
+              sm:grid-cols-2
+              xl:grid-cols-5
             "
           >
 
-            <EstadoTratamiento
-              titulo="Total"
-              valor={
-                tratamientosFiltrados.length
-              }
-              descripcion="Registrados"
+            <DatoTesoreria
+              titulo="Caja MXN"
+              valor={cajaMXN}
+              moneda="MXN"
+              formatoMonto={formatoMonto}
             />
 
-            <EstadoTratamiento
-              titulo="Finalizados"
-              valor={
-                tratamientosFinalizados
-              }
-              descripcion="Completados"
-              tipo="success"
+            <DatoTesoreria
+              titulo="Caja USD"
+              valor={cajaUSD}
+              moneda="USD"
+              formatoMonto={formatoMonto}
             />
 
-            <EstadoTratamiento
-              titulo="En proceso"
-              valor={
-                tratamientosPendientes
-              }
-              descripcion="Pendientes de finalizar"
-              tipo="warning"
+            <DatoTesoreria
+              titulo="Tarjeta / Banco"
+              valor={totalTarjeta}
+              moneda="MXN"
+              formatoMonto={formatoMonto}
             />
 
-            <EstadoTratamiento
-              titulo="Cancelados"
-              valor={
-                tratamientosCancelados
-              }
-              descripcion="Sin concluir"
-              tipo="danger"
+            <DatoTesoreria
+              titulo="Transferencias"
+              valor={totalTransferencia}
+              moneda="MXN"
+              formatoMonto={formatoMonto}
+            />
+
+            <DatoTesoreria
+              titulo="Transferencias"
+              valor={totalTransferenciaUSD}
+              moneda="USD"
+              formatoMonto={formatoMonto}
               ultimo
             />
 
@@ -2087,100 +1749,270 @@ const tratamientosCancelados =
       </section>
 
 
-      {/* CUENTAS POR COBRAR */}
+      {/* OPERACIÓN + ACTIVIDAD */}
 
-      <section>
+      <section
+        className="
+          grid
+          grid-cols-1
+          xl:grid-cols-[1.2fr_0.8fr]
+          gap-5
+        "
+      >
 
-        <div
-          className="
-            mint-card
-            overflow-hidden
-          "
-        >
+        <div>
 
           <div
             className="
-              p-6
-              flex
-              flex-col
-              md:flex-row
-              md:items-center
-              md:justify-between
-              gap-5
+              mb-4
             "
           >
 
-            <div>
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.14em]
+                font-bold
+                mint-text-muted
+                mb-1
+              "
+            >
+              Operación
+            </p>
 
-              <p
-                className="
-                  text-[11px]
-                  uppercase
-                  tracking-[0.14em]
-                  font-bold
-                  mint-text-muted
-                "
-              >
-                Cuentas por cobrar
-              </p>
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+              Estado de tratamientos
+            </h3>
 
-              <h3
-                className="
-                  text-xl
-                  font-bold
-                  mint-text-primary
-                  mt-1
-                "
-              >
-                Saldo pendiente de pacientes
-              </h3>
+          </div>
 
-              <p
-                className="
-                  text-sm
-                  mint-text-secondary
-                  mt-1
-                "
-              >
-                Tratamientos registrados que aún
-                conservan saldo pendiente.
-              </p>
+          <div
+            className="
+              grid
+              grid-cols-2
+              lg:grid-cols-4
+              gap-3
+            "
+          >
 
-            </div>
+            <IndicadorOperacion
+              titulo="Total"
+              valor={
+                tratamientosFiltrados.length
+              }
+              descripcion="Registrados"
+            />
+
+            <IndicadorOperacion
+              titulo="Finalizados"
+              valor={
+                tratamientosFinalizados
+              }
+              descripcion="Completados"
+              tipo="success"
+            />
+
+            <IndicadorOperacion
+              titulo="En proceso"
+              valor={
+                tratamientosPendientes
+              }
+              descripcion="Pendientes"
+              tipo="warning"
+            />
+
+            <IndicadorOperacion
+              titulo="Cancelados"
+              valor={
+                tratamientosCancelados
+              }
+              descripcion="Sin concluir"
+              tipo="danger"
+            />
+
+          </div>
+
+        </div>
+
+        <div>
+
+          <div
+            className="
+              mb-4
+            "
+          >
+
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.14em]
+                font-bold
+                mint-text-muted
+                mb-1
+              "
+            >
+              Actividad financiera
+            </p>
+
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+              Pendiente y producción
+            </h3>
+
+          </div>
+
+          <div
+            className="
+              rounded-[22px]
+              border
+              border-[var(--mint-border)]
+              bg-[var(--mint-surface)]
+              shadow-[0_8px_24px_rgba(15,42,65,0.045)]
+              overflow-hidden
+            "
+          >
 
             <div
               className="
-                md:text-right
+                grid
+                grid-cols-1
+                sm:grid-cols-2
               "
             >
 
-              <p
+              <div
                 className="
-                  text-3xl
-                  font-bold
-                  text-[var(--mint-danger)]
+                  p-5
+                  sm:border-r
+                  border-[var(--mint-border)]
                 "
               >
-                $
-                {
-                  formatoMonto(
-                    pendiente
-                  )
-                }
-              </p>
 
-              <p
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    text-[var(--mint-danger)]
+                  "
+                >
+                  Por cobrar
+                </p>
+
+                <p
+                  className="
+                    text-2xl
+                    font-bold
+                    text-[var(--mint-danger)]
+                    mt-2
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      pendiente
+                    )
+                  }
+                </p>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    font-bold
+                    mint-text-muted
+                    mt-1
+                  "
+                >
+                  MXN pendiente
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-secondary
+                    mt-3
+                  "
+                >
+                  Saldo pendiente de pacientes.
+                </p>
+
+              </div>
+
+              <div
                 className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.1em]
-                  font-bold
-                  mint-text-muted
-                  mt-1
+                  p-5
+                  border-t
+                  sm:border-t-0
+                  border-[var(--mint-border)]
                 "
               >
-                MXN pendiente
-              </p>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  Producción
+                </p>
+
+                <p
+                  className="
+                    text-2xl
+                    font-bold
+                    mint-text-primary
+                    mt-2
+                  "
+                >
+                  $
+                  {
+                    formatoMonto(
+                      ingresos
+                    )
+                  }
+                </p>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    font-bold
+                    mint-text-muted
+                    mt-1
+                  "
+                >
+                  MXN generado
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-secondary
+                    mt-3
+                  "
+                >
+                  Valor total registrado en tratamientos.
+                </p>
+
+              </div>
 
             </div>
 
@@ -2190,8 +2022,7 @@ const tratamientosCancelados =
 
       </section>
 
-
-      {/* CIERRES OFICIALES */}
+            {/* CIERRES OFICIALES */}
 
       <section>
 
@@ -2237,7 +2068,6 @@ const tratamientosCancelados =
                 text-sm
                 mint-text-secondary
                 mt-1
-                max-w-2xl
               "
             >
               Consulta las fotografías financieras
@@ -2252,20 +2082,30 @@ const tratamientosCancelados =
               items-center
               self-start
               md:self-auto
+              gap-2
               px-3
               py-2
-              rounded-xl
-              bg-[var(--mint-primary-soft)]
+              rounded-full
+              bg-[var(--mint-surface-teal)]
               border
-              border-[var(--mint-border-primary)]
+              border-[var(--mint-border-teal)]
             "
           >
 
             <span
               className="
+                w-2
+                h-2
+                rounded-full
+                bg-[var(--mint-teal)]
+              "
+            />
+
+            <span
+              className="
                 text-xs
                 font-bold
-                text-[var(--mint-primary)]
+                text-[var(--mint-teal)]
               "
             >
               {cierres.length} cierres guardados
@@ -2277,7 +2117,11 @@ const tratamientosCancelados =
 
         <div
           className="
-            mint-card
+            rounded-[22px]
+            border
+            border-[var(--mint-border)]
+            bg-[var(--mint-surface)]
+            shadow-[0_8px_24px_rgba(15,42,65,0.045)]
             overflow-hidden
           "
         >
@@ -2289,8 +2133,11 @@ const tratamientosCancelados =
 
                 <div
                   className="
-                    p-8
-                    text-center
+                    min-h-[150px]
+                    flex
+                    items-center
+                    justify-center
+                    text-sm
                     mint-text-muted
                   "
                 >
@@ -2305,14 +2152,47 @@ const tratamientosCancelados =
 
                   <div
                     className="
-                      p-8
+                      min-h-[150px]
+                      flex
+                      flex-col
+                      items-center
+                      justify-center
+                      px-6
                       text-center
+                      bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
                     "
                   >
 
+                    <div
+                      className="
+                        w-10
+                        h-10
+                        rounded-2xl
+                        flex
+                        items-center
+                        justify-center
+                        bg-white
+                        border
+                        border-[var(--mint-border-teal)]
+                        shadow-sm
+                        mb-3
+                      "
+                    >
+
+                      <span
+                        className="
+                          w-2.5
+                          h-2.5
+                          rounded-full
+                          bg-[var(--mint-teal)]
+                        "
+                      />
+
+                    </div>
+
                     <p
                       className="
-                        font-semibold
+                        font-bold
                         mint-text-primary
                       "
                     >
@@ -2339,422 +2219,175 @@ const tratamientosCancelados =
 
                   <div
                     className="
-                      overflow-x-auto
+                      divide-y
+                      divide-[var(--mint-border)]
                     "
                   >
 
-                    <table
-                      className="
-                        w-full
-                        text-sm
-                      "
-                    >
+                    {
+                      cierres.map(
+                        (
+                          cierre
+                        ) => (
 
-                      <thead
-                        className="
-                          mint-bg-soft
-                        "
-                      >
-
-                        <tr>
-
-                          <th
+                          <div
+                            key={
+                              cierre.id
+                            }
                             className="
-                              text-left
+                              grid
+                              grid-cols-1
+                              lg:grid-cols-[1.1fr_repeat(5,minmax(120px,0.75fr))_1fr]
+                              items-center
+                              gap-4
                               px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
+                              py-4
+                              hover:bg-[var(--mint-surface-soft)]
+                              transition-colors
                             "
                           >
-                            Período
-                          </th>
 
-                          <th
-                            className="
-                              text-right
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Cobrado MXN
-                          </th>
+                            <div>
 
-                          <th
-                            className="
-                              text-right
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Cobrado USD
-                          </th>
-
-                          <th
-                            className="
-                              text-right
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Gastos MXN
-                          </th>
-
-                          <th
-                            className="
-                              text-right
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Utilidad MXN
-                          </th>
-
-                          <th
-                            className="
-                              text-right
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Utilidad USD
-                          </th>
-
-                          <th
-                            className="
-                              text-left
-                              px-6
-                              py-3
-                              text-xs
-                              font-bold
-                              mint-text-muted
-                            "
-                          >
-                            Fecha cierre
-                          </th>
-
-                        </tr>
-
-                      </thead>
-
-                      <tbody>
-
-                        {
-                          cierres.map(
-                            (
-                              cierre
-                            ) => (
-
-                              <tr
-                                key={
-                                  cierre.id
-                                }
+                              <p
                                 className="
-                                  border-t
-                                  border-[var(--mint-border)]
-                                  hover:bg-[var(--mint-bg-soft)]
-                                  transition-colors
+                                  font-bold
+                                  mint-text-primary
                                 "
                               >
+                                {
+                                  MESES[
+                                    cierre.mes - 1
+                                  ]
+                                }{" "}
+                                {
+                                  cierre.anio
+                                }
+                              </p>
 
-                                <td
-                                  className="
-                                    px-6
-                                    py-4
-                                  "
-                                >
+                              <p
+                                className="
+                                  text-[9px]
+                                  uppercase
+                                  tracking-[0.1em]
+                                  font-bold
+                                  text-[var(--mint-teal)]
+                                  mt-1
+                                "
+                              >
+                                Cierre oficial
+                              </p>
 
-                                  <p
-                                    className="
-                                      font-bold
-                                      mint-text-primary
-                                    "
-                                  >
-                                    {
-                                      MESES[
-                                        cierre.mes - 1
-                                      ]
-                                    }{" "}
-                                    {
-                                      cierre.anio
-                                    }
-                                  </p>
+                            </div>
 
-                                  <p
-                                    className="
-                                      text-[10px]
-                                      uppercase
-                                      tracking-[0.08em]
-                                      font-bold
-                                      text-[var(--mint-primary)]
-                                      mt-1
-                                    "
-                                  >
-                                    Cierre oficial
-                                  </p>
+                            <DatoCierre
+                              titulo="Cobrado MXN"
+                              valor={
+                                cierre.cobrado_mxn
+                              }
+                              formatoMonto={
+                                formatoMonto
+                              }
+                              tipo="success"
+                            />
 
-                                </td>
+                            <DatoCierre
+                              titulo="Cobrado USD"
+                              valor={
+                                cierre.cobrado_usd
+                              }
+                              formatoMonto={
+                                formatoMonto
+                              }
+                              tipo="info"
+                            />
 
-                                <td
-                                  className="
-                                    px-6
-                                    py-4
-                                    text-right
-                                    font-semibold
-                                    text-[var(--mint-success)]
-                                    whitespace-nowrap
-                                  "
-                                >
-                                  $
-                                  {
-                                    formatoMonto(
-                                      cierre.cobrado_mxn
-                                    )
-                                  }
-                                </td>
+                            <DatoCierre
+                              titulo="Gastos MXN"
+                              valor={
+                                cierre.gastos_mxn
+                              }
+                              formatoMonto={
+                                formatoMonto
+                              }
+                              tipo="danger"
+                            />
 
-                                <td
-                                  className="
-                                    px-6
-                                    py-4
-                                    text-right
-                                    font-semibold
-                                    text-[var(--mint-info)]
-                                    whitespace-nowrap
-                                  "
-                                >
-                                  $
-                                  {
-                                    formatoMonto(
-                                      cierre.cobrado_usd
-                                    )
-                                  }
-                                </td>
+                            <DatoCierre
+                              titulo="Utilidad MXN"
+                              valor={
+                                cierre.utilidad_neta_mxn
+                              }
+                              formatoMonto={
+                                formatoMonto
+                              }
+                              tipo={
+                                cierre.utilidad_neta_mxn >= 0
+                                  ? "success"
+                                  : "danger"
+                              }
+                            />
 
-                                <td
-                                  className="
-                                    px-6
-                                    py-4
-                                    text-right
-                                    font-semibold
-                                    text-[var(--mint-danger)]
-                                    whitespace-nowrap
-                                  "
-                                >
-                                  $
-                                  {
-                                    formatoMonto(
-                                      cierre.gastos_mxn
-                                    )
-                                  }
-                                </td>
+                            <DatoCierre
+                              titulo="Utilidad USD"
+                              valor={
+                                cierre.utilidad_neta_usd
+                              }
+                              formatoMonto={
+                                formatoMonto
+                              }
+                              tipo={
+                                cierre.utilidad_neta_usd >= 0
+                                  ? "info"
+                                  : "danger"
+                              }
+                            />
 
-                                <td
-                                  className={`
-                                    px-6
-                                    py-4
-                                    text-right
-                                    font-bold
-                                    whitespace-nowrap
+                            <div
+                              className="
+                                lg:text-right
+                              "
+                            >
 
-                                    ${
-                                      cierre.utilidad_neta_mxn >= 0
+                              <p
+                                className="
+                                  text-[9px]
+                                  uppercase
+                                  tracking-[0.08em]
+                                  font-bold
+                                  mint-text-muted
+                                "
+                              >
+                                Fecha cierre
+                              </p>
 
-                                        ? `
-                                            text-[var(--mint-success)]
-                                          `
+                              <p
+                                className="
+                                  text-xs
+                                  font-medium
+                                  mint-text-secondary
+                                  mt-1
+                                "
+                              >
+                                {
+                                  formatoFechaCierre(
+                                    cierre.fecha_cierre
+                                  )
+                                }
+                              </p>
 
-                                        : `
-                                            text-[var(--mint-danger)]
-                                          `
-                                    }
-                                  `}
-                                >
-                                  $
-                                  {
-                                    formatoMonto(
-                                      cierre.utilidad_neta_mxn
-                                    )
-                                  }
-                                </td>
+                            </div>
 
-                                <td
-                                  className={`
-                                    px-6
-                                    py-4
-                                    text-right
-                                    font-bold
-                                    whitespace-nowrap
+                          </div>
 
-                                    ${
-                                      cierre.utilidad_neta_usd >= 0
-
-                                        ? `
-                                            text-[var(--mint-info)]
-                                          `
-
-                                        : `
-                                            text-[var(--mint-danger)]
-                                          `
-                                    }
-                                  `}
-                                >
-                                  $
-                                  {
-                                    formatoMonto(
-                                      cierre.utilidad_neta_usd
-                                    )
-                                  }
-                                </td>
-
-                                <td
-                                  className="
-                                    px-6
-                                    py-4
-                                    mint-text-secondary
-                                    whitespace-nowrap
-                                  "
-                                >
-                                  {
-                                    formatoFechaCierre(
-                                      cierre.fecha_cierre
-                                    )
-                                  }
-                                </td>
-
-                              </tr>
-
-                            )
-                          )
-                        }
-
-                      </tbody>
-
-                    </table>
+                        )
+                      )
+                    }
 
                   </div>
 
                 )
           }
-
-        </div>
-
-      </section>
-
-
-      {/* REFERENCIA DE PRODUCCIÓN */}
-
-      <section>
-
-        <div
-          className="
-            mint-card
-            p-6
-          "
-        >
-
-          <div
-            className="
-              flex
-              flex-col
-              md:flex-row
-              md:items-center
-              md:justify-between
-              gap-5
-            "
-          >
-
-            <div>
-
-              <p
-                className="
-                  text-[11px]
-                  uppercase
-                  tracking-[0.14em]
-                  font-bold
-                  mint-text-muted
-                "
-              >
-                Producción clínica
-              </p>
-
-              <h3
-                className="
-                  text-xl
-                  font-bold
-                  mint-text-primary
-                  mt-1
-                "
-              >
-                Valor generado
-              </h3>
-
-              <p
-                className="
-                  text-sm
-                  mint-text-secondary
-                  mt-1
-                "
-              >
-                Referencia del valor total registrado
-                en tratamientos durante el período.
-              </p>
-
-            </div>
-
-            <div
-              className="
-                md:text-right
-              "
-            >
-
-              <p
-                className="
-                  text-3xl
-                  font-bold
-                  text-[var(--mint-primary)]
-                "
-              >
-                $
-                {
-                  formatoMonto(
-                    ingresos
-                  )
-                }
-              </p>
-
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.1em]
-                  font-bold
-                  mint-text-muted
-                  mt-1
-                "
-              >
-                MXN
-              </p>
-
-            </div>
-
-          </div>
 
         </div>
 
@@ -2767,16 +2400,15 @@ const tratamientosCancelados =
 }
 
 
-type FilaReporteProps = {
+type FilaEstadoFinancieroProps = {
 
   titulo: string;
+
   subtitulo: string;
 
-  valor: number;
+  valorMXN: number;
 
-  moneda:
-    | "MXN"
-    | "USD";
+  valorUSD: number;
 
   formatoMonto:
     (
@@ -2790,33 +2422,49 @@ type FilaReporteProps = {
 
 };
 
-function FilaReporte({
+function FilaEstadoFinanciero({
 
   titulo,
+
   subtitulo,
 
-  valor,
+  valorMXN,
 
-  moneda,
+  valorUSD,
 
   formatoMonto,
 
   tipo = "normal",
 
-}: FilaReporteProps) {
+}: FilaEstadoFinancieroProps) {
+
+  const claseValor =
+    tipo === "positivo"
+
+      ? "text-[var(--mint-success)]"
+
+      : tipo === "negativo"
+
+        ? "text-[var(--mint-danger)]"
+
+        : "mint-text-primary";
 
   return (
 
     <div
       className="
-        flex
+        grid
+        grid-cols-1
+        md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
         items-center
-        justify-between
-        gap-4
-        py-3.5
+        gap-3
+        px-6
+        py-4
         border-b
         border-[var(--mint-border)]
         last:border-b-0
+        hover:bg-[var(--mint-surface-soft)]
+        transition-colors
       "
     >
 
@@ -2846,8 +2494,8 @@ function FilaReporte({
 
       <div
         className="
-          text-right
-          shrink-0
+          md:text-right
+          md:pr-5
         "
       >
 
@@ -2855,26 +2503,7 @@ function FilaReporte({
           className={`
             text-base
             font-bold
-
-            ${
-              tipo ===
-              "positivo"
-
-                ? `
-                    text-[var(--mint-success)]
-                  `
-
-                : tipo ===
-                  "negativo"
-
-                  ? `
-                      text-[var(--mint-danger)]
-                    `
-
-                  : `
-                      mint-text-primary
-                    `
-            }
+            ${claseValor}
           `}
         >
           {
@@ -2885,13 +2514,14 @@ function FilaReporte({
           $
           {
             formatoMonto(
-              valor
+              valorMXN
             )
           }
         </p>
 
         <p
           className="
+            md:hidden
             text-[9px]
             uppercase
             font-bold
@@ -2899,7 +2529,51 @@ function FilaReporte({
             mt-0.5
           "
         >
-          {moneda}
+          MXN
+        </p>
+
+      </div>
+
+      <div
+        className="
+          md:text-right
+          md:pl-5
+          md:border-l
+          border-[var(--mint-border)]
+        "
+      >
+
+        <p
+          className={`
+            text-base
+            font-bold
+            ${claseValor}
+          `}
+        >
+          {
+            tipo === "negativo"
+              ? "−"
+              : ""
+          }
+          $
+          {
+            formatoMonto(
+              valorUSD
+            )
+          }
+        </p>
+
+        <p
+          className="
+            md:hidden
+            text-[9px]
+            uppercase
+            font-bold
+            mint-text-muted
+            mt-0.5
+          "
+        >
+          USD
         </p>
 
       </div>
@@ -2911,7 +2585,7 @@ function FilaReporte({
 }
 
 
-type TarjetaLiquidezProps = {
+type DatoTesoreriaProps = {
 
   titulo: string;
 
@@ -2921,21 +2595,16 @@ type TarjetaLiquidezProps = {
     | "MXN"
     | "USD";
 
-  descripcion: string;
-
   formatoMonto:
     (
       valor: number
     ) => string;
 
-  tipo:
-    | "success"
-    | "info"
-    | "neutral";
+  ultimo?: boolean;
 
 };
 
-function TarjetaLiquidez({
+function DatoTesoreria({
 
   titulo,
 
@@ -2943,61 +2612,53 @@ function TarjetaLiquidez({
 
   moneda,
 
-  descripcion,
-
   formatoMonto,
 
-  tipo,
+  ultimo = false,
 
-}: TarjetaLiquidezProps) {
+}: DatoTesoreriaProps) {
 
   return (
 
     <div
-      className="
-        mint-card
-        p-5
-      "
+      className={`
+        px-6
+        py-5
+
+        ${
+          !ultimo
+
+            ? `
+                border-b
+                sm:border-b-0
+                sm:border-r
+                border-white/15
+              `
+
+            : ""
+        }
+      `}
     >
 
       <p
         className="
-          text-xs
+          text-[10px]
           uppercase
-          tracking-[0.08em]
+          tracking-[0.1em]
           font-bold
-          mint-text-muted
+          text-white/60
         "
       >
         {titulo}
       </p>
 
       <p
-        className={`
+        className="
           text-2xl
           font-bold
-          mt-3
-
-          ${
-            tipo ===
-            "success"
-
-              ? `
-                  text-[var(--mint-success)]
-                `
-
-              : tipo ===
-                "info"
-
-                ? `
-                    text-[var(--mint-info)]
-                  `
-
-                : `
-                    mint-text-primary
-                  `
-          }
-        `}
+          text-white
+          mt-2
+        "
       >
         $
         {
@@ -3009,25 +2670,15 @@ function TarjetaLiquidez({
 
       <p
         className="
-          text-[10px]
+          text-[9px]
           uppercase
-          tracking-[0.08em]
+          tracking-[0.1em]
           font-bold
-          mint-text-muted
+          text-white/50
           mt-1
         "
       >
         {moneda}
-      </p>
-
-      <p
-        className="
-          text-[11px]
-          mint-text-secondary
-          mt-3
-        "
-      >
-        {descripcion}
       </p>
 
     </div>
@@ -3037,7 +2688,7 @@ function TarjetaLiquidez({
 }
 
 
-type EstadoTratamientoProps = {
+type IndicadorOperacionProps = {
 
   titulo: string;
 
@@ -3051,11 +2702,9 @@ type EstadoTratamientoProps = {
     | "warning"
     | "danger";
 
-  ultimo?: boolean;
-
 };
 
-function EstadoTratamiento({
+function IndicadorOperacion({
 
   titulo,
 
@@ -3065,30 +2714,63 @@ function EstadoTratamiento({
 
   tipo = "normal",
 
-  ultimo = false,
+}: IndicadorOperacionProps) {
 
-}: EstadoTratamientoProps) {
+  const claseValor =
+    tipo === "success"
+
+      ? "text-[var(--mint-success)]"
+
+      : tipo === "warning"
+
+        ? "text-[var(--mint-warning)]"
+
+        : tipo === "danger"
+
+          ? "text-[var(--mint-danger)]"
+
+          : "mint-text-primary";
 
   return (
 
     <div
-      className={`
+      className="
+        relative
+        overflow-hidden
+        rounded-[18px]
+        border
+        border-[var(--mint-border)]
+        bg-[var(--mint-surface)]
         p-5
-
-        ${
-          !ultimo
-
-            ? `
-                border-b
-                md:border-b-0
-                md:border-r
-                border-[var(--mint-border)]
-              `
-
-            : ""
-        }
-      `}
+        shadow-[0_6px_20px_rgba(15,42,65,0.04)]
+      "
     >
+
+      <div
+        className={`
+          absolute
+          left-0
+          top-0
+          bottom-0
+          w-[3px]
+
+          ${
+            tipo === "success"
+
+              ? "bg-[var(--mint-success)]"
+
+              : tipo === "warning"
+
+                ? "bg-[var(--mint-warning)]"
+
+                : tipo === "danger"
+
+                  ? "bg-[var(--mint-danger)]"
+
+                  : "bg-[var(--mint-teal)]"
+          }
+        `}
+      />
 
       <p
         className="
@@ -3105,33 +2787,7 @@ function EstadoTratamiento({
           text-2xl
           font-bold
           mt-2
-
-          ${
-            tipo ===
-            "success"
-
-              ? `
-                  text-[var(--mint-success)]
-                `
-
-              : tipo ===
-                "warning"
-
-                ? `
-                    text-[var(--mint-warning)]
-                  `
-
-                : tipo ===
-                  "danger"
-
-                  ? `
-                      text-[var(--mint-danger)]
-                    `
-
-                  : `
-                      mint-text-primary
-                    `
-          }
+          ${claseValor}
         `}
       >
         {valor}
@@ -3145,6 +2801,87 @@ function EstadoTratamiento({
         "
       >
         {descripcion}
+      </p>
+
+    </div>
+
+  );
+
+}
+
+
+type DatoCierreProps = {
+
+  titulo: string;
+
+  valor: number;
+
+  formatoMonto:
+    (
+      valor: number
+    ) => string;
+
+  tipo:
+    | "success"
+    | "info"
+    | "danger";
+
+};
+
+function DatoCierre({
+
+  titulo,
+
+  valor,
+
+  formatoMonto,
+
+  tipo,
+
+}: DatoCierreProps) {
+
+  const claseValor =
+    tipo === "success"
+
+      ? "text-[var(--mint-success)]"
+
+      : tipo === "info"
+
+        ? "text-[var(--mint-info)]"
+
+        : "text-[var(--mint-danger)]";
+
+  return (
+
+    <div>
+
+      <p
+        className="
+          text-[9px]
+          uppercase
+          tracking-[0.08em]
+          font-bold
+          mint-text-muted
+        "
+      >
+        {titulo}
+      </p>
+
+      <p
+        className={`
+          text-sm
+          font-bold
+          mt-1
+          whitespace-nowrap
+          ${claseValor}
+        `}
+      >
+        $
+        {
+          formatoMonto(
+            valor
+          )
+        }
       </p>
 
     </div>

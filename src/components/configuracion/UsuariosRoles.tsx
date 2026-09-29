@@ -1,9 +1,6 @@
 import {
-
   useEffect,
-
   useState,
-
 } from "react";
 
 import { supabase } from "../../lib/supabase";
@@ -282,7 +279,9 @@ export default function UsuariosRoles() {
       rol === "admin"
     ) {
 
-      return es ? "Administrador" : "Administrator";
+      return es
+        ? "Administrador"
+        : "Administrator";
 
     }
 
@@ -298,7 +297,9 @@ export default function UsuariosRoles() {
       rol === "tablet"
     ) {
 
-      return es ? "Tablet de recepción" : "Reception tablet";
+      return es
+        ? "Tablet de recepción"
+        : "Reception tablet";
 
     }
 
@@ -306,11 +307,15 @@ export default function UsuariosRoles() {
       rol === "registro"
     ) {
 
-      return es ? "Registro QR" : "QR registration";
+      return es
+        ? "Registro QR"
+        : "QR registration";
 
     }
 
-    return es ? "Recepcionista" : "Receptionist";
+    return es
+      ? "Recepcionista"
+      : "Receptionist";
 
   }
 
@@ -389,7 +394,9 @@ export default function UsuariosRoles() {
     if (!nombre) {
 
       setErrorNuevoUsuario(
-        es ? "Ingresa el nombre del usuario." : "Enter the user name."
+        es
+          ? "Ingresa el nombre del usuario."
+          : "Enter the user name."
       );
 
       return;
@@ -399,7 +406,9 @@ export default function UsuariosRoles() {
     if (!email) {
 
       setErrorNuevoUsuario(
-        es ? "Ingresa el correo electrónico." : "Enter the email address."
+        es
+          ? "Ingresa el correo electrónico."
+          : "Enter the email address."
       );
 
       return;
@@ -411,7 +420,9 @@ export default function UsuariosRoles() {
     ) {
 
       setErrorNuevoUsuario(
-        es ? "Ingresa un correo electrónico válido." : "Enter a valid email address."
+        es
+          ? "Ingresa un correo electrónico válido."
+          : "Enter a valid email address."
       );
 
       return;
@@ -425,7 +436,9 @@ export default function UsuariosRoles() {
     ) {
 
       setErrorNuevoUsuario(
-        es ? "Selecciona el doctor que corresponde a esta cuenta." : "Select the doctor associated with this account."
+        es
+          ? "Selecciona el doctor que corresponde a esta cuenta."
+          : "Select the doctor associated with this account."
       );
 
       return;
@@ -453,7 +466,9 @@ export default function UsuariosRoles() {
       ) {
 
         setErrorNuevoUsuario(
-          es ? "Tu sesión no es válida. Inicia sesión nuevamente." : "Your session is not valid. Please sign in again."
+          es
+            ? "Tu sesión no es válida. Inicia sesión nuevamente."
+            : "Your session is not valid. Please sign in again."
         );
 
         return;
@@ -512,7 +527,9 @@ export default function UsuariosRoles() {
         );
 
         let mensaje =
-          es ? "No se pudo crear el usuario." : "The user could not be created.";
+          es
+            ? "No se pudo crear el usuario."
+            : "The user could not be created.";
 
         if (
           data &&
@@ -563,7 +580,9 @@ export default function UsuariosRoles() {
       limpiarFormulario();
 
       setMensajeExito(
-        es ? "Usuario creado correctamente. Se envió una invitación a su correo para establecer su contraseña." : "User created successfully. An invitation was sent by email to set their password."
+        es
+          ? "Usuario creado correctamente. Se envió una invitación a su correo para establecer su contraseña."
+          : "User created successfully. An invitation was sent by email to set their password."
       );
 
     } catch (error) {
@@ -574,7 +593,9 @@ export default function UsuariosRoles() {
       );
 
       setErrorNuevoUsuario(
-        es ? "Ocurrió un error inesperado al crear el usuario." : "An unexpected error occurred while creating the user."
+        es
+          ? "Ocurrió un error inesperado al crear el usuario."
+          : "An unexpected error occurred while creating the user."
       );
 
     } finally {
@@ -591,49 +612,103 @@ export default function UsuariosRoles() {
 
     <>
 
-      <div
+      {/* HEADER PREMIUM */}
+
+      <section
         className="
-          mint-card
+          relative
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[rgba(255,255,255,0.12)]
+          bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_52%,var(--mint-teal)_100%)]
+          shadow-[0_18px_42px_rgba(15,42,65,0.16)]
         "
       >
 
         <div
           className="
-            p-5
-            border-b
-            border-[var(--mint-border)]
+            absolute
+            left-0
+            right-0
+            bottom-0
+            h-[3px]
+            bg-[linear-gradient(90deg,var(--mint-teal-soft)_0%,var(--mint-gold)_100%)]
+          "
+        />
+
+        <div
+          className="
+            absolute
+            -right-20
+            -top-24
+            w-72
+            h-72
+            rounded-full
+            bg-white/[0.05]
+          "
+        />
+
+        <div
+          className="
+            relative
+            px-7
+            py-7
             flex
             items-center
             justify-between
-            gap-4
+            gap-6
+            flex-wrap
           "
         >
 
           <div>
 
-            <h2
+            <p
               className="
-                text-lg
+                text-[10px]
+                uppercase
+                tracking-[0.18em]
                 font-bold
-                mint-text-primary
+                text-[var(--mint-teal-soft)]
+                mb-2
               "
             >
+              {
+                es
+                  ? "Configuración · Acceso al sistema"
+                  : "Settings · System access"
+              }
+            </p>
 
-              {es ? "Usuarios y Roles" : "Users and Roles"}
-
+            <h2
+              className="
+                text-2xl
+                font-bold
+                tracking-tight
+                text-white
+              "
+            >
+              {
+                es
+                  ? "Usuarios y Roles"
+                  : "Users and Roles"
+              }
             </h2>
 
             <p
               className="
                 text-sm
-                mint-text-secondary
-                mt-1
+                text-white/70
+                mt-1.5
+                max-w-2xl
               "
             >
-
-              {es ? "Administra las cuentas y permisos de acceso a MintOS." : "Manage MintOS user accounts and access permissions."}
-
+              {
+                es
+                  ? "Administra las cuentas, roles y permisos de acceso a MintOS."
+                  : "Manage MintOS user accounts, roles and access permissions."
+              }
             </p>
 
           </div>
@@ -656,42 +731,193 @@ export default function UsuariosRoles() {
 
             }}
             className="
-              mint-btn
-              mint-btn-primary
-              px-4
-              py-2
+              inline-flex
+              items-center
+              justify-center
+              gap-2
+              min-h-[42px]
+              px-5
+              rounded-xl
+              bg-white
+              text-[var(--mint-navy)]
               text-sm
+              font-bold
+              border
+              border-white/80
+              shadow-[0_8px_20px_rgba(15,42,65,0.14)]
+              hover:bg-[var(--mint-surface-teal)]
+              transition-colors
             "
           >
+            <span
+              className="
+                text-[var(--mint-teal)]
+                text-lg
+                leading-none
+              "
+            >
+              +
+            </span>
 
-            {es ? "+ Nuevo usuario" : "+ New user"}
-
+            {
+              es
+                ? "Nuevo usuario"
+                : "New user"
+            }
           </button>
 
         </div>
 
-        {
+      </section>
 
-          mensajeExito && (
 
-            <div
+      {/* MENSAJE DE ÉXITO */}
+
+      {
+
+        mensajeExito && (
+
+          <div
+            className="
+              mt-5
+              px-5
+              py-4
+              rounded-2xl
+              border
+              border-[var(--mint-success-border)]
+              bg-[var(--mint-success-bg)]
+              text-sm
+              font-medium
+              text-[var(--mint-success)]
+            "
+          >
+            {mensajeExito}
+          </div>
+
+        )
+
+      }
+
+
+      {/* USUARIOS */}
+
+      <section
+        className="
+          mt-6
+        "
+      >
+
+        <div
+          className="
+            flex
+            items-end
+            justify-between
+            gap-4
+            mb-4
+          "
+        >
+
+          <div>
+
+            <p
               className="
-                mx-5
-                mt-4
-                p-3
-                mint-card-success
-                text-sm
-                font-medium
+                text-[10px]
+                uppercase
+                tracking-[0.14em]
+                font-bold
+                text-[var(--mint-teal)]
+                mb-1
               "
             >
+              {
+                es
+                  ? "Control de acceso"
+                  : "Access control"
+              }
+            </p>
 
-              {mensajeExito}
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+              {
+                es
+                  ? "Cuentas de usuario"
+                  : "User accounts"
+              }
+            </h3>
 
-            </div>
+            <p
+              className="
+                text-sm
+                mint-text-secondary
+                mt-1
+              "
+            >
+              {
+                es
+                  ? "Personas y dispositivos autorizados para ingresar al sistema."
+                  : "People and devices authorized to access the system."
+              }
+            </p>
 
-          )
+          </div>
 
-        }
+          {
+            !loading && (
+
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  px-3.5
+                  py-2
+                  rounded-full
+                  bg-[var(--mint-surface-teal)]
+                  border
+                  border-[var(--mint-border-teal)]
+                "
+              >
+
+                <span
+                  className="
+                    w-2
+                    h-2
+                    rounded-full
+                    bg-[var(--mint-teal)]
+                  "
+                />
+
+                <span
+                  className="
+                    text-xs
+                    font-bold
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  {perfiles.length}{" "}
+                  {
+                    es
+                      ? perfiles.length === 1
+                        ? "cuenta"
+                        : "cuentas"
+                      : perfiles.length === 1
+                        ? "account"
+                        : "accounts"
+                  }
+                </span>
+
+              </div>
+
+            )
+          }
+
+        </div>
+
 
         {
 
@@ -701,141 +927,332 @@ export default function UsuariosRoles() {
 
               <div
                 className="
-                  p-6
-                  text-sm
-                  mint-text-secondary
+                  min-h-[170px]
+                  rounded-[22px]
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-surface)]
+                  flex
+                  items-center
+                  justify-center
+                  shadow-[0_8px_24px_rgba(15,42,65,0.045)]
                 "
               >
 
-                {es ? "Cargando usuarios..." : "Loading users..."}
+                <p
+                  className="
+                    text-sm
+                    mint-text-secondary
+                  "
+                >
+                  {
+                    es
+                      ? "Cargando usuarios..."
+                      : "Loading users..."
+                  }
+                </p>
 
               </div>
 
             )
 
-            : (
+            : perfiles.length === 0
 
-              <div
-                className="
-                  overflow-x-auto
-                "
-              >
+              ? (
 
-                <table
+                <div
                   className="
-                    w-full
-                    text-left
+                    min-h-[180px]
+                    rounded-[22px]
+                    border
+                    border-[var(--mint-border)]
+                    bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
+                    flex
+                    flex-col
+                    items-center
+                    justify-center
+                    px-6
+                    text-center
                   "
                 >
 
-                  <thead
+                  <div
                     className="
-                      bg-[var(--mint-bg-soft)]
-                      mint-text-secondary
+                      w-12
+                      h-12
+                      rounded-2xl
+                      bg-white
+                      border
+                      border-[var(--mint-border-teal)]
+                      flex
+                      items-center
+                      justify-center
+                      text-[var(--mint-teal)]
+                      font-bold
+                      shadow-sm
                     "
                   >
+                    U
+                  </div>
 
-                    <tr>
-
-                      <th className="p-3">
-                        {es ? "Nombre" : "Name"}
-                      </th>
-
-                      <th className="p-3">
-                        {es ? "Rol" : "Role"}
-                      </th>
-
-                      <th className="p-3">
-                        {es ? "Estado" : "Status"}
-                      </th>
-
-                      <th className="p-3">
-                        {es ? "Acciones" : "Actions"}
-                      </th>
-
-                    </tr>
-
-                  </thead>
-
-                  <tbody>
-
+                  <p
+                    className="
+                      mt-3
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
                     {
+                      es
+                        ? "No hay usuarios registrados"
+                        : "No users registered"
+                    }
+                  </p>
 
-                      perfiles.map(
-                        (
-                          perfil
-                        ) => (
+                </div>
 
-                          <tr
-                            key={
-                              perfil.id
-                            }
+              )
+
+              : (
+
+                <div
+                  className="
+                    grid
+                    grid-cols-1
+                    xl:grid-cols-2
+                    gap-4
+                  "
+                >
+
+                  {
+
+                    perfiles.map(
+                      (
+                        perfil
+                      ) => (
+
+                        <article
+                          key={
+                            perfil.id
+                          }
+                          className="
+                            group
+                            relative
+                            overflow-hidden
+                            rounded-[20px]
+                            border
+                            border-[var(--mint-border)]
+                            bg-[var(--mint-surface)]
+                            shadow-[0_8px_24px_rgba(15,42,65,0.045)]
+                            hover:border-[var(--mint-border-teal)]
+                            hover:shadow-[0_12px_30px_rgba(15,42,65,0.075)]
+                            transition-all
+                          "
+                        >
+
+                          <div
                             className="
-                              border-t
-                              border-[var(--mint-border)]
-                              hover:bg-[var(--mint-bg-soft)]
-                              transition-colors
+                              absolute
+                              left-0
+                              top-0
+                              bottom-0
+                              w-[3px]
+                              bg-[linear-gradient(180deg,var(--mint-teal)_0%,var(--mint-teal-soft)_72%,var(--mint-gold)_100%)]
+                              opacity-70
+                              group-hover:opacity-100
+                              transition-opacity
+                            "
+                          />
+
+                          <div
+                            className="
+                              p-5
                             "
                           >
 
-                            <td
+                            <div
                               className="
-                                p-3
-                                font-semibold
-                                mint-text-primary
+                                flex
+                                items-start
+                                justify-between
+                                gap-4
                               "
                             >
 
-                              {
-                                perfil.nombre
-                              }
+                              <div
+                                className="
+                                  flex
+                                  items-center
+                                  gap-3.5
+                                  min-w-0
+                                "
+                              >
 
-                            </td>
+                                <div
+                                  className="
+                                    w-12
+                                    h-12
+                                    shrink-0
+                                    rounded-2xl
+                                    bg-[var(--mint-surface-teal)]
+                                    border
+                                    border-[var(--mint-border-teal)]
+                                    text-[var(--mint-teal)]
+                                    flex
+                                    items-center
+                                    justify-center
+                                    text-base
+                                    font-bold
+                                  "
+                                >
+                                  {
+                                    perfil.nombre
+                                      ?.trim()
+                                      .charAt(0)
+                                      .toUpperCase() ||
+                                    "U"
+                                  }
+                                </div>
 
-                            <td
-                              className="
-                                p-3
-                                mint-text-secondary
-                              "
-                            >
+                                <div
+                                  className="
+                                    min-w-0
+                                  "
+                                >
 
-                              {
-                                nombreRol(
-                                  perfil.rol
-                                )
-                              }
+                                  <p
+                                    className="
+                                      text-base
+                                      font-bold
+                                      mint-text-primary
+                                      truncate
+                                    "
+                                  >
+                                    {perfil.nombre}
+                                  </p>
 
-                            </td>
+                                  {
+                                    perfil.usuario && (
 
-                            <td className="p-3">
+                                      <p
+                                        className="
+                                          text-xs
+                                          mint-text-muted
+                                          mt-0.5
+                                          truncate
+                                        "
+                                      >
+                                        {perfil.usuario}
+                                      </p>
+
+                                    )
+                                  }
+
+                                </div>
+
+                              </div>
 
                               <span
                                 className={`
-                                  mint-badge
+                                  inline-flex
+                                  items-center
+                                  gap-1.5
+                                  shrink-0
+                                  px-2.5
+                                  py-1
+                                  rounded-full
+                                  text-[11px]
+                                  font-bold
+                                  border
 
                                   ${
                                     perfil.activo
 
-                                      ? "mint-badge-success"
+                                      ? "bg-[var(--mint-success-bg)] border-[var(--mint-success-border)] text-[var(--mint-success)]"
 
-                                      : "mint-badge-muted"
+                                      : "bg-[var(--mint-surface-soft)] border-[var(--mint-border)] mint-text-muted"
                                   }
                                 `}
                               >
 
+                                <span
+                                  className={`
+                                    w-1.5
+                                    h-1.5
+                                    rounded-full
+
+                                    ${
+                                      perfil.activo
+                                        ? "bg-[var(--mint-success)]"
+                                        : "bg-[var(--mint-text-muted)]"
+                                    }
+                                  `}
+                                />
+
                                 {
                                   perfil.activo
 
-                                    ? es ? "Activo" : "Active"
+                                    ? es
+                                      ? "Activo"
+                                      : "Active"
 
-                                    : es ? "Inactivo" : "Inactive"
+                                    : es
+                                      ? "Inactivo"
+                                      : "Inactive"
                                 }
 
                               </span>
 
-                            </td>
+                            </div>
 
-                            <td className="p-3">
+
+                            <div
+                              className="
+                                mt-5
+                                pt-4
+                                border-t
+                                border-[var(--mint-border-soft)]
+                                flex
+                                items-center
+                                justify-between
+                                gap-4
+                              "
+                            >
+
+                              <div>
+
+                                <p
+                                  className="
+                                    text-[9px]
+                                    uppercase
+                                    tracking-[0.1em]
+                                    font-bold
+                                    mint-text-muted
+                                  "
+                                >
+                                  {
+                                    es
+                                      ? "Rol de acceso"
+                                      : "Access role"
+                                  }
+                                </p>
+
+                                <p
+                                  className="
+                                    text-sm
+                                    font-semibold
+                                    mint-text-primary
+                                    mt-1
+                                  "
+                                >
+                                  {
+                                    nombreRol(
+                                      perfil.rol
+                                    )
+                                  }
+                                </p>
+
+                              </div>
 
                               <button
                                 type="button"
@@ -845,38 +1262,53 @@ export default function UsuariosRoles() {
                                   )
                                 }
                                 className="
-                                  mint-btn
-                                  mint-btn-action-soft
-                                  px-3
+                                  inline-flex
+                                  items-center
+                                  justify-center
+                                  px-4
                                   py-2
+                                  rounded-xl
+                                  border
+                                  border-[var(--mint-border-teal)]
+                                  bg-[var(--mint-surface-teal)]
+                                  text-[var(--mint-teal)]
                                   text-sm
+                                  font-bold
+                                  hover:bg-[var(--mint-teal)]
+                                  hover:text-white
+                                  hover:border-[var(--mint-teal)]
+                                  transition-colors
                                 "
                               >
-                                {es ? "Administrar" : "Manage"}
+                                {
+                                  es
+                                    ? "Administrar"
+                                    : "Manage"
+                                }
                               </button>
 
-                            </td>
+                            </div>
 
-                          </tr>
+                          </div>
 
-                        )
+                        </article>
+
                       )
+                    )
 
-                    }
+                  }
 
-                  </tbody>
+                </div>
 
-                </table>
-
-              </div>
-
-            )
+              )
 
         }
 
-      </div>
+      </section>
 
-            {
+            {/* MODAL NUEVO USUARIO */}
+
+      {
 
         mostrarNuevoUsuario && (
 
@@ -884,41 +1316,166 @@ export default function UsuariosRoles() {
             className="
               fixed
               inset-0
-              bg-black/50
+              z-50
               flex
               items-center
               justify-center
-              z-50
+              bg-[rgba(15,42,65,0.62)]
+              backdrop-blur-[3px]
               p-4
             "
           >
 
             <div
               className="
-                mint-card
                 w-full
                 max-w-lg
-                p-5
+                overflow-hidden
+                rounded-[24px]
+                border
+                border-white/20
+                bg-[var(--mint-surface)]
+                shadow-[0_28px_80px_rgba(15,42,65,0.30)]
               "
             >
 
-              <h3
-                className="
-                  text-xl
-                  font-bold
-                  mint-text-primary
-                  mb-5
-                "
-              >
-
-                {es ? "Nuevo usuario" : "New user"}
-
-              </h3>
+              {/* MODAL HEADER */}
 
               <div
                 className="
-                  grid
-                  gap-4
+                  relative
+                  overflow-hidden
+                  bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+                  px-6
+                  py-5
+                "
+              >
+
+                <div
+                  className="
+                    absolute
+                    left-0
+                    right-0
+                    bottom-0
+                    h-[3px]
+                    bg-[linear-gradient(90deg,var(--mint-teal-soft)_0%,var(--mint-gold)_100%)]
+                  "
+                />
+
+                <div
+                  className="
+                    absolute
+                    -right-10
+                    -top-16
+                    w-40
+                    h-40
+                    rounded-full
+                    bg-white/[0.05]
+                  "
+                />
+
+                <div
+                  className="
+                    relative
+                    flex
+                    items-start
+                    justify-between
+                    gap-4
+                  "
+                >
+
+                  <div>
+
+                    <p
+                      className="
+                        text-[10px]
+                        uppercase
+                        tracking-[0.16em]
+                        font-bold
+                        text-[var(--mint-teal-soft)]
+                        mb-1
+                      "
+                    >
+                      {
+                        es
+                          ? "Acceso a MintOS"
+                          : "MintOS access"
+                      }
+                    </p>
+
+                    <h3
+                      className="
+                        text-xl
+                        font-bold
+                        text-white
+                      "
+                    >
+                      {
+                        es
+                          ? "Nuevo usuario"
+                          : "New user"
+                      }
+                    </h3>
+
+                    <p
+                      className="
+                        text-sm
+                        text-white/65
+                        mt-1
+                      "
+                    >
+                      {
+                        es
+                          ? "Crea una cuenta y define su nivel de acceso."
+                          : "Create an account and define its access level."
+                      }
+                    </p>
+
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={
+                      cerrarModal
+                    }
+                    disabled={
+                      creandoUsuario
+                    }
+                    className="
+                      w-9
+                      h-9
+                      shrink-0
+                      rounded-xl
+                      border
+                      border-white/20
+                      bg-white/10
+                      text-white
+                      text-xl
+                      leading-none
+                      hover:bg-white/20
+                      transition-colors
+                      disabled:opacity-50
+                    "
+                    aria-label={
+                      es
+                        ? "Cerrar"
+                        : "Close"
+                    }
+                  >
+                    ×
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              {/* MODAL BODY */}
+
+              <div
+                className="
+                  px-6
+                  py-6
                 "
               >
 
@@ -928,225 +1485,424 @@ export default function UsuariosRoles() {
 
                     <div
                       className="
-                        p-3
-                        mint-card-danger
+                        mb-5
+                        px-4
+                        py-3
+                        rounded-xl
+                        border
+                        border-[var(--mint-danger-border)]
+                        bg-[var(--mint-danger-bg)]
+                        text-[var(--mint-danger)]
                         text-sm
+                        font-medium
                       "
                     >
-
                       {errorNuevoUsuario}
-
                     </div>
 
                   )
 
                 }
 
-                <input
-                  type="text"
-                  placeholder={es ? "Nombre completo" : "Full name"}
-                  value={
-                    nombreNuevoUsuario
-                  }
-                  disabled={
-                    creandoUsuario
-                  }
-                  onChange={(e) =>
-                    setNombreNuevoUsuario(
-                      e.target.value
-                    )
-                  }
+
+                <div
                   className="
-                    mint-input
-                    w-full
-                    p-3
-                    disabled:opacity-60
-                    disabled:cursor-not-allowed
-                  "
-                />
-
-                <input
-                  type="email"
-                  placeholder={es ? "Correo" : "Email"}
-                  value={
-                    correoNuevoUsuario
-                  }
-                  disabled={
-                    creandoUsuario
-                  }
-                  onChange={(e) =>
-                    setCorreoNuevoUsuario(
-                      e.target.value
-                    )
-                  }
-                  className="
-                    mint-input
-                    w-full
-                    p-3
-                    disabled:opacity-60
-                    disabled:cursor-not-allowed
-                  "
-                />
-
-                <select
-                  value={
-                    rolNuevoUsuario
-                  }
-                  disabled={
-                    creandoUsuario
-                  }
-                  onChange={(e) => {
-
-                    const nuevoRol =
-                      e.target.value as Perfil["rol"];
-
-                    setRolNuevoUsuario(
-                      nuevoRol
-                    );
-
-                    if (
-                      nuevoRol !==
-                        "doctor"
-                    ) {
-
-                      setDoctorIdNuevoUsuario(
-                        ""
-                      );
-
-                    }
-
-                  }}
-                  className="
-                    mint-input
-                    w-full
-                    p-3
-                    disabled:opacity-60
-                    disabled:cursor-not-allowed
+                    space-y-5
                   "
                 >
 
-                  <option value="admin">
-                    {es ? "Administrador" : "Administrator"}
-                  </option>
+                  {/* NOMBRE */}
 
-                  <option value="doctor">
-                    Doctor
-                  </option>
+                  <div>
 
-                  <option value="recepcionista">
-                    {es ? "Recepcionista" : "Receptionist"}
-                  </option>
+                    <label
+                      className="
+                        block
+                        text-xs
+                        font-bold
+                        mint-text-primary
+                        mb-2
+                      "
+                    >
+                      {
+                        es
+                          ? "Nombre completo"
+                          : "Full name"
+                      }
+                    </label>
 
-                  <option value="tablet">
-                    {es ? "Tablet de recepción" : "Reception tablet"}
-                  </option>
+                    <input
+                      type="text"
+                      placeholder={
+                        es
+                          ? "Nombre del usuario"
+                          : "User name"
+                      }
+                      value={
+                        nombreNuevoUsuario
+                      }
+                      disabled={
+                        creandoUsuario
+                      }
+                      onChange={(e) =>
+                        setNombreNuevoUsuario(
+                          e.target.value
+                        )
+                      }
+                      className="
+                        mint-input
+                        w-full
+                        p-3
+                        disabled:opacity-60
+                        disabled:cursor-not-allowed
+                      "
+                    />
 
-                  <option value="registro">
-                    {es ? "Registro QR" : "QR registration"}
-                  </option>
+                  </div>
 
-                </select>
 
-                {
+                  {/* CORREO */}
 
-                  rolNuevoUsuario ===
-                    "doctor"
+                  <div>
 
-                  &&
+                    <label
+                      className="
+                        block
+                        text-xs
+                        font-bold
+                        mint-text-primary
+                        mb-2
+                      "
+                    >
+                      {
+                        es
+                          ? "Correo electrónico"
+                          : "Email address"
+                      }
+                    </label>
 
-                  <select
-                    value={
-                      doctorIdNuevoUsuario
-                    }
-                    disabled={
-                      creandoUsuario
-                    }
-                    onChange={(e) =>
-                      setDoctorIdNuevoUsuario(
-                        e.target.value
-                      )
-                    }
-                    className="
-                      mint-input
-                      w-full
-                      p-3
-                      disabled:opacity-60
-                      disabled:cursor-not-allowed
-                    "
+                    <input
+                      type="email"
+                      placeholder={
+                        es
+                          ? "correo@ejemplo.com"
+                          : "email@example.com"
+                      }
+                      value={
+                        correoNuevoUsuario
+                      }
+                      disabled={
+                        creandoUsuario
+                      }
+                      onChange={(e) =>
+                        setCorreoNuevoUsuario(
+                          e.target.value
+                        )
+                      }
+                      className="
+                        mint-input
+                        w-full
+                        p-3
+                        disabled:opacity-60
+                        disabled:cursor-not-allowed
+                      "
+                    />
+
+                  </div>
+
+
+                  {/* ROL / DOCTOR */}
+
+                  <div
+                    className={`
+                      grid
+                      grid-cols-1
+                      gap-4
+
+                      ${
+                        rolNuevoUsuario ===
+                          "doctor"
+                          ? "sm:grid-cols-2"
+                          : ""
+                      }
+                    `}
                   >
 
-                    <option value="">
-                      {es ? "Vincular doctor" : "Link doctor"}
-                    </option>
+                    <div>
+
+                      <label
+                        className="
+                          block
+                          text-xs
+                          font-bold
+                          mint-text-primary
+                          mb-2
+                        "
+                      >
+                        {
+                          es
+                            ? "Rol de acceso"
+                            : "Access role"
+                        }
+                      </label>
+
+                      <select
+                        value={
+                          rolNuevoUsuario
+                        }
+                        disabled={
+                          creandoUsuario
+                        }
+                        onChange={(e) => {
+
+                          const nuevoRol =
+                            e.target.value as Perfil["rol"];
+
+                          setRolNuevoUsuario(
+                            nuevoRol
+                          );
+
+                          if (
+                            nuevoRol !==
+                              "doctor"
+                          ) {
+
+                            setDoctorIdNuevoUsuario(
+                              ""
+                            );
+
+                          }
+
+                        }}
+                        className="
+                          mint-input
+                          w-full
+                          p-3
+                          disabled:opacity-60
+                          disabled:cursor-not-allowed
+                        "
+                      >
+
+                        <option value="admin">
+                          {
+                            es
+                              ? "Administrador"
+                              : "Administrator"
+                          }
+                        </option>
+
+                        <option value="doctor">
+                          Doctor
+                        </option>
+
+                        <option value="recepcionista">
+                          {
+                            es
+                              ? "Recepcionista"
+                              : "Receptionist"
+                          }
+                        </option>
+
+                        <option value="tablet">
+                          {
+                            es
+                              ? "Tablet de recepción"
+                              : "Reception tablet"
+                          }
+                        </option>
+
+                        <option value="registro">
+                          {
+                            es
+                              ? "Registro QR"
+                              : "QR registration"
+                          }
+                        </option>
+
+                      </select>
+
+                    </div>
+
 
                     {
 
-                      doctores.map(
-                        (
-                          doctor
-                        ) => (
+                      rolNuevoUsuario ===
+                        "doctor"
 
-                          <option
-                            key={
-                              doctor.id
-                            }
-                            value={
-                              doctor.id
-                            }
-                          >
+                      &&
 
+                      <div>
+
+                        <label
+                          className="
+                            block
+                            text-xs
+                            font-bold
+                            mint-text-primary
+                            mb-2
+                          "
+                        >
+                          {
+                            es
+                              ? "Doctor vinculado"
+                              : "Linked doctor"
+                          }
+                        </label>
+
+                        <select
+                          value={
+                            doctorIdNuevoUsuario
+                          }
+                          disabled={
+                            creandoUsuario
+                          }
+                          onChange={(e) =>
+                            setDoctorIdNuevoUsuario(
+                              e.target.value
+                            )
+                          }
+                          className="
+                            mint-input
+                            w-full
+                            p-3
+                            disabled:opacity-60
+                            disabled:cursor-not-allowed
+                          "
+                        >
+
+                          <option value="">
                             {
-                              doctor.nombre
+                              es
+                                ? "Seleccionar doctor"
+                                : "Select doctor"
                             }
-
                           </option>
 
+                          {
+
+                            doctores.map(
+                              (
+                                doctor
+                              ) => (
+
+                                <option
+                                  key={
+                                    doctor.id
+                                  }
+                                  value={
+                                    doctor.id
+                                  }
+                                >
+                                  {
+                                    doctor.nombre
+                                  }
+                                </option>
+
+                              )
+                            )
+
+                          }
+
+                        </select>
+
+                      </div>
+
+                    }
+
+                  </div>
+
+
+                  {/* ESTADO */}
+
+                  <label
+                    className="
+                      flex
+                      items-center
+                      justify-between
+                      gap-5
+                      rounded-2xl
+                      border
+                      border-[var(--mint-border-teal)]
+                      bg-[var(--mint-surface-teal)]
+                      px-4
+                      py-4
+                      cursor-pointer
+                    "
+                  >
+
+                    <div>
+
+                      <p
+                        className="
+                          text-sm
+                          font-bold
+                          mint-text-primary
+                        "
+                      >
+                        {
+                          es
+                            ? "Usuario activo"
+                            : "Active user"
+                        }
+                      </p>
+
+                      <p
+                        className="
+                          text-xs
+                          mint-text-secondary
+                          mt-0.5
+                        "
+                      >
+                        {
+                          es
+                            ? "La cuenta podrá iniciar sesión en MintOS."
+                            : "The account will be able to sign in to MintOS."
+                        }
+                      </p>
+
+                    </div>
+
+                    <input
+                      type="checkbox"
+                      checked={
+                        activoNuevoUsuario
+                      }
+                      disabled={
+                        creandoUsuario
+                      }
+                      onChange={(e) =>
+                        setActivoNuevoUsuario(
+                          e.target.checked
                         )
-                      )
+                      }
+                      className="
+                        w-4
+                        h-4
+                        shrink-0
+                        accent-[var(--mint-teal)]
+                      "
+                    />
 
-                    }
+                  </label>
 
-                  </select>
-
-                }
-
-                <label
-                  className="
-                    flex
-                    items-center
-                    gap-2
-                    text-sm
-                    mint-text-secondary
-                  "
-                >
-
-                  <input
-                    type="checkbox"
-                    checked={
-                      activoNuevoUsuario
-                    }
-                    disabled={
-                      creandoUsuario
-                    }
-                    onChange={(e) =>
-                      setActivoNuevoUsuario(
-                        e.target.checked
-                      )
-                    }
-                  />
-
-                  {es ? "Usuario activo" : "Active user"}
-
-                </label>
+                </div>
 
               </div>
+
+
+              {/* MODAL FOOTER */}
 
               <div
                 className="
                   flex
+                  items-center
                   justify-end
                   gap-3
-                  mt-6
+                  px-6
+                  py-4
+                  border-t
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-surface-soft)]
                 "
               >
 
@@ -1166,9 +1922,11 @@ export default function UsuariosRoles() {
                     disabled:opacity-50
                   "
                 >
-
-                  {es ? "Cancelar" : "Cancel"}
-
+                  {
+                    es
+                      ? "Cancelar"
+                      : "Cancel"
+                  }
                 </button>
 
                 <button
@@ -1182,7 +1940,7 @@ export default function UsuariosRoles() {
                   className="
                     mint-btn
                     mint-btn-primary
-                    px-4
+                    px-5
                     py-2
                     disabled:opacity-50
                     disabled:cursor-not-allowed
@@ -1193,9 +1951,13 @@ export default function UsuariosRoles() {
 
                     creandoUsuario
 
-                      ? es ? "Creando..." : "Creating..."
+                      ? es
+                        ? "Creando..."
+                        : "Creating..."
 
-                      : es ? "Crear usuario" : "Create user"
+                      : es
+                        ? "Crear usuario"
+                        : "Create user"
 
                   }
 
@@ -1210,6 +1972,9 @@ export default function UsuariosRoles() {
         )
 
       }
+
+
+      {/* ADMINISTRAR USUARIO */}
 
       {
 

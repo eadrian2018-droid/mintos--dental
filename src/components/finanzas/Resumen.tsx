@@ -84,6 +84,340 @@ export default function Resumen({
   return (
     <>
 
+      {/* CORTE DE CAJA */}
+
+      <section
+        className="
+          mb-8
+        "
+      >
+
+        <div
+          className="
+            mb-4
+          "
+        >
+
+          <p
+            className="
+              text-[11px]
+              font-bold
+              uppercase
+              tracking-[0.14em]
+              mint-text-muted
+              mb-1
+            "
+          >
+            Liquidez
+          </p>
+
+          <h2
+            className="
+              text-xl
+              font-bold
+              mint-text-primary
+            "
+          >
+            Corte de caja
+          </h2>
+
+        </div>
+
+        <div
+          className="
+            mint-card
+            overflow-hidden
+          "
+        >
+
+          <div
+            className="
+              grid
+              grid-cols-1
+              md:grid-cols-2
+              xl:grid-cols-4
+            "
+          >
+
+            {/* CAJA MXN */}
+
+            <div
+              className="
+                p-5
+                border-b
+                md:border-r
+                xl:border-b-0
+                border-[var(--mint-border)]
+              "
+            >
+
+              <p
+                className="
+                  text-xs
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Caja MXN
+              </p>
+
+              <p
+                className="
+                  text-2xl
+                  font-bold
+                  text-[var(--mint-success)]
+                "
+              >
+                ${formatoMoneda(
+                  cajaMXN
+                )}
+              </p>
+
+              <span
+                className="
+                  inline-flex
+                  mt-3
+                  px-2
+                  py-1
+                  rounded-md
+                  bg-[var(--mint-success-bg)]
+                  text-[var(--mint-success)]
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                "
+              >
+                Efectivo MXN
+              </span>
+
+            </div>
+
+            {/* CAJA USD */}
+
+            <div
+              className="
+                p-5
+                border-b
+                xl:border-b-0
+                xl:border-r
+                border-[var(--mint-border)]
+              "
+            >
+
+              <p
+                className="
+                  text-xs
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Caja USD
+              </p>
+
+              <p
+                className="
+                  text-2xl
+                  font-bold
+                  text-[var(--mint-info)]
+                "
+              >
+                ${formatoMoneda(
+                  cajaUSD
+                )}
+              </p>
+
+              <span
+                className="
+                  inline-flex
+                  mt-3
+                  px-2
+                  py-1
+                  rounded-md
+                  bg-[var(--mint-info-bg)]
+                  text-[var(--mint-info)]
+                  text-[10px]
+                  font-bold
+                  uppercase
+                  tracking-wide
+                "
+              >
+                Efectivo USD
+              </span>
+
+            </div>
+
+            {/* TARJETAS */}
+
+            <div
+              className="
+                p-5
+                border-b
+                md:border-b-0
+                md:border-r
+                border-[var(--mint-border)]
+              "
+            >
+
+              <p
+                className="
+                  text-xs
+                  mint-text-secondary
+                  mb-2
+                "
+              >
+                Tarjetas
+              </p>
+
+              <p
+                className="
+                  text-2xl
+                  font-bold
+                  mint-text-primary
+                "
+              >
+                ${formatoMoneda(
+                  totalTarjeta
+                )}
+              </p>
+
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.08em]
+                  font-bold
+                  mint-text-muted
+                  mt-1
+                "
+              >
+                MXN neto
+              </p>
+
+              <p
+                className="
+                  text-[11px]
+                  mint-text-muted
+                  mt-2
+                "
+              >
+                Depósito después de comisión
+              </p>
+
+            </div>
+
+            {/* TRANSFERENCIAS */}
+
+            <div
+              className="
+                p-5
+              "
+            >
+
+              <p
+                className="
+                  text-xs
+                  mint-text-secondary
+                  mb-3
+                "
+              >
+                Transferencias
+              </p>
+
+              <div
+                className="
+                  flex
+                  items-end
+                  gap-4
+                  flex-wrap
+                "
+              >
+
+                <div>
+
+                  <p
+                    className="
+                      text-2xl
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalTransferencia
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    MXN
+                  </p>
+
+                </div>
+
+                <div
+                  className="
+                    border-l
+                    border-[var(--mint-border)]
+                    pl-4
+                  "
+                >
+
+                  <p
+                    className="
+                      text-lg
+                      font-bold
+                      text-[var(--mint-info)]
+                    "
+                  >
+                    ${formatoMoneda(
+                      totalTransferenciaUSD
+                    )}
+                  </p>
+
+                  <p
+                    className="
+                      text-[10px]
+                      uppercase
+                      tracking-[0.08em]
+                      font-bold
+                      mint-text-muted
+                      mt-1
+                    "
+                  >
+                    USD
+                  </p>
+
+                </div>
+
+              </div>
+
+              <p
+                className="
+                  text-[11px]
+                  mint-text-muted
+                  mt-2
+                "
+              >
+                Transferencias recibidas
+              </p>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+
       {/* INDICADORES PRINCIPALES */}
 
       <section
@@ -1137,339 +1471,6 @@ export default function Resumen({
 
       </section>
 
-
-      {/* CORTE DE CAJA */}
-
-      <section
-        className="
-          mb-8
-        "
-      >
-
-        <div
-          className="
-            mb-4
-          "
-        >
-
-          <p
-            className="
-              text-[11px]
-              font-bold
-              uppercase
-              tracking-[0.14em]
-              mint-text-muted
-              mb-1
-            "
-          >
-            Liquidez
-          </p>
-
-          <h2
-            className="
-              text-xl
-              font-bold
-              mint-text-primary
-            "
-          >
-            Corte de caja
-          </h2>
-
-        </div>
-
-        <div
-          className="
-            mint-card
-            overflow-hidden
-          "
-        >
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              xl:grid-cols-4
-            "
-          >
-
-            {/* CAJA MXN */}
-
-            <div
-              className="
-                p-5
-                border-b
-                md:border-r
-                xl:border-b-0
-                border-[var(--mint-border)]
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                Caja MXN
-              </p>
-
-              <p
-                className="
-                  text-2xl
-                  font-bold
-                  text-[var(--mint-success)]
-                "
-              >
-                ${formatoMoneda(
-                  cajaMXN
-                )}
-              </p>
-
-              <span
-                className="
-                  inline-flex
-                  mt-3
-                  px-2
-                  py-1
-                  rounded-md
-                  bg-[var(--mint-success-bg)]
-                  text-[var(--mint-success)]
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-wide
-                "
-              >
-                Efectivo MXN
-              </span>
-
-            </div>
-
-            {/* CAJA USD */}
-
-            <div
-              className="
-                p-5
-                border-b
-                xl:border-b-0
-                xl:border-r
-                border-[var(--mint-border)]
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                Caja USD
-              </p>
-
-              <p
-                className="
-                  text-2xl
-                  font-bold
-                  text-[var(--mint-info)]
-                "
-              >
-                ${formatoMoneda(
-                  cajaUSD
-                )}
-              </p>
-
-              <span
-                className="
-                  inline-flex
-                  mt-3
-                  px-2
-                  py-1
-                  rounded-md
-                  bg-[var(--mint-info-bg)]
-                  text-[var(--mint-info)]
-                  text-[10px]
-                  font-bold
-                  uppercase
-                  tracking-wide
-                "
-              >
-                Efectivo USD
-              </span>
-
-            </div>
-
-            {/* TARJETAS */}
-
-            <div
-              className="
-                p-5
-                border-b
-                md:border-b-0
-                md:border-r
-                border-[var(--mint-border)]
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                Tarjetas
-              </p>
-
-              <p
-                className="
-                  text-2xl
-                  font-bold
-                  mint-text-primary
-                "
-              >
-                ${formatoMoneda(
-                  totalTarjeta
-                )}
-              </p>
-
-              <p
-                className="
-                  text-[10px]
-                  uppercase
-                  tracking-[0.08em]
-                  font-bold
-                  mint-text-muted
-                  mt-1
-                "
-              >
-                MXN neto
-              </p>
-
-              <p
-                className="
-                  text-[11px]
-                  mint-text-muted
-                  mt-2
-                "
-              >
-                Depósito después de comisión
-              </p>
-
-            </div>
-
-            {/* TRANSFERENCIAS */}
-
-            <div
-              className="
-                p-5
-              "
-            >
-
-              <p
-                className="
-                  text-xs
-                  mint-text-secondary
-                  mb-3
-                "
-              >
-                Transferencias
-              </p>
-
-              <div
-                className="
-                  flex
-                  items-end
-                  gap-4
-                  flex-wrap
-                "
-              >
-
-                <div>
-
-                  <p
-                    className="
-                      text-2xl
-                      font-bold
-                      mint-text-primary
-                    "
-                  >
-                    ${formatoMoneda(
-                      totalTransferencia
-                    )}
-                  </p>
-
-                  <p
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-[0.08em]
-                      font-bold
-                      mint-text-muted
-                      mt-1
-                    "
-                  >
-                    MXN
-                  </p>
-
-                </div>
-
-                <div
-                  className="
-                    border-l
-                    border-[var(--mint-border)]
-                    pl-4
-                  "
-                >
-
-                  <p
-                    className="
-                      text-lg
-                      font-bold
-                      text-[var(--mint-info)]
-                    "
-                  >
-                    ${formatoMoneda(
-                      totalTransferenciaUSD
-                    )}
-                  </p>
-
-                  <p
-                    className="
-                      text-[10px]
-                      uppercase
-                      tracking-[0.08em]
-                      font-bold
-                      mint-text-muted
-                      mt-1
-                    "
-                  >
-                    USD
-                  </p>
-
-                </div>
-
-              </div>
-
-              <p
-                className="
-                  text-[11px]
-                  mint-text-muted
-                  mt-2
-                "
-              >
-                Transferencias recibidas
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
-      </section>
 
             {/* MOVIMIENTOS */}
 

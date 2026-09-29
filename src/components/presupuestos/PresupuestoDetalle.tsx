@@ -1257,13 +1257,20 @@ export default function PresupuestoDetalle({
     <div
       className="
         space-y-6
+        rounded-[28px]
+        bg-[var(--mint-surface-teal)]
+        p-1
       "
     >
 
       <section
         className="
-          mint-card
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+          shadow-[var(--mint-shadow-brand)]
         "
       >
 
@@ -1298,12 +1305,13 @@ export default function PresupuestoDetalle({
                 h-10
                 rounded-xl
                 border
-                border-[var(--mint-border)]
+                border-white/25
+                bg-white/10
                 flex
                 items-center
                 justify-center
-                mint-text-secondary
-                hover:bg-[var(--mint-bg-soft)]
+                text-white
+                hover:bg-white/20
                 transition
                 shrink-0
               "
@@ -1321,7 +1329,7 @@ export default function PresupuestoDetalle({
                   uppercase
                   tracking-[0.14em]
                   font-bold
-                  mint-text-brand
+                  text-white/75
                 "
               >
                 Presupuesto
@@ -1332,7 +1340,7 @@ export default function PresupuestoDetalle({
                   text-2xl
                   font-bold
                   tracking-tight
-                  mint-text-primary
+                  text-white
                   mt-1
                 "
               >
@@ -1343,7 +1351,7 @@ export default function PresupuestoDetalle({
               <p
                 className="
                   text-sm
-                  mint-text-secondary
+                  text-white/75
                   mt-1
                 "
               >
@@ -1379,9 +1387,18 @@ export default function PresupuestoDetalle({
                       enviarPresupuesto
                     }
                     className="
-                      mint-btn
-                      mint-btn-primary
                       inline-flex
+                      rounded-xl
+                      border
+                      border-white/20
+                      bg-white
+                      px-4
+                      py-2.5
+                      font-bold
+                      text-[var(--mint-navy)]
+                      shadow-sm
+                      transition
+                      hover:bg-white/90
                       items-center
                       gap-2
                     "
@@ -1457,8 +1474,12 @@ export default function PresupuestoDetalle({
 
         <section
           className="
-            mint-card
             overflow-hidden
+            rounded-[24px]
+            border
+            border-[var(--mint-border-teal)]
+            bg-[var(--mint-surface)]
+            shadow-[var(--mint-shadow-card)]
           "
         >
 
@@ -1484,7 +1505,7 @@ export default function PresupuestoDetalle({
                   w-10
                   h-10
                   rounded-xl
-                  bg-[var(--mint-primary-soft)]
+                  bg-[var(--mint-teal-pale)]
                   flex
                   items-center
                   justify-center
@@ -1494,7 +1515,7 @@ export default function PresupuestoDetalle({
                 <FileText
                   size={18}
                   className="
-                    text-[var(--mint-primary)]
+                    text-[var(--mint-teal)]
                   "
                 />
 
@@ -1551,7 +1572,7 @@ export default function PresupuestoDetalle({
 
                     <thead
                       className="
-                        bg-[var(--mint-bg-soft)]
+                        bg-[var(--mint-surface-teal)]
                       "
                     >
 
@@ -1782,8 +1803,12 @@ export default function PresupuestoDetalle({
 
           <section
             className="
-              mint-card
+              rounded-[22px]
+              border
+              border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
               p-5
+              shadow-[var(--mint-shadow-card)]
             "
           >
 
@@ -1980,7 +2005,7 @@ export default function PresupuestoDetalle({
                   className="
                     text-2xl
                     font-bold
-                    text-[var(--mint-primary)]
+                    text-[var(--mint-teal)]
                     mt-1
                   "
                 >
@@ -2000,8 +2025,12 @@ export default function PresupuestoDetalle({
 
           <section
             className="
-              mint-card
+              rounded-[22px]
+              border
+              border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
               p-5
+              shadow-[var(--mint-shadow-card)]
             "
           >
 

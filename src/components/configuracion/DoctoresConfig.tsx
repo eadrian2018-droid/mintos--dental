@@ -124,6 +124,11 @@ export default function DoctoresConfig() {
   ] = useState(true);
 
   const [
+    seccionActiva,
+    setSeccionActiva,
+  ] = useState<"doctores" | "especialistas">("doctores");
+
+  const [
     guardando,
     setGuardando,
   ] = useState(false);
@@ -1159,20 +1164,33 @@ async function guardarPrecioEspecialista() {
 
     <div
       className="
-        mint-card
         overflow-hidden
+        rounded-[24px]
+        border
+        border-[var(--mint-border)]
+        bg-white
+        shadow-[0_14px_38px_rgba(15,42,65,0.08)]
       "
     >
 
       <div
         className="
+          relative
           flex
           items-center
           justify-between
-          gap-4
-          p-5
+          gap-5
+          overflow-hidden
+          px-6
+          py-6
           border-b
-          border-[var(--mint-border)]
+          border-white/10
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+          after:absolute
+          after:inset-x-0
+          after:bottom-0
+          after:h-[3px]
+          after:bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]
         "
       >
 
@@ -1180,9 +1198,10 @@ async function guardarPrecioEspecialista() {
 
           <h2
             className="
-              text-lg
+              text-xl
               font-bold
-              mint-text-primary
+              tracking-[-0.02em]
+              text-white
             "
           >
 
@@ -1193,7 +1212,7 @@ async function guardarPrecioEspecialista() {
           <p
             className="
               text-sm
-              mint-text-secondary
+              text-white/75
               mt-1
             "
           >
@@ -1215,14 +1234,24 @@ async function guardarPrecioEspecialista() {
             abrirNuevoDoctor
           }
           className="
-            mint-btn
-            mint-btn-primary
+            relative
+            z-10
             inline-flex
             items-center
             gap-2
+            rounded-xl
+            border
+            border-white/25
+            bg-white
             px-4
             py-2.5
             text-sm
+            font-bold
+            text-[var(--mint-navy)]
+            shadow-[0_8px_22px_rgba(15,42,65,0.18)]
+            transition
+            hover:-translate-y-0.5
+            hover:bg-[var(--mint-teal-pale)]
           "
         >
 
@@ -1242,10 +1271,10 @@ async function guardarPrecioEspecialista() {
 
           <div
             className="
-              p-5
-              bg-[var(--mint-bg-soft)]
+              p-6
+              bg-[linear-gradient(180deg,#f7fbfa_0%,#eef8f6_100%)]
               border-b
-              border-[var(--mint-border)]
+              border-[var(--mint-border-teal)]
             "
           >
 
@@ -1712,23 +1741,91 @@ async function guardarPrecioEspecialista() {
 
       }
 
+      {esAdmin && (
+        <div
+          className="
+            px-6
+            py-4
+            border-b
+            border-[var(--mint-border)]
+            bg-white
+          "
+        >
+          <div
+            className="
+              inline-flex
+              items-center
+              gap-1
+              rounded-2xl
+              border
+              border-[var(--mint-border)]
+              bg-[var(--mint-surface-soft)]
+              p-1
+              shadow-[inset_0_1px_2px_rgba(15,42,65,0.04)]
+            "
+          >
+            <button
+              type="button"
+              onClick={() => setSeccionActiva("doctores")}
+              className={`
+                rounded-xl
+                px-5
+                py-2.5
+                text-sm
+                font-bold
+                transition-all
+                ${
+                  seccionActiva === "doctores"
+                    ? "bg-white text-[var(--mint-navy)] shadow-[0_4px_14px_rgba(15,42,65,0.10)]"
+                    : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-navy)]"
+                }
+              `}
+            >
+              {es ? "Doctores" : "Doctors"}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setSeccionActiva("especialistas")}
+              className={`
+                rounded-xl
+                px-5
+                py-2.5
+                text-sm
+                font-bold
+                transition-all
+                ${
+                  seccionActiva === "especialistas"
+                    ? "bg-[var(--mint-navy)] text-white shadow-[0_4px_14px_rgba(15,42,65,0.14)]"
+                    : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-navy)]"
+                }
+              `}
+            >
+              {es ? "Especialistas" : "Specialists"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {seccionActiva === "doctores" && (
+        <>
       <div
         className="
-          px-5
-          py-4
+          px-6
+          py-5
           border-b
-          border-[var(--mint-border)]
-          bg-[var(--mint-bg-soft)]
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(90deg,#eef9f6_0%,#f8fbfa_68%,#ffffff_100%)]
         "
       >
 
         <p
           className="
-            text-xs
-            font-bold
+            text-[11px]
+            font-extrabold
             uppercase
-            tracking-[0.12em]
-            text-[var(--mint-primary)]
+            tracking-[0.16em]
+            text-[var(--mint-teal)]
             mb-1
           "
         >
@@ -1772,8 +1869,10 @@ async function guardarPrecioEspecialista() {
 
           <thead
             className="
-              bg-[var(--mint-bg-soft)]
-              mint-text-secondary
+              bg-[#f3f8f7]
+              text-[var(--mint-text-secondary)]
+              border-b
+              border-[var(--mint-border)]
             "
           >
 
@@ -1907,8 +2006,8 @@ async function guardarPrecioEspecialista() {
       <tr
         className="
           border-t
-          border-[var(--mint-border)]
-          hover:bg-[var(--mint-bg-soft)]
+          border-[var(--mint-border-soft)]
+          hover:bg-[var(--mint-teal-pale)]
           transition-colors
         "
       >
@@ -1918,7 +2017,7 @@ async function guardarPrecioEspecialista() {
             px-5
             py-4
             font-bold
-            mint-text-primary
+            text-[var(--mint-navy)]
           "
         >
 
@@ -1963,8 +2062,8 @@ async function guardarPrecioEspecialista() {
             px-5
             py-4
             text-center
-            font-semibold
-            mint-text-primary
+            font-bold
+            text-[var(--mint-teal)]
           "
         >
 
@@ -2111,8 +2210,13 @@ async function guardarPrecioEspecialista() {
 
       </div>
 
+        </>
+      )}
+
       {
         esAdmin
+
+        && seccionActiva === "especialistas"
 
         &&
 
@@ -2121,27 +2225,28 @@ async function guardarPrecioEspecialista() {
       <div
         className="
           border-t
-          border-[var(--mint-border)]
+          border-[var(--mint-border-teal)]
+          bg-white
         "
       >
 
         <div
           className="
-            px-5
-            py-4
+            px-6
+            py-5
             border-b
-            border-[var(--mint-border)]
-            bg-[var(--mint-bg-soft)]
+            border-[var(--mint-border-teal)]
+            bg-[linear-gradient(90deg,#f7f4ea_0%,#fbfaf5_34%,#ffffff_100%)]
           "
         >
 
           <p
             className="
-              text-xs
-              font-bold
+              text-[11px]
+              font-extrabold
               uppercase
-              tracking-[0.12em]
-              text-[var(--mint-accent)]
+              tracking-[0.16em]
+              text-[#9b7a28]
               mb-1
             "
           >
@@ -2161,7 +2266,7 @@ async function guardarPrecioEspecialista() {
           <p
             className="
               text-sm
-              mint-text-secondary
+              text-[var(--mint-text-secondary)]
               mt-1
             "
           >
@@ -2305,8 +2410,8 @@ async function guardarPrecioEspecialista() {
                         <tr
                           className="
                             border-t
-                            border-[var(--mint-border)]
-                            hover:bg-[var(--mint-bg-soft)]
+                            border-[var(--mint-border-soft)]
+                            hover:bg-[#fbfaf5]
                             transition-colors
                           "
                         >
@@ -2498,15 +2603,19 @@ async function guardarPrecioEspecialista() {
                                 colSpan={5}
                                 className="
                                   p-0
-                                  bg-[var(--mint-bg-soft)]
+                                  bg-[linear-gradient(180deg,#f4faf8_0%,#f8fbfa_100%)]
                                 "
                               >
 
                                 <div
                                   className="
-                                    m-4
-                                    mint-card
+                                    m-5
                                     overflow-hidden
+                                    rounded-[22px]
+                                    border
+                                    border-[var(--mint-border-teal)]
+                                    bg-white
+                                    shadow-[0_12px_32px_rgba(15,42,65,0.07)]
                                   "
                                 >
 
@@ -2519,7 +2628,8 @@ async function guardarPrecioEspecialista() {
                                       px-5
                                       py-4
                                       border-b
-                                      border-[var(--mint-border)]
+                                      border-[var(--mint-border-teal)]
+                                      bg-[linear-gradient(90deg,#eaf8f5_0%,#f7fbfa_70%,#ffffff_100%)]
                                     "
                                   >
 
@@ -2587,8 +2697,8 @@ async function guardarPrecioEspecialista() {
                                         className="
                                           p-5
                                           border-b
-                                          border-[var(--mint-border)]
-                                          bg-[var(--mint-bg-soft)]
+                                          border-[var(--mint-border-teal)]
+                                          bg-[#f8fbfa]
                                         "
                                       >
 

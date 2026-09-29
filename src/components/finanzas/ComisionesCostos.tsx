@@ -58,6 +58,14 @@ export default function ComisionesCostos({
     );
 
   const [
+    seccionActiva,
+    setSeccionActiva,
+  ] = useState<
+    "comisiones" |
+    "especialistas"
+  >("comisiones");
+
+  const [
     mostrarFormulario,
     setMostrarFormulario,
   ] = useState(false);
@@ -467,6 +475,35 @@ export default function ComisionesCostos({
 
       </div>
 
+      <div className="rounded-[22px] border border-[var(--mint-border)] bg-white p-2 shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
+        <div className="grid grid-cols-2 gap-2 rounded-[16px] bg-[var(--mint-surface-teal)] p-1.5">
+          <button
+            type="button"
+            onClick={() => setSeccionActiva("comisiones")}
+            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
+              seccionActiva === "comisiones"
+                ? "bg-white text-[var(--mint-navy)] shadow-[0_5px_16px_rgba(15,42,65,0.10)]"
+                : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-teal)]"
+            }`}
+          >
+            Comisión por doctor
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setSeccionActiva("especialistas")}
+            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
+              seccionActiva === "especialistas"
+                ? "bg-white text-[var(--mint-navy)] shadow-[0_5px_16px_rgba(15,42,65,0.10)]"
+                : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-teal)]"
+            }`}
+          >
+            Costos especialistas
+          </button>
+        </div>
+      </div>
+
+      {seccionActiva === "comisiones" && (
       <div
         className="
           mint-card
@@ -628,6 +665,10 @@ export default function ComisionesCostos({
 
       </div>
 
+
+      )}
+
+      {seccionActiva === "especialistas" && (
       <div
         className="
           mint-card
@@ -955,6 +996,9 @@ export default function ComisionesCostos({
 
       </div>
 
+
+      )}
+
       {
         mostrarFormulario &&
         tratamientoEditando !== null && (
@@ -967,8 +1011,8 @@ export default function ComisionesCostos({
               flex
               items-center
               justify-center
-              bg-slate-950/55
-              backdrop-blur-[2px]
+              bg-[rgba(15,42,65,0.66)]
+              backdrop-blur-[3px]
               p-4
             "
             onMouseDown={(e) => {
@@ -989,15 +1033,13 @@ export default function ComisionesCostos({
               className="
                 w-full
                 max-w-2xl
-                max-h-[90vh]
+                max-h-[92vh]
                 overflow-hidden
-                rounded-2xl
+                rounded-[24px]
                 border
-                border-slate-200
+                border-white/20
                 bg-white
-                shadow-2xl
-                dark:border-slate-700
-                dark:bg-slate-900
+                shadow-[0_30px_90px_rgba(15,42,65,0.34)]
               "
               onMouseDown={(e) =>
                 e.stopPropagation()
@@ -1011,10 +1053,10 @@ export default function ComisionesCostos({
                   justify-between
                   gap-4
                   border-b
-                  border-slate-200
+                  border-white/10
+                  bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
                   px-6
                   py-5
-                  dark:border-slate-700
                 "
               >
 
@@ -1027,8 +1069,7 @@ export default function ComisionesCostos({
                       font-bold
                       uppercase
                       tracking-[0.12em]
-                      text-teal-700
-                      dark:text-teal-400
+                      text-[var(--mint-teal-soft)]
                     "
                   >
                     Tratamiento configurado
@@ -1038,8 +1079,7 @@ export default function ComisionesCostos({
                     className="
                       text-lg
                       font-bold
-                      text-slate-900
-                      dark:text-slate-100
+                      text-white
                     "
                   >
                     Editar costos de especialista
@@ -1064,21 +1104,15 @@ export default function ComisionesCostos({
                     justify-center
                     rounded-xl
                     border
-                    border-slate-200
-                    bg-white
+                    border-white/20
+                    bg-white/10
                     text-lg
                     font-medium
-                    text-slate-500
+                    text-white
                     transition
-                    hover:bg-slate-100
-                    hover:text-slate-900
+                    hover:bg-white/20
                     disabled:cursor-not-allowed
                     disabled:opacity-50
-                    dark:border-slate-700
-                    dark:bg-slate-800
-                    dark:text-slate-300
-                    dark:hover:bg-slate-700
-                    dark:hover:text-white
                   "
                   aria-label="Cerrar"
                 >
@@ -1089,8 +1123,9 @@ export default function ComisionesCostos({
 
               <div
                 className="
-                  max-h-[calc(90vh-145px)]
+                  max-h-[calc(92vh-145px)]
                   overflow-y-auto
+                  bg-[var(--mint-app-bg)]
                   px-6
                   py-5
                 "
@@ -1556,12 +1591,10 @@ export default function ComisionesCostos({
                   justify-end
                   gap-3
                   border-t
-                  border-slate-200
-                  bg-slate-50
+                  border-[var(--mint-border)]
+                  bg-white
                   px-6
                   py-4
-                  dark:border-slate-700
-                  dark:bg-slate-800/70
                 "
               >
 

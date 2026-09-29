@@ -441,8 +441,12 @@ export default function Finanzas() {
             <div
               className="
                 mb-8
-                mint-card
+                rounded-[24px]
                 overflow-hidden
+                border
+                border-[var(--mint-border-teal)]
+                shadow-[var(--mint-shadow-md)]
+                bg-[var(--mint-surface)]
               "
             >
 
@@ -451,7 +455,8 @@ export default function Finanzas() {
                   px-6
                   py-6
                   border-b
-                  border-[var(--mint-border)]
+                  border-white/15
+                  bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
                   flex
                   flex-col
                   xl:flex-row
@@ -477,8 +482,8 @@ export default function Finanzas() {
                         inline-flex
                         items-center
                         rounded-full
-                        bg-[var(--mint-primary-soft)]
-                        text-[var(--mint-primary)]
+                        bg-white/12
+                        text-white
                         px-3
                         py-1
                         text-[11px]
@@ -499,7 +504,7 @@ export default function Finanzas() {
                       text-3xl
                       font-bold
                       tracking-tight
-                      mint-text-primary
+                      text-white
                     "
                   >
 
@@ -516,7 +521,7 @@ export default function Finanzas() {
                     className="
                       mt-2
                       text-sm
-                      mint-text-secondary
+                      text-white/75
                     "
                   >
 
@@ -539,8 +544,9 @@ export default function Finanzas() {
                     xl:self-center
                     rounded-xl
                     border
-                    border-[var(--mint-border)]
-                    bg-[var(--mint-bg-soft)]
+                    border-white/20
+                    bg-white/10
+                    backdrop-blur-sm
                     p-1
                     shadow-sm
                   "
@@ -566,16 +572,17 @@ export default function Finanzas() {
                         "semana"
 
                           ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-primary)]
+                              bg-white
+                              text-[var(--mint-navy)]
                               shadow-sm
                               ring-1
-                              ring-[var(--mint-border)]
+                              ring-white/40
                             `
 
                           : `
-                              mint-text-secondary
-                              hover:text-[var(--mint-text-primary)]
+                              text-white/75
+                              hover:text-white
+                              hover:bg-white/10
                             `
                       }
                     `}
@@ -605,16 +612,17 @@ export default function Finanzas() {
                         "mes"
 
                           ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-primary)]
+                              bg-white
+                              text-[var(--mint-navy)]
                               shadow-sm
                               ring-1
-                              ring-[var(--mint-border)]
+                              ring-white/40
                             `
 
                           : `
-                              mint-text-secondary
-                              hover:text-[var(--mint-text-primary)]
+                              text-white/75
+                              hover:text-white
+                              hover:bg-white/10
                             `
                       }
                     `}
@@ -644,16 +652,17 @@ export default function Finanzas() {
                         "anio"
 
                           ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-primary)]
+                              bg-white
+                              text-[var(--mint-navy)]
                               shadow-sm
                               ring-1
-                              ring-[var(--mint-border)]
+                              ring-white/40
                             `
 
                           : `
-                              mint-text-secondary
-                              hover:text-[var(--mint-text-primary)]
+                              text-white/75
+                              hover:text-white
+                              hover:bg-white/10
                             `
                       }
                     `}
@@ -683,16 +692,17 @@ export default function Finanzas() {
                         "historico"
 
                           ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-primary)]
+                              bg-white
+                              text-[var(--mint-navy)]
                               shadow-sm
                               ring-1
-                              ring-[var(--mint-border)]
+                              ring-white/40
                             `
 
                           : `
-                              mint-text-secondary
-                              hover:text-[var(--mint-text-primary)]
+                              text-white/75
+                              hover:text-white
+                              hover:bg-white/10
                             `
                       }
                     `}
@@ -710,7 +720,7 @@ export default function Finanzas() {
                 className="
                   px-6
                   py-4
-                  bg-[var(--mint-bg-soft)]
+                  bg-[var(--mint-surface-teal)]
                   flex
                   items-center
                   justify-between
@@ -837,15 +847,42 @@ export default function Finanzas() {
             <div
               className="
                 mb-8
+                rounded-[24px]
+                overflow-hidden
+                border
+                border-[var(--mint-border-teal)]
+                shadow-[var(--mint-shadow-md)]
+                bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+                px-6
+                py-6
               "
             >
+
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  rounded-full
+                  bg-white/12
+                  text-white
+                  px-3
+                  py-1
+                  text-[11px]
+                  font-bold
+                  uppercase
+                  tracking-[0.12em]
+                  mb-3
+                "
+              >
+                Finanzas
+              </div>
 
               <h1
                 className="
                   text-3xl
                   font-bold
                   tracking-tight
-                  mint-text-primary
+                  text-white
                 "
               >
 

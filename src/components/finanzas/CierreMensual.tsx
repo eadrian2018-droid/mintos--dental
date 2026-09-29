@@ -578,21 +578,39 @@ export default function CierreMensual({
 
     <div
       className="
-        space-y-6
+        space-y-7
       "
     >
 
       {/* ENCABEZADO */}
 
-      <div
+      <section
         className="
-          mint-card
-          p-6
+          relative
+          overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
+          shadow-[0_12px_32px_rgba(15,42,65,0.06)]
         "
       >
 
         <div
           className="
+            absolute
+            left-0
+            top-0
+            bottom-0
+            w-1
+            bg-[linear-gradient(180deg,var(--mint-teal)_0%,var(--mint-teal-soft)_58%,var(--mint-gold)_100%)]
+          "
+        />
+
+        <div
+          className="
+            px-7
+            py-6
             flex
             items-start
             justify-between
@@ -601,87 +619,89 @@ export default function CierreMensual({
           "
         >
 
-          <div>
+          <div
+            className="
+              flex
+              items-start
+              gap-4
+            "
+          >
 
             <div
               className="
+                w-11
+                h-11
+                shrink-0
+                rounded-2xl
+                bg-[var(--mint-surface-teal)]
+                text-[var(--mint-teal)]
+                border
+                border-[var(--mint-border-teal)]
                 flex
                 items-center
-                gap-3
-                mb-2
+                justify-center
+                shadow-sm
               "
             >
 
-              <div
-                className="
-                  w-10
-                  h-10
-                  rounded-xl
-                  bg-[var(--mint-primary-soft)]
-                  text-[var(--mint-primary)]
-                  flex
-                  items-center
-                  justify-center
-                "
-              >
-
-                <CalendarCheck
-                  size={
-                    20
-                  }
-                />
-
-              </div>
-
-              <div>
-
-                <p
-                  className="
-                    text-xs
-                    font-semibold
-                    uppercase
-                    tracking-[0.16em]
-                    text-[var(--mint-primary)]
-                  "
-                >
-                  Cierre financiero
-                </p>
-
-                <h2
-                  className="
-                    text-xl
-                    font-bold
-                    mint-text-primary
-                  "
-                >
-                  {
-                    MESES[
-                      mesActual -
-                        1
-                    ]
-                  }{" "}
-                  {
-                    anioActual
-                  }
-                </h2>
-
-              </div>
+              <CalendarCheck
+                size={
+                  21
+                }
+              />
 
             </div>
 
-            <p
-              className="
-                text-sm
-                mint-text-secondary
-                max-w-2xl
-              "
-            >
-              Guarda una fotografía
-              definitiva del resultado
-              financiero del mes sin
-              modificar los movimientos
-              originales.
-            </p>
+            <div>
+
+              <p
+                className="
+                  text-[11px]
+                  font-bold
+                  uppercase
+                  tracking-[0.16em]
+                  text-[var(--mint-teal)]
+                "
+              >
+                Cierre financiero
+              </p>
+
+              <h2
+                className="
+                  text-2xl
+                  font-bold
+                  tracking-tight
+                  mint-text-primary
+                  mt-1
+                "
+              >
+                {
+                  MESES[
+                    mesActual -
+                      1
+                  ]
+                }{" "}
+                {
+                  anioActual
+                }
+              </h2>
+
+              <p
+                className="
+                  text-sm
+                  mint-text-secondary
+                  max-w-2xl
+                  mt-1
+                "
+              >
+                Guarda una fotografía
+                definitiva del resultado
+                financiero del mes sin
+                modificar los movimientos
+                originales.
+              </p>
+
+            </div>
 
           </div>
 
@@ -697,13 +717,13 @@ export default function CierreMensual({
                     gap-2
                     px-4
                     py-2
-                    rounded-xl
+                    rounded-full
                     bg-[var(--mint-success-bg)]
                     border
                     border-[var(--mint-success-border)]
                     text-[var(--mint-success)]
                     text-sm
-                    font-semibold
+                    font-bold
                   "
                 >
 
@@ -728,13 +748,14 @@ export default function CierreMensual({
                     gap-2
                     px-4
                     py-2
-                    rounded-xl
-                    mint-bg-soft
+                    rounded-full
+                    bg-white
                     border
-                    mint-border
+                    border-[var(--mint-border-teal)]
                     mint-text-secondary
                     text-sm
                     font-semibold
+                    shadow-sm
                   "
                 >
 
@@ -753,40 +774,47 @@ export default function CierreMensual({
 
         </div>
 
-      </div>
+      </section>
 
-      {/* RESUMEN */}
 
-      <div
-        className="
-          mint-card
-          overflow-hidden
-        "
-      >
+      {/* RESULTADO PRINCIPAL */}
+
+      <section>
 
         <div
           className="
-            px-6
-            py-5
-            border-b
-            border-[var(--mint-border)]
             flex
-            items-center
+            items-end
             justify-between
             gap-4
+            mb-4
             flex-wrap
           "
         >
 
           <div>
 
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.14em]
+                font-bold
+                mint-text-muted
+                mb-1
+              "
+            >
+              Resumen para cierre
+            </p>
+
             <h3
               className="
+                text-xl
                 font-bold
                 mint-text-primary
               "
             >
-              Resumen para cierre
+              Fotografía financiera
             </h3>
 
             <p
@@ -805,17 +833,18 @@ export default function CierreMensual({
 
           </div>
 
-          <div
+          <span
             className="
+              inline-flex
               px-3
               py-1.5
-              rounded-lg
-              bg-[var(--mint-bg-soft)]
+              rounded-full
+              bg-[var(--mint-surface-teal)]
               border
-              border-[var(--mint-border)]
+              border-[var(--mint-border-teal)]
               text-xs
-              font-semibold
-              mint-text-secondary
+              font-bold
+              text-[var(--mint-teal)]
             "
           >
             {
@@ -823,284 +852,451 @@ export default function CierreMensual({
                 ? "Cierre guardado"
                 : "Datos actuales"
             }
-          </div>
+          </span>
 
         </div>
 
         <div
           className="
-            p-6
-            space-y-6
+            grid
+            grid-cols-1
+            xl:grid-cols-[1.2fr_0.8fr]
+            gap-5
           "
         >
 
+          {/* ESTADO DE RESULTADOS */}
+
           <div
             className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              xl:grid-cols-4
-              gap-4
+              overflow-hidden
+              rounded-[22px]
+              border
+              border-[var(--mint-border)]
+              bg-[var(--mint-surface)]
+              shadow-[0_10px_30px_rgba(15,42,65,0.055)]
             "
           >
 
             <div
               className="
-                rounded-2xl
-                border
-                border-[var(--mint-border)]
-                bg-[var(--mint-bg-soft)]
-                p-5
+                grid
+                grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+                items-center
+                px-6
+                py-4
+                bg-[var(--mint-surface-teal)]
+                border-b
+                border-[var(--mint-border-teal)]
               "
             >
-              <p className="text-xs uppercase tracking-wide mint-text-muted font-semibold">
-                Cobrado MXN
-              </p>
-              <p className="mt-2 text-xl font-bold text-[var(--mint-success)]">
-                {
-                  formatoDinero(
-                    resumenCierre.cobradoMXN,
-                    "MXN"
-                  )
-                }
-              </p>
+
+              <div>
+
+                <p
+                  className="
+                    text-[10px]
+                    uppercase
+                    tracking-[0.12em]
+                    font-bold
+                    mint-text-muted
+                  "
+                >
+                  Estado de resultados
+                </p>
+
+              </div>
+
+              <div
+                className="
+                  text-right
+                  pr-5
+                "
+              >
+
+                <span
+                  className="
+                    inline-flex
+                    px-3
+                    py-1
+                    rounded-full
+                    text-[10px]
+                    font-bold
+                    bg-white
+                    text-[var(--mint-teal)]
+                    border
+                    border-[var(--mint-border-teal)]
+                  "
+                >
+                  MXN
+                </span>
+
+              </div>
+
+              <div
+                className="
+                  text-right
+                  pl-5
+                  border-l
+                  border-[var(--mint-border-teal)]
+                "
+              >
+
+                <span
+                  className="
+                    inline-flex
+                    px-3
+                    py-1
+                    rounded-full
+                    text-[10px]
+                    font-bold
+                    bg-white
+                    text-[var(--mint-info)]
+                    border
+                    border-[var(--mint-info-border)]
+                  "
+                >
+                  USD
+                </span>
+
+              </div>
+
             </div>
+
+            <FilaCierre
+              titulo="Cobrado"
+              valorMXN={
+                resumenCierre.cobradoMXN
+              }
+              valorUSD={
+                resumenCierre.cobradoUSD
+              }
+              formatoDinero={
+                formatoDinero
+              }
+              tipo="success"
+            />
+
+            <FilaCierre
+              titulo="Base clínica"
+              valorMXN={
+                resumenCierre.baseClinicaMXN
+              }
+              valorUSD={
+                resumenCierre.baseClinicaUSD
+              }
+              formatoDinero={
+                formatoDinero
+              }
+            />
+
+            <FilaCierre
+              titulo="Comisiones"
+              valorMXN={
+                resumenCierre.comisionesMXN
+              }
+              valorUSD={
+                resumenCierre.comisionesUSD
+              }
+              formatoDinero={
+                formatoDinero
+              }
+            />
+
+            <FilaCierre
+              titulo="Gastos"
+              valorMXN={
+                resumenCierre.gastosMXN
+              }
+              valorUSD={
+                resumenCierre.gastosUSD
+              }
+              formatoDinero={
+                formatoDinero
+              }
+              tipo="danger"
+            />
 
             <div
               className="
-                rounded-2xl
-                border
-                border-[var(--mint-border)]
-                bg-[var(--mint-bg-soft)]
-                p-5
+                grid
+                grid-cols-1
+                md:grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+                items-center
+                gap-3
+                px-6
+                py-5
+                bg-[linear-gradient(90deg,var(--mint-surface-teal)_0%,var(--mint-surface)_100%)]
+                border-t
+                border-[var(--mint-border-teal)]
               "
             >
-              <p className="text-xs uppercase tracking-wide mint-text-muted font-semibold">
-                Cobrado USD
-              </p>
-              <p className="mt-2 text-xl font-bold text-[var(--mint-info)]">
-                {
-                  formatoDinero(
-                    resumenCierre.cobradoUSD,
-                    "USD"
-                  )
-                }
-              </p>
-            </div>
 
-            <div
-              className="
-                rounded-2xl
-                border
-                border-[var(--mint-primary)]
-                bg-[var(--mint-primary-soft)]
-                p-5
-              "
-            >
-              <p className="text-xs uppercase tracking-wide text-[var(--mint-primary)] font-semibold">
-                Utilidad MXN
-              </p>
-              <p className="mt-2 text-xl font-bold text-[var(--mint-primary)]">
-                {
-                  formatoDinero(
-                    resumenCierre.utilidadMXN,
-                    "MXN"
-                  )
-                }
-              </p>
-            </div>
+              <div>
 
-            <div
-              className="
-                rounded-2xl
-                border
-                border-[var(--mint-border)]
-                bg-[var(--mint-bg-soft)]
-                p-5
-              "
-            >
-              <p className="text-xs uppercase tracking-wide mint-text-muted font-semibold">
-                Utilidad USD
-              </p>
-              <p className="mt-2 text-xl font-bold text-[var(--mint-info)]">
-                {
-                  formatoDinero(
-                    resumenCierre.utilidadUSD,
-                    "USD"
-                  )
-                }
-              </p>
+                <p
+                  className="
+                    text-base
+                    font-bold
+                    mint-text-primary
+                  "
+                >
+                  Utilidad neta
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-muted
+                    mt-1
+                  "
+                >
+                  Resultado final del mes
+                </p>
+
+              </div>
+
+              <div
+                className="
+                  md:text-right
+                  md:pr-5
+                "
+              >
+
+                <p
+                  className="
+                    text-xl
+                    font-bold
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  {
+                    formatoDinero(
+                      resumenCierre.utilidadMXN,
+                      "MXN"
+                    )
+                  }
+                </p>
+
+              </div>
+
+              <div
+                className="
+                  md:text-right
+                  md:pl-5
+                  md:border-l
+                  border-[var(--mint-border-teal)]
+                "
+              >
+
+                <p
+                  className="
+                    text-xl
+                    font-bold
+                    text-[var(--mint-info)]
+                  "
+                >
+                  {
+                    formatoDinero(
+                      resumenCierre.utilidadUSD,
+                      "USD"
+                    )
+                  }
+                </p>
+
+              </div>
+
             </div>
 
           </div>
 
+
+          {/* POSICIÓN AL CIERRE */}
+
           <div
             className="
-              grid
-              grid-cols-1
-              xl:grid-cols-2
-              gap-4
+              relative
+              overflow-hidden
+              rounded-[22px]
+              border
+              border-[var(--mint-border-teal)]
+              bg-[linear-gradient(135deg,var(--mint-navy)_0%,var(--mint-navy-soft)_52%,var(--mint-teal)_100%)]
+              shadow-[0_14px_34px_rgba(15,42,65,0.13)]
             "
           >
 
             <div
               className="
-                rounded-2xl
-                border
-                border-[var(--mint-border)]
-                p-5
+                absolute
+                left-0
+                right-0
+                top-0
+                h-[3px]
+                bg-[linear-gradient(90deg,var(--mint-teal-soft)_0%,var(--mint-gold)_100%)]
+              "
+            />
+
+            <div
+              className="
+                px-6
+                pt-6
+                pb-4
               "
             >
 
-              <div className="mb-4">
-                <p className="text-sm font-bold mint-text-primary">
-                  Distribución financiera
-                </p>
-                <p className="text-xs mint-text-muted mt-1">
-                  Base clínica, comisiones y gastos del período.
-                </p>
-              </div>
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.14em]
+                  font-bold
+                  text-white/60
+                "
+              >
+                Posición al cierre
+              </p>
 
-              <div className="space-y-3">
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Base clínica MXN</span>
-                  <span className="text-sm font-semibold mint-text-primary">
-                    {formatoDinero(resumenCierre.baseClinicaMXN, "MXN")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Base clínica USD</span>
-                  <span className="text-sm font-semibold mint-text-primary">
-                    {formatoDinero(resumenCierre.baseClinicaUSD, "USD")}
-                  </span>
-                </div>
-
-                <div className="h-px bg-[var(--mint-border)]" />
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Comisiones MXN</span>
-                  <span className="text-sm font-semibold mint-text-primary">
-                    {formatoDinero(resumenCierre.comisionesMXN, "MXN")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Comisiones USD</span>
-                  <span className="text-sm font-semibold mint-text-primary">
-                    {formatoDinero(resumenCierre.comisionesUSD, "USD")}
-                  </span>
-                </div>
-
-                <div className="h-px bg-[var(--mint-border)]" />
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Gastos MXN</span>
-                  <span className="text-sm font-semibold text-[var(--mint-danger)]">
-                    {formatoDinero(resumenCierre.gastosMXN, "MXN")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-sm mint-text-secondary">Gastos USD</span>
-                  <span className="text-sm font-semibold text-[var(--mint-danger)]">
-                    {formatoDinero(resumenCierre.gastosUSD, "USD")}
-                  </span>
-                </div>
-
-              </div>
+              <h4
+                className="
+                  text-lg
+                  font-bold
+                  text-white
+                  mt-1
+                "
+              >
+                Disponibilidad y cartera
+              </h4>
 
             </div>
 
             <div
               className="
-                rounded-2xl
-                border
-                border-[var(--mint-border)]
-                p-5
+                grid
+                grid-cols-2
+                border-t
+                border-white/15
               "
             >
 
-              <div className="mb-4">
-                <p className="text-sm font-bold mint-text-primary">
-                  Posición al cierre
+              <DatoPosicion
+                titulo="Caja MXN"
+                valor={
+                  resumenCierre.cajaMXN
+                }
+                moneda="MXN"
+                formatoDinero={
+                  formatoDinero
+                }
+              />
+
+              <DatoPosicion
+                titulo="Caja USD"
+                valor={
+                  resumenCierre.cajaUSD
+                }
+                moneda="USD"
+                formatoDinero={
+                  formatoDinero
+                }
+              />
+
+              <DatoPosicion
+                titulo="Banco"
+                valor={
+                  resumenCierre.bancoMXN
+                }
+                moneda="MXN"
+                formatoDinero={
+                  formatoDinero
+                }
+              />
+
+              <DatoPosicion
+                titulo="Por cobrar"
+                valor={
+                  resumenCierre.pendienteMXN
+                }
+                moneda="MXN"
+                formatoDinero={
+                  formatoDinero
+                }
+                warning
+              />
+
+            </div>
+
+            <div
+              className="
+                px-6
+                py-5
+                border-t
+                border-white/15
+                flex
+                items-center
+                justify-between
+                gap-5
+              "
+            >
+
+              <div>
+
+                <p
+                  className="
+                    text-[9px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    text-white/50
+                  "
+                >
+                  Tratamientos del mes
                 </p>
-                <p className="text-xs mint-text-muted mt-1">
-                  Disponibilidad, cuentas por cobrar y actividad clínica.
+
+                <p
+                  className="
+                    text-xl
+                    font-bold
+                    text-white
+                    mt-1
+                  "
+                >
+                  {
+                    resumenCierre.tratamientosTotal
+                  }
                 </p>
+
               </div>
 
               <div
                 className="
-                  grid
-                  grid-cols-1
-                  sm:grid-cols-2
-                  gap-3
+                  text-right
                 "
               >
 
-                <div className="rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)] p-4">
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">Caja MXN</p>
-                  <p className="mt-1 font-bold mint-text-primary">
-                    {formatoDinero(resumenCierre.cajaMXN, "MXN")}
-                  </p>
-                </div>
+                <p
+                  className="
+                    text-[9px]
+                    uppercase
+                    tracking-[0.1em]
+                    font-bold
+                    text-white/50
+                  "
+                >
+                  Finalizados
+                </p>
 
-                <div className="rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)] p-4">
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">Caja USD</p>
-                  <p className="mt-1 font-bold mint-text-primary">
-                    {formatoDinero(resumenCierre.cajaUSD, "USD")}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)] p-4">
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">Banco MXN</p>
-                  <p className="mt-1 font-bold mint-text-primary">
-                    {formatoDinero(resumenCierre.bancoMXN, "MXN")}
-                  </p>
-                </div>
-
-                <div className="rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)] p-4">
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">Por cobrar MXN</p>
-                  <p className="mt-1 font-bold text-[var(--mint-warning)]">
-                    {formatoDinero(resumenCierre.pendienteMXN, "MXN")}
-                  </p>
-                </div>
-
-              </div>
-
-              <div
-                className="
-                  mt-4
-                  pt-4
-                  border-t
-                  border-[var(--mint-border)]
-                  flex
-                  items-center
-                  justify-between
-                  gap-4
-                  flex-wrap
-                "
-              >
-
-                <div>
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">
-                    Tratamientos del mes
-                  </p>
-                  <p className="mt-1 text-lg font-bold mint-text-primary">
-                    {resumenCierre.tratamientosTotal}
-                  </p>
-                </div>
-
-                <div className="text-right">
-                  <p className="text-[11px] uppercase tracking-wide mint-text-muted font-semibold">
-                    Finalizados
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-[var(--mint-success)]">
-                    {resumenCierre.tratamientosFinalizados}
-                  </p>
-                </div>
+                <p
+                  className="
+                    text-xl
+                    font-bold
+                    text-[var(--mint-teal-soft)]
+                    mt-1
+                  "
+                >
+                  {
+                    resumenCierre.tratamientosFinalizados
+                  }
+                </p>
 
               </div>
 
@@ -1110,52 +1306,94 @@ export default function CierreMensual({
 
         </div>
 
-      </div>
+      </section>
 
-      {/* ACCIÓN */}
+            {/* ACCIÓN DE CIERRE */}
 
       {
         !cierreActual && (
 
-          <div
+          <section
             className="
-              mint-card
-              p-6
+              relative
+              overflow-hidden
+              rounded-[22px]
+              border
+              border-[var(--mint-border-teal)]
+              bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
+              shadow-[0_8px_24px_rgba(15,42,65,0.045)]
             "
           >
 
             <div
               className="
+                px-6
+                py-5
                 flex
                 items-center
                 justify-between
-                gap-5
+                gap-6
                 flex-wrap
               "
             >
 
-              <div>
+              <div
+                className="
+                  flex
+                  items-start
+                  gap-4
+                "
+              >
 
-                <h3
+                <div
                   className="
-                    font-bold
-                    mint-text-primary
+                    w-10
+                    h-10
+                    shrink-0
+                    rounded-xl
+                    bg-white
+                    border
+                    border-[var(--mint-border-teal)]
+                    text-[var(--mint-teal)]
+                    flex
+                    items-center
+                    justify-center
+                    shadow-sm
                   "
                 >
-                  Cerrar período
-                </h3>
 
-                <p
-                  className="
-                    text-sm
-                    mint-text-secondary
-                    mt-1
-                  "
-                >
-                  Revisa los indicadores
-                  antes de guardar el
-                  cierre definitivo.
-                </p>
+                  <LockKeyhole
+                    size={
+                      18
+                    }
+                  />
+
+                </div>
+
+                <div>
+
+                  <h3
+                    className="
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    Cerrar período
+                  </h3>
+
+                  <p
+                    className="
+                      text-sm
+                      mint-text-secondary
+                      mt-1
+                    "
+                  >
+                    Revisa los indicadores
+                    antes de guardar el
+                    cierre definitivo.
+                  </p>
+
+                </div>
 
               </div>
 
@@ -1192,196 +1430,244 @@ export default function CierreMensual({
 
             </div>
 
-          </div>
+          </section>
 
         )
       }
 
+
       {/* HISTORIAL */}
 
-      <div
-        className="
-          mint-card
-          overflow-hidden
-        "
-      >
+      <section>
 
         <div
           className="
-            px-6
-            py-5
-            border-b
-            mint-border
+            flex
+            flex-col
+            md:flex-row
+            md:items-end
+            md:justify-between
+            gap-4
+            mb-4
           "
         >
 
-          <h3
-            className="
-              font-bold
-              mint-text-primary
-            "
-          >
-            Historial de cierres
-          </h3>
+          <div>
 
-          <p
+            <p
+              className="
+                text-[11px]
+                uppercase
+                tracking-[0.14em]
+                font-bold
+                mint-text-muted
+                mb-1
+              "
+            >
+              Archivo financiero
+            </p>
+
+            <h3
+              className="
+                text-xl
+                font-bold
+                mint-text-primary
+              "
+            >
+              Historial de cierres
+            </h3>
+
+            <p
+              className="
+                text-sm
+                mint-text-secondary
+                mt-1
+              "
+            >
+              Fotografías financieras
+              almacenadas por período.
+            </p>
+
+          </div>
+
+          <div
             className="
-              text-sm
-              mint-text-secondary
-              mt-1
+              inline-flex
+              items-center
+              self-start
+              md:self-auto
+              gap-2
+              px-3
+              py-2
+              rounded-full
+              bg-[var(--mint-surface-teal)]
+              border
+              border-[var(--mint-border-teal)]
             "
           >
-            Fotografías financieras
-            almacenadas por período.
-          </p>
+
+            <span
+              className="
+                w-2
+                h-2
+                rounded-full
+                bg-[var(--mint-teal)]
+              "
+            />
+
+            <span
+              className="
+                text-xs
+                font-bold
+                text-[var(--mint-teal)]
+              "
+            >
+              {cierres.length} cierres guardados
+            </span>
+
+          </div>
 
         </div>
 
-        {
-          cargando
+        <div
+          className="
+            overflow-hidden
+            rounded-[22px]
+            border
+            border-[var(--mint-border)]
+            bg-[var(--mint-surface)]
+            shadow-[0_8px_24px_rgba(15,42,65,0.045)]
+          "
+        >
 
-            ? (
-
-              <div
-                className="
-                  p-8
-                  text-center
-                  mint-text-muted
-                "
-              >
-                Cargando cierres...
-              </div>
-
-            )
-
-            : cierres.length ===
-                0
+          {
+            cargando
 
               ? (
 
                 <div
                   className="
-                    p-8
-                    text-center
+                    min-h-[150px]
+                    flex
+                    items-center
+                    justify-center
+                    text-sm
                     mint-text-muted
                   "
                 >
-                  Todavía no hay
-                  cierres registrados.
+                  Cargando cierres...
                 </div>
 
               )
 
-              : (
+              : cierres.length ===
+                  0
 
-                <div
-                  className="
-                    overflow-x-auto
-                  "
-                >
+                ? (
 
-                  <table
+                  <div
                     className="
-                      w-full
-                      text-sm
+                      min-h-[150px]
+                      flex
+                      flex-col
+                      items-center
+                      justify-center
+                      px-6
+                      text-center
+                      bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
                     "
                   >
 
-                    <thead
+                    <div
                       className="
-                        mint-bg-soft
+                        w-10
+                        h-10
+                        rounded-2xl
+                        flex
+                        items-center
+                        justify-center
+                        bg-white
+                        border
+                        border-[var(--mint-border-teal)]
+                        shadow-sm
+                        mb-3
                       "
                     >
 
-                      <tr>
+                      <CalendarCheck
+                        size={
+                          18
+                        }
+                        className="
+                          text-[var(--mint-teal)]
+                        "
+                      />
 
-                        <th
-                          className="
-                            text-left
-                            px-6
-                            py-3
-                          "
-                        >
-                          Período
-                        </th>
+                    </div>
 
-                        <th
-                          className="
-                            text-right
-                            px-6
-                            py-3
-                          "
-                        >
-                          Utilidad MXN
-                        </th>
+                    <p
+                      className="
+                        font-bold
+                        mint-text-primary
+                      "
+                    >
+                      Todavía no hay
+                      cierres registrados.
+                    </p>
 
-                        <th
-                          className="
-                            text-right
-                            px-6
-                            py-3
-                          "
-                        >
-                          Utilidad USD
-                        </th>
+                    <p
+                      className="
+                        text-sm
+                        mint-text-secondary
+                        mt-1
+                      "
+                    >
+                      El historial comenzará
+                      cuando se cierre el
+                      primer período.
+                    </p>
 
-                        <th
-                          className="
-                            text-right
-                            px-6
-                            py-3
-                          "
-                        >
-                          Cobrado MXN
-                        </th>
+                  </div>
 
-                        <th
-                          className="
-                            text-right
-                            px-6
-                            py-3
-                          "
-                        >
-                          Cobrado USD
-                        </th>
+                )
 
-                        <th
-                          className="
-                            text-left
-                            px-6
-                            py-3
-                          "
-                        >
-                          Fecha cierre
-                        </th>
+                : (
 
-                      </tr>
+                  <div
+                    className="
+                      divide-y
+                      divide-[var(--mint-border)]
+                    "
+                  >
 
-                    </thead>
+                    {
+                      cierres.map(
+                        (
+                          cierre
+                        ) => (
 
-                    <tbody>
+                          <div
+                            key={
+                              cierre.id
+                            }
+                            className="
+                              grid
+                              grid-cols-1
+                              lg:grid-cols-[1.15fr_repeat(4,minmax(135px,0.8fr))_1fr]
+                              items-center
+                              gap-4
+                              px-6
+                              py-4
+                              hover:bg-[var(--mint-surface-soft)]
+                              transition-colors
+                            "
+                          >
 
-                      {
-                        cierres.map(
-                          (
-                            cierre
-                          ) => (
+                            <div>
 
-                            <tr
-                              key={
-                                cierre.id
-                              }
-                              className="
-                                border-t
-                                mint-border
-                              "
-                            >
-
-                              <td
+                              <p
                                 className="
-                                  px-6
-                                  py-4
-                                  font-semibold
+                                  font-bold
                                   mint-text-primary
                                 "
                               >
@@ -1394,75 +1680,103 @@ export default function CierreMensual({
                                 {
                                   cierre.anio
                                 }
-                              </td>
+                              </p>
 
-                              <td
+                              <p
                                 className="
-                                  px-6
-                                  py-4
-                                  text-right
-                                  font-semibold
+                                  text-[9px]
+                                  uppercase
+                                  tracking-[0.1em]
+                                  font-bold
+                                  text-[var(--mint-teal)]
+                                  mt-1
                                 "
                               >
-                                {
-                                  formatoDinero(
-                                    cierre.utilidad_neta_mxn,
-                                    "MXN"
-                                  )
-                                }
-                              </td>
+                                Cierre oficial
+                              </p>
 
-                              <td
+                            </div>
+
+                            <DatoHistorial
+                              titulo="Utilidad MXN"
+                              valor={
+                                cierre.utilidad_neta_mxn
+                              }
+                              moneda="MXN"
+                              formatoDinero={
+                                formatoDinero
+                              }
+                              tipo={
+                                cierre.utilidad_neta_mxn >= 0
+                                  ? "success"
+                                  : "danger"
+                              }
+                            />
+
+                            <DatoHistorial
+                              titulo="Utilidad USD"
+                              valor={
+                                cierre.utilidad_neta_usd
+                              }
+                              moneda="USD"
+                              formatoDinero={
+                                formatoDinero
+                              }
+                              tipo={
+                                cierre.utilidad_neta_usd >= 0
+                                  ? "info"
+                                  : "danger"
+                              }
+                            />
+
+                            <DatoHistorial
+                              titulo="Cobrado MXN"
+                              valor={
+                                cierre.cobrado_mxn
+                              }
+                              moneda="MXN"
+                              formatoDinero={
+                                formatoDinero
+                              }
+                              tipo="normal"
+                            />
+
+                            <DatoHistorial
+                              titulo="Cobrado USD"
+                              valor={
+                                cierre.cobrado_usd
+                              }
+                              moneda="USD"
+                              formatoDinero={
+                                formatoDinero
+                              }
+                              tipo="normal"
+                            />
+
+                            <div
+                              className="
+                                lg:text-right
+                              "
+                            >
+
+                              <p
                                 className="
-                                  px-6
-                                  py-4
-                                  text-right
-                                  font-semibold
+                                  text-[9px]
+                                  uppercase
+                                  tracking-[0.08em]
+                                  font-bold
+                                  mint-text-muted
                                 "
                               >
-                                {
-                                  formatoDinero(
-                                    cierre.utilidad_neta_usd,
-                                    "USD"
-                                  )
-                                }
-                              </td>
+                                Fecha cierre
+                              </p>
 
-                              <td
+                              <p
                                 className="
-                                  px-6
-                                  py-4
-                                  text-right
-                                "
-                              >
-                                {
-                                  formatoDinero(
-                                    cierre.cobrado_mxn,
-                                    "MXN"
-                                  )
-                                }
-                              </td>
-
-                              <td
-                                className="
-                                  px-6
-                                  py-4
-                                  text-right
-                                "
-                              >
-                                {
-                                  formatoDinero(
-                                    cierre.cobrado_usd,
-                                    "USD"
-                                  )
-                                }
-                              </td>
-
-                              <td
-                                className="
-                                  px-6
-                                  py-4
+                                  text-xs
+                                  font-medium
                                   mint-text-secondary
+                                  mt-1
                                 "
                               >
                                 {
@@ -1470,24 +1784,345 @@ export default function CierreMensual({
                                     cierre.fecha_cierre
                                   )
                                 }
-                              </td>
+                              </p>
 
-                            </tr>
+                            </div>
 
-                          )
+                          </div>
+
                         )
-                      }
+                      )
+                    }
 
-                    </tbody>
+                  </div>
 
-                  </table>
+                )
+          }
 
-                </div>
+        </div>
 
-              )
-        }
+      </section>
+
+    </div>
+
+  );
+
+}
+
+
+type FilaCierreProps = {
+
+  titulo: string;
+
+  valorMXN: number;
+
+  valorUSD: number;
+
+  formatoDinero:
+    (
+      valor: number,
+      moneda:
+        | "MXN"
+        | "USD"
+    ) => string;
+
+  tipo?:
+    | "normal"
+    | "success"
+    | "danger";
+
+};
+
+function FilaCierre({
+
+  titulo,
+
+  valorMXN,
+
+  valorUSD,
+
+  formatoDinero,
+
+  tipo = "normal",
+
+}: FilaCierreProps) {
+
+  const claseValor =
+    tipo === "success"
+
+      ? "text-[var(--mint-success)]"
+
+      : tipo === "danger"
+
+        ? "text-[var(--mint-danger)]"
+
+        : "mint-text-primary";
+
+  return (
+
+    <div
+      className="
+        grid
+        grid-cols-1
+        md:grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+        items-center
+        gap-3
+        px-6
+        py-4
+        border-b
+        border-[var(--mint-border)]
+        hover:bg-[var(--mint-surface-soft)]
+        transition-colors
+      "
+    >
+
+      <div>
+
+        <p
+          className="
+            text-sm
+            font-semibold
+            mint-text-primary
+          "
+        >
+          {titulo}
+        </p>
 
       </div>
+
+      <div
+        className="
+          md:text-right
+          md:pr-5
+        "
+      >
+
+        <p
+          className={`
+            text-sm
+            font-bold
+            ${claseValor}
+          `}
+        >
+          {
+            formatoDinero(
+              valorMXN,
+              "MXN"
+            )
+          }
+        </p>
+
+      </div>
+
+      <div
+        className="
+          md:text-right
+          md:pl-5
+          md:border-l
+          border-[var(--mint-border)]
+        "
+      >
+
+        <p
+          className={`
+            text-sm
+            font-bold
+            ${claseValor}
+          `}
+        >
+          {
+            formatoDinero(
+              valorUSD,
+              "USD"
+            )
+          }
+        </p>
+
+      </div>
+
+    </div>
+
+  );
+
+}
+
+
+type DatoPosicionProps = {
+
+  titulo: string;
+
+  valor: number;
+
+  moneda:
+    | "MXN"
+    | "USD";
+
+  formatoDinero:
+    (
+      valor: number,
+      moneda:
+        | "MXN"
+        | "USD"
+    ) => string;
+
+  warning?: boolean;
+
+};
+
+function DatoPosicion({
+
+  titulo,
+
+  valor,
+
+  moneda,
+
+  formatoDinero,
+
+  warning = false,
+
+}: DatoPosicionProps) {
+
+  return (
+
+    <div
+      className="
+        px-5
+        py-5
+        border-r
+        border-b
+        border-white/15
+        last:border-r-0
+      "
+    >
+
+      <p
+        className="
+          text-[9px]
+          uppercase
+          tracking-[0.1em]
+          font-bold
+          text-white/50
+        "
+      >
+        {titulo}
+      </p>
+
+      <p
+        className={`
+          text-base
+          font-bold
+          mt-2
+
+          ${
+            warning
+              ? "text-[var(--mint-gold)]"
+              : "text-white"
+          }
+        `}
+      >
+        {
+          formatoDinero(
+            valor,
+            moneda
+          )
+        }
+      </p>
+
+    </div>
+
+  );
+
+}
+
+
+type DatoHistorialProps = {
+
+  titulo: string;
+
+  valor: number;
+
+  moneda:
+    | "MXN"
+    | "USD";
+
+  formatoDinero:
+    (
+      valor: number,
+      moneda:
+        | "MXN"
+        | "USD"
+    ) => string;
+
+  tipo:
+    | "normal"
+    | "success"
+    | "info"
+    | "danger";
+
+};
+
+function DatoHistorial({
+
+  titulo,
+
+  valor,
+
+  moneda,
+
+  formatoDinero,
+
+  tipo,
+
+}: DatoHistorialProps) {
+
+  const claseValor =
+    tipo === "success"
+
+      ? "text-[var(--mint-success)]"
+
+      : tipo === "info"
+
+        ? "text-[var(--mint-info)]"
+
+        : tipo === "danger"
+
+          ? "text-[var(--mint-danger)]"
+
+          : "mint-text-primary";
+
+  return (
+
+    <div>
+
+      <p
+        className="
+          text-[9px]
+          uppercase
+          tracking-[0.08em]
+          font-bold
+          mint-text-muted
+        "
+      >
+        {titulo}
+      </p>
+
+      <p
+        className={`
+          text-sm
+          font-bold
+          mt-1
+          whitespace-nowrap
+          ${claseValor}
+        `}
+      >
+        {
+          formatoDinero(
+            valor,
+            moneda
+          )
+        }
+      </p>
 
     </div>
 

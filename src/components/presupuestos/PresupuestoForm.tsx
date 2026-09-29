@@ -262,7 +262,6 @@ export default function PresupuestoForm({
   const subtotal =
     useMemo(
       () => {
-
         return items.reduce(
           (
             acumulado,
@@ -279,7 +278,6 @@ export default function PresupuestoForm({
             ),
           0
         );
-
       },
       [
         items,
@@ -301,7 +299,11 @@ export default function PresupuestoForm({
 
         return Math.min(descuento, subtotal);
       },
-      [subtotal, tipoDescuento, valorDescuento]
+      [
+        subtotal,
+        tipoDescuento,
+        valorDescuento,
+      ]
     );
 
   const total = Math.max(
@@ -318,7 +320,6 @@ export default function PresupuestoForm({
       | "precio_unitario",
     valor: string | number
   ) {
-
     setItems(
       (
         actuales
@@ -336,7 +337,6 @@ export default function PresupuestoForm({
               : item
         )
     );
-
   }
 
   const itemDentalActivo =
@@ -400,7 +400,6 @@ export default function PresupuestoForm({
   }
 
   function agregarItem() {
-
     const nuevoItem: ItemFormulario = {
       id: Date.now(),
       diente: "",
@@ -420,19 +419,15 @@ export default function PresupuestoForm({
     setItemDentalActivoId(
       nuevoItem.id
     );
-
   }
 
   function eliminarItem(
     id: number
   ) {
-
     if (
       items.length === 1
     ) {
-
       return;
-
     }
 
     const restantes =
@@ -451,23 +446,21 @@ export default function PresupuestoForm({
         restantes[0].id
       );
     }
-
   }
 
   async function guardar() {
-
     if (
       tipoPaciente ===
         "registrado" &&
       !pacienteId
     ) {
-
       alert(
-        es ? "Selecciona un paciente." : "Select a patient."
+        es
+          ? "Selecciona un paciente."
+          : "Select a patient."
       );
 
       return;
-
     }
 
     if (
@@ -475,13 +468,13 @@ export default function PresupuestoForm({
         "nuevo" &&
       !nombrePacienteNuevo.trim()
     ) {
-
       alert(
-        es ? "Escribe el nombre del paciente." : "Enter the patient name."
+        es
+          ? "Escribe el nombre del paciente."
+          : "Enter the patient name."
       );
 
       return;
-
     }
 
     const itemsValidos =
@@ -502,13 +495,13 @@ export default function PresupuestoForm({
     if (
       itemsValidos.length === 0
     ) {
-
       alert(
-        es ? "Agrega al menos un tratamiento." : "Add at least one treatment."
+        es
+          ? "Agrega al menos un tratamiento."
+          : "Add at least one treatment."
       );
 
       return;
-
     }
 
     setGuardando(
@@ -516,7 +509,6 @@ export default function PresupuestoForm({
     );
 
     try {
-
       const pacienteRegistrado =
         pacientes.find(
           (paciente) =>
@@ -534,6 +526,7 @@ export default function PresupuestoForm({
                 pacienteId
               )
             : null,
+
         nombre_paciente:
           tipoPaciente ===
           "registrado"
@@ -541,64 +534,65 @@ export default function PresupuestoForm({
                 ?.nombre || ""
             : nombrePacienteNuevo
                 .trim(),
+
         moneda,
+
         idioma:
           idiomaDocumento,
+
         descuento:
           descuentoCalculado,
+
         notas:
           notas.trim(),
+
         items:
           itemsValidos,
       });
-
     } finally {
-
       setGuardando(
         false
       );
-
     }
-
   }
 
-  return (
-
+    return (
     <div
       className="
-        space-y-6
+        space-y-4
+        rounded-[28px]
+        bg-[var(--mint-surface-teal)]
+        p-1
       "
     >
-
       <section
         className="
-          mint-card
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+          shadow-[var(--mint-shadow-brand)]
         "
       >
-
         <div
           className="
-            px-6
-            py-5
-            border-b
-            border-[var(--mint-border)]
+            px-5
+            py-4
             flex
-            items-center
+            items-start
             justify-between
-            gap-4
+            gap-5
           "
         >
-
-          <div>
-
+          <div className="min-w-0">
             <p
               className="
                 text-[11px]
                 uppercase
                 tracking-[0.14em]
                 font-bold
-                mint-text-brand
+                text-white/75
               "
             >
               {es ? "Presupuestos" : "Estimates"}
@@ -609,17 +603,19 @@ export default function PresupuestoForm({
                 text-2xl
                 font-bold
                 tracking-tight
-                mint-text-primary
+                text-white
                 mt-1
               "
             >
-              {es ? "Nuevo presupuesto" : "New estimate"}
+              {es
+                ? "Nuevo presupuesto"
+                : "New estimate"}
             </h2>
 
             <p
               className="
                 text-sm
-                mint-text-secondary
+                text-white/75
                 mt-1
               "
             >
@@ -627,404 +623,520 @@ export default function PresupuestoForm({
                 ? "Crea una propuesta de tratamiento para el paciente."
                 : "Create a treatment estimate for the patient."}
             </p>
-
           </div>
 
-          <button
-            type="button"
-            onClick={
-              onCancelar
-            }
+          <div
             className="
-              mint-btn
-              inline-flex
-              items-center
+              flex
+              flex-col
+              items-end
               gap-2
+              shrink-0
             "
           >
-            <X
-              size={17}
-            />
+            <div
+              className="
+                flex
+                flex-wrap
+                items-center
+                justify-end
+                gap-2
+              "
+            >
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-white/20
+                  bg-white/10
+                  px-2
+                  py-1.5
+                  backdrop-blur-sm
+                "
+              >
+                <span
+                  className="
+                    text-[10px]
+                    font-bold
+                    uppercase
+                    tracking-[0.12em]
+                    text-white/65
+                  "
+                >
+                  {es ? "Moneda" : "Currency"}
+                </span>
 
-            {es ? "Cancelar" : "Cancel"}
-          </button>
+                <div
+                  className="
+                    inline-flex
+                    rounded-lg
+                    bg-black/10
+                    p-0.5
+                  "
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      cambiarMoneda("MXN")
+                    }
+                    className={`
+                      rounded-md
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-bold
+                      transition
 
+                      ${
+                        moneda === "MXN"
+                          ? `
+                              bg-white
+                              text-[var(--mint-navy)]
+                              shadow-sm
+                            `
+                          : `
+                              text-white/70
+                              hover:text-white
+                            `
+                      }
+                    `}
+                  >
+                    MXN
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      cambiarMoneda("USD")
+                    }
+                    className={`
+                      rounded-md
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-bold
+                      transition
+
+                      ${
+                        moneda === "USD"
+                          ? `
+                              bg-white
+                              text-[var(--mint-navy)]
+                              shadow-sm
+                            `
+                          : `
+                              text-white/70
+                              hover:text-white
+                            `
+                      }
+                    `}
+                  >
+                    USD
+                  </button>
+                </div>
+              </div>
+
+              <div
+                className="
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-white/20
+                  bg-white/10
+                  px-2
+                  py-1.5
+                  backdrop-blur-sm
+                "
+              >
+                <span
+                  className="
+                    text-[10px]
+                    font-bold
+                    uppercase
+                    tracking-[0.12em]
+                    text-white/65
+                  "
+                >
+                  {es ? "Idioma" : "Language"}
+                </span>
+
+                <div
+                  className="
+                    inline-flex
+                    rounded-lg
+                    bg-black/10
+                    p-0.5
+                  "
+                >
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIdiomaDocumento("es")
+                    }
+                    className={`
+                      rounded-md
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-bold
+                      transition
+
+                      ${
+                        idiomaDocumento === "es"
+                          ? `
+                              bg-white
+                              text-[var(--mint-navy)]
+                              shadow-sm
+                            `
+                          : `
+                              text-white/70
+                              hover:text-white
+                            `
+                      }
+                    `}
+                  >
+                    ES
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIdiomaDocumento("en")
+                    }
+                    className={`
+                      rounded-md
+                      px-2.5
+                      py-1
+                      text-xs
+                      font-bold
+                      transition
+
+                      ${
+                        idiomaDocumento === "en"
+                          ? `
+                              bg-white
+                              text-[var(--mint-navy)]
+                              shadow-sm
+                            `
+                          : `
+                              text-white/70
+                              hover:text-white
+                            `
+                      }
+                    `}
+                  >
+                    EN
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onCancelar}
+              className="
+                inline-flex
+                items-center
+                gap-2
+                rounded-xl
+                border
+                border-white/25
+                bg-white/10
+                px-4
+                py-2
+                text-sm
+                font-semibold
+                text-white
+                transition
+                hover:bg-white/20
+              "
+            >
+              <X size={16} />
+
+              {es ? "Cancelar" : "Cancel"}
+            </button>
+          </div>
         </div>
 
         <div
           className="
-            p-6
-            space-y-6
+            h-1
+            bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]
+          "
+        />
+      </section>
+
+      <section
+        className="
+          overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border-teal)]
+          bg-[var(--mint-surface)]
+          shadow-[var(--mint-shadow-card)]
+        "
+      >
+        <div
+          className="
+            p-5
+            space-y-4
+            bg-[var(--mint-surface-soft)]
           "
         >
-
-          <div
-            className="
-              grid
-              grid-cols-1
-              md:grid-cols-2
-              gap-4
-            "
-          >
-
-            <div>
-
-              <label
-                className="
-                  block
-                  text-xs
-                  font-bold
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                {es ? "Paciente" : "Patient"}
-              </label>
-
-              <div
-                className="
-                  inline-flex
-                  rounded-xl
-                  bg-[var(--mint-bg-soft)]
-                  border
-                  border-[var(--mint-border)]
-                  p-1
-                  mb-3
-                "
-              >
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setTipoPaciente(
-                      "registrado"
-                    )
-                  }
-                  className={`
-                    px-4
-                    py-2
-                    rounded-lg
-                    text-sm
-                    font-semibold
-                    transition
-
-                    ${
-                      tipoPaciente ===
-                      "registrado"
-                        ? `
-                            bg-[var(--mint-bg-card)]
-                            text-[var(--mint-primary)]
-                            shadow-sm
-                          `
-                        : `
-                            mint-text-secondary
-                          `
-                    }
-                  `}
-                >
-                  {es ? "Registrado" : "Registered"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    setTipoPaciente(
-                      "nuevo"
-                    )
-                  }
-                  className={`
-                    px-4
-                    py-2
-                    rounded-lg
-                    text-sm
-                    font-semibold
-                    transition
-
-                    ${
-                      tipoPaciente ===
-                      "nuevo"
-                        ? `
-                            bg-[var(--mint-bg-card)]
-                            text-[var(--mint-primary)]
-                            shadow-sm
-                          `
-                        : `
-                            mint-text-secondary
-                          `
-                    }
-                  `}
-                >
-                  {es ? "Paciente nuevo" : "New patient"}
-                </button>
-
-              </div>
-
-              {
-                tipoPaciente ===
-                "registrado"
-                  ? (
-
-                    <select
-                      value={
-                        pacienteId
-                      }
-                      onChange={
-                        (e) =>
-                          setPacienteId(
-                            e.target.value
-                          )
-                      }
-                      className="
-                        w-full
-                        rounded-xl
-                        border
-                        border-[var(--mint-border)]
-                        bg-[var(--mint-bg-card)]
-                        px-3
-                        py-2.5
-                        text-sm
-                        mint-text-primary
-                      "
-                    >
-
-                      <option
-                        value=""
-                      >
-                        {es ? "Seleccionar paciente" : "Select patient"}
-                      </option>
-
-                      {
-                        pacientes.map(
-                          (paciente) => (
-
-                            <option
-                              key={
-                                paciente.id
-                              }
-                              value={
-                                paciente.id
-                              }
-                            >
-                              {
-                                paciente.nombre
-                              }
-                            </option>
-
-                          )
-                        )
-                      }
-
-                    </select>
-
-                  )
-                  : (
-
-                    <div>
-
-                      <input
-                        type="text"
-                        value={
-                          nombrePacienteNuevo
-                        }
-                        onChange={
-                          (e) =>
-                            setNombrePacienteNuevo(
-                              e.target.value
-                            )
-                        }
-                        placeholder={es ? "Nombre del paciente" : "Patient name"}
-                        className="
-                          w-full
-                          rounded-xl
-                          border
-                          border-[var(--mint-border)]
-                          bg-[var(--mint-bg-card)]
-                          px-3
-                          py-2.5
-                          text-sm
-                          mint-text-primary
-                        "
-                      />
-
-                      <p
-                        className="
-                          mt-2
-                          text-xs
-                          mint-text-muted
-                        "
-                      >
-                        {es ? "Puedes crear el presupuesto sin registrar todavía un expediente." : "You can create the estimate before registering a patient record."}
-                      </p>
-
-                    </div>
-
-                  )
-              }
-
-            </div>
-
-            <div>
-
-              <label
-                className="
-                  block
-                  text-xs
-                  font-bold
-                  mint-text-secondary
-                  mb-2
-                "
-              >
-                {es ? "Moneda" : "Currency"}
-              </label>
-
-              <div
-                className="
-                  inline-flex
-                  rounded-xl
-                  bg-[var(--mint-bg-soft)]
-                  border
-                  border-[var(--mint-border)]
-                  p-1
-                "
-              >
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    cambiarMoneda(
-                      "MXN"
-                    )
-                  }
-                  className={`
-                    px-5
-                    py-2
-                    rounded-lg
-                    text-sm
-                    font-semibold
-                    transition
-
-                    ${
-                      moneda ===
-                      "MXN"
-                        ? `
-                            bg-[var(--mint-bg-card)]
-                            text-[var(--mint-primary)]
-                            shadow-sm
-                          `
-                        : `
-                            mint-text-secondary
-                          `
-                    }
-                  `}
-                >
-                  MXN
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    cambiarMoneda(
-                      "USD"
-                    )
-                  }
-                  className={`
-                    px-5
-                    py-2
-                    rounded-lg
-                    text-sm
-                    font-semibold
-                    transition
-
-                    ${
-                      moneda ===
-                      "USD"
-                        ? `
-                            bg-[var(--mint-bg-card)]
-                            text-[var(--mint-primary)]
-                            shadow-sm
-                          `
-                        : `
-                            mint-text-secondary
-                          `
-                    }
-                  `}
-                >
-                  USD
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
+          {/* PACIENTE */}
           <div
             className="
               rounded-2xl
               border
-              border-[var(--mint-border)]
-              bg-[var(--mint-bg-soft)]
+              border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
               p-4
-              flex
-              flex-col
-              sm:flex-row
-              sm:items-center
-              sm:justify-between
-              gap-4
+              shadow-sm
             "
           >
-            <div>
-              <p className="text-sm font-bold mint-text-primary">
-                {es ? "Idioma del presupuesto" : "Estimate language"}
-              </p>
-              <p className="text-xs mint-text-secondary mt-1">
+            <div
+              className="
+                mb-3
+                flex
+                items-center
+                gap-3
+              "
+            >
+              <div
+                className="
+                  flex
+                  h-8
+                  w-8
+                  items-center
+                  justify-center
+                  rounded-xl
+                  bg-[var(--mint-teal-pale)]
+                  text-xs
+                  font-extrabold
+                  text-[var(--mint-teal)]
+                "
+              >
+                01
+              </div>
+
+              <div>
+                <p
+                  className="
+                    text-sm
+                    font-bold
+                    mint-text-primary
+                  "
+                >
+                  {es ? "Paciente" : "Patient"}
+                </p>
+
+                <p
+                  className="
+                    text-xs
+                    mint-text-muted
+                  "
+                >
+                  {es
+                    ? "Selecciona el expediente o registra un nombre para este presupuesto."
+                    : "Select a patient record or enter a name for this estimate."}
+                </p>
+              </div>
+            </div>
+
+            <div
+              className="
+                inline-flex
+                rounded-xl
+                bg-[var(--mint-surface-teal)]
+                border
+                border-[var(--mint-border)]
+                p-1
+                mb-3
+              "
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setTipoPaciente(
+                    "registrado"
+                  )
+                }
+                className={`
+                  px-4
+                  py-2
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  transition
+
+                  ${
+                    tipoPaciente ===
+                    "registrado"
+                      ? `
+                          bg-[var(--mint-surface)]
+                          text-[var(--mint-teal)]
+                          shadow-sm
+                        `
+                      : `
+                          mint-text-secondary
+                        `
+                  }
+                `}
+              >
                 {es
-                  ? "Este idioma es independiente del idioma de MintOS."
-                  : "This language is independent from the MintOS interface language."}
-              </p>
-            </div>
-
-            <div className="inline-flex rounded-xl bg-[var(--mint-bg-card)] border border-[var(--mint-border)] p-1">
-              <button
-                type="button"
-                onClick={() => setIdiomaDocumento("es")}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-                  idiomaDocumento === "es"
-                    ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)] shadow-sm"
-                    : "mint-text-secondary"
-                }`}
-              >
-                Español
+                  ? "Registrado"
+                  : "Registered"}
               </button>
 
               <button
                 type="button"
-                onClick={() => setIdiomaDocumento("en")}
-                className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-                  idiomaDocumento === "en"
-                    ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)] shadow-sm"
-                    : "mint-text-secondary"
-                }`}
+                onClick={() =>
+                  setTipoPaciente(
+                    "nuevo"
+                  )
+                }
+                className={`
+                  px-4
+                  py-2
+                  rounded-lg
+                  text-sm
+                  font-semibold
+                  transition
+
+                  ${
+                    tipoPaciente ===
+                    "nuevo"
+                      ? `
+                          bg-[var(--mint-surface)]
+                          text-[var(--mint-teal)]
+                          shadow-sm
+                        `
+                      : `
+                          mint-text-secondary
+                        `
+                  }
+                `}
               >
-                English
+                {es
+                  ? "Paciente nuevo"
+                  : "New patient"}
               </button>
             </div>
+
+            {tipoPaciente ===
+            "registrado" ? (
+              <select
+                value={pacienteId}
+                onChange={(e) =>
+                  setPacienteId(
+                    e.target.value
+                  )
+                }
+                className="
+                  w-full
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-surface)]
+                  px-3
+                  py-2.5
+                  text-sm
+                  mint-text-primary
+                  outline-none
+                  transition
+                  focus:border-[var(--mint-teal)]
+                  focus:ring-2
+                  focus:ring-[var(--mint-teal-pale)]
+                "
+              >
+                <option value="">
+                  {es
+                    ? "Seleccionar paciente"
+                    : "Select patient"}
+                </option>
+
+                {pacientes.map(
+                  (paciente) => (
+                    <option
+                      key={paciente.id}
+                      value={paciente.id}
+                    >
+                      {paciente.nombre}
+                    </option>
+                  )
+                )}
+              </select>
+            ) : (
+              <div>
+                <input
+                  type="text"
+                  value={
+                    nombrePacienteNuevo
+                  }
+                  onChange={(e) =>
+                    setNombrePacienteNuevo(
+                      e.target.value
+                    )
+                  }
+                  placeholder={
+                    es
+                      ? "Nombre del paciente"
+                      : "Patient name"
+                  }
+                  className="
+                    w-full
+                    rounded-xl
+                    border
+                    border-[var(--mint-border)]
+                    bg-[var(--mint-surface)]
+                    px-3
+                    py-2.5
+                    text-sm
+                    mint-text-primary
+                    outline-none
+                    transition
+                    focus:border-[var(--mint-teal)]
+                    focus:ring-2
+                    focus:ring-[var(--mint-teal-pale)]
+                  "
+                />
+
+                <p
+                  className="
+                    mt-2
+                    text-xs
+                    mint-text-muted
+                  "
+                >
+                  {es
+                    ? "Puedes crear el presupuesto sin registrar todavía un expediente."
+                    : "You can create the estimate before registering a patient record."}
+                </p>
+              </div>
+            )}
           </div>
 
+          {/* PLAN DE TRATAMIENTO */}
           <div
             className="
               border
-              border-[var(--mint-border)]
+              border-[var(--mint-border-teal)]
               rounded-2xl
               overflow-hidden
+              bg-[var(--mint-surface)]
+              shadow-sm
             "
           >
-
             <div
               className="
                 px-5
                 py-4
-                bg-[var(--mint-bg-soft)]
+                bg-[linear-gradient(90deg,var(--mint-surface-teal)_0%,var(--mint-surface)_100%)]
                 border-b
                 border-[var(--mint-border)]
                 flex
@@ -1033,16 +1145,41 @@ export default function PresupuestoForm({
                 gap-4
               "
             >
-
               <div>
-
                 <h3
                   className="
                     font-bold
                     mint-text-primary
                   "
                 >
-                  {es ? "Tratamientos" : "Treatments"}
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+                      gap-2
+                    "
+                  >
+                    <span
+                      className="
+                        flex
+                        h-7
+                        w-7
+                        items-center
+                        justify-center
+                        rounded-lg
+                        bg-[var(--mint-teal-pale)]
+                        text-[11px]
+                        font-extrabold
+                        text-[var(--mint-teal)]
+                      "
+                    >
+                      02
+                    </span>
+
+                    {es
+                      ? "Plan de tratamiento"
+                      : "Treatment plan"}
+                  </span>
                 </h3>
 
                 <p
@@ -1050,28 +1187,60 @@ export default function PresupuestoForm({
                     text-xs
                     mint-text-muted
                     mt-1
+                    ml-9
                   "
                 >
-                  Agrega los procedimientos incluidos
-                  en este presupuesto.
+                  {es
+                    ? "Agrega los procedimientos incluidos en este presupuesto."
+                    : "Add the procedures included in this estimate."}
                 </p>
-
               </div>
-
-
-
             </div>
 
-            <div className="p-5 border-b border-[var(--mint-border)]">
-              <div className="mb-4">
-                <p className="text-sm font-bold mint-text-primary">
-                  {es ? "Renglón activo" : "Active line item"}
-                </p>
-                <p className="text-xs mint-text-secondary mt-1">
-                  {es
-                    ? "La selección dental se aplicará al tratamiento resaltado en la tabla."
-                    : "The dental selection will be applied to the highlighted treatment row."}
-                </p>
+            <div
+              className="
+                px-4
+                py-3
+                border-b
+                border-[var(--mint-border-soft)]
+                bg-[var(--mint-surface)]
+              "
+            >
+              <div
+                className="
+                  mb-3
+                  flex
+                  flex-wrap
+                  items-end
+                  justify-between
+                  gap-2
+                "
+              >
+                <div>
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    {es
+                      ? "Renglón activo"
+                      : "Active line item"}
+                  </p>
+
+                  <p
+                    className="
+                      text-xs
+                      mint-text-secondary
+                      mt-1
+                    "
+                  >
+                    {es
+                      ? "La selección dental se aplicará al tratamiento resaltado."
+                      : "The dental selection will be applied to the highlighted treatment."}
+                  </p>
+                </div>
               </div>
 
               {itemDentalActivo && (
@@ -1092,43 +1261,42 @@ export default function PresupuestoForm({
               )}
             </div>
 
+            {/* TABLA */}
             <div
               className="
                 overflow-x-auto
+                bg-[var(--mint-surface)]
               "
             >
-
               <table
                 className="
                   w-full
                   text-sm
                 "
               >
-
                 <thead
                   className="
-                    bg-[var(--mint-bg-soft)]
+                    bg-[var(--mint-surface-soft)]
                   "
                 >
-
                   <tr>
-
-                    <th
-                      className="
-                        w-14
-                      "
-                    />
+                    <th className="w-14" />
 
                     <th
                       className="
                         text-left
                         px-4
                         py-3
-                        text-xs
+                        text-[11px]
+                        uppercase
+                        tracking-wide
+                        font-bold
                         mint-text-muted
                       "
                     >
-                      {es ? "Diente / Arcada" : "Tooth / Arch"}
+                      {es
+                        ? "Diente / Arcada"
+                        : "Tooth / Arch"}
                     </th>
 
                     <th
@@ -1136,11 +1304,16 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-xs
+                        text-[11px]
+                        uppercase
+                        tracking-wide
+                        font-bold
                         mint-text-muted
                       "
                     >
-                      {es ? "Tratamiento" : "Treatment"}
+                      {es
+                        ? "Tratamiento"
+                        : "Treatment"}
                     </th>
 
                     <th
@@ -1148,11 +1321,16 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-xs
+                        text-[11px]
+                        uppercase
+                        tracking-wide
+                        font-bold
                         mint-text-muted
                       "
                     >
-                      {es ? "Cantidad" : "Quantity"}
+                      {es
+                        ? "Cantidad"
+                        : "Quantity"}
                     </th>
 
                     <th
@@ -1160,11 +1338,16 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-xs
+                        text-[11px]
+                        uppercase
+                        tracking-wide
+                        font-bold
                         mint-text-muted
                       "
                     >
-                      {es ? "Precio unitario" : "Unit price"}
+                      {es
+                        ? "Precio unitario"
+                        : "Unit price"}
                     </th>
 
                     <th
@@ -1172,413 +1355,542 @@ export default function PresupuestoForm({
                         text-right
                         px-4
                         py-3
-                        text-xs
+                        text-[11px]
+                        uppercase
+                        tracking-wide
+                        font-bold
                         mint-text-muted
                       "
                     >
                       Total
                     </th>
 
-                    <th
-                      className="
-                        w-14
-                      "
-                    />
-
+                    <th className="w-14" />
                   </tr>
-
                 </thead>
 
                 <tbody>
+                  {items.map((item) => {
+                    const totalItem =
+                      Number(
+                        item.cantidad
+                      ) *
+                      Number(
+                        item.precio_unitario
+                      );
 
-                  {
-                    items.map(
-                      (
-                        item
-                      ) => {
+                    return (
+                      <tr
+                        key={item.id}
+                        onClick={() =>
+                          setItemDentalActivoId(
+                            item.id
+                          )
+                        }
+                        className={`
+                          border-t
+                          border-[var(--mint-border-soft)]
+                          transition-colors
 
-                        const totalItem =
-                          Number(
-                            item.cantidad
-                          ) *
-                          Number(
-                            item.precio_unitario
-                          );
+                          ${
+                            itemDentalActivoId ===
+                            item.id
+                              ? `
+                                  bg-[var(--mint-surface-teal)]
+                                `
+                              : `
+                                  hover:bg-[var(--mint-surface-soft)]
+                                `
+                          }
+                        `}
+                      >
+                        <td
+                          className="
+                            p-3
+                            text-center
+                          "
+                        >
+                          {itemDentalActivoId ===
+                            item.id && (
+                            <button
+                              type="button"
+                              onClick={(
+                                e
+                              ) => {
+                                e.stopPropagation();
+                                agregarItem();
+                              }}
+                              disabled={
+                                !item.catalogo_tratamiento_id
+                              }
+                              title={
+                                es
+                                  ? "Agregar otro tratamiento"
+                                  : "Add another treatment"
+                              }
+                              aria-label={
+                                es
+                                  ? "Agregar otro tratamiento"
+                                  : "Add another treatment"
+                              }
+                              className="
+                                w-9
+                                h-9
+                                rounded-xl
+                                border
+                                border-[var(--mint-teal)]
+                                bg-[var(--mint-teal)]
+                                text-white
+                                inline-flex
+                                items-center
+                                justify-center
+                                shadow-sm
+                                hover:opacity-90
+                                disabled:opacity-30
+                                disabled:cursor-not-allowed
+                                transition
+                              "
+                            >
+                              <Plus
+                                size={16}
+                              />
+                            </button>
+                          )}
+                        </td>
 
-                        return (
-
-                          <tr
-                            key={
-                              item.id
-                            }
+                        <td className="p-3">
+                          <button
+                            type="button"
                             onClick={() =>
                               setItemDentalActivoId(
                                 item.id
                               )
                             }
                             className={`
-                              border-t
-                              border-[var(--mint-border)]
+                              min-w-[150px]
+                              text-left
+                              rounded-xl
+                              border
+                              px-3
+                              py-2
+                              text-sm
+                              transition
+
                               ${
-                                itemDentalActivoId === item.id
-                                  ? "bg-[var(--mint-primary-soft)]"
-                                  : ""
+                                itemDentalActivoId ===
+                                item.id
+                                  ? `
+                                      border-[var(--mint-teal)]
+                                      bg-[var(--mint-teal-pale)]
+                                      text-[var(--mint-teal)]
+                                      font-semibold
+                                    `
+                                  : `
+                                      border-[var(--mint-border)]
+                                      bg-[var(--mint-surface)]
+                                      mint-text-primary
+                                    `
                               }
                             `}
                           >
-
-                            <td
-                              className="
-                                p-3
-                                text-center
-                              "
-                            >
-                              {itemDentalActivoId === item.id && (
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    agregarItem();
-                                  }}
-                                  disabled={!item.catalogo_tratamiento_id}
-                                  title={es ? "Agregar otro tratamiento" : "Add another treatment"}
-                                  aria-label={es ? "Agregar otro tratamiento" : "Add another treatment"}
-                                  className="
-                                    w-10
-                                    h-10
-                                    rounded-lg
-                                    border
-                                    border-[var(--mint-primary)]
-                                    bg-[var(--mint-primary)]
-                                    text-white
-                                    inline-flex
-                                    items-center
-                                    justify-center
-                                    hover:opacity-90
-                                    disabled:opacity-30
-                                    disabled:cursor-not-allowed
-                                    transition
-                                  "
-                                >
-                                  <Plus size={17} />
-                                </button>
-                              )}
-                            </td>
-
-                            <td
-                              className="
-                                p-3
-                              "
-                            >
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setItemDentalActivoId(
-                                    item.id
-                                  )
-                                }
-                                className={`
-                                  min-w-[150px]
-                                  text-left
-                                  rounded-lg
-                                  border
-                                  px-3
-                                  py-2
-                                  text-sm
-                                  transition
-                                  ${
-                                    itemDentalActivoId === item.id
-                                      ? "border-[var(--mint-primary)] bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
-                                      : "border-[var(--mint-border)] bg-[var(--mint-bg-card)] mint-text-primary"
-                                  }
-                                `}
-                              >
-                                {item.arcada
-                                  ? item.arcada === "superior"
-                                    ? es ? "Arcada superior" : "Upper arch"
-                                    : es ? "Arcada inferior" : "Lower arch"
-                                  : item.dientes.length > 0
-                                    ? item.dientes.slice().sort((a, b) => a - b).join(", ")
-                                    : es ? "Seleccionar" : "Select"}
-                              </button>
-
-                            </td>
-
-                            <td
-                              className="
-                                p-3
-                              "
-                            >
-
-                              <div className="flex items-center gap-2 min-w-[290px]">
-                                <select
-                                  value={
-                                    item.catalogo_tratamiento_id || ""
-                                  }
-                                  onChange={
-                                    (
-                                      e
-                                    ) =>
-                                      seleccionarTratamiento(
-                                        item.id,
-                                        e.target.value
-                                      )
-                                  }
-                                  className="
-                                    w-full
-                                    min-w-[240px]
-                                    rounded-lg
-                                    border
-                                    border-[var(--mint-border)]
-                                    px-3
-                                    py-2
-                                    bg-[var(--mint-bg-card)]
-                                    mint-text-primary
-                                  "
-                                >
-                                  <option value="">
-                                    {es ? "Seleccionar tratamiento" : "Select treatment"}
-                                  </option>
-
-                                  {
-                                    catalogoTratamientos.map(
-                                      (tratamiento) => (
-                                        <option
-                                          key={
-                                            tratamiento.id
-                                          }
-                                          value={
-                                            tratamiento.id
-                                          }
-                                        >
-                                          {
-                                            idiomaDocumento === "en" &&
-                                            tratamiento.nombre_en
-                                              ? tratamiento.nombre_en
-                                              : tratamiento.nombre
-                                          }
-                                        </option>
-                                      )
+                            {item.arcada
+                              ? item.arcada ===
+                                "superior"
+                                ? es
+                                  ? "Arcada superior"
+                                  : "Upper arch"
+                                : es
+                                  ? "Arcada inferior"
+                                  : "Lower arch"
+                              : item.dientes
+                                    .length >
+                                  0
+                                ? item.dientes
+                                    .slice()
+                                    .sort(
+                                      (
+                                        a,
+                                        b
+                                      ) =>
+                                        a -
+                                        b
                                     )
-                                  }
-                                </select>
-
-                              </div>
-
-                            </td>
-
-                            <td
-                              className="
-                                p-3
-                              "
-                            >
-
-                              <input
-                                type="number"
-                                min="1"
-                                value={
-                                  item.cantidad
-                                }
-                                onChange={
-                                  (
-                                    e
-                                  ) =>
-                                    actualizarItem(
-                                      item.id,
-                                      "cantidad",
-                                      Number(
-                                        e.target.value
-                                      )
+                                    .join(
+                                      ", "
                                     )
-                                }
-                                className="
-                                  w-20
-                                  rounded-lg
-                                  border
-                                  border-[var(--mint-border)]
-                                  px-3
-                                  py-2
-                                  bg-[var(--mint-bg-card)]
-                                  mint-text-primary
-                                "
-                              />
+                                : es
+                                  ? "Seleccionar"
+                                  : "Select"}
+                          </button>
+                        </td>
 
-                            </td>
-
-                            <td
-                              className="
-                                p-3
-                              "
-                            >
-
-                              <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={
-                                  item.precio_unitario
-                                }
-                                onChange={
-                                  (
-                                    e
-                                  ) =>
-                                    actualizarItem(
-                                      item.id,
-                                      "precio_unitario",
-                                      Number(
-                                        e.target.value
-                                      )
-                                    )
-                                }
-                                className="
-                                  w-36
-                                  rounded-lg
-                                  border
-                                  border-[var(--mint-border)]
-                                  px-3
-                                  py-2
-                                  bg-[var(--mint-bg-card)]
-                                  mint-text-primary
-                                "
-                              />
-
-                            </td>
-
-                            <td
-                              className="
-                                p-3
-                                text-right
-                                font-bold
-                                mint-text-primary
-                                whitespace-nowrap
-                              "
-                            >
-                              $
-                              {
-                                totalItem
-                                  .toLocaleString(
-                                    es ? "es-MX" : "en-US",
-                                    {
-                                      minimumFractionDigits: 2,
-                                      maximumFractionDigits: 2,
-                                    }
-                                  )
+                        <td className="p-3">
+                          <div
+                            className="
+                              flex
+                              items-center
+                              gap-2
+                              min-w-[290px]
+                            "
+                          >
+                            <select
+                              value={
+                                item.catalogo_tratamiento_id ||
+                                ""
                               }
-                            </td>
-
-                            <td
+                              onChange={(
+                                e
+                              ) =>
+                                seleccionarTratamiento(
+                                  item.id,
+                                  e.target
+                                    .value
+                                )
+                              }
                               className="
-                                p-3
-                                text-right
+                                w-full
+                                min-w-[240px]
+                                rounded-xl
+                                border
+                                border-[var(--mint-border)]
+                                px-3
+                                py-2
+                                bg-[var(--mint-surface)]
+                                mint-text-primary
+                                outline-none
+                                transition
+                                focus:border-[var(--mint-teal)]
+                                focus:ring-2
+                                focus:ring-[var(--mint-teal-pale)]
                               "
                             >
+                              <option value="">
+                                {es
+                                  ? "Seleccionar tratamiento"
+                                  : "Select treatment"}
+                              </option>
 
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  eliminarItem(
-                                    item.id
-                                  )
-                                }
-                                disabled={
-                                  items.length === 1
-                                }
-                                className="
-                                  p-2
-                                  rounded-lg
-                                  text-[var(--mint-danger)]
-                                  hover:bg-[var(--mint-danger-bg)]
-                                  disabled:opacity-30
-                                  transition
-                                "
-                              >
-                                <Trash2
-                                  size={16}
-                                />
-                              </button>
+                              {catalogoTratamientos.map(
+                                (
+                                  tratamiento
+                                ) => (
+                                  <option
+                                    key={
+                                      tratamiento.id
+                                    }
+                                    value={
+                                      tratamiento.id
+                                    }
+                                  >
+                                    {idiomaDocumento ===
+                                      "en" &&
+                                    tratamiento.nombre_en
+                                      ? tratamiento.nombre_en
+                                      : tratamiento.nombre}
+                                  </option>
+                                )
+                              )}
+                            </select>
+                          </div>
+                        </td>
 
-                            </td>
+                        <td className="p-3">
+                          <input
+                            type="number"
+                            min="1"
+                            value={
+                              item.cantidad
+                            }
+                            onChange={(
+                              e
+                            ) =>
+                              actualizarItem(
+                                item.id,
+                                "cantidad",
+                                Number(
+                                  e.target
+                                    .value
+                                )
+                              )
+                            }
+                            className="
+                              w-20
+                              rounded-xl
+                              border
+                              border-[var(--mint-border)]
+                              px-3
+                              py-2
+                              bg-[var(--mint-surface)]
+                              mint-text-primary
+                              outline-none
+                              transition
+                              focus:border-[var(--mint-teal)]
+                            "
+                          />
+                        </td>
 
-                          </tr>
+                        <td className="p-3">
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={
+                              item.precio_unitario
+                            }
+                            onChange={(
+                              e
+                            ) =>
+                              actualizarItem(
+                                item.id,
+                                "precio_unitario",
+                                Number(
+                                  e.target
+                                    .value
+                                )
+                              )
+                            }
+                            className="
+                              w-36
+                              rounded-xl
+                              border
+                              border-[var(--mint-border)]
+                              px-3
+                              py-2
+                              bg-[var(--mint-surface)]
+                              mint-text-primary
+                              outline-none
+                              transition
+                              focus:border-[var(--mint-teal)]
+                            "
+                          />
+                        </td>
 
-                        );
+                        <td
+                          className="
+                            p-3
+                            text-right
+                            font-bold
+                            mint-text-primary
+                            whitespace-nowrap
+                          "
+                        >
+                          $
+                          {totalItem.toLocaleString(
+                            es
+                              ? "es-MX"
+                              : "en-US",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
+                        </td>
 
-                      }
-                    )
-                  }
-
+                        <td
+                          className="
+                            p-3
+                            text-right
+                          "
+                        >
+                          <button
+                            type="button"
+                            onClick={() =>
+                              eliminarItem(
+                                item.id
+                              )
+                            }
+                            disabled={
+                              items.length ===
+                              1
+                            }
+                            className="
+                              p-2
+                              rounded-xl
+                              text-[var(--mint-danger)]
+                              hover:bg-[var(--mint-danger-bg)]
+                              disabled:opacity-30
+                              transition
+                            "
+                          >
+                            <Trash2
+                              size={16}
+                            />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
-
               </table>
-
             </div>
-
           </div>
 
+          {/* NOTAS Y RESUMEN */}
           <div
             className="
               grid
               grid-cols-1
-              lg:grid-cols-[1fr_320px]
-              gap-6
+              lg:grid-cols-[1fr_340px]
+              gap-4
             "
           >
-
-            <div>
-
-              <label
+            <div
+              className="
+                rounded-2xl
+                border
+                border-[var(--mint-border)]
+                bg-[var(--mint-surface)]
+                p-4
+              "
+            >
+              <div
                 className="
-                  block
-                  text-xs
-                  font-bold
-                  mint-text-secondary
-                  mb-2
+                  flex
+                  items-center
+                  gap-3
+                  mb-3
                 "
               >
-                {es ? "Notas" : "Notes"}
-              </label>
+                <div
+                  className="
+                    flex
+                    h-8
+                    w-8
+                    items-center
+                    justify-center
+                    rounded-xl
+                    bg-[var(--mint-teal-pale)]
+                    text-xs
+                    font-extrabold
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  03
+                </div>
+
+                <div>
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      mint-text-primary
+                    "
+                  >
+                    {es
+                      ? "Notas del presupuesto"
+                      : "Estimate notes"}
+                  </p>
+
+                  <p
+                    className="
+                      text-xs
+                      mint-text-muted
+                    "
+                  >
+                    {es
+                      ? "Información adicional para el paciente."
+                      : "Additional information for the patient."}
+                  </p>
+                </div>
+              </div>
 
               <textarea
-                value={
-                  notas
-                }
-                onChange={
-                  (
-                    e
-                  ) =>
-                    setNotas(
-                      e.target.value
-                    )
+                value={notas}
+                onChange={(e) =>
+                  setNotas(
+                    e.target.value
+                  )
                 }
                 rows={5}
-                placeholder={es ? "Notas u observaciones del presupuesto..." : "Estimate notes or observations..."}
+                placeholder={
+                  es
+                    ? "Notas u observaciones del presupuesto..."
+                    : "Estimate notes or observations..."
+                }
                 className="
                   w-full
                   rounded-xl
                   border
                   border-[var(--mint-border)]
-                  bg-[var(--mint-bg-card)]
+                  bg-[var(--mint-surface-soft)]
                   px-3
                   py-3
                   text-sm
                   mint-text-primary
                   resize-none
+                  outline-none
+                  transition
+                  focus:border-[var(--mint-teal)]
+                  focus:ring-2
+                  focus:ring-[var(--mint-teal-pale)]
                 "
               />
-
             </div>
 
             <div
               className="
                 rounded-2xl
-                bg-[var(--mint-bg-soft)]
+                bg-[linear-gradient(145deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
                 border
-                border-[var(--mint-border)]
+                border-[var(--mint-border-teal)]
                 p-5
                 space-y-4
+                shadow-sm
               "
             >
+              <div
+                className="
+                  flex
+                  items-center
+                  justify-between
+                  gap-3
+                "
+              >
+                <div>
+                  <p
+                    className="
+                      text-[11px]
+                      uppercase
+                      tracking-[0.12em]
+                      font-bold
+                      text-[var(--mint-teal)]
+                    "
+                  >
+                    {es
+                      ? "Resumen"
+                      : "Summary"}
+                  </p>
+
+                  <p
+                    className="
+                      text-sm
+                      font-bold
+                      mint-text-primary
+                      mt-1
+                    "
+                  >
+                    {es
+                      ? "Presupuesto"
+                      : "Estimate"}
+                  </p>
+                </div>
+
+                <span
+                  className="
+                    rounded-lg
+                    border
+                    border-[var(--mint-border-teal)]
+                    bg-[var(--mint-teal-pale)]
+                    px-2.5
+                    py-1
+                    text-xs
+                    font-bold
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  {moneda}
+                </span>
+              </div>
 
               <div
                 className="
@@ -1602,19 +1914,17 @@ export default function PresupuestoForm({
                   "
                 >
                   $
-                  {
-                    subtotal.toLocaleString(
-                      es ? "es-MX" : "en-US",
-                      {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }
-                    )
-                  }
+                  {subtotal.toLocaleString(
+                    es
+                      ? "es-MX"
+                      : "en-US",
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }
+                  )}
                 </strong>
               </div>
-
-
 
               <div
                 className="
@@ -1624,66 +1934,184 @@ export default function PresupuestoForm({
                   space-y-3
                 "
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-sm font-semibold mint-text-secondary">
-                    {es ? "Descuento" : "Discount"}
+                <div
+                  className="
+                    flex
+                    items-center
+                    justify-between
+                    gap-3
+                  "
+                >
+                  <span
+                    className="
+                      text-sm
+                      font-semibold
+                      mint-text-secondary
+                    "
+                  >
+                    {es
+                      ? "Descuento"
+                      : "Discount"}
                   </span>
 
-                  <div className="inline-flex rounded-xl bg-[var(--mint-bg-card)] border border-[var(--mint-border)] p-1">
+                  <div
+                    className="
+                      inline-flex
+                      rounded-xl
+                      bg-[var(--mint-surface)]
+                      border
+                      border-[var(--mint-border)]
+                      p-1
+                    "
+                  >
                     <button
                       type="button"
-                      onClick={() => setTipoDescuento("monto")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                        tipoDescuento === "monto"
-                          ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
-                          : "mint-text-secondary"
-                      }`}
+                      onClick={() =>
+                        setTipoDescuento(
+                          "monto"
+                        )
+                      }
+                      className={`
+                        px-3
+                        py-1.5
+                        rounded-lg
+                        text-xs
+                        font-bold
+                        transition
+
+                        ${
+                          tipoDescuento ===
+                          "monto"
+                            ? `
+                                bg-[var(--mint-teal-pale)]
+                                text-[var(--mint-teal)]
+                              `
+                            : `
+                                mint-text-secondary
+                              `
+                        }
+                      `}
                     >
                       {moneda}
                     </button>
 
                     <button
                       type="button"
-                      onClick={() => setTipoDescuento("porcentaje")}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition ${
-                        tipoDescuento === "porcentaje"
-                          ? "bg-[var(--mint-primary-soft)] text-[var(--mint-primary)]"
-                          : "mint-text-secondary"
-                      }`}
+                      onClick={() =>
+                        setTipoDescuento(
+                          "porcentaje"
+                        )
+                      }
+                      className={`
+                        px-3
+                        py-1.5
+                        rounded-lg
+                        text-xs
+                        font-bold
+                        transition
+
+                        ${
+                          tipoDescuento ===
+                          "porcentaje"
+                            ? `
+                                bg-[var(--mint-teal-pale)]
+                                text-[var(--mint-teal)]
+                              `
+                            : `
+                                mint-text-secondary
+                              `
+                        }
+                      `}
                     >
                       %
                     </button>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div
+                  className="
+                    flex
+                    items-center
+                    gap-2
+                  "
+                >
                   <input
                     type="number"
                     min="0"
-                    max={tipoDescuento === "porcentaje" ? 100 : subtotal}
+                    max={
+                      tipoDescuento ===
+                      "porcentaje"
+                        ? 100
+                        : subtotal
+                    }
                     step="0.01"
-                    value={valorDescuento}
+                    value={
+                      valorDescuento
+                    }
                     onChange={(e) =>
                       setValorDescuento(
                         e.target.value
                       )
                     }
-                    className="w-full rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-card)] px-3 py-2.5 text-sm mint-text-primary"
+                    className="
+                      w-full
+                      rounded-xl
+                      border
+                      border-[var(--mint-border)]
+                      bg-[var(--mint-surface)]
+                      px-3
+                      py-2.5
+                      text-sm
+                      mint-text-primary
+                      outline-none
+                      transition
+                      focus:border-[var(--mint-teal)]
+                    "
                   />
 
-                  <span className="text-sm font-bold mint-text-secondary whitespace-nowrap">
-                    {tipoDescuento === "porcentaje" ? "%" : moneda}
+                  <span
+                    className="
+                      text-sm
+                      font-bold
+                      mint-text-secondary
+                      whitespace-nowrap
+                    "
+                  >
+                    {tipoDescuento ===
+                    "porcentaje"
+                      ? "%"
+                      : moneda}
                   </span>
                 </div>
 
-                <div className="flex justify-between gap-4 text-sm">
-                  <span className="mint-text-secondary">
-                    {es ? "Descuento aplicado" : "Applied discount"}
+                <div
+                  className="
+                    flex
+                    justify-between
+                    gap-4
+                    text-sm
+                  "
+                >
+                  <span
+                    className="
+                      mint-text-secondary
+                    "
+                  >
+                    {es
+                      ? "Descuento aplicado"
+                      : "Applied discount"}
                   </span>
 
-                  <strong className="text-[var(--mint-danger)]">
-                    -${descuentoCalculado.toLocaleString(
-                      es ? "es-MX" : "en-US",
+                  <strong
+                    className="
+                      text-[var(--mint-danger)]
+                    "
+                  >
+                    -$
+                    {descuentoCalculado.toLocaleString(
+                      es
+                        ? "es-MX"
+                        : "en-US",
                       {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
@@ -1692,7 +2120,6 @@ export default function PresupuestoForm({
                   </strong>
                 </div>
               </div>
-
 
               <div
                 className="
@@ -1705,9 +2132,7 @@ export default function PresupuestoForm({
                   gap-4
                 "
               >
-
                 <div>
-
                   <p
                     className="
                       text-xs
@@ -1722,70 +2147,67 @@ export default function PresupuestoForm({
 
                   <p
                     className="
-                      text-2xl
-                      font-bold
-                      text-[var(--mint-primary)]
+                      text-3xl
+                      font-extrabold
+                      text-[var(--mint-navy)]
                       mt-1
+                      tracking-tight
                     "
                   >
                     $
-                    {
-                      total.toLocaleString(
-                        es ? "es-MX" : "en-US",
-                        {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }
-                      )
-                    }
+                    {total.toLocaleString(
+                      es
+                        ? "es-MX"
+                        : "en-US",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
                   </p>
 
                   <p
                     className="
                       text-xs
-                      mint-text-muted
+                      font-semibold
+                      text-[var(--mint-teal)]
+                      mt-1
                     "
                   >
                     {moneda}
                   </p>
-
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
+          {/* ACCIONES */}
           <div
             className="
               flex
               justify-end
               gap-3
-              pt-2
+              pt-4
+              border-t
+              border-[var(--mint-border-soft)]
             "
           >
-
             <button
               type="button"
-              onClick={
-                onCancelar
-              }
+              onClick={onCancelar}
               className="
                 mint-btn
               "
             >
-              {es ? "Cancelar" : "Cancel"}
+              {es
+                ? "Cancelar"
+                : "Cancel"}
             </button>
 
             <button
               type="button"
-              onClick={
-                guardar
-              }
-              disabled={
-                guardando
-              }
+              onClick={guardar}
+              disabled={guardando}
               className="
                 mint-btn
                 mint-btn-primary
@@ -1795,27 +2217,19 @@ export default function PresupuestoForm({
                 disabled:opacity-60
               "
             >
+              <Save size={17} />
 
-              <Save
-                size={17}
-              />
-
-              {
-                guardando
-                  ? es ? "Guardando..." : "Saving..."
-                  : es ? "Guardar borrador" : "Save draft"
-              }
-
+              {guardando
+                ? es
+                  ? "Guardando..."
+                  : "Saving..."
+                : es
+                  ? "Guardar borrador"
+                  : "Save draft"}
             </button>
-
           </div>
-
         </div>
-
       </section>
-
     </div>
-
   );
-
 }

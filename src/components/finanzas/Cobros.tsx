@@ -719,6 +719,9 @@ export default function Cobros() {
         className="
           mint-card
           overflow-hidden
+          border
+          border-[var(--mint-border-teal)]
+          shadow-[0_12px_30px_rgba(15,42,65,0.06)]
         "
       >
 
@@ -726,6 +729,9 @@ export default function Cobros() {
           className="
             px-6
             py-5
+            bg-gradient-to-r
+            from-[var(--mint-surface)]
+            to-[var(--mint-surface-teal)]
             flex
             flex-col
             xl:flex-row
@@ -784,10 +790,10 @@ export default function Cobros() {
               xl:self-center
               rounded-xl
               border
-              border-[var(--mint-border)]
-              bg-[var(--mint-bg-soft)]
+              border-[var(--mint-border-teal)]
+              bg-white/80
               p-1
-              shadow-sm
+              shadow-[0_5px_14px_rgba(15,42,65,0.07)]
             "
           >
 
@@ -1022,6 +1028,13 @@ export default function Cobros() {
               overflow-hidden
               p-5
               min-h-[160px]
+              border
+              border-[var(--mint-border-soft)]
+              shadow-[0_10px_24px_rgba(15,42,65,0.06)]
+              transition-all
+              duration-200
+              hover:-translate-y-0.5
+              hover:shadow-[0_16px_32px_rgba(15,42,65,0.09)]
               flex
               flex-col
               justify-between
@@ -1034,7 +1047,7 @@ export default function Cobros() {
                 top-0
                 left-0
                 right-0
-                h-[3px]
+                h-[4px]
                 bg-[var(--mint-success)]
               "
             />
@@ -1076,10 +1089,13 @@ export default function Cobros() {
 
               <div
                 className="
-                  w-9
-                  h-9
+                  w-10
+                  h-10
                   shrink-0
                   rounded-xl
+                  border
+                  border-white/70
+                  shadow-sm
                   flex
                   items-center
                   justify-center
@@ -1139,6 +1155,13 @@ export default function Cobros() {
               overflow-hidden
               p-5
               min-h-[160px]
+              border
+              border-[var(--mint-border-soft)]
+              shadow-[0_10px_24px_rgba(15,42,65,0.06)]
+              transition-all
+              duration-200
+              hover:-translate-y-0.5
+              hover:shadow-[0_16px_32px_rgba(15,42,65,0.09)]
               flex
               flex-col
               justify-between
@@ -1151,7 +1174,7 @@ export default function Cobros() {
                 top-0
                 left-0
                 right-0
-                h-[3px]
+                h-[4px]
                 bg-[var(--mint-info)]
               "
             />
@@ -1193,10 +1216,13 @@ export default function Cobros() {
 
               <div
                 className="
-                  w-9
-                  h-9
+                  w-10
+                  h-10
                   shrink-0
                   rounded-xl
+                  border
+                  border-white/70
+                  shadow-sm
                   flex
                   items-center
                   justify-center
@@ -1256,6 +1282,13 @@ export default function Cobros() {
               overflow-hidden
               p-5
               min-h-[160px]
+              border
+              border-[var(--mint-border-soft)]
+              shadow-[0_10px_24px_rgba(15,42,65,0.06)]
+              transition-all
+              duration-200
+              hover:-translate-y-0.5
+              hover:shadow-[0_16px_32px_rgba(15,42,65,0.09)]
               flex
               flex-col
               justify-between
@@ -1268,7 +1301,7 @@ export default function Cobros() {
                 top-0
                 left-0
                 right-0
-                h-[3px]
+                h-[4px]
                 bg-[var(--mint-primary)]
               "
             />
@@ -1310,10 +1343,13 @@ export default function Cobros() {
 
               <div
                 className="
-                  w-9
-                  h-9
+                  w-10
+                  h-10
                   shrink-0
                   rounded-xl
+                  border
+                  border-white/70
+                  shadow-sm
                   flex
                   items-center
                   justify-center
@@ -1376,6 +1412,9 @@ export default function Cobros() {
           className="
             mint-card
             overflow-hidden
+            border
+            border-[var(--mint-border-teal)]
+            shadow-[0_14px_34px_rgba(15,42,65,0.065)]
           "
         >
 
@@ -1383,6 +1422,9 @@ export default function Cobros() {
             className="
               px-6
               py-5
+              bg-gradient-to-r
+              from-[var(--mint-surface)]
+              to-[var(--mint-surface-teal)]
               border-b
               border-[var(--mint-border)]
               flex
@@ -1446,18 +1488,19 @@ export default function Cobros() {
                 justify-center
                 self-start
                 xl:self-center
-                rounded-lg
+                rounded-xl
                 border
-                border-[var(--mint-border-strong)]
-                bg-[var(--mint-bg-card)]
+                border-[var(--mint-border-teal)]
+                bg-white
                 px-4
                 py-2
                 text-sm
                 font-semibold
                 mint-text-primary
-                shadow-sm
+                shadow-[0_4px_12px_rgba(15,42,65,0.06)]
                 transition-all
-                hover:bg-[var(--mint-bg-soft)]
+                hover:bg-[var(--mint-surface-teal)]
+                hover:border-[var(--mint-teal-soft)]
                 disabled:opacity-50
                 disabled:cursor-not-allowed
               "
@@ -1484,7 +1527,7 @@ export default function Cobros() {
               className="
                 px-6
                 py-4
-                bg-[var(--mint-bg-soft)]
+                bg-[var(--mint-surface-teal)]
                 border-b
                 border-[var(--mint-border)]
                 overflow-x-auto
@@ -1508,9 +1551,9 @@ export default function Cobros() {
                     )
                   }
                   className={`
-                    px-3
+                    px-3.5
                     py-2
-                    rounded-lg
+                    rounded-xl
                     text-xs
                     font-semibold
                     transition-all
@@ -1555,9 +1598,9 @@ export default function Cobros() {
                           )
                         }
                         className={`
-                          px-3
+                          px-3.5
                           py-2
-                          rounded-lg
+                          rounded-xl
                           text-xs
                           font-semibold
                           transition-all
@@ -1626,7 +1669,7 @@ export default function Cobros() {
 
                 <tr
                   className="
-                    bg-[var(--mint-bg-soft)]
+                    bg-[var(--mint-surface-soft)]
                     border-b
                     border-[var(--mint-border)]
                   "
@@ -1756,9 +1799,9 @@ export default function Cobros() {
                               }
                               className="
                                 border-b
-                                border-[var(--mint-border)]
+                                border-[var(--mint-border-soft)]
                                 transition-colors
-                                hover:bg-[var(--mint-bg-soft)]
+                                hover:bg-[var(--mint-surface-teal)]
                               "
                             >
 
@@ -1994,7 +2037,7 @@ export default function Cobros() {
               className="
                 px-6
                 py-4
-                bg-[var(--mint-bg-soft)]
+                bg-[var(--mint-surface-soft)]
                 border-t
                 border-[var(--mint-border)]
               "

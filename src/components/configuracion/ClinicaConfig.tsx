@@ -392,8 +392,12 @@ export default function ClinicaConfig() {
     return (
       <div
         className="
-          mint-card
+          rounded-[22px]
+          border
+          border-[var(--mint-border)]
+          bg-white
           p-6
+          shadow-[0_10px_30px_rgba(15,42,65,0.06)]
         "
       >
 
@@ -415,20 +419,33 @@ export default function ClinicaConfig() {
 
     <div
       className="
-        mint-card
         overflow-hidden
+        rounded-[24px]
+        border
+        border-[var(--mint-border)]
+        bg-white
+        shadow-[0_16px_42px_rgba(15,42,65,0.09)]
       "
     >
 
       <div
         className="
+          relative
           flex
-          items-start
+          items-center
           justify-between
-          gap-4
-          p-6
+          gap-5
+          overflow-hidden
+          px-7
+          py-7
           border-b
-          border-[var(--mint-border)]
+          border-white/10
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+          after:absolute
+          after:inset-x-0
+          after:bottom-0
+          after:h-[3px]
+          after:bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]
         "
       >
 
@@ -442,13 +459,15 @@ export default function ClinicaConfig() {
 
           <div
             className="
+              relative
+              z-10
               w-11
               h-11
               rounded-xl
-              bg-[var(--mint-primary-soft)]
-              text-[var(--mint-primary)]
+              bg-white/12
+              text-white
               border
-              border-[var(--mint-border-primary)]
+              border-white/20
               flex
               items-center
               justify-center
@@ -468,7 +487,8 @@ export default function ClinicaConfig() {
               className="
                 text-xl
                 font-bold
-                mint-text-primary
+                tracking-[-0.02em]
+                text-white
               "
             >
               {es ? "Clínica" : "Clinic"}
@@ -477,7 +497,7 @@ export default function ClinicaConfig() {
             <p
               className="
                 text-sm
-                mint-text-secondary
+                text-white/75
                 mt-1
               "
             >
@@ -497,14 +517,24 @@ export default function ClinicaConfig() {
             guardando
           }
           className="
-            mint-btn
-            mint-btn-primary
+            relative
+            z-10
             inline-flex
             items-center
             gap-2
+            rounded-xl
+            border
+            border-white/25
+            bg-white
             px-4
             py-2.5
             text-sm
+            font-bold
+            text-[var(--mint-navy)]
+            shadow-[0_8px_22px_rgba(15,42,65,0.18)]
+            transition
+            hover:-translate-y-0.5
+            hover:bg-[var(--mint-teal-pale)]
             disabled:opacity-50
             disabled:cursor-not-allowed
           "
@@ -526,19 +556,62 @@ export default function ClinicaConfig() {
 
       <div
         className="
+          px-6
+          py-4
+          border-b
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(90deg,#eaf8f5_0%,#f7fbfa_72%,#ffffff_100%)]
+        "
+      >
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--mint-teal)] shadow-[0_0_0_4px_rgba(11,143,128,0.10)]" />
+          <div>
+            <p className="text-sm font-bold text-[var(--mint-navy)]">
+              {es ? "Información institucional" : "Institutional information"}
+            </p>
+            <p className="mt-0.5 text-xs leading-5 text-[var(--mint-text-secondary)]">
+              {es
+                ? "Estos datos identifican a la clínica dentro de MintOS y se utilizan en documentos generados por el sistema, como consentimientos y presupuestos."
+                : "These details identify the clinic within MintOS and are used in system-generated documents such as consent forms and estimates."}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="
           p-6
           grid
           grid-cols-1
           lg:grid-cols-2
-          gap-6
+          gap-5
+          bg-[var(--mint-app-bg)]
         "
       >
 
         <div
           className="
             space-y-5
+            rounded-[20px]
+            border
+            border-[var(--mint-border)]
+            bg-white
+            p-5
+            shadow-[0_8px_24px_rgba(15,42,65,0.045)]
           "
         >
+
+          <div className="pb-4 border-b border-[var(--mint-border-soft)]">
+            <p className="text-[10px] uppercase tracking-[0.16em] font-extrabold text-[var(--mint-teal)]">
+              {es ? "Identidad y contacto" : "Identity and contact"}
+            </p>
+            <h2 className="mt-1 text-base font-bold text-[var(--mint-navy)]">
+              {es ? "Datos del consultorio" : "Clinic details"}
+            </h2>
+            <p className="mt-1 text-xs text-[var(--mint-text-secondary)]">
+              {es ? "Información institucional utilizada por MintOS." : "Institutional information used by MintOS."}
+            </p>
+          </div>
 
           <div>
 
@@ -865,8 +938,26 @@ export default function ClinicaConfig() {
         <div
           className="
             space-y-5
+            rounded-[20px]
+            border
+            border-[var(--mint-border)]
+            bg-white
+            p-5
+            shadow-[0_8px_24px_rgba(15,42,65,0.045)]
           "
         >
+
+          <div className="pb-4 border-b border-[var(--mint-border-soft)]">
+            <p className="text-[10px] uppercase tracking-[0.16em] font-extrabold text-[#9b7a28]">
+              {es ? "Ubicación y operación" : "Location and operations"}
+            </p>
+            <h2 className="mt-1 text-base font-bold text-[var(--mint-navy)]">
+              {es ? "Datos operativos" : "Operational details"}
+            </h2>
+            <p className="mt-1 text-xs text-[var(--mint-text-secondary)]">
+              {es ? "Dirección regional, horario y zona horaria de la clínica." : "Regional address, business hours and clinic time zone."}
+            </p>
+          </div>
 
           <div
             className="
@@ -1049,23 +1140,64 @@ export default function ClinicaConfig() {
               "
             >
 
-              <option
-                value="America/Hermosillo"
-              >
-                Sonora / Arizona
-              </option>
+              <optgroup label={es ? "América" : "Americas"}>
+                <option value="America/Anchorage">Alaska</option>
+                <option value="America/Los_Angeles">Pacific Time — Los Angeles / Vancouver</option>
+                <option value="America/Tijuana">Tijuana / Baja California</option>
+                <option value="America/Phoenix">Arizona</option>
+                <option value="America/Hermosillo">Hermosillo / Sonora</option>
+                <option value="America/Denver">Mountain Time — Denver</option>
+                <option value="America/Chicago">Central Time — Chicago</option>
+                <option value="America/Mexico_City">Mexico City</option>
+                <option value="America/New_York">Eastern Time — New York / Toronto</option>
+                <option value="America/Halifax">Atlantic Time — Halifax</option>
+                <option value="America/St_Johns">Newfoundland — St. John's</option>
+                <option value="America/Bogota">Bogotá / Lima / Quito</option>
+                <option value="America/Caracas">Caracas</option>
+                <option value="America/Santiago">Santiago</option>
+                <option value="America/Argentina/Buenos_Aires">Buenos Aires</option>
+                <option value="America/Sao_Paulo">São Paulo</option>
+              </optgroup>
 
-              <option
-                value="America/Tijuana"
-              >
-                Baja California
-              </option>
+              <optgroup label={es ? "Europa" : "Europe"}>
+                <option value="Europe/London">London / Dublin</option>
+                <option value="Europe/Lisbon">Lisbon</option>
+                <option value="Europe/Madrid">Madrid / Paris / Berlin / Rome</option>
+                <option value="Europe/Athens">Athens / Helsinki / Bucharest</option>
+                <option value="Europe/Istanbul">Istanbul</option>
+                <option value="Europe/Moscow">Moscow</option>
+              </optgroup>
 
-              <option
-                value="America/Mexico_City"
-              >
-                {es ? "Centro de México" : "Central Mexico"}
-              </option>
+              <optgroup label={es ? "África" : "Africa"}>
+                <option value="Africa/Casablanca">Casablanca</option>
+                <option value="Africa/Cairo">Cairo</option>
+                <option value="Africa/Johannesburg">Johannesburg</option>
+                <option value="Africa/Nairobi">Nairobi</option>
+              </optgroup>
+
+              <optgroup label={es ? "Asia" : "Asia"}>
+                <option value="Asia/Dubai">Dubai / Abu Dhabi</option>
+                <option value="Asia/Karachi">Karachi</option>
+                <option value="Asia/Kolkata">India — Kolkata / Mumbai / Delhi</option>
+                <option value="Asia/Dhaka">Dhaka</option>
+                <option value="Asia/Bangkok">Bangkok / Jakarta</option>
+                <option value="Asia/Singapore">Singapore / Kuala Lumpur</option>
+                <option value="Asia/Shanghai">China — Shanghai / Beijing</option>
+                <option value="Asia/Hong_Kong">Hong Kong</option>
+                <option value="Asia/Tokyo">Tokyo / Seoul</option>
+              </optgroup>
+
+              <optgroup label={es ? "Oceanía" : "Oceania"}>
+                <option value="Australia/Perth">Perth</option>
+                <option value="Australia/Adelaide">Adelaide</option>
+                <option value="Australia/Sydney">Sydney / Melbourne</option>
+                <option value="Pacific/Auckland">Auckland</option>
+                <option value="Pacific/Honolulu">Honolulu</option>
+              </optgroup>
+
+              <optgroup label="UTC">
+                <option value="UTC">UTC</option>
+              </optgroup>
 
             </select>
 

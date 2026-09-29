@@ -740,7 +740,13 @@ export default function Comisiones({
       <div
         className="
           mint-card
+          relative
+          overflow-hidden
           p-6
+          border
+          border-[var(--mint-border-teal)]
+          bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
+          shadow-[0_12px_32px_rgba(15,42,65,0.06)]
         "
       >
 
@@ -798,10 +804,11 @@ export default function Comisiones({
               inline-flex
               p-1
               rounded-xl
-              bg-[var(--mint-bg-soft)]
+              bg-[var(--mint-surface-teal)]
               border
-              border-[var(--mint-border)]
+              border-[var(--mint-border-teal)]
               self-start
+              shadow-sm
             "
           >
 
@@ -824,9 +831,11 @@ export default function Comisiones({
                   "doctores"
 
                     ? `
-                      bg-white
-                      text-[var(--mint-primary)]
-                      shadow-sm
+                      bg-[var(--mint-surface)]
+                      text-[var(--mint-teal)]
+                      shadow-[0_3px_10px_rgba(15,42,65,0.08)]
+                      ring-1
+                      ring-[var(--mint-border-teal)]
                     `
 
                     : `
@@ -838,7 +847,7 @@ export default function Comisiones({
               Doctores
             </button>
 
-                    <button
+            <button
               type="button"
               onClick={() => {
 
@@ -867,9 +876,11 @@ export default function Comisiones({
                   "especialistas"
 
                     ? `
-                        bg-white
-                        text-[var(--mint-primary)]
-                        shadow-sm
+                        bg-[var(--mint-surface)]
+                        text-[var(--mint-teal)]
+                        shadow-[0_3px_10px_rgba(15,42,65,0.08)]
+                        ring-1
+                        ring-[var(--mint-border-teal)]
                       `
 
                     : `
@@ -906,28 +917,40 @@ export default function Comisiones({
                 <div
                   className="
                     mint-card-primary
+                    relative
+                    overflow-hidden
                     p-5
+                    border
+                    border-[var(--mint-border-teal)]
+                    shadow-[0_8px_24px_rgba(15,42,65,0.05)]
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Doctores
                   </p>
+
                   <p className="text-2xl font-bold mint-text-primary mt-2">
-                   {
-  resumenDoctores.length
-}
+                    {
+                      resumenDoctores.length
+                    }
                   </p>
                 </div>
 
                 <div
                   className="
                     mint-card
+                    relative
+                    overflow-hidden
                     p-5
+                    border
+                    border-[var(--mint-border)]
+                    shadow-[0_8px_24px_rgba(15,42,65,0.05)]
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Por pagar MXN
                   </p>
+
                   <p className="text-2xl font-bold text-[var(--mint-success)] mt-2">
                     $
                     {
@@ -941,12 +964,18 @@ export default function Comisiones({
                 <div
                   className="
                     mint-card-accent
+                    relative
+                    overflow-hidden
                     p-5
+                    border
+                    border-[var(--mint-border)]
+                    shadow-[0_8px_24px_rgba(15,42,65,0.05)]
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Por pagar USD
                   </p>
+
                   <p className="text-2xl font-bold mint-text-accent mt-2">
                     $
                     {
@@ -963,6 +992,9 @@ export default function Comisiones({
                 className="
                   mint-card
                   overflow-hidden
+                  border
+                  border-[var(--mint-border)]
+                  shadow-[0_12px_30px_rgba(15,42,65,0.055)]
                 "
               >
 
@@ -1022,6 +1054,7 @@ export default function Comisiones({
                                     item.doctor.nombre
                                   }
                                 </p>
+
                                 <p className="text-xs mint-text-muted mt-1">
                                   {
                                     item.doctor.especialidad ||
@@ -1145,19 +1178,19 @@ export default function Comisiones({
                                         item.doctor
                                       );
 
-                                    setMostrarDetalleDoctor(
-                                      true
-                                    );
+                                      setMostrarDetalleDoctor(
+                                        true
+                                      );
 
-                                  }}
-                                  className="
-                                    mint-btn
-                                    mint-btn-action
-                                    mint-btn-sm
-                                  "
-                                >
-                                  Ver detalle
-                                </button>
+                                    }}
+                                    className="
+                                      mint-btn
+                                      mint-btn-action
+                                      mint-btn-sm
+                                    "
+                                  >
+                                    Ver detalle
+                                  </button>
 
                                 </div>
 
@@ -1193,10 +1226,11 @@ export default function Comisiones({
                 "
               >
 
-                <div className="mint-card-primary p-5">
+                <div className="mint-card-primary relative overflow-hidden p-5 border border-[var(--mint-border-teal)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Especialistas
                   </p>
+
                   <p className="text-2xl font-bold mint-text-primary mt-2">
                     {
                       resumenEspecialistas.length
@@ -1204,10 +1238,11 @@ export default function Comisiones({
                   </p>
                 </div>
 
-                <div className="mint-card p-5">
+                <div className="mint-card relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Por pagar MXN
                   </p>
+
                   <p className="text-2xl font-bold text-[var(--mint-danger)] mt-2">
                     $
                     {
@@ -1218,10 +1253,11 @@ export default function Comisiones({
                   </p>
                 </div>
 
-                <div className="mint-card-accent p-5">
+                <div className="mint-card-accent relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
                     Por pagar USD
                   </p>
+
                   <p className="text-2xl font-bold mint-text-accent mt-2">
                     $
                     {
@@ -1260,6 +1296,9 @@ export default function Comisiones({
                           className="
                             mint-card
                             overflow-hidden
+                            border
+                            border-[var(--mint-border)]
+                            shadow-[0_10px_28px_rgba(15,42,65,0.055)]
                           "
                         >
 
@@ -1282,6 +1321,7 @@ export default function Comisiones({
                               <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
                                 Especialista
                               </p>
+
                               <h3 className="text-xl font-bold mint-text-primary mt-1">
                                 {
                                   especialista.nombre
@@ -1295,6 +1335,7 @@ export default function Comisiones({
                                 <p className="text-[10px] uppercase font-bold text-[var(--mint-danger)]">
                                   Pendiente MXN
                                 </p>
+
                                 <p className="font-bold text-[var(--mint-danger)]">
                                   $
                                   {
@@ -1309,6 +1350,7 @@ export default function Comisiones({
                                 <p className="text-[10px] uppercase font-bold text-[var(--mint-warning)]">
                                   Pendiente USD
                                 </p>
+
                                 <p className="font-bold text-[var(--mint-warning)]">
                                   $
                                   {
@@ -1441,6 +1483,7 @@ export default function Comisiones({
                                                   )
                                                 }
                                               </span>
+
                                               <span className="ml-2 text-xs mint-text-muted">
                                                 {
                                                   tratamiento.moneda_especialista ===
@@ -1462,6 +1505,7 @@ export default function Comisiones({
                                                       <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[var(--mint-success-bg)] text-[var(--mint-success)] border border-[var(--mint-success-border)]">
                                                         Pagado
                                                       </span>
+
                                                       <p className="text-[10px] mint-text-muted mt-1">
                                                         {
                                                           tratamiento.especialista_metodo_pago ||
@@ -1606,8 +1650,12 @@ export default function Comisiones({
               mint-card
               w-full
               max-w-md
+              overflow-hidden
+              border
+              border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
               p-6
-              shadow-xl
+              shadow-[0_24px_70px_rgba(15,42,65,0.22)]
             "
           >
 
@@ -1634,6 +1682,7 @@ export default function Comisiones({
                   <p className="text-xs mint-text-muted">
                     MXN
                   </p>
+
                   <p className="text-xl font-bold mint-text-primary">
                     $
                     {
@@ -1648,6 +1697,7 @@ export default function Comisiones({
                   <p className="text-xs mint-text-muted">
                     USD
                   </p>
+
                   <p className="text-xl font-bold mint-text-accent">
                     $
                     {
@@ -1838,8 +1888,12 @@ export default function Comisiones({
               mint-card
               w-full
               max-w-md
+              overflow-hidden
+              border
+              border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
               p-6
-              shadow-xl
+              shadow-[0_24px_70px_rgba(15,42,65,0.22)]
             "
           >
 
@@ -1872,6 +1926,7 @@ export default function Comisiones({
                     )
                   )
                 }
+
                 <span className="text-sm ml-2 mint-text-muted">
                   {
                     tratamientoPago.moneda_especialista ===
@@ -1920,11 +1975,13 @@ export default function Comisiones({
               </div>
 
               <div className="mt-4">
+
                 <label className="text-sm font-semibold mint-text-primary">
                   Cantidad
                 </label>
 
                 <div className="relative mt-2">
+
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 mint-text-muted font-semibold">
                     $
                   </span>
@@ -1957,8 +2014,11 @@ export default function Comisiones({
                         : "MXN"
                     }
                   </span>
+
                 </div>
+
               </div>
+
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
