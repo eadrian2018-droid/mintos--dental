@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
 
   font-size: 14px;
@@ -21,8 +23,8 @@
 
 
   /* =========================================================
-     MINTOS DESIGN SYSTEM V13
-     Brand
+     MINTOS DESIGN SYSTEM V14
+     BRAND
      ========================================================= */
 
   --mint-navy: #102f4f;
@@ -47,6 +49,12 @@
   --mint-surface-soft: #f8fbfa;
 
   --mint-surface-teal: #f1faf8;
+
+  --mint-surface-elevated: #ffffff;
+
+  --mint-surface-input: #ffffff;
+
+  --mint-surface-hover: #f3f8f7;
 
 
   /* =========================================================
@@ -129,19 +137,30 @@
      ========================================================= */
 
   --mint-success: #0b8f80;
+
   --mint-success-bg: #eaf8f5;
+
   --mint-success-border: #bfe4dc;
 
+
   --mint-warning: #b87908;
+
   --mint-warning-bg: #fff8e8;
+
   --mint-warning-border: #f1d17c;
 
+
   --mint-danger: #e53e5d;
+
   --mint-danger-bg: #fff0f3;
+
   --mint-danger-border: #ffc4cf;
 
+
   --mint-info: #337b9c;
+
   --mint-info-bg: #edf7fb;
+
   --mint-info-border: #c9e4ef;
 
 
@@ -151,6 +170,135 @@
 
   --mint-transition:
     160ms ease;
+
+}
+
+
+/* =========================================================
+   DARK MODE
+   ========================================================= */
+
+.dark {
+
+  /* BRAND */
+
+  --mint-navy: #e7f1f4;
+
+  --mint-navy-soft: #c5dce3;
+
+  --mint-teal: #5fd3bd;
+
+  --mint-teal-medium: #45bea8;
+
+  --mint-teal-soft: #78ddca;
+
+  --mint-teal-pale: #123b39;
+
+  --mint-gold: #dfc77f;
+
+
+  /* SURFACES */
+
+  --mint-app-bg: #07151f;
+
+  --mint-surface: #0e202c;
+
+  --mint-surface-soft: #112631;
+
+  --mint-surface-teal: #123331;
+
+  --mint-surface-elevated: #152b38;
+
+  --mint-surface-input: #102531;
+
+  --mint-surface-hover: #17313d;
+
+
+  /* TEXT */
+
+  --mint-text-primary: #edf5f7;
+
+  --mint-text-secondary: #aec1ca;
+
+  --mint-text-muted: #8097a3;
+
+  --mint-text-on-brand: #ffffff;
+
+
+  /* BORDERS */
+
+  --mint-border:
+    rgba(185, 215, 224, 0.14);
+
+  --mint-border-soft:
+    rgba(185, 215, 224, 0.09);
+
+  --mint-border-teal:
+    rgba(95, 211, 189, 0.28);
+
+
+  /* BRAND GRADIENTS */
+
+  --mint-gradient-brand:
+    linear-gradient(
+      120deg,
+      #102c42 0%,
+      #16485a 52%,
+      #176c66 100%
+    );
+
+  --mint-gradient-accent:
+    linear-gradient(
+      90deg,
+      #25b39a 0%,
+      #65cdb8 55%,
+      #d8bd72 100%
+    );
+
+
+  /* SEMANTIC */
+
+  --mint-success: #71dfcb;
+
+  --mint-success-bg: #103632;
+
+  --mint-success-border: #285e58;
+
+
+  --mint-warning: #e3bd65;
+
+  --mint-warning-bg: #352d1d;
+
+  --mint-warning-border: #65522b;
+
+
+  --mint-danger: #ff8499;
+
+  --mint-danger-bg: #3a2028;
+
+  --mint-danger-border: #693341;
+
+
+  --mint-info: #75c3e4;
+
+  --mint-info-bg: #142e3b;
+
+  --mint-info-border: #28546a;
+
+
+  /* SHADOWS */
+
+  --mint-shadow-soft:
+    0 8px 24px rgba(0, 0, 0, 0.18);
+
+  --mint-shadow-card:
+    0 16px 36px rgba(0, 0, 0, 0.22);
+
+  --mint-shadow-elevated:
+    0 18px 42px rgba(0, 0, 0, 0.28);
+
+  --mint-shadow-brand:
+    0 14px 34px rgba(0, 0, 0, 0.26);
 
 }
 
@@ -193,6 +341,10 @@ body {
   color:
     var(--mint-text-primary);
 
+  transition:
+    background-color var(--mint-transition),
+    color var(--mint-transition);
+
 }
 
 
@@ -225,6 +377,36 @@ button {
     color var(--mint-transition),
     box-shadow var(--mint-transition),
     transform var(--mint-transition);
+
+}
+
+
+input,
+select,
+textarea {
+
+  color:
+    var(--mint-text-primary);
+
+}
+
+
+input::placeholder,
+textarea::placeholder {
+
+  color:
+    var(--mint-text-muted);
+
+}
+
+
+select option {
+
+  background:
+    var(--mint-surface);
+
+  color:
+    var(--mint-text-primary);
 
 }
 
@@ -338,49 +520,203 @@ h3 {
 
 
 /* =========================================================
-   DARK MODE TOKENS
-   Preparados para cuando reparemos Dark Mode
+   DARK MODE — TAILWIND COMPATIBILITY
+   ========================================================= */
+
+.dark .bg-white {
+
+  background-color:
+    var(--mint-surface) !important;
+
+}
+
+
+.dark .bg-slate-50 {
+
+  background-color:
+    var(--mint-surface-soft) !important;
+
+}
+
+
+.dark .bg-slate-100 {
+
+  background-color:
+    var(--mint-surface-elevated) !important;
+
+}
+
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+
+  color:
+    var(--mint-text-primary) !important;
+
+}
+
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+
+  color:
+    var(--mint-text-secondary) !important;
+
+}
+
+
+.dark .text-slate-400 {
+
+  color:
+    var(--mint-text-muted) !important;
+
+}
+
+
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
+
+  border-color:
+    var(--mint-border) !important;
+
+}
+
+
+/* =========================================================
+   IMPORTANT:
+   WHITE TEXT INSIDE BRAND / GRADIENT HEADERS STAYS WHITE
+   ========================================================= */
+
+.dark .text-white {
+
+  color:
+    #ffffff;
+
+}
+
+
+/* =========================================================
+   DARK MODE — FORMS
+   ========================================================= */
+
+.dark input,
+.dark select,
+.dark textarea {
+
+  color:
+    var(--mint-text-primary);
+
+}
+
+
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
+
+  background-color:
+    var(--mint-surface-input);
+
+  border-color:
+    var(--mint-border);
+
+}
+
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+
+  color:
+    var(--mint-text-muted);
+
+}
+
+
+/* =========================================================
+   DARK MODE — COMMON MINTOS COMPONENTS
+   ========================================================= */
+
+.dark .mint-card {
+
+  background:
+    var(--mint-surface);
+
+  border-color:
+    var(--mint-border);
+
+  box-shadow:
+    var(--mint-shadow-card);
+
+}
+
+
+.dark .mint-input {
+
+  background:
+    var(--mint-surface-input);
+
+  border-color:
+    var(--mint-border);
+
+  color:
+    var(--mint-text-primary);
+
+}
+
+
+.dark .mint-label {
+
+  color:
+    var(--mint-text-secondary);
+
+}
+
+
+/* =========================================================
+   DARK MODE — SCROLLBAR
    ========================================================= */
 
 .dark {
 
-  --mint-app-bg: #081722;
+  color-scheme: dark;
 
-  --mint-surface: #102331;
-
-  --mint-surface-soft: #102936;
-
-  --mint-surface-teal: #123d3a;
+}
 
 
-  --mint-text-primary: #f3f8fa;
+.dark ::-webkit-scrollbar {
 
-  --mint-text-secondary: #a9bdc7;
+  width: 10px;
 
-  --mint-text-muted: #78909d;
+  height: 10px;
 
-
-  --mint-border: rgba(255, 255, 255, 0.08);
-
-  --mint-border-soft: rgba(255, 255, 255, 0.06);
-
-  --mint-border-teal: #285e58;
+}
 
 
-  --mint-success: #71dfcb;
+.dark ::-webkit-scrollbar-track {
 
-  --mint-success-bg: #123d3a;
+  background:
+    var(--mint-app-bg);
 
-  --mint-success-border: #285e58;
+}
 
 
-  --mint-shadow-soft:
-    0 8px 24px rgba(0, 0, 0, 0.12);
+.dark ::-webkit-scrollbar-thumb {
 
-  --mint-shadow-card:
-    0 16px 36px rgba(0, 0, 0, 0.16);
+  background:
+    #294552;
 
-  --mint-shadow-elevated:
-    0 18px 42px rgba(0, 0, 0, 0.20);
+  border-radius: 999px;
+
+  border:
+    2px solid var(--mint-app-bg);
+
+}
+
+
+.dark ::-webkit-scrollbar-thumb:hover {
+
+  background:
+    #37606d;
 
 }

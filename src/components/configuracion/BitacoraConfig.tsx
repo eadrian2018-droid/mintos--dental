@@ -316,8 +316,12 @@ export default function BitacoraConfig() {
 
     <div
       className="
-        mint-card
         overflow-hidden
+        rounded-[24px]
+        border
+        border-[var(--mint-border)]
+        bg-white
+        shadow-[0_12px_34px_rgba(15,42,65,0.07)]
       "
     >
 
@@ -331,7 +335,8 @@ export default function BitacoraConfig() {
           gap-4
           p-6
           border-b
-          border-[var(--mint-border)]
+          border-white/10
+          bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
         "
       >
 
@@ -348,10 +353,10 @@ export default function BitacoraConfig() {
               w-11
               h-11
               rounded-xl
-              bg-[var(--mint-primary-soft)]
-              text-[var(--mint-primary)]
+              bg-white/10
+              text-white
               border
-              border-[var(--mint-border-primary)]
+              border-white/15
               flex
               items-center
               justify-center
@@ -369,9 +374,9 @@ export default function BitacoraConfig() {
 
             <h1
               className="
-                text-xl
+                text-2xl
                 font-bold
-                mint-text-primary
+                text-white
               "
             >
               {es ? "Bitácora" : "Activity Log"}
@@ -380,7 +385,7 @@ export default function BitacoraConfig() {
             <p
               className="
                 text-sm
-                mint-text-secondary
+                text-white/70
                 mt-1
               "
             >
@@ -432,6 +437,7 @@ export default function BitacoraConfig() {
                 mint-input
                 w-full
                 sm:w-64
+                bg-white
                 pl-9
                 pr-3
                 py-2.5
@@ -469,6 +475,7 @@ export default function BitacoraConfig() {
               }
               className="
                 mint-input
+                bg-white
                 pl-9
                 pr-8
                 py-2.5
@@ -505,6 +512,8 @@ export default function BitacoraConfig() {
       <div
         className="
           overflow-x-auto
+          bg-[var(--mint-app-bg)]
+          p-4
         "
       >
 
@@ -517,9 +526,9 @@ export default function BitacoraConfig() {
 
           <thead
             className="
-              bg-[var(--mint-bg-soft)]
+              bg-[var(--mint-surface-teal)]
               border-b
-              border-[var(--mint-border)]
+              border-[var(--mint-border-teal)]
             "
           >
 
@@ -645,7 +654,8 @@ export default function BitacoraConfig() {
                           registro.id
                         }
                         className="
-                          hover:bg-[var(--mint-bg-soft)]
+                          bg-white
+                          hover:bg-[var(--mint-surface-teal)]
                           transition-colors
                         "
                       >

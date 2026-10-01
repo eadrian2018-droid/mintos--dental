@@ -32,126 +32,84 @@ export default function AjustesConfig() {
 
     <div className="space-y-5">
 
-      <div>
-
-        <div
-          className="
-            flex
-            items-center
-            gap-3
-          "
-        >
-
-          <div
-            className="
-              w-10
-              h-10
-              rounded-xl
-              flex
-              items-center
-              justify-center
-              bg-[var(--mint-primary-soft)]
-              text-[var(--mint-primary)]
-            "
-          >
-            <MonitorCog size={20} />
-          </div>
-
-          <div>
-
-            <h1
-              className="
-                text-2xl
-                font-bold
-                mint-text-primary
-              "
-            >
-              {es ? "Ajustes" : "Settings"}
-            </h1>
-
-            <p
-              className="
-                text-sm
-                mint-text-secondary
-                mt-1
-              "
-            >
-              {
-                es
-                  ? "Personaliza la apariencia y el funcionamiento de MintOS."
-                  : "Customize the appearance and behavior of MintOS."
-              }
-            </p>
-
-          </div>
-
-        </div>
-
-      </div>
-
-      {/* IDIOMA */}
-
       <section
         className="
-          mint-card
-          p-5
+          overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border)]
+          bg-white
+          shadow-[0_12px_34px_rgba(15,42,65,0.07)]
         "
       >
 
         <div
           className="
-            flex
-            items-start
-            justify-between
-            gap-6
+            relative
+            overflow-hidden
+            bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
+            px-6
+            py-6
           "
         >
 
-          <div
-            className="
-              flex
-              gap-3
-            "
-          >
+          <div className="relative z-10 flex items-center gap-4">
 
             <div
               className="
-                w-9
-                h-9
-                rounded-xl
                 flex
+                h-12
+                w-12
+                shrink-0
                 items-center
                 justify-center
-                bg-[var(--mint-bg-soft)]
-                text-[var(--mint-primary)]
-                flex-shrink-0
+                rounded-2xl
+                border
+                border-white/15
+                bg-white/10
+                text-white
+                shadow-sm
               "
             >
-              <Languages size={18} />
+              <MonitorCog size={24} />
             </div>
 
             <div>
 
-              <h2
+              <p
                 className="
-                  font-bold
-                  mint-text-primary
+                  text-[10px]
+                  font-extrabold
+                  uppercase
+                  tracking-[0.16em]
+                  text-[var(--mint-teal-soft)]
                 "
               >
-                {es ? "Idioma" : "Language"}
-              </h2>
+                {es ? "Preferencias de MintOS" : "MintOS preferences"}
+              </p>
+
+              <h1
+                className="
+                  mt-1
+                  text-2xl
+                  font-bold
+                  text-white
+                "
+              >
+                {es ? "Ajustes" : "Settings"}
+              </h1>
 
               <p
                 className="
-                  text-sm
-                  mint-text-secondary
                   mt-1
+                  text-sm
+                  text-white/70
                 "
               >
                 {
                   es
-                    ? "Selecciona el idioma de la interfaz de MintOS."
-                    : "Select the language of the MintOS interface."
+                    ? "Personaliza el idioma y la apariencia de tu espacio de trabajo."
+                    : "Customize the language and appearance of your workspace."
                 }
               </p>
 
@@ -161,253 +119,395 @@ export default function AjustesConfig() {
 
           <div
             className="
-              flex
-              items-center
-              rounded-xl
-              bg-[var(--mint-bg-soft)]
-              border
-              border-[var(--mint-border)]
-              p-1
-              flex-shrink-0
+              absolute
+              bottom-0
+              left-0
+              h-[3px]
+              w-full
+              bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]
             "
-          >
-
-            <button
-              type="button"
-              onClick={() =>
-                setLanguage("es")
-              }
-              className={`
-                rounded-lg
-                px-4
-                py-2
-                text-sm
-                font-semibold
-                transition
-
-                ${
-                  language === "es"
-                    ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
-                        shadow-sm
-                      `
-                    : `
-                        mint-text-muted
-                        hover:text-[var(--mint-text-primary)]
-                      `
-                }
-              `}
-            >
-              Español
-            </button>
-
-            <button
-              type="button"
-              onClick={() =>
-                setLanguage("en")
-              }
-              className={`
-                rounded-lg
-                px-4
-                py-2
-                text-sm
-                font-semibold
-                transition
-
-                ${
-                  language === "en"
-                    ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
-                        shadow-sm
-                      `
-                    : `
-                        mint-text-muted
-                        hover:text-[var(--mint-text-primary)]
-                      `
-                }
-              `}
-            >
-              English
-            </button>
-
-          </div>
+          />
 
         </div>
 
-      </section>
-
-      {/* APARIENCIA */}
-
-      <section
-        className="
-          mint-card
-          p-5
-        "
-      >
-
         <div
           className="
-            flex
-            items-start
-            justify-between
-            gap-6
+            grid
+            grid-cols-1
+            gap-5
+            bg-[var(--mint-app-bg)]
+            p-6
+            xl:grid-cols-2
           "
         >
 
-          <div
+          {/* IDIOMA */}
+
+          <section
             className="
-              flex
-              gap-3
+              rounded-[20px]
+              border
+              border-[var(--mint-border)]
+              bg-white
+              p-5
+              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
             "
           >
 
             <div
               className="
-                w-9
-                h-9
-                rounded-xl
                 flex
-                items-center
-                justify-center
-                bg-[var(--mint-bg-soft)]
-                text-[var(--mint-primary)]
-                flex-shrink-0
+                h-full
+                flex-col
+                justify-between
+                gap-5
               "
             >
-              {
-                theme === "dark"
-                  ? <Moon size={18} />
-                  : <Sun size={18} />
-              }
-            </div>
 
-            <div>
+              <div className="flex gap-3">
 
-              <h2
+                <div
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-[var(--mint-border-teal)]
+                    bg-[var(--mint-surface-teal)]
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  <Languages size={19} />
+                </div>
+
+                <div>
+
+                  <p
+                    className="
+                      text-[10px]
+                      font-extrabold
+                      uppercase
+                      tracking-[0.14em]
+                      text-[var(--mint-teal)]
+                    "
+                  >
+                    {es ? "Interfaz" : "Interface"}
+                  </p>
+
+                  <h2
+                    className="
+                      mt-1
+                      font-bold
+                      text-[var(--mint-navy)]
+                    "
+                  >
+                    {es ? "Idioma" : "Language"}
+                  </h2>
+
+                  <p
+                    className="
+                      mt-1
+                      text-sm
+                      leading-6
+                      text-[var(--mint-text-secondary)]
+                    "
+                  >
+                    {
+                      es
+                        ? "Selecciona el idioma que utilizará la interfaz de MintOS."
+                        : "Select the language used throughout the MintOS interface."
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div
                 className="
-                  font-bold
-                  mint-text-primary
+                  flex
+                  items-center
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-surface-soft)]
+                  p-1
                 "
               >
-                {
-                  es
-                    ? "Apariencia"
-                    : "Appearance"
-                }
-              </h2>
 
-              <p
-                className="
-                  text-sm
-                  mint-text-secondary
-                  mt-1
-                "
-              >
-                {
-                  es
-                    ? "Selecciona el tema visual de MintOS."
-                    : "Select the visual theme for MintOS."
-                }
-              </p>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLanguage("es")
+                  }
+                  className={`
+                    flex-1
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      language === "es"
+                        ? `
+                            bg-white
+                            text-[var(--mint-teal)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border-teal)]
+                          `
+                        : `
+                            text-[var(--mint-text-muted)]
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+                  Español
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setLanguage("en")
+                  }
+                  className={`
+                    flex-1
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      language === "en"
+                        ? `
+                            bg-white
+                            text-[var(--mint-teal)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border-teal)]
+                          `
+                        : `
+                            text-[var(--mint-text-muted)]
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+                  English
+                </button>
+
+              </div>
 
             </div>
 
-          </div>
+          </section>
 
-          <div
+          {/* APARIENCIA */}
+
+          <section
             className="
-              flex
-              items-center
-              rounded-xl
-              bg-[var(--mint-bg-soft)]
+              rounded-[20px]
               border
               border-[var(--mint-border)]
-              p-1
-              flex-shrink-0
+              bg-white
+              p-5
+              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
             "
           >
 
-            <button
-              type="button"
-              onClick={() =>
-                setTheme("light")
-              }
-              className={`
+            <div
+              className="
                 flex
-                items-center
-                gap-2
-                rounded-lg
-                px-4
-                py-2
-                text-sm
-                font-semibold
-                transition
-
-                ${
-                  theme === "light"
-                    ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
-                        shadow-sm
-                      `
-                    : `
-                        mint-text-muted
-                        hover:text-[var(--mint-text-primary)]
-                      `
-                }
-              `}
+                h-full
+                flex-col
+                justify-between
+                gap-5
+              "
             >
-              <Sun size={16} />
 
-              {
-                es
-                  ? "Claro"
-                  : "Light"
-              }
-            </button>
+              <div className="flex gap-3">
 
-            <button
-              type="button"
-              onClick={() =>
-                setTheme("dark")
-              }
-              className={`
-                flex
-                items-center
-                gap-2
-                rounded-lg
-                px-4
-                py-2
-                text-sm
-                font-semibold
-                transition
+                <div
+                  className="
+                    flex
+                    h-10
+                    w-10
+                    shrink-0
+                    items-center
+                    justify-center
+                    rounded-xl
+                    border
+                    border-[var(--mint-border-teal)]
+                    bg-[var(--mint-surface-teal)]
+                    text-[var(--mint-teal)]
+                  "
+                >
+                  {
+                    theme === "dark"
+                      ? <Moon size={19} />
+                      : <Sun size={19} />
+                  }
+                </div>
 
-                ${
-                  theme === "dark"
-                    ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
-                        shadow-sm
-                      `
-                    : `
-                        mint-text-muted
-                        hover:text-[var(--mint-text-primary)]
-                      `
-                }
-              `}
-            >
-              <Moon size={16} />
+                <div>
 
-              {
-                es
-                  ? "Oscuro"
-                  : "Dark"
-              }
-            </button>
+                  <p
+                    className="
+                      text-[10px]
+                      font-extrabold
+                      uppercase
+                      tracking-[0.14em]
+                      text-[var(--mint-teal)]
+                    "
+                  >
+                    {es ? "Visual" : "Visual"}
+                  </p>
 
-          </div>
+                  <h2
+                    className="
+                      mt-1
+                      font-bold
+                      text-[var(--mint-navy)]
+                    "
+                  >
+                    {
+                      es
+                        ? "Apariencia"
+                        : "Appearance"
+                    }
+                  </h2>
+
+                  <p
+                    className="
+                      mt-1
+                      text-sm
+                      leading-6
+                      text-[var(--mint-text-secondary)]
+                    "
+                  >
+                    {
+                      es
+                        ? "Selecciona el tema visual que deseas utilizar en MintOS."
+                        : "Select the visual theme you want to use in MintOS."
+                    }
+                  </p>
+
+                </div>
+
+              </div>
+
+              <div
+                className="
+                  flex
+                  items-center
+                  rounded-xl
+                  border
+                  border-[var(--mint-border)]
+                  bg-[var(--mint-surface-soft)]
+                  p-1
+                "
+              >
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTheme("light")
+                  }
+                  className={`
+                    flex
+                    flex-1
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      theme === "light"
+                        ? `
+                            bg-white
+                            text-[var(--mint-teal)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border-teal)]
+                          `
+                        : `
+                            text-[var(--mint-text-muted)]
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+                  <Sun size={16} />
+
+                  {
+                    es
+                      ? "Claro"
+                      : "Light"
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    setTheme("dark")
+                  }
+                  className={`
+                    flex
+                    flex-1
+                    items-center
+                    justify-center
+                    gap-2
+                    rounded-lg
+                    px-4
+                    py-2.5
+                    text-sm
+                    font-semibold
+                    transition-all
+
+                    ${
+                      theme === "dark"
+                        ? `
+                            bg-white
+                            text-[var(--mint-teal)]
+                            shadow-sm
+                            ring-1
+                            ring-[var(--mint-border-teal)]
+                          `
+                        : `
+                            text-[var(--mint-text-muted)]
+                            hover:text-[var(--mint-text-primary)]
+                          `
+                    }
+                  `}
+                >
+                  <Moon size={16} />
+
+                  {
+                    es
+                      ? "Oscuro"
+                      : "Dark"
+                  }
+                </button>
+
+              </div>
+
+            </div>
+
+          </section>
 
         </div>
 

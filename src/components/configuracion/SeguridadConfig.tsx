@@ -320,8 +320,12 @@ export default function SeguridadConfig() {
 
       <div
         className="
-          mint-card
           overflow-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border)]
+          bg-white
+          shadow-[0_12px_34px_rgba(15,42,65,0.07)]
         "
       >
 
@@ -332,7 +336,8 @@ export default function SeguridadConfig() {
             gap-3
             p-6
             border-b
-            border-[var(--mint-border)]
+            border-white/10
+            bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)]
           "
         >
 
@@ -341,10 +346,10 @@ export default function SeguridadConfig() {
               w-11
               h-11
               rounded-xl
-              bg-[var(--mint-primary-soft)]
-              text-[var(--mint-primary)]
+              bg-white/10
+              text-white
               border
-              border-[var(--mint-border-primary)]
+              border-white/15
               flex
               items-center
               justify-center
@@ -362,9 +367,9 @@ export default function SeguridadConfig() {
 
             <h1
               className="
-                text-xl
+                text-2xl
                 font-bold
-                mint-text-primary
+                text-white
               "
             >
               {es ? "Seguridad" : "Security"}
@@ -373,7 +378,7 @@ export default function SeguridadConfig() {
             <p
               className="
                 text-sm
-                mint-text-secondary
+                text-white/70
                 mt-1
               "
             >
@@ -388,13 +393,18 @@ export default function SeguridadConfig() {
           className="
             p-6
             space-y-5
+            bg-[var(--mint-app-bg)]
           "
         >
 
           <div
             className="
-              mint-card
+              rounded-[20px]
+              border
+              border-[var(--mint-border)]
+              bg-white
               p-5
+              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
             "
           >
 
@@ -420,8 +430,10 @@ export default function SeguridadConfig() {
                     w-10
                     h-10
                     rounded-xl
-                    bg-[var(--mint-bg-muted)]
-                    mint-text-secondary
+                    bg-[var(--mint-surface-teal)]
+                    text-[var(--mint-teal)]
+                    border
+                    border-[var(--mint-border-teal)]
                     flex
                     items-center
                     justify-center
@@ -505,8 +517,12 @@ export default function SeguridadConfig() {
 
           <div
             className="
-              mint-card
+              rounded-[20px]
+              border
+              border-[var(--mint-border)]
+              bg-white
               p-5
+              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
             "
           >
 
@@ -626,8 +642,12 @@ export default function SeguridadConfig() {
 
           <div
             className="
-              mint-card
+              rounded-[20px]
+              border
+              border-[var(--mint-border)]
+              bg-white
               p-5
+              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
             "
           >
 
@@ -645,10 +665,10 @@ export default function SeguridadConfig() {
                   w-10
                   h-10
                   rounded-xl
-                  bg-[var(--mint-primary-soft)]
-                  text-[var(--mint-primary)]
+                  bg-[var(--mint-surface-teal)]
+                  text-[var(--mint-teal)]
                   border
-                  border-[var(--mint-border-primary)]
+                  border-[var(--mint-border-teal)]
                   flex
                   items-center
                   justify-center

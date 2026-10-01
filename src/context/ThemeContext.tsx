@@ -55,7 +55,9 @@ export function ThemeProvider({
         savedTheme === "light" ||
         savedTheme === "dark"
       ) {
+
         return savedTheme;
+
       }
 
       return "light";
@@ -71,11 +73,21 @@ export function ThemeProvider({
         theme
       );
 
-      document.documentElement
-        .setAttribute(
-          "data-theme",
-          theme
-        );
+      const root =
+        document.documentElement;
+
+      root.setAttribute(
+        "data-theme",
+        theme
+      );
+
+      root.classList.toggle(
+        "dark",
+        theme === "dark"
+      );
+
+      root.style.colorScheme =
+        theme;
 
     },
     [
