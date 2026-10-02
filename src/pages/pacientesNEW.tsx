@@ -15,6 +15,8 @@ import { registrarBitacora } from "../lib/registrarBitacora";
 import Odontograma from "../components/Odontograma";
 
 import QRCodePaciente from "../components/QRCodePaciente";
+import PresupuestoForm from "../components/presupuestos/PresupuestoForm";
+import PresupuestoDetalle from "../components/presupuestos/PresupuestoDetalle";
 
 interface ZonaDiente {
 
@@ -347,6 +349,26 @@ const [
 ] = useState("");
 
 const [
+  presupuestosPaciente,
+  setPresupuestosPaciente,
+] = useState<any[]>([]);
+
+const [
+  cargandoPresupuestosPaciente,
+  setCargandoPresupuestosPaciente,
+] = useState(false);
+
+const [
+  mostrarFormularioPresupuestoPaciente,
+  setMostrarFormularioPresupuestoPaciente,
+] = useState(false);
+
+const [
+  presupuestoPacienteSeleccionado,
+  setPresupuestoPacienteSeleccionado,
+] = useState<any>(null);
+
+const [
   mostrarModalCobro,
   setMostrarModalCobro,
 ] = useState(false);
@@ -615,11 +637,6 @@ async function cargarTipoCambio() {
 
     .select("*")
 
-    .eq(
-      "activo",
-      true
-    )
-
     .order(
       "nombre",
       {
@@ -633,7 +650,9 @@ async function cargarTipoCambio() {
   ) {
 
     setDoctores(
-      data
+      data.filter(
+        (doctor: any) => doctor.activo !== false
+      )
     );
 
   }
@@ -904,6 +923,136 @@ async function guardarCorreccionNotaClinica(
   );
 
 }
+
+  async function cargarPresupuestosPaciente(pacienteId: number) {
+
+    setCargandoPresupuestosPaciente(true);
+
+    const { data, error } = await supabase
+      .from("presupuestos")
+      .select("*")
+      .eq("paciente_id", pacienteId)
+      .order("fecha", { ascending: false });
+
+    if (error) {
+      console.error("Error cargando presupuestos del paciente:", error);
+      setPresupuestosPaciente([]);
+      setCargandoPresupuestosPaciente(false);
+      return;
+    }
+
+    setPresupuestosPaciente(data || []);
+    setCargandoPresupuestosPaciente(false);
+  }
+
+  async function guardarPresupuestoPaciente(datos: any) {
+
+    if (!pacienteAbierto?.id) {
+      return;
+    }
+
+    const items = Array.isArray(datos.items) ? datos.items : [];
+    const subtotal = items.reduce(
+      (acumulado: number, item: any) =>
+        acumulado + Number(item.cantidad || 0) * Number(item.precio_unitario || 0),
+      0
+    );
+
+    const descuento = Math.min(
+      Math.max(Number(datos.descuento || 0), 0),
+      subtotal
+    );
+
+    const total = Math.max(subtotal - descuento, 0);
+
+    const { data: presupuestoCreado, error: errorPresupuesto } = await supabase
+      .from("presupuestos")
+      .insert([{
+        paciente_id: pacienteAbierto.id,
+        nombre_paciente: pacienteAbierto.nombre,
+        estado: "Borrador",
+        moneda: datos.moneda,
+        idioma: datos.idioma,
+        subtotal,
+        descuento,
+        total,
+        notas: datos.notas || null,
+        updated_at: new Date().toISOString(),
+      }])
+      .select("*")
+      .single();
+
+    if (errorPresupuesto || !presupuestoCreado) {
+      console.error("Error creando presupuesto:", errorPresupuesto);
+      alert(es ? "No se pudo guardar el presupuesto." : "The estimate could not be saved.");
+      throw errorPresupuesto;
+    }
+
+    const itemsInsertar = items.map((item: any) => ({
+      presupuesto_id: presupuestoCreado.id,
+      diente: String(item.diente || "").trim() || null,
+      tratamiento: String(item.tratamiento || "").trim(),
+      catalogo_tratamiento_id: item.catalogo_tratamiento_id ?? null,
+      dientes: Array.isArray(item.dientes) ? item.dientes : [],
+      arcada: item.arcada || null,
+      cantidad: Number(item.cantidad || 0),
+      precio_unitario: Number(item.precio_unitario || 0),
+      total: Number(item.cantidad || 0) * Number(item.precio_unitario || 0),
+    }));
+
+    const { error: errorItems } = await supabase
+      .from("presupuesto_items")
+      .insert(itemsInsertar);
+
+    if (errorItems) {
+      console.error("Error guardando tratamientos del presupuesto:", errorItems);
+      await supabase.from("presupuestos").delete().eq("id", presupuestoCreado.id);
+      alert(es ? "No se pudieron guardar los tratamientos del presupuesto." : "The estimate treatments could not be saved.");
+      throw errorItems;
+    }
+
+    await registrarBitacora({
+      accion: "Crear presupuesto",
+      modulo: "Pacientes",
+      detalle: `Presupuesto ID: ${presupuestoCreado.id} | Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Total: ${total} ${datos.moneda}`,
+    });
+
+    setMostrarFormularioPresupuestoPaciente(false);
+    await cargarPresupuestosPaciente(pacienteAbierto.id);
+  }
+
+  async function abrirPresupuestoPaciente(presupuesto: any) {
+
+    const { data, error } = await supabase
+      .from("presupuesto_items")
+      .select("*")
+      .eq("presupuesto_id", presupuesto.id)
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.error("Error cargando detalle del presupuesto:", error);
+      alert(es ? "No se pudo cargar el detalle del presupuesto." : "The estimate details could not be loaded.");
+      return;
+    }
+
+    setPresupuestoPacienteSeleccionado({
+      ...presupuesto,
+      paciente_nombre: pacienteAbierto?.nombre || presupuesto.nombre_paciente,
+      items: (data || []).map((item: any) => ({
+        ...item,
+        dientes: Array.isArray(item.dientes)
+          ? item.dientes.map((diente: unknown) => Number(diente))
+          : [],
+        arcada:
+          item.arcada === "superior" || item.arcada === "inferior"
+            ? item.arcada
+            : null,
+        cantidad: Number(item.cantidad || 0),
+        precio_unitario: Number(item.precio_unitario || 0),
+        total: Number(item.total || 0),
+      })),
+    });
+  }
 
   async function cargarCitas(
   pacienteId: number
@@ -3197,6 +3346,13 @@ cargarHistorialMedico(
   paciente.id
 );
 
+cargarPresupuestosPaciente(
+  paciente.id
+);
+
+setMostrarFormularioPresupuestoPaciente(false);
+setPresupuestoPacienteSeleccionado(null);
+
     if (
       paciente.observaciones_dientes
     ) {
@@ -3952,6 +4108,43 @@ const pacientesFiltrados =
       bg-[var(--mint-surface-teal)]
       p-4
     ">
+
+    {mostrarFormularioPresupuestoPaciente ? (
+      <PresupuestoForm
+        pacientes={pacienteAbierto ? [{ id: pacienteAbierto.id, nombre: pacienteAbierto.nombre }] : []}
+        pacienteInicialId={pacienteAbierto?.id ?? null}
+        bloquearPaciente={true}
+        onCancelar={() => setMostrarFormularioPresupuestoPaciente(false)}
+        onGuardar={guardarPresupuestoPaciente}
+      />
+    ) : (
+      <div className="overflow-hidden rounded-[22px] border border-[var(--mint-border-teal)] bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)] shadow-[var(--mint-shadow-brand)]">
+        <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--mint-teal-soft)]">
+              {es ? "VALORACIÓN" : "ASSESSMENT"}
+            </p>
+            <h3 className="mt-1 text-xl font-bold text-white">
+              {es ? "Plan de tratamiento / Presupuesto" : "Treatment plan / Estimate"}
+            </h3>
+            <p className="mt-1 text-sm text-white/70">
+              {es
+                ? "Registra una sola vez los hallazgos y tratamientos indicados durante la valoración."
+                : "Record findings and recommended treatments once during the assessment."}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMostrarFormularioPresupuestoPaciente(true)}
+            className="mint-btn shrink-0 border border-white/20 bg-white px-5 py-2.5 font-bold text-[var(--mint-navy)] shadow-sm hover:bg-white/90"
+          >
+            {es ? "+ Crear presupuesto" : "+ Create estimate"}
+          </button>
+        </div>
+        <div className="h-[3px] bg-[linear-gradient(90deg,var(--mint-teal-soft)_0%,var(--mint-gold)_100%)]" />
+      </div>
+    )}
 
     <div className="
       grid
@@ -4998,6 +5191,9 @@ const pacientesFiltrados =
               mint-input
               p-3
               w-full
+              cursor-pointer
+              relative
+              z-10
             "
           >
 
@@ -5414,33 +5610,42 @@ const pacientesFiltrados =
       className="
         fixed
         inset-0
-        bg-black/50
+        z-50
         flex
         items-center
         justify-center
-        z-50
+        bg-[rgba(15,42,65,0.62)]
+        backdrop-blur-[3px]
+        p-4
       "
     >
 
       <div
         className="
-          rounded-[22px]
-          border
-          border-[var(--mint-border-teal)]
-          bg-[var(--mint-surface)]
-          p-6
           w-full
-          shadow-[var(--mint-shadow-elevated)]
           max-w-xl
+          overflow-hidden
+          rounded-[24px]
+          border
+          border-white/20
+          bg-[var(--mint-surface)]
+          shadow-[0_28px_80px_rgba(15,42,65,0.30)]
+        [&>*:not(h2)]:mx-6
+          [&>*:not(h2)]:mx-6
         "
       >
 
         <h2
           className="
-            text-2xl
+            text-xl
             font-bold
-            mint-text-primary
-            mb-2
+            text-white
+            px-6
+            py-5
+            mb-0
+            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+            border-b-[3px]
+            border-[var(--mint-teal-soft)]
           "
         >
 
@@ -5970,31 +6175,39 @@ const pacientesFiltrados =
       className="
         fixed
         inset-0
-        bg-black/50
+        z-50
         flex
         items-center
         justify-center
-        z-50
+        bg-[rgba(15,42,65,0.62)]
+        backdrop-blur-[3px]
+        p-4
       "
     >
       <div
         className="
-          rounded-[22px]
-          border
-          border-[var(--mint-border-teal)]
-          bg-[var(--mint-surface)]
-          p-6
           w-full
-          shadow-[var(--mint-shadow-elevated)]
           max-w-xl
+          overflow-hidden
+          rounded-[24px]
+          border
+          border-white/20
+          bg-[var(--mint-surface)]
+          shadow-[0_28px_80px_rgba(15,42,65,0.30)]
+          [&>*:not(h2)]:mx-6
         "
       >
         <h2
           className="
-            text-2xl
+            text-xl
             font-bold
-            mint-text-primary
-            mb-2
+            text-white
+            px-6
+            py-5
+            mb-0
+            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+            border-b-[3px]
+            border-[var(--mint-teal-soft)]
           "
         >
           {es ? "Registrar cobro" : "Record payment"}
@@ -6988,21 +7201,26 @@ const pacientesFiltrados =
     ">
 
       <div className="
-        rounded-[22px]
-        border
-        border-[var(--mint-border-teal)]
-        bg-[var(--mint-surface)]
-        p-6
         w-full
-        shadow-[var(--mint-shadow-elevated)]
         max-w-xl
+        overflow-hidden
+        rounded-[24px]
+        border
+        border-white/20
+        bg-[var(--mint-surface)]
+        shadow-[0_28px_80px_rgba(15,42,65,0.30)]
       ">
 
         <h2 className="
-          text-2xl
+          text-xl
           font-bold
-          mint-text-primary
-          mb-5
+          text-white
+          px-6
+          py-5
+          mb-0
+          bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+          border-b-[3px]
+          border-[var(--mint-teal-soft)]
         ">
 
           {es ? "Nueva Cita" : "New Appointment"}
@@ -7194,114 +7412,201 @@ const pacientesFiltrados =
   tabActiva ===
   "expediente" && (
 
-<div className="rounded-[22px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] p-4 shadow-[var(--mint-shadow-card)]">
-  <div className="mb-4 rounded-2xl border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] px-5 py-4">
-    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--mint-teal)]">{es ? "EXPEDIENTE CLÍNICO" : "CLINICAL RECORD"}</p>
-    <h3 className="mt-1 text-xl font-bold mint-text-primary">{es ? "Odontograma y observaciones" : "Odontogram and observations"}</h3>
-  </div>
-<Odontograma
-  observacionesDientes={
-    observacionesDientes
-  }
-  setObservacionesDientes={
-    setObservacionesDientes
-  }
-  estadoDientes={
-    estadoDientes
-  }
-  setEstadoDientes={
-    setEstadoDientes
-  }
-  onGuardar={async (
-    nuevosEstados,
-    nuevasObservaciones
-  ) => {
+    <div className="space-y-6 rounded-[22px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] p-4">
 
-    if (!pacienteAbierto?.id) {
-      return false;
-    }
+      {presupuestoPacienteSeleccionado ? (
 
-    const { error } =
-      await supabase
-        .from("pacientes")
-        .update({
-          observaciones_dientes: {
-            dientes:
-              nuevasObservaciones,
+        <PresupuestoDetalle
+          presupuesto={presupuestoPacienteSeleccionado}
+          onVolver={() => setPresupuestoPacienteSeleccionado(null)}
+          puedeEnviar={false}
+        />
 
-            estados:
-              nuevosEstados,
+      ) : (
 
-            imagen:
-              imagenPreview,
-          },
-        })
-        .eq(
-          "id",
-          pacienteAbierto.id
-        );
+        <>
+          <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)] shadow-[var(--mint-shadow-brand)]">
+            <div className="flex flex-col gap-5 px-6 py-6 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/75">
+                  {es ? "Expediente clínico" : "Clinical record"}
+                </p>
+                <h2 className="mt-1 text-2xl font-bold tracking-tight text-white">
+                  {es ? "Valoraciones y planes de tratamiento" : "Assessments and treatment plans"}
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm text-white/75">
+                  {es
+                    ? "El expediente se construye automáticamente con los presupuestos y tratamientos indicados durante cada valoración."
+                    : "The clinical record is built automatically from the estimates and treatments indicated during each assessment."}
+                </p>
+              </div>
 
-    if (error) {
+              <button
+                type="button"
+                onClick={() => {
+                  setTabActiva("general");
+                  setMostrarFormularioPresupuestoPaciente(true);
+                }}
+                className="mint-btn shrink-0 border border-white/20 bg-white px-4 py-2.5 font-bold text-[var(--mint-navy)] shadow-sm hover:bg-white/90"
+              >
+                {es ? "+ Nueva valoración" : "+ New assessment"}
+              </button>
+            </div>
+            <div className="h-1 bg-[linear-gradient(90deg,#19a991_0%,#65cdb8_55%,#d8bd72_100%)]" />
+          </section>
 
-      console.error(
-        "Error guardando odontograma:",
-        error
-      );
+          <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
+            <div className="flex items-center justify-between gap-4 border-b border-[var(--mint-border)] px-6 py-5">
+              <div>
+                <h3 className="text-lg font-bold mint-text-primary">
+                  {es ? "Historial de valoraciones" : "Assessment history"}
+                </h3>
+                <p className="mt-1 text-sm mint-text-secondary">
+                  {es
+                    ? "Planes de tratamiento registrados para este paciente."
+                    : "Treatment plans recorded for this patient."}
+                </p>
+              </div>
 
-      alert(
-        es ? "Error guardando odontograma" : "Error saving odontogram"
-      );
+              <div className="inline-flex items-center gap-2 rounded-xl border border-[var(--mint-border-teal)] bg-[var(--mint-teal-pale)] px-3 py-2">
+                <span className="text-xs font-bold text-[var(--mint-teal)]">
+                  {presupuestosPaciente.length}
+                </span>
+              </div>
+            </div>
 
-      return false;
-    }
+            {cargandoPresupuestosPaciente ? (
+              <div className="px-6 py-12 text-center text-sm mint-text-muted">
+                {es ? "Cargando expediente..." : "Loading clinical record..."}
+              </div>
+            ) : presupuestosPaciente.length === 0 ? (
+              <div className="px-6 py-12 text-center">
+                <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--mint-teal-pale)] font-bold text-[var(--mint-teal)]">
+                  +
+                </div>
+                <p className="mt-4 font-semibold mint-text-primary">
+                  {es ? "Aún no hay valoraciones registradas." : "No assessments have been recorded yet."}
+                </p>
+                <p className="mt-1 text-sm mint-text-secondary">
+                  {es
+                    ? "Crea el primer plan de tratamiento desde la pestaña General."
+                    : "Create the first treatment plan from the General tab."}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="mint-bg-soft">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-bold mint-text-muted">{es ? "Fecha" : "Date"}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold mint-text-muted">{es ? "Valoración" : "Assessment"}</th>
+                      <th className="px-6 py-3 text-left text-xs font-bold mint-text-muted">{es ? "Estado" : "Status"}</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold mint-text-muted">{es ? "Total" : "Total"}</th>
+                      <th className="px-6 py-3 text-right text-xs font-bold mint-text-muted">{es ? "Acciones" : "Actions"}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {presupuestosPaciente.map((presupuesto: any) => (
+                      <tr
+                        key={presupuesto.id}
+                        onDoubleClick={() => abrirPresupuestoPaciente(presupuesto)}
+                        className="border-t border-[var(--mint-border)] transition-colors hover:bg-[var(--mint-surface-teal)]"
+                      >
+                        <td className="whitespace-nowrap px-6 py-4 mint-text-secondary">
+                          {new Date(presupuesto.fecha).toLocaleDateString(es ? "es-MX" : "en-US", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="font-semibold mint-text-primary">
+                            {es ? `Plan de tratamiento #${presupuesto.id}` : `Treatment plan #${presupuesto.id}`}
+                          </p>
+                          {presupuesto.notas && (
+                            <p className="mt-1 max-w-[360px] truncate text-xs mint-text-muted">
+                              {presupuesto.notas}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex rounded-lg border border-[var(--mint-warning-border)] bg-[var(--mint-warning-bg)] px-2.5 py-1 text-[11px] font-bold text-[var(--mint-warning)]">
+                            {presupuesto.estado || (es ? "Borrador" : "Draft")}
+                          </span>
+                        </td>
+                        <td className="whitespace-nowrap px-6 py-4 text-right font-bold mint-text-primary">
+                          ${Number(presupuesto.total || 0).toLocaleString(es ? "es-MX" : "en-US", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })} {presupuesto.moneda || "MXN"}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            type="button"
+                            onClick={() => abrirPresupuestoPaciente(presupuesto)}
+                            className="mint-btn inline-flex items-center gap-2"
+                          >
+                            {es ? "Ver" : "View"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-    await registrarBitacora({
-      accion: "Guardar odontograma",
-      modulo: "Pacientes",
-      detalle:
-        `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre}`,
-    });
+          <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
+            <div className="border-b border-[var(--mint-border)] px-6 py-5">
+              <h3 className="text-lg font-bold mint-text-primary">
+                {es ? "Radiografías / Fotos clínicas" : "X-rays / Clinical photos"}
+              </h3>
+              <p className="mt-1 text-sm mint-text-secondary">
+                {es
+                  ? "Material clínico asociado al expediente del paciente."
+                  : "Clinical material associated with the patient record."}
+              </p>
+            </div>
 
-    setPacienteAbierto({
-      ...pacienteAbierto,
+            <div className="p-6">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const archivo = e.target.files?.[0];
+                  if (!archivo) return;
+                  subirRadiografia(archivo);
+                }}
+                className="mint-input w-full p-2 text-sm"
+              />
 
-      observaciones_dientes: {
-        dientes:
-          nuevasObservaciones,
+              {imagenPreview ? (
+                <button
+                  type="button"
+                  onClick={() => window.open(imagenPreview, "_blank", "noopener,noreferrer")}
+                  className="mt-5 block w-full overflow-hidden rounded-2xl border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] p-2 text-left"
+                >
+                  <img
+                    src={imagenPreview}
+                    alt={es ? "Radiografía" : "X-ray"}
+                    className="max-h-[520px] w-full rounded-xl object-contain"
+                  />
+                  <p className="mt-2 text-center text-xs font-semibold text-[var(--mint-teal)]">
+                    {es ? "Abrir imagen en tamaño completo" : "Open full-size image"}
+                  </p>
+                </button>
+              ) : (
+                <div className="mt-5 rounded-2xl border border-dashed border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-5 py-8 text-center text-sm mint-text-muted">
+                  {es ? "No hay radiografías o fotos cargadas." : "No X-rays or photos uploaded."}
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      )}
 
-        estados:
-          nuevosEstados,
-
-        imagen:
-          imagenPreview,
-      },
-    });
-
-    setPacientes(
-      pacientes.map((p) =>
-        p.id === pacienteAbierto.id
-          ? {
-              ...p,
-
-              observaciones_dientes: {
-                dientes:
-                  nuevasObservaciones,
-
-                estados:
-                  nuevosEstados,
-
-                imagen:
-                  imagenPreview,
-              },
-            }
-          : p
-      )
-    );
-
-    return true;
-  }}
-/>
-</div>
+    </div>
 
   )
 }
@@ -8266,117 +8571,6 @@ const pacientesFiltrados =
   )
 }
 
-              <div className="
-                mt-8
-                bg-[var(--mint-surface-teal)]
-                border
-                border-[var(--mint-border-teal)]
-                rounded-[22px]
-                p-5
-                shadow-[var(--mint-shadow-soft)]
-              ">
-
-                <h3 className="
-                  text-lg
-                  font-bold
-                  mb-4
-                  mint-text-primary
-                ">
-
-                  {es ? "Radiografías / Fotos" : "X-rays / Photos"}
-
-                </h3>
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-
-                    const archivo =
-                      e.target.files?.[0];
-
-                    if (!archivo)
-                      return;
-
-                    subirRadiografia(
-                      archivo
-                    );
-
-                  }}
-                  className="
-                    mint-input
-                    w-full
-                    p-2
-                    text-sm
-                  "
-                />
-
-                {
-
-                  imagenPreview && (
-
-                    <img
-                      src={imagenPreview}
-                      alt={es ? "Radiografía" : "X-ray"}
-                      className="
-                        mt-5
-                        rounded-2xl
-                        max-h-[500px]
-                        border
-                        border-[var(--mint-border)]
-                      "
-                    />
-
-                  )
-
-                }
-
-              </div>
-
-              <div className="
-                mt-8
-                pt-5
-                border-t
-                border-[var(--mint-border)]
-                flex
-                justify-end
-                gap-3
-              ">
-
-                <button
-                  type="button"
-                  onClick={
-                    generarPDF
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-secondary
-                    px-5
-                    py-2.5
-                    text-sm
-                  "
-                >
-                  PDF
-                </button>
-
-                <button
-                  type="button"
-                  onClick={
-                    guardarExpediente
-                  }
-                  className="
-                    mint-btn
-                    mint-btn-primary
-                    px-6
-                    py-2.5
-                    text-sm
-                  "
-                >
-                  {es ? "Guardar" : "Save"}
-                </button>
-
-              </div>
-
             </div>
 
           )
@@ -8614,10 +8808,11 @@ const pacientesFiltrados =
               fixed
               inset-0
               z-50
-              bg-black/40
               flex
               items-center
               justify-center
+              bg-[rgba(15,42,65,0.62)]
+              backdrop-blur-[3px]
               p-4
             "
             onClick={() =>
@@ -8629,10 +8824,14 @@ const pacientesFiltrados =
 
             <div
               className="
-                mint-card
                 w-full
                 max-w-2xl
-                p-6
+                overflow-hidden
+                rounded-[24px]
+                border
+                border-white/20
+                bg-[var(--mint-surface)]
+                shadow-[0_28px_80px_rgba(15,42,65,0.30)]
               "
               onClick={(e) =>
                 e.stopPropagation()
@@ -8640,21 +8839,25 @@ const pacientesFiltrados =
             >
 
               <div className="
+                relative
+                overflow-hidden
                 flex
                 items-start
                 justify-between
                 gap-4
-                mb-6
+                px-6
+                py-5
+                bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
               ">
 
                 <div>
 
                   <p className="
-                    text-xs
+                    text-[10px]
                     uppercase
-                    tracking-wide
-                    font-semibold
-                    mint-text-muted
+                    tracking-[0.16em]
+                    font-bold
+                    text-[var(--mint-teal-soft)]
                   ">
                     {es ? "Expediente" : "Record"} #{pacienteAbierto.id}
                   </p>
@@ -8662,7 +8865,7 @@ const pacientesFiltrados =
                   <h3 className="
                     text-xl
                     font-bold
-                    mint-text-primary
+                    text-white
                     mt-1
                   ">
                     {es ? "Editar paciente" : "Edit patient"}
@@ -8670,7 +8873,7 @@ const pacientesFiltrados =
 
                   <p className="
                     text-sm
-                    mint-text-secondary
+                    text-white/65
                     mt-1
                   ">
                     {es ? "Actualiza los datos generales del paciente." : "Update the patient’s general information."}
@@ -8686,14 +8889,18 @@ const pacientesFiltrados =
                     )
                   }
                   className="
-                    mint-btn
-                    mint-btn-secondary
                     w-9
                     h-9
-                    rounded-full
-                    p-0
-                    font-bold
                     shrink-0
+                    rounded-xl
+                    border
+                    border-white/20
+                    bg-white/10
+                    text-white
+                    text-xl
+                    leading-none
+                    hover:bg-white/20
+                    transition-colors
                   "
                 >
                   ×
@@ -8706,6 +8913,8 @@ const pacientesFiltrados =
                 grid-cols-1
                 md:grid-cols-2
                 gap-4
+                px-6
+                py-6
               ">
 
                 <label className="
@@ -9019,10 +9228,11 @@ const pacientesFiltrados =
               fixed
               inset-0
               z-50
-              bg-black/40
               flex
               items-center
               justify-center
+              bg-[rgba(15,42,65,0.62)]
+              backdrop-blur-[3px]
               p-4
             "
             onClick={() =>
@@ -9032,10 +9242,14 @@ const pacientesFiltrados =
 
             <div
               className="
-                mint-card
                 w-full
                 max-w-md
-                p-6
+                overflow-hidden
+                rounded-[24px]
+                border
+                border-white/20
+                bg-[var(--mint-surface)]
+                shadow-[0_28px_80px_rgba(15,42,65,0.30)]
                 relative
               "
               onClick={(e) =>
@@ -9049,16 +9263,21 @@ const pacientesFiltrados =
                   setMostrarQR(false)
                 }
                 className="
-                  mint-btn
-                  mint-btn-secondary
                   absolute
                   top-4
                   right-4
+                  z-10
                   w-9
                   h-9
-                  rounded-full
-                  p-0
-                  font-bold
+                  rounded-xl
+                  border
+                  border-white/20
+                  bg-white/10
+                  text-white
+                  text-xl
+                  leading-none
+                  hover:bg-white/20
+                  transition-colors
                 "
               >
                 ×
@@ -9072,11 +9291,11 @@ const pacientesFiltrados =
 
                 <p
                   className="
-                    text-xs
-                    font-semibold
+                    text-[10px]
+                    font-bold
                     uppercase
-                    tracking-wide
-                    mint-text-brand
+                    tracking-[0.16em]
+                    text-[var(--mint-teal-soft)]
                   "
                 >
                   {es ? "Registro de pacientes" : "Patient registration"}
@@ -9084,10 +9303,10 @@ const pacientesFiltrados =
 
                 <h2
                   className="
-                    text-2xl
+                    text-xl
                     font-bold
-                    mint-text-primary
-                    mt-2
+                    text-white
+                    mt-1
                   "
                 >
                   {es ? "Código QR" : "QR Code"}
@@ -9096,8 +9315,8 @@ const pacientesFiltrados =
                 <p
                   className="
                     text-sm
-                    mint-text-secondary
-                    mt-2
+                    text-white/65
+                    mt-1
                   "
                 >
                   {es ? "Escanea este código desde un teléfono" : "Scan this code from a phone"}
@@ -9108,7 +9327,7 @@ const pacientesFiltrados =
                   className="
                     max-w-[260px]
                     mx-auto
-                    mt-6
+                    my-6
                   "
                 >
                   <QRCodePaciente />

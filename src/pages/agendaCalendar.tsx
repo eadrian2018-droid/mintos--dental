@@ -1219,18 +1219,7 @@ export default function AgendaCalendar() {
                 </label>
 
                 <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(4, minmax(0, 1fr))",
-                    gap: "8px",
-                    padding: "5px",
-                    borderRadius: "14px",
-                    background:
-                      "var(--mint-bg-soft)",
-                    border:
-                      "1px solid var(--mint-border)",
-                  }}
+                  className="agenda-duration-options"
                 >
 
                   {[
@@ -1255,26 +1244,11 @@ export default function AgendaCalendar() {
                             opcion.minutos
                           )
                         }
-                        style={{
-                          minHeight: "38px",
-                          padding: "8px 10px",
-                          borderRadius: "10px",
-                          border: activo
-                            ? "1px solid var(--mint-primary)"
-                            : "1px solid transparent",
-                          background: activo
-                            ? "var(--mint-primary)"
-                            : "transparent",
-                          color: activo
-                            ? "#ffffff"
-                            : "inherit",
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          cursor: puedeEditarCitas
-                            ? "pointer"
-                            : "not-allowed",
-                          transition: "all 0.18s ease",
-                        }}
+                        className={`agenda-duration-btn${
+                          activo
+                            ? " agenda-duration-btn-active"
+                            : ""
+                        }`}
                       >
                         {opcion.label}
                       </button>

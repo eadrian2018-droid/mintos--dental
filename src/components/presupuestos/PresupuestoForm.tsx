@@ -42,6 +42,8 @@ type ItemFormulario = {
 
 type PresupuestoFormProps = {
   pacientes: Paciente[];
+  pacienteInicialId?: number | null;
+  bloquearPaciente?: boolean;
   onCancelar: () => void;
   onGuardar: (datos: {
     paciente_id: number | null;
@@ -56,6 +58,8 @@ type PresupuestoFormProps = {
 
 export default function PresupuestoForm({
   pacientes,
+  pacienteInicialId = null,
+  bloquearPaciente = false,
   onCancelar,
   onGuardar,
 }: PresupuestoFormProps) {
@@ -71,7 +75,9 @@ export default function PresupuestoForm({
   const [
     pacienteId,
     setPacienteId,
-  ] = useState("");
+  ] = useState(
+    pacienteInicialId ? String(pacienteInicialId) : ""
+  );
 
   const [
     tipoPaciente,
@@ -145,6 +151,13 @@ export default function PresupuestoForm({
   useEffect(() => {
     cargarCatalogoTratamientos();
   }, []);
+
+  useEffect(() => {
+    if (pacienteInicialId) {
+      setPacienteId(String(pacienteInicialId));
+      setTipoPaciente("registrado");
+    }
+  }, [pacienteInicialId]);
 
   async function cargarCatalogoTratamientos() {
     const {
@@ -948,6 +961,7 @@ export default function PresupuestoForm({
               </div>
             </div>
 
+            {!bloquearPaciente && (
             <div
               className="
                 inline-flex
@@ -1027,10 +1041,13 @@ export default function PresupuestoForm({
                   : "New patient"}
               </button>
             </div>
+            )}
 
             {tipoPaciente ===
             "registrado" ? (
+
               <select
+                disabled={bloquearPaciente}
                 value={pacienteId}
                 onChange={(e) =>
                   setPacienteId(
