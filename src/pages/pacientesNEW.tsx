@@ -5862,16 +5862,16 @@ const pacientesFiltrados =
               "
             >
 
-              placeholder={
-  es
-    ? "Observaciones relevantes sobre el tratamiento..."
-    : "Relevant clinical notes about the treatment..."
-}
+              {es ? "Notas clínicas iniciales" : "Initial Clinical Notes"}
 
             </label>
 
             <textarea
-              placeholder="Observaciones relevantes sobre el tratamiento..."
+              placeholder={
+                es
+                  ? "Observaciones relevantes sobre el tratamiento..."
+                  : "Relevant clinical notes about the treatment..."
+              }
               value={
                 nuevoTratamiento.notas
               }
