@@ -3901,7 +3901,7 @@ const pacientesFiltrados =
         onGuardar={guardarPresupuestoPaciente}
       />
     ) : (
-      <div className="overflow-hidden rounded-[22px] border border-[var(--mint-border-teal)] bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)] shadow-[var(--mint-shadow-brand)]">
+      <div className="overflow-hidden rounded-[22px] border border-[var(--mint-border-teal)]bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] shadow-[var(--mint-shadow-brand)]">
         <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--mint-teal-soft)]">
@@ -5426,7 +5426,7 @@ const pacientesFiltrados =
             px-6
             py-5
             mb-0
-            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+           bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
             border-b-[3px]
             border-[var(--mint-teal-soft)]
           "
@@ -5444,7 +5444,9 @@ const pacientesFiltrados =
           "
         >
 
-          Registra la información clínica del tratamiento.
+          {es
+  ? "Registra la información clínica del tratamiento."
+  : "Enter the clinical information for this treatment."}
 
         </p>
 
@@ -5723,10 +5725,14 @@ const pacientesFiltrados =
 
               <option value="">
                 {
-                  doctorSeleccionado
-                    ? "Seleccionar Tratamiento"
-                    : "Selecciona primero un doctor"
-                }
+  doctorSeleccionado
+    ? es
+      ? "Seleccionar Tratamiento"
+      : "Select Treatment"
+    : es
+      ? "Selecciona primero un doctor"
+      : "Select a doctor first"
+}
               </option>
 
               {
@@ -5836,7 +5842,9 @@ const pacientesFiltrados =
               "
             >
 
-              El doctor podrá confirmar y actualizar el estado posteriormente.
+              {es
+  ? "El doctor podrá confirmar y actualizar el estado posteriormente."
+  : "The doctor can confirm and update the status later."}
 
             </p>
 
@@ -5854,7 +5862,11 @@ const pacientesFiltrados =
               "
             >
 
-              Notas clínicas iniciales
+              placeholder={
+  es
+    ? "Observaciones relevantes sobre el tratamiento..."
+    : "Relevant clinical notes about the treatment..."
+}
 
             </label>
 
@@ -5988,7 +6000,7 @@ const pacientesFiltrados =
             px-6
             py-5
             mb-0
-            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+           bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
             border-b-[3px]
             border-[var(--mint-teal-soft)]
           "
@@ -7001,7 +7013,7 @@ const pacientesFiltrados =
           px-6
           py-5
           mb-0
-          bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+         bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
           border-b-[3px]
           border-[var(--mint-teal-soft)]
         ">
@@ -8800,7 +8812,7 @@ const pacientesFiltrados =
                 gap-4
                 px-6
                 py-5
-                bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+               bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
               ">
 
                 <div>
