@@ -34,6 +34,10 @@ import {
 } from "../context/AuthContext";
 
 import {
+  useLanguage,
+} from "../context/LanguageContext";
+
+import {
   registrarBitacora,
 } from "../lib/registrarBitacora";
 
@@ -58,12 +62,64 @@ type Paciente = {
   nombre: string;
 };
 
+type Doctor = {
+  id: number;
+  nombre: string;
+  telefono: string | null;
+  activo: boolean;
+};
+
 Modal.setAppElement("#root");
 
 export default function AgendaCalendar() {
 
   const navigate =
     useNavigate();
+
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  const t = {
+    newAppointment: es ? "NUEVA CITA" : "NEW APPOINTMENT",
+    appointmentDetails: es ? "DETALLES DE CITA" : "APPOINTMENT DETAILS",
+    schedulePatient: es ? "Agendar paciente" : "Schedule patient",
+    editAppointment: es ? "Editar cita" : "Edit appointment",
+    searchExisting: es ? "Buscar paciente existente" : "Search existing patient",
+    searchPatient: es ? "Buscar paciente..." : "Search patient...",
+    or: es ? "O" : "OR",
+    patientName: es ? "Nombre del paciente" : "Patient name",
+    appointmentDuration: es ? "Duración de la cita" : "Appointment duration",
+    doctor: es ? "Doctor" : "Doctor",
+    status: es ? "Estado" : "Status",
+    pending: es ? "Pendiente" : "Pending",
+    confirmed: es ? "Confirmada" : "Confirmed",
+    treatment: es ? "Tratamiento" : "Treatment",
+    cancelled: es ? "Cancelada" : "Cancelled",
+    createAppointment: es ? "Crear cita" : "Create appointment",
+    save: es ? "Guardar" : "Save",
+    openRecord: es ? "Abrir expediente" : "Open patient record",
+    delete: es ? "Eliminar" : "Delete",
+    close: es ? "Cerrar" : "Close",
+    today: es ? "Hoy" : "Today",
+    month: es ? "Mes" : "Month",
+    week: es ? "Semana" : "Week",
+    day: es ? "Día" : "Day",
+    min30: "30 min",
+    hour1: es ? "1 hora" : "1 hour",
+    hour1half: es ? "1 h 30" : "1 h 30",
+    hours2: es ? "2 horas" : "2 hours",
+    createError: es ? "No se pudo crear la cita." : "The appointment could not be created.",
+    moveError: es ? "No se pudo actualizar el horario de la cita." : "The appointment time could not be updated.",
+    enterPatient: es ? "Ingresa el nombre del paciente." : "Enter the patient name.",
+    saveError: es ? "No se pudieron guardar los cambios." : "The changes could not be saved.",
+    deleteConfirm: es ? "¿Seguro que quieres eliminar esta cita?" : "Are you sure you want to delete this appointment?",
+    deleteError: es ? "No se pudo eliminar la cita." : "The appointment could not be deleted.",
+    noLinkedPatient: es ? "Esta cita no está conectada a un paciente existente." : "This appointment is not linked to an existing patient.",
+    selectDoctor: es ? "Selecciona un doctor." : "Select a doctor.",
+    noDoctorPhone: es ? "Este doctor no tiene un número de WhatsApp registrado." : "This doctor does not have a WhatsApp number registered.",
+    notifyDoctor: es ? "Notificar por WhatsApp" : "Notify via WhatsApp",
+    notifyCreated: es ? "Cita creada. ¿Quieres notificar al doctor por WhatsApp?" : "Appointment created. Do you want to notify the doctor via WhatsApp?",
+  };
 
   const {
     permisos,
@@ -81,6 +137,11 @@ export default function AgendaCalendar() {
     pacientes,
     setPacientes,
   ] = useState<Paciente[]>([]);
+
+  const [
+    doctores,
+    setDoctores,
+  ] = useState<Doctor[]>([]);
 
   const [
     modalOpen,
@@ -117,7 +178,7 @@ export default function AgendaCalendar() {
   const [
     doctor,
     setDoctor,
-  ] = useState("Dr. Edgar");
+  ] = useState("");
 
   const [
     inicioNuevo,
@@ -138,6 +199,7 @@ export default function AgendaCalendar() {
 
     cargarCitas();
     cargarPacientes();
+    cargarDoctores();
 
   }, []);
 
@@ -199,6 +261,169 @@ export default function AgendaCalendar() {
       );
 
     }
+
+  }
+
+  async function cargarDoctores() {
+
+    const {
+      data,
+      error,
+    } = await supabase
+      .from("doctores")
+      .select(
+        "id, nombre, telefono, activo"
+      )
+      .eq(
+        "activo",
+        true
+      )
+      .order(
+        "nombre",
+        {
+          ascending: true,
+        }
+      );
+
+    if (error) {
+
+      console.error(
+        "Error cargando doctores:",
+        error
+      );
+
+      return;
+
+    }
+
+    const lista =
+      (data || []) as Doctor[];
+
+    setDoctores(
+      lista
+    );
+
+    setDoctor(
+      (actual) =>
+        actual ||
+        lista[0]?.nombre ||
+        ""
+    );
+
+  }
+
+  function obtenerDoctor(
+    nombreDoctor: string
+  ) {
+
+    return doctores.find(
+      (item) =>
+        item.nombre ===
+        nombreDoctor
+    );
+
+  }
+
+  function normalizarTelefonoWhatsApp(
+    telefono: string
+  ) {
+
+    return telefono.replace(
+      /\D/g,
+      ""
+    );
+
+  }
+
+  function crearMensajeWhatsApp(
+    nombrePaciente: string,
+    nombreDoctor: string,
+    fechaInicio: Date,
+    duracion?: number
+  ) {
+
+    const fecha =
+      fechaInicio.toLocaleDateString(
+        es ? "es-MX" : "en-US",
+        {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+        }
+      );
+
+    const hora =
+      fechaInicio.toLocaleTimeString(
+        es ? "es-MX" : "en-US",
+        {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }
+      );
+
+    const duracionTexto =
+      duracion
+        ? es
+          ? `\nDuración: ${duracion} min`
+          : `\nDuration: ${duracion} min`
+        : "";
+
+    return es
+      ? `🦷 *MintOS Dental*\n\nHola ${nombreDoctor}, tienes una cita asignada.\n\nPaciente: ${nombrePaciente}\nFecha: ${fecha}\nHora: ${hora}${duracionTexto}\n\nEste mensaje fue preparado desde MintOS.`
+      : `🦷 *MintOS Dental*\n\nHello ${nombreDoctor}, you have an appointment assigned.\n\nPatient: ${nombrePaciente}\nDate: ${fecha}\nTime: ${hora}${duracionTexto}\n\nThis message was prepared by MintOS.`;
+
+  }
+
+  function abrirWhatsAppDoctor(
+    nombreDoctor: string,
+    nombrePaciente: string,
+    fechaInicio: Date,
+    duracion?: number
+  ) {
+
+    const doctorSeleccionado =
+      obtenerDoctor(
+        nombreDoctor
+      );
+
+    const telefono =
+      doctorSeleccionado
+        ?.telefono
+        ? normalizarTelefonoWhatsApp(
+            doctorSeleccionado.telefono
+          )
+        : "";
+
+    if (!telefono) {
+
+      alert(
+        t.noDoctorPhone
+      );
+
+      return;
+
+    }
+
+    const mensaje =
+      crearMensajeWhatsApp(
+        nombrePaciente,
+        nombreDoctor,
+        fechaInicio,
+        duracion
+      );
+
+    const url =
+      `https://wa.me/${telefono}?text=${encodeURIComponent(
+        mensaje
+      )}`;
+
+    window.open(
+      url,
+      "_blank",
+      "noopener,noreferrer"
+    );
 
   }
 
@@ -318,7 +543,8 @@ export default function AgendaCalendar() {
     );
 
     setDoctor(
-      "Dr. Edgar"
+      doctores[0]?.nombre ||
+      ""
     );
 
     setEstado(
@@ -382,6 +608,16 @@ export default function AgendaCalendar() {
 
     }
 
+    if (!doctor) {
+
+      alert(
+        t.selectDoctor
+      );
+
+      return;
+
+    }
+
     const inicio =
       new Date(
         inicioNuevo
@@ -425,7 +661,7 @@ export default function AgendaCalendar() {
       );
 
       alert(
-        "No se pudo crear la cita."
+        t.createError
       );
 
       return;
@@ -451,6 +687,24 @@ export default function AgendaCalendar() {
           ""
         }`,
     });
+
+    const notificar =
+      window.confirm(
+        t.notifyCreated
+      );
+
+    if (notificar) {
+
+      abrirWhatsAppDoctor(
+        doctor,
+        nombreFinal,
+        new Date(
+          inicio
+        ),
+        duracionMinutos
+      );
+
+    }
 
     setModalOpen(
       false
@@ -495,7 +749,7 @@ export default function AgendaCalendar() {
       );
 
       alert(
-        "No se pudo actualizar el horario de la cita."
+        t.moveError
       );
 
       info.revert();
@@ -566,7 +820,8 @@ export default function AgendaCalendar() {
       info.event
         .extendedProps
         ?.doctor ||
-      "Dr. Edgar"
+      doctores[0]?.nombre ||
+      ""
     );
 
     setPacienteId(
@@ -613,7 +868,7 @@ export default function AgendaCalendar() {
     if (!nombreFinal) {
 
       alert(
-        "Ingresa el nombre del paciente."
+        t.enterPatient
       );
 
       return;
@@ -638,7 +893,7 @@ export default function AgendaCalendar() {
         ?.split(" - ")[0] ||
       "";
 
-    const {
+          const {
       error,
     } = await supabase
       .from("citas")
@@ -666,7 +921,7 @@ export default function AgendaCalendar() {
       );
 
       alert(
-        "No se pudieron guardar los cambios."
+        t.saveError
       );
 
       return;
@@ -750,7 +1005,7 @@ export default function AgendaCalendar() {
 
     const confirmar =
       window.confirm(
-        "¿Seguro que quieres eliminar esta cita?"
+        t.deleteConfirm
       );
 
     if (!confirmar) {
@@ -798,7 +1053,7 @@ export default function AgendaCalendar() {
       );
 
       alert(
-        "No se pudo eliminar la cita."
+        t.deleteError
       );
 
       return;
@@ -829,7 +1084,7 @@ export default function AgendaCalendar() {
     if (!pacienteId) {
 
       alert(
-        "Esta cita no está conectada a un paciente existente."
+        t.noLinkedPatient
       );
 
       return;
@@ -869,6 +1124,8 @@ export default function AgendaCalendar() {
 
         <FullCalendar
 
+          key={language}
+
           plugins={[
             dayGridPlugin,
             timeGridPlugin,
@@ -878,7 +1135,7 @@ export default function AgendaCalendar() {
           initialView=
             "timeGridWeek"
 
-          locale="es"
+          locale={es ? "es" : "en"}
 
           firstDay={1}
 
@@ -895,16 +1152,16 @@ export default function AgendaCalendar() {
 
           buttonText={{
             today:
-              "Hoy",
+              t.today,
 
             month:
-              "Mes",
+              t.month,
 
             week:
-              "Semana",
+              t.week,
 
             day:
-              "Día",
+              t.day,
           }}
 
           selectable={
@@ -1057,8 +1314,8 @@ export default function AgendaCalendar() {
 
               {
                 modoCrear
-                  ? "NUEVA CITA"
-                  : "DETALLES DE CITA"
+                  ? t.newAppointment
+                  : t.appointmentDetails
               }
 
             </span>
@@ -1067,8 +1324,8 @@ export default function AgendaCalendar() {
 
               {
                 modoCrear
-                  ? "Agendar paciente"
-                  : "Editar cita"
+                  ? t.schedulePatient
+                  : t.editAppointment
               }
 
             </h2>
@@ -1099,7 +1356,7 @@ export default function AgendaCalendar() {
           >
 
             <label>
-              Buscar paciente existente
+              {t.searchExisting}
             </label>
 
             <Select
@@ -1108,8 +1365,7 @@ export default function AgendaCalendar() {
                 opcionesPacientes
               }
 
-              placeholder=
-                "Buscar paciente..."
+              placeholder={t.searchPatient}
 
               isClearable
 
@@ -1171,7 +1427,7 @@ export default function AgendaCalendar() {
           >
 
             <span>
-              O
+              {t.or}
             </span>
 
           </div>
@@ -1181,7 +1437,7 @@ export default function AgendaCalendar() {
           >
 
             <label>
-              Nombre del paciente
+              {t.patientName}
             </label>
 
             <input
@@ -1200,8 +1456,7 @@ export default function AgendaCalendar() {
                 )
               }
 
-              placeholder=
-                "Nombre del paciente"
+              placeholder={t.patientName}
 
             />
 
@@ -1215,7 +1470,7 @@ export default function AgendaCalendar() {
               >
 
                 <label>
-                  Duración de la cita
+                  {t.appointmentDuration}
                 </label>
 
                 <div
@@ -1223,10 +1478,10 @@ export default function AgendaCalendar() {
                 >
 
                   {[
-                    { minutos: 30, label: "30 min" },
-                    { minutos: 60, label: "1 hora" },
-                    { minutos: 90, label: "1 h 30" },
-                    { minutos: 120, label: "2 horas" },
+                    { minutos: 30, label: t.min30 },
+                    { minutos: 60, label: t.hour1 },
+                    { minutos: 90, label: t.hour1half },
+                    { minutos: 120, label: t.hours2 },
                   ].map((opcion) => {
 
                     const activo =
@@ -1273,7 +1528,7 @@ export default function AgendaCalendar() {
             >
 
               <label>
-                Doctor
+                {t.doctor}
               </label>
 
               <select
@@ -1294,17 +1549,27 @@ export default function AgendaCalendar() {
 
               >
 
-                <option>
-                  Dr. Edgar
+                <option
+                  value=""
+                  disabled
+                >
+                  {t.selectDoctor}
                 </option>
 
-                <option>
-                  Dra. Maria
-                </option>
+                {
+                  doctores.map(
+                    (item) => (
 
-                <option>
-                  Dr. Juan
-                </option>
+                      <option
+                        key={item.id}
+                        value={item.nombre}
+                      >
+                        {item.nombre}
+                      </option>
+
+                    )
+                  )
+                }
 
               </select>
 
@@ -1315,7 +1580,7 @@ export default function AgendaCalendar() {
             >
 
               <label>
-                Estado
+                {t.status}
               </label>
 
               <select
@@ -1339,25 +1604,25 @@ export default function AgendaCalendar() {
                 <option
                   value="pendiente"
                 >
-                  Pendiente
+                  {t.pending}
                 </option>
 
                 <option
                   value="confirmada"
                 >
-                  Confirmada
+                  {t.confirmed}
                 </option>
 
                 <option
                   value="tratamiento"
                 >
-                  Tratamiento
+                  {t.treatment}
                 </option>
 
                 <option
                   value="cancelada"
                 >
-                  Cancelada
+                  {t.cancelled}
                 </option>
 
               </select>
@@ -1388,7 +1653,7 @@ export default function AgendaCalendar() {
                       "agenda-btn agenda-btn-primary"
 
                   >
-                    Crear cita
+                    {t.createAppointment}
                   </button>
 
                 )
@@ -1411,7 +1676,7 @@ export default function AgendaCalendar() {
                           "agenda-btn agenda-btn-primary"
 
                       >
-                        Guardar
+                        {t.save}
                       </button>
 
                     )
@@ -1432,7 +1697,40 @@ export default function AgendaCalendar() {
                           "agenda-btn agenda-btn-secondary"
 
                       >
-                        Abrir expediente
+                        {t.openRecord}
+                      </button>
+
+                    )
+                  }
+
+                  {
+                    doctor && (
+
+                      <button
+
+                        type="button"
+
+                        onClick={() =>
+                          abrirWhatsAppDoctor(
+                            doctor,
+                            nombreManual.trim() ||
+                            eventoSeleccionado
+                              ?.title
+                              ?.split(" - ")[0] ||
+                            "Paciente",
+                            new Date(
+                              eventoSeleccionado
+                                ?.start ||
+                              new Date()
+                            )
+                          )
+                        }
+
+                        className=
+                          "agenda-btn agenda-btn-secondary"
+
+                      >
+                        {t.notifyDoctor}
                       </button>
 
                     )
@@ -1451,7 +1749,7 @@ export default function AgendaCalendar() {
                           "agenda-btn agenda-btn-danger"
 
                       >
-                        Eliminar
+                        {t.delete}
                       </button>
 
                     )
@@ -1476,7 +1774,7 @@ export default function AgendaCalendar() {
               "agenda-btn agenda-btn-neutral"
 
           >
-            Cerrar
+            {t.close}
           </button>
 
         </div>

@@ -668,9 +668,9 @@
   background:
     linear-gradient(
       120deg,
-      var(--mint-navy) 0%,
-      var(--mint-navy-soft) 55%,
-      var(--mint-teal) 100%
+      #102f4f 0%,
+      #1b4f68 55%,
+      #0b8f80 100%
     );
 
   border-bottom: 3px solid var(--mint-teal-soft);
@@ -1181,3 +1181,228 @@ th {
   }
 
 }
+
+/* Dark mode: keep modal header on the MintOS brand gradient. */
+[data-theme="dark"] .agenda-modal-header {
+  background: linear-gradient(120deg, #102f4f 0%, #1b4f68 55%, #0b8f80 100%);
+}
+
+[data-theme="dark"] .agenda-modal-header h2 {
+  color: #ffffff;
+}
+
+[data-theme="dark"] .agenda-modal-eyebrow {
+  color: #63c8b2;
+}
+
+/* =================================
+   AGENDA — PREMIUM VISUAL POLISH
+================================= */
+
+.agenda-page {
+  padding: 10px 12px 12px;
+  background:
+    radial-gradient(circle at 88% 4%, rgba(99, 200, 178, 0.11), transparent 25%),
+    linear-gradient(180deg, var(--mint-surface-teal) 0%, var(--mint-bg-app) 18%, var(--mint-bg-app) 100%);
+}
+
+.agenda-calendar-card {
+  position: relative;
+  padding: 12px;
+  background: var(--mint-surface);
+  border: 1px solid var(--mint-border-teal);
+  border-radius: 22px;
+  box-shadow: 0 18px 48px rgba(15, 42, 65, 0.09), 0 2px 8px rgba(15, 42, 65, 0.04);
+}
+
+.agenda-calendar-card::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 0;
+  height: 3px;
+  border-radius: 0 0 999px 999px;
+  background: linear-gradient(90deg, var(--mint-teal), var(--mint-teal-soft), var(--mint-gold));
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.fc {
+  --fc-border-color: var(--mint-border);
+  --fc-page-bg-color: var(--mint-surface);
+  --fc-neutral-bg-color: var(--mint-surface-soft);
+  --fc-today-bg-color: var(--mint-surface-teal);
+}
+
+.fc .fc-toolbar {
+  min-height: 50px;
+  margin-bottom: 10px;
+  padding: 3px 4px 7px;
+  border-bottom: 1px solid var(--mint-border-soft);
+}
+
+.fc .fc-toolbar-title {
+  color: var(--mint-navy);
+  font-size: 1.12rem;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+}
+
+.fc .fc-button-group {
+  padding: 3px;
+  gap: 3px;
+  border: 1px solid var(--mint-border);
+  border-radius: 13px;
+  background: var(--mint-surface-soft);
+}
+
+.fc .fc-button-group > .fc-button {
+  margin: 0 !important;
+  border-radius: 9px !important;
+}
+
+.fc .fc-button {
+  min-height: 34px;
+  padding: 6px 12px !important;
+  border: 1px solid transparent !important;
+  background: transparent !important;
+  color: var(--mint-text-secondary) !important;
+  box-shadow: none !important;
+}
+
+.fc .fc-button:hover {
+  border-color: var(--mint-border-teal) !important;
+  background: var(--mint-surface-teal) !important;
+  color: var(--mint-teal) !important;
+}
+
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+  border-color: var(--mint-teal) !important;
+  background: var(--mint-teal) !important;
+  color: #ffffff !important;
+  box-shadow: 0 5px 14px rgba(11, 143, 128, 0.18) !important;
+}
+
+.fc .fc-today-button {
+  margin-left: 7px !important;
+  border: 1px solid var(--mint-border) !important;
+  border-radius: 10px !important;
+  background: var(--mint-surface) !important;
+  color: var(--mint-text-secondary) !important;
+  box-shadow: var(--mint-shadow-sm) !important;
+}
+
+.fc .fc-scrollgrid {
+  border: 1px solid var(--mint-border-teal);
+  border-radius: 17px;
+  background: var(--mint-surface);
+}
+
+.fc .fc-col-header-cell {
+  background: linear-gradient(180deg, var(--mint-surface-teal) 0%, var(--mint-surface-soft) 100%);
+  border-color: var(--mint-border-teal);
+}
+
+.fc .fc-col-header-cell-cushion {
+  padding: 12px 6px 11px;
+  color: var(--mint-navy);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+.fc .fc-col-header-cell.fc-day-today {
+  background: linear-gradient(180deg, rgba(99, 200, 178, 0.24) 0%, var(--mint-surface-teal) 100%);
+  box-shadow: inset 0 -3px 0 var(--mint-teal);
+}
+
+.fc .fc-timegrid-axis,
+.fc .fc-timegrid-slot-label {
+  background: var(--mint-surface-soft);
+}
+
+.fc .fc-timegrid-axis {
+  border-right-color: var(--mint-border-teal);
+}
+
+.fc .fc-timegrid-slot-label {
+  color: var(--mint-text-secondary);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.fc .fc-timegrid-slot {
+  border-color: var(--mint-border-soft);
+}
+
+.fc .fc-timegrid-slot-minor {
+  border-color: var(--mint-border-soft);
+  opacity: 0.72;
+}
+
+.fc .fc-timegrid-col {
+  background: var(--mint-surface);
+}
+
+.fc .fc-timegrid-col:nth-child(even) {
+  background: linear-gradient(180deg, var(--mint-surface-soft) 0%, var(--mint-surface) 100%);
+}
+
+.fc .fc-timegrid-col.fc-day-today {
+  background: linear-gradient(180deg, rgba(99, 200, 178, 0.13) 0%, rgba(99, 200, 178, 0.055) 100%) !important;
+  box-shadow: inset 1px 0 0 rgba(11, 143, 128, 0.10), inset -1px 0 0 rgba(11, 143, 128, 0.10);
+}
+
+.fc .fc-timegrid-now-indicator-line {
+  border-color: var(--mint-teal);
+  border-width: 2px;
+}
+
+.fc .fc-timegrid-now-indicator-arrow {
+  border-left-color: var(--mint-teal);
+}
+
+.fc .fc-event {
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: 9px !important;
+  box-shadow: 0 5px 14px rgba(15, 42, 65, 0.13);
+}
+
+[data-theme="dark"] .agenda-page {
+  background:
+    radial-gradient(circle at 88% 4%, rgba(36, 152, 132, 0.10), transparent 26%),
+    var(--mint-bg-app);
+}
+
+[data-theme="dark"] .agenda-calendar-card {
+  background: var(--mint-surface);
+  border-color: var(--mint-border);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.20);
+}
+
+[data-theme="dark"] .fc .fc-toolbar-title,
+[data-theme="dark"] .fc .fc-col-header-cell-cushion {
+  color: var(--mint-text-primary);
+}
+
+[data-theme="dark"] .fc .fc-button-group {
+  background: var(--mint-surface-soft);
+}
+
+[data-theme="dark"] .fc .fc-scrollgrid {
+  background: var(--mint-surface);
+}
+
+[data-theme="dark"] .fc .fc-col-header-cell {
+  background: linear-gradient(180deg, var(--mint-surface-teal) 0%, var(--mint-surface-soft) 100%);
+}
+
+[data-theme="dark"] .fc .fc-timegrid-col:nth-child(even) {
+  background: var(--mint-surface-soft);
+}
+
+[data-theme="dark"] .fc .fc-timegrid-col.fc-day-today {
+  background: var(--mint-primary-soft) !important;
+}
+
