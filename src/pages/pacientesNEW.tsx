@@ -86,6 +86,50 @@ export default function Pacientes() {
     return valor || "-";
   }
 
+
+  function traducirPreguntaHistorial(
+    id: string,
+    preguntaGuardada: string
+  ) {
+    if (es) return preguntaGuardada;
+
+    const preguntasEn: Record<string, string> = {
+      tratamiento_medico: "Are you currently under medical treatment or taking any medications?",
+      alergias: "Are you allergic to penicillin, antibiotics, anesthetics, or any other medications?",
+      presion_arterial: "Do you have high or low blood pressure?",
+      enfermedad_cardiaca: "Do you have any heart condition?",
+      diabetes: "Do you have diabetes?",
+      embarazo: "Are you pregnant or think you may be pregnant?",
+      fiebre_reumatica: "Have you ever had rheumatic fever?",
+      enfermedad_cirugia: "Have you had any serious illness, hospitalization, or major surgery?",
+      sangrado: "Do you have any blood disorder, anemia, or clotting problem?",
+      retroviral_bifosfonato: "Do you take or have you taken antiretroviral medications or bisphosphonates?",
+      transfusion: "Have you ever received a blood transfusion?",
+      estomago_higado_rinon: "Do you have any stomach, liver, or kidney problems?",
+      tiroides: "Do you have any thyroid problems?",
+      mareos_asma: "Do you experience frequent dizziness, fainting, or asthma?",
+      epilepsia: "Do you have epilepsy, seizures, or nervous attacks?",
+      hepatitis_tuberculosis: "Have you ever had hepatitis or tuberculosis?",
+      tabaco: "Do you smoke or chew tobacco?",
+      drogas: "Do you use any recreational drugs?",
+      alcohol: "Do you frequently consume alcoholic beverages?",
+      tratamiento_psiquiatrico: "Are you currently or have you ever been under psychiatric treatment?",
+      perdida_peso: "Have you experienced unexplained weight loss?",
+      osteoporosis_cancer: "Do you have or have you had osteoporosis or cancer?",
+      otra_condicion: "Do you have any other medical condition we should know about?",
+      morder_unas_objetos: "Do you bite your nails or other objects?",
+      apretamiento: "Do you clench or grind your teeth?",
+      respiracion_bucal: "Do you usually breathe through your mouth?",
+      aftas_herpes: "Do you frequently experience canker sores or cold sores?",
+      ruidos_atm: "Do you experience clicking, pain, or discomfort when opening or closing your mouth?",
+      cardiaca_presion: "Do you have heart disease or blood pressure problems?",
+      hepatitis_tuberculosis_its: "Have you ever had hepatitis, tuberculosis, or a sexually transmitted infection?",
+      tabaco_drogas: "Do you smoke, chew tobacco, or use recreational drugs?",
+    };
+
+    return preguntasEn[id] || preguntaGuardada || "Medical question";
+  }
+
   const puedeRegistrarCobros =
     permisos?.registrar_cobros === true;
 
@@ -8086,8 +8130,10 @@ if (abriendoPacienteDesdeUrl) {
                             <p className="
                               text-sm font-semibold mint-text-primary
                             ">
-                              {item?.pregunta ||
-                                (es ? "Pregunta médica" : "Medical question")}
+                              {traducirPreguntaHistorial(
+                                String(item?.id || ""),
+                                String(item?.pregunta || "")
+                              )}
                             </p>
 
                             <span className={`
@@ -8175,8 +8221,10 @@ if (abriendoPacienteDesdeUrl) {
                             <p className="
                               text-sm font-semibold mint-text-primary
                             ">
-                              {item?.pregunta ||
-                                (es ? "Hábito" : "Habit")}
+                              {traducirPreguntaHistorial(
+                                String(item?.id || ""),
+                                String(item?.pregunta || "")
+                              )}
                             </p>
 
                             <span className="
