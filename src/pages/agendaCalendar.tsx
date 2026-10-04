@@ -1096,7 +1096,7 @@ export default function AgendaCalendar() {
     );
 
     navigate(
-      `/paciente/${pacienteId}`
+      `/pacientes?paciente=${pacienteId}&tab=expediente`
     );
 
   }

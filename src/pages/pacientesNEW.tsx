@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { useSearchParams } from "react-router-dom";
+
 import { supabase } from "../lib/supabase";
 
 import { useAuth } from "../context/AuthContext";
@@ -31,6 +33,8 @@ type Paciente = {
 
   id: number;
 
+  created_at?: string | null;
+
   nombre: string;
 
   telefono: string;
@@ -43,11 +47,17 @@ type Paciente = {
 
   direccion?: string;
 
+  fecha_nacimiento?: string | null;
+
   historial_clinico?: any;
+
+  historial_declarado?: any;
 
   consentimiento_firmado?: boolean;
 
   firma_paciente?: string;
+
+  texto_consentimiento?: string | null;
 
   observaciones_dientes?: any;
 
@@ -58,6 +68,9 @@ export default function Pacientes() {
   const { permisos } = useAuth();
 
   const { language } = useLanguage();
+
+  const [searchParams, setSearchParams] =
+    useSearchParams();
 
   const es = language === "es";
 
@@ -110,6 +123,30 @@ export default function Pacientes() {
     busquedaTelefono,
     setBusquedaTelefono,
   ] = useState("");
+
+  const [
+    filtroRapido,
+    setFiltroRapido,
+  ] = useState<
+    "todos" |
+    "nuevos" |
+    "saldo" |
+    "tratamientos"
+  >("todos");
+
+  const [
+    pacientesConSaldoFiltro,
+    setPacientesConSaldoFiltro,
+  ] = useState<Set<number>>(
+    new Set()
+  );
+
+  const [
+    pacientesConTratamientosPendientesFiltro,
+    setPacientesConTratamientosPendientesFiltro,
+  ] = useState<Set<number>>(
+    new Set()
+  );
 
     const [
   mostrarQR,
@@ -173,6 +210,11 @@ const [
   cargandoHistorialMedico,
   setCargandoHistorialMedico,
 ] = useState(false);
+
+const [
+  registroInicialPaciente,
+  setRegistroInicialPaciente,
+] = useState<any>(null);
 
   const [mostrarModalTratamiento,
   setMostrarModalTratamiento] =
@@ -588,8 +630,39 @@ async function cargarTipoCambio() {
           .filter(Boolean)
       );
 
+    const pacientesConTratamientosPendientesIds =
+      new Set<number>(
+        tratamientosActivos
+          .map(
+            (tratamiento: any) =>
+              Number(
+                tratamiento.paciente_id
+              )
+          )
+          .filter(
+            (pacienteId: number) =>
+              Number.isFinite(pacienteId) &&
+              pacienteId > 0
+          )
+      );
+
     setPacientesConSaldo(
       pacientesConSaldoIds.size
+    );
+
+    setPacientesConSaldoFiltro(
+      new Set(
+        Array.from(
+          pacientesConSaldoIds
+        ).map(
+          (pacienteId: any) =>
+            Number(pacienteId)
+        )
+      )
+    );
+
+    setPacientesConTratamientosPendientesFiltro(
+      pacientesConTratamientosPendientesIds
     );
 
   }
@@ -3049,95 +3122,158 @@ setNuevoTratamiento({
 
   }
 
-  async function cargarHistorialMedico(
-    pacienteId: number
-  ) {
+async function cargarHistorialMedico(
+  pacienteId: number
+) {
 
-    setCargandoHistorialMedico(true);
+  setCargandoHistorialMedico(true);
+  setRegistroInicialPaciente(null);
 
-    const { data, error } =
-      await supabase
-        .from("historial_medico_cambios")
-        .select(`
-          id,
-          paciente_id,
-          usuario_id,
-          alergias,
-          enfermedades,
-          medicamentos,
-          historial_clinico,
-          created_at
-        `)
-        .eq("paciente_id", pacienteId)
-        .order("created_at", {
-          ascending: false,
-        });
+  const [
+    registroInicialResponse,
+    cambiosResponse,
+  ] = await Promise.all([
 
-    if (error) {
+    supabase
+      .from("registros_iniciales_paciente")
+      .select("*")
+      .eq("paciente_id", pacienteId)
+      .order("created_at", {
+        ascending: false,
+      })
+      .limit(1)
+      .maybeSingle(),
 
-      console.error(
-        "Error cargando historial médico:",
-        error
-      );
+    supabase
+      .from("historial_medico_cambios")
+      .select(`
+        id,
+        paciente_id,
+        usuario_id,
+        alergias,
+        enfermedades,
+        medicamentos,
+        historial_clinico,
+        created_at
+      `)
+      .eq("paciente_id", pacienteId)
+      .order("created_at", {
+        ascending: false,
+      }),
 
-      setHistorialMedicoCambios([]);
-      setCargandoHistorialMedico(false);
+  ]);
 
-      return;
-    }
+  if (registroInicialResponse.error) {
 
-    const cambios =
-      (data || []) as HistorialMedicoCambio[];
-
-    const usuariosIds = Array.from(
-      new Set(
-        cambios
-          .map((cambio) => cambio.usuario_id)
-          .filter(Boolean)
-      )
+    console.error(
+      "Error cargando registro inicial del paciente:",
+      registroInicialResponse.error
     );
 
-    let nombresPorUsuario:
-      Record<string, string> = {};
+  } else {
 
-    if (usuariosIds.length > 0) {
+    setRegistroInicialPaciente(
+      registroInicialResponse.data || null
+    );
 
-      const {
-        data: perfilesHistorial,
-        error: errorPerfilesHistorial,
-      } = await supabase
-        .from("perfiles")
-        .select("id, nombre")
-        .in("id", usuariosIds);
+  }
 
-      if (!errorPerfilesHistorial) {
+  if (cambiosResponse.error) {
 
-        nombresPorUsuario =
-          Object.fromEntries(
-            (perfilesHistorial || []).map(
-              (perfil: any) => [
-                perfil.id,
-                perfil.nombre,
-              ]
-            )
-          );
+    console.error(
+      "Error cargando historial médico:",
+      cambiosResponse.error
+    );
 
-      }
+    setHistorialMedicoCambios([]);
+    setCargandoHistorialMedico(false);
+
+    return;
+  }
+
+  const cambios =
+    (cambiosResponse.data || []) as HistorialMedicoCambio[];
+
+  const usuariosIds = Array.from(
+    new Set(
+      cambios
+        .map(
+          (cambio) =>
+            cambio.usuario_id
+        )
+        .filter(Boolean)
+    )
+  );
+
+  let nombresPorUsuario:
+    Record<string, string> = {};
+
+  if (
+    usuariosIds.length > 0
+  ) {
+
+    const {
+      data: perfilesHistorial,
+      error: errorPerfilesHistorial,
+    } = await supabase
+
+      .from("perfiles")
+
+      .select(
+        "id, nombre"
+      )
+
+      .in(
+        "id",
+        usuariosIds
+      );
+
+    if (
+      !errorPerfilesHistorial
+    ) {
+
+      nombresPorUsuario =
+        Object.fromEntries(
+
+          (
+            perfilesHistorial || []
+          ).map(
+            (perfil: any) => [
+
+              perfil.id,
+
+              perfil.nombre,
+
+            ]
+          )
+
+        );
 
     }
 
-    setHistorialMedicoCambios(
-      cambios.map((cambio) => ({
+  }
+
+  setHistorialMedicoCambios(
+
+    cambios.map(
+      (cambio) => ({
+
         ...cambio,
+
         usuario_nombre:
           nombresPorUsuario[
             cambio.usuario_id
-          ] || "Usuario de MintOS",
-      }))
-    );
+          ] ||
+          "Usuario de MintOS",
 
-    setCargandoHistorialMedico(false);
-  }
+      })
+    )
+
+  );
+
+  setCargandoHistorialMedico(false);
+
+}
 
   async function abrirPaciente(
   paciente: Paciente
@@ -3303,6 +3439,66 @@ comision_banco:
 
   }
 
+  useEffect(() => {
+
+    const pacienteParametro =
+      searchParams.get("paciente");
+
+    if (
+      !pacienteParametro ||
+      pacientes.length === 0
+    ) {
+      return;
+    }
+
+    const pacienteId =
+      Number(pacienteParametro);
+
+    if (!Number.isFinite(pacienteId)) {
+      return;
+    }
+
+    const paciente =
+      pacientes.find(
+        (item) =>
+          item.id === pacienteId
+      );
+
+    if (!paciente) {
+      return;
+    }
+
+    const tabParametro =
+      searchParams.get("tab");
+
+    const tabsPermitidas = [
+      "general",
+      "expediente",
+      "historial",
+      "citas",
+    ];
+
+    if (
+      tabParametro &&
+      tabsPermitidas.includes(tabParametro)
+    ) {
+      setTabActiva(tabParametro);
+    }
+
+    if (
+      pacienteAbierto?.id ===
+      paciente.id
+    ) {
+      return;
+    }
+
+    abrirPaciente(paciente);
+
+  }, [
+    pacientes,
+    searchParams,
+  ]);
+
   async function actualizarEstadoTratamiento(
   tratamientoId: number,
   nuevoEstado: string
@@ -3411,12 +3607,90 @@ const pacientesFiltrados =
         textoTelefono
       );
 
+    let coincideFiltroRapido =
+      true;
+
+    if (
+      filtroRapido === "nuevos"
+    ) {
+      if (!p.created_at) {
+        coincideFiltroRapido =
+          false;
+      } else {
+        const fechaRegistro =
+          new Date(p.created_at);
+
+        const ahora =
+          new Date();
+
+        coincideFiltroRapido =
+          fechaRegistro.getFullYear() ===
+            ahora.getFullYear() &&
+          fechaRegistro.getMonth() ===
+            ahora.getMonth();
+      }
+    }
+
+    if (
+      filtroRapido === "saldo"
+    ) {
+      coincideFiltroRapido =
+        pacientesConSaldoFiltro.has(
+          p.id
+        );
+    }
+
+    if (
+      filtroRapido ===
+      "tratamientos"
+    ) {
+      coincideFiltroRapido =
+        pacientesConTratamientosPendientesFiltro.has(
+          p.id
+        );
+    }
+
     return (
       coincideNombre &&
-      coincideTelefono
+      coincideTelefono &&
+      coincideFiltroRapido
     );
 
   });
+
+  const abriendoPacienteDesdeUrl =
+  Boolean(
+    searchParams.get("paciente")
+  ) &&
+  !pacienteAbierto;
+
+if (abriendoPacienteDesdeUrl) {
+  return (
+    <div
+      className="
+        min-h-[calc(100vh-32px)]
+        flex
+        items-center
+        justify-center
+      "
+    >
+      <div
+        className="
+          mint-card
+          px-6
+          py-5
+          text-sm
+          font-semibold
+          text-[var(--mint-text-secondary)]
+        "
+      >
+        {es
+          ? "Abriendo expediente clínico..."
+          : "Opening clinical record..."}
+      </div>
+    </div>
+  );
+}
 
   return (
 
@@ -3448,6 +3722,7 @@ const pacientesFiltrados =
           setPacienteAbierto(null);
           setBusqueda("");
           setBusquedaTelefono("");
+          setSearchParams({});
         }}
         className="
           mint-btn
@@ -3901,7 +4176,7 @@ const pacientesFiltrados =
         onGuardar={guardarPresupuestoPaciente}
       />
     ) : (
-      <div className="overflow-hidden rounded-[22px] border border-[var(--mint-border-teal)]bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] shadow-[var(--mint-shadow-brand)]">
+      <div className="overflow-hidden rounded-[22px] border border-[var(--mint-border-teal)] bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] shadow-[var(--mint-shadow-brand)]">
         <div className="flex flex-col gap-4 px-5 py-5 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--mint-teal-soft)]">
@@ -7589,244 +7864,564 @@ const pacientesFiltrados =
       p-4
     ">
 
-      <div className="
-        rounded-[22px]
-        border
-        border-[var(--mint-border-teal)]
-        bg-[var(--mint-surface)]
-        p-6
-        shadow-[var(--mint-shadow-card)]
-      ">
+      {(() => {
+        const historial =
+  registroInicialPaciente?.historial_declarado ||
+  pacienteAbierto?.historial_declarado ||
+  pacienteAbierto?.historial_clinico ||
+  {};
 
-        <h3 className="
-          text-2xl
-          font-bold
-          mb-6
-          mint-text-primary
-        ">
+        const datosGenerales =
+          historial?.datos_generales || {};
 
-          {es ? "Historial Médico" : "Medical History"}
+        const antecedentes =
+          Array.isArray(historial?.antecedentes_medicos)
+            ? historial.antecedentes_medicos
+            : [];
 
-        </h3>
+        const habitos =
+          Array.isArray(historial?.habitos_salud_oral)
+            ? historial.habitos_salud_oral
+            : [];
 
-        <div className="
-          grid
-          grid-cols-1
-          md:grid-cols-2
-          gap-4
-        ">
+        const tieneFormularioNuevo =
+          antecedentes.length > 0 ||
+          habitos.length > 0 ||
+          Boolean(historial?.version_formulario);
 
-          <div className="
-            bg-[var(--mint-bg-soft)]
-            border
-            border-[var(--mint-border)]
-            rounded-2xl
-            p-4
-          ">
-            <p className="
-              text-sm
-              mint-text-secondary
-            ">
-              {es ? "Fuma" : "Smokes"}
-            </p>
+        const textoRespuesta = (valor: any) => {
+          if (
+            valor === true ||
+            valor === "Sí" ||
+            valor === "Si" ||
+            valor === "sí" ||
+            valor === "si"
+          ) {
+            return es ? "Sí" : "Yes";
+          }
 
-            <p className="
-              font-bold
-              mint-text-primary
-            ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.fuma
+          if (
+            valor === false ||
+            valor === "No" ||
+            valor === "no"
+          ) {
+            return "No";
+          }
 
-                  ? (es ? "Sí" : "Yes")
+          return valor || "-";
+        };
 
-                  : "No"
-              }
-            </p>
-          </div>
+        const fechaNacimiento =
+          pacienteAbierto?.fecha_nacimiento
+            ? new Date(
+                `${pacienteAbierto.fecha_nacimiento}T00:00:00`
+              ).toLocaleDateString(
+                es ? "es-MX" : "en-US"
+              )
+            : "-";
 
-          <div className="
-            bg-[var(--mint-bg-soft)]
-            border
-            border-[var(--mint-border)]
-            rounded-2xl
-            p-4
-          ">
-            <p className="
-              text-sm
-              mint-text-secondary
-            ">
-              {es ? "Consume alcohol" : "Consumes alcohol"}
-            </p>
-
-            <p className="
-              font-bold
-              mint-text-primary
-            ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.alcohol
-
-                  ? (es ? "Sí" : "Yes")
-
-                  : "No"
-              }
-            </p>
-          </div>
-
-          <div className="
-            bg-[var(--mint-bg-soft)]
-            border
-            border-[var(--mint-border)]
-            rounded-2xl
-            p-4
-          ">
-            <p className="
-              text-sm
-              mint-text-secondary
-            ">
-              {es ? "Embarazo" : "Pregnancy"}
-            </p>
-
-            <p className="
-              font-bold
-              mint-text-primary
-            ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.embarazo
-
-                  ? (es ? "Sí" : "Yes")
-
-                  : "No"
-              }
-            </p>
-          </div>
-
-          <div className="
-            bg-[var(--mint-primary-soft)]
-            border
-            border-[var(--mint-border-primary)]
-            rounded-2xl
-            p-4
-          ">
-            <p className="
-              text-sm
-              mint-text-secondary
-            ">
-              {es ? "Consentimiento" : "Consent"}
-            </p>
-
-            <p className="
-              font-bold
-              mint-text-primary
-            ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.consentimiento
-
-                  ? (es ? "Firmado" : "Signed")
-
-                  : "No"
-              }
-            </p>
-          </div>
-
-        </div>
-
-        <div className="
-          mt-6
-          space-y-4
-        ">
-
-          <div>
-
-            <p className="
-              text-sm
-              mint-text-secondary
-              mb-1
-            ">
-              {es ? "Alergias" : "Allergies"}
-            </p>
-
+        return (
+          <>
             <div className="
-              bg-[var(--mint-bg-soft)]
-              border
-              border-[var(--mint-border)]
-              rounded-2xl
-              p-4
-              mint-text-primary
+              rounded-[22px]
+              border border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
+              p-6
+              shadow-[var(--mint-shadow-card)]
             ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.alergias || "-"
-              }
+              <div className="
+                flex flex-col gap-2
+                md:flex-row md:items-start md:justify-between
+                mb-6
+              ">
+                <div>
+                  <p className="
+                    text-[10px] font-bold uppercase
+                    tracking-[0.16em]
+                    text-[var(--mint-primary)]
+                  ">
+                    {es
+                      ? "INFORMACIÓN DECLARADA POR EL PACIENTE"
+                      : "PATIENT-REPORTED INFORMATION"}
+                  </p>
+
+                  <h3 className="
+                    text-2xl font-bold
+                    mint-text-primary mt-1
+                  ">
+                    {es ? "Historial Médico" : "Medical History"}
+                  </h3>
+
+                  <p className="
+                    text-sm mint-text-secondary mt-1
+                  ">
+                    {es
+                      ? "Información registrada en el formulario de ingreso del paciente."
+                      : "Information recorded in the patient's intake form."}
+                  </p>
+                </div>
+
+                {historial?.idioma_formulario && (
+                  <span className="
+                    inline-flex self-start rounded-full
+                    border border-[var(--mint-border-teal)]
+                    bg-[var(--mint-surface-teal)]
+                    px-3 py-1 text-xs font-semibold
+                    mint-text-brand
+                  ">
+                    {es ? "Formulario" : "Form"}
+                    {": "}
+                    {String(historial.idioma_formulario).toUpperCase()}
+                  </span>
+                )}
+              </div>
+
+              <div className="
+                grid grid-cols-1 md:grid-cols-2
+                xl:grid-cols-4 gap-3
+              ">
+                {[
+                  [
+                    es ? "Fecha de nacimiento" : "Date of birth",
+                    fechaNacimiento,
+                  ],
+                  [
+                    es ? "Estado civil" : "Marital status",
+                    datosGenerales?.estado_civil || "-",
+                  ],
+                  [
+                    es ? "Ocupación" : "Occupation",
+                    datosGenerales?.ocupacion || "-",
+                  ],
+                  [
+                    es ? "¿Cómo nos conoció?" : "How did you hear about us?",
+                    datosGenerales?.recomendacion || "-",
+                  ],
+                ].map(([etiqueta, valor]) => (
+                  <div
+                    key={String(etiqueta)}
+                    className="
+                      rounded-2xl
+                      border border-[var(--mint-border)]
+                      bg-[var(--mint-bg-soft)] p-4
+                    "
+                  >
+                    <p className="
+                      text-xs font-semibold mint-text-muted
+                    ">
+                      {String(etiqueta)}
+                    </p>
+
+                    <p className="
+                      mt-1 text-sm font-bold
+                      mint-text-primary whitespace-pre-wrap
+                    ">
+                      {String(valor || "-")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="
+                mt-4 rounded-2xl
+                border border-[var(--mint-border)]
+                bg-[var(--mint-bg-soft)] p-4
+              ">
+                <p className="
+                  text-xs font-semibold mint-text-muted
+                ">
+                  {es ? "Motivo de consulta" : "Reason for visit"}
+                </p>
+
+                <p className="
+                  mt-1 text-sm font-bold
+                  mint-text-primary whitespace-pre-wrap
+                ">
+                  {datosGenerales?.motivo_consulta || "-"}
+                </p>
+              </div>
             </div>
 
-          </div>
+            {tieneFormularioNuevo ? (
+              <>
+                <div className="
+                  rounded-[22px]
+                  border border-[var(--mint-border-teal)]
+                  bg-[var(--mint-surface)]
+                  p-6
+                  shadow-[var(--mint-shadow-card)]
+                ">
+                  <div className="mb-5">
+                    <h3 className="
+                      text-xl font-bold mint-text-primary
+                    ">
+                      {es ? "Antecedentes médicos" : "Medical history"}
+                    </h3>
 
-          <div>
+                    <p className="
+                      mt-1 text-sm mint-text-secondary
+                    ">
+                      {es
+                        ? "Respuestas proporcionadas directamente por el paciente."
+                        : "Answers provided directly by the patient."}
+                    </p>
+                  </div>
 
-            <p className="
-              text-sm
-              mint-text-secondary
-              mb-1
-            ">
-              {es ? "Enfermedades" : "Conditions"}
-            </p>
+                  <div className="
+                    grid grid-cols-1 lg:grid-cols-2 gap-3
+                  ">
+                    {antecedentes.map(
+                      (item: any, index: number) => (
+                        <div
+                          key={item?.id || `antecedente-${index}`}
+                          className="
+                            rounded-2xl
+                            border border-[var(--mint-border)]
+                            bg-[var(--mint-bg-soft)] p-4
+                          "
+                        >
+                          <div className="
+                            flex items-start justify-between gap-4
+                          ">
+                            <p className="
+                              text-sm font-semibold mint-text-primary
+                            ">
+                              {item?.pregunta ||
+                                (es ? "Pregunta médica" : "Medical question")}
+                            </p>
+
+                            <span className={`
+                              shrink-0 rounded-full border
+                              px-2.5 py-1 text-xs font-bold
+                              ${
+                                textoRespuesta(item?.respuesta) ===
+                                (es ? "Sí" : "Yes")
+                                  ? "border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] mint-text-brand"
+                                  : "border-[var(--mint-border)] bg-[var(--mint-surface)] mint-text-secondary"
+                              }
+                            `}>
+                              {textoRespuesta(item?.respuesta)}
+                            </span>
+                          </div>
+
+                          {item?.detalle && (
+                            <div className="
+                              mt-3 rounded-xl
+                              border border-[var(--mint-border)]
+                              bg-[var(--mint-surface)]
+                              px-3 py-2.5
+                            ">
+                              <p className="
+                                text-xs font-semibold mint-text-muted
+                              ">
+                                {es ? "Detalle" : "Details"}
+                              </p>
+
+                              <p className="
+                                mt-1 text-sm mint-text-primary
+                                whitespace-pre-wrap
+                              ">
+                                {String(item.detalle)}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div className="
+                  rounded-[22px]
+                  border border-[var(--mint-border-teal)]
+                  bg-[var(--mint-surface)]
+                  p-6
+                  shadow-[var(--mint-shadow-card)]
+                ">
+                  <div className="mb-5">
+                    <h3 className="
+                      text-xl font-bold mint-text-primary
+                    ">
+                      {es
+                        ? "Hábitos y salud oral"
+                        : "Oral habits and health"}
+                    </h3>
+
+                    <p className="
+                      mt-1 text-sm mint-text-secondary
+                    ">
+                      {es
+                        ? "Hábitos reportados en el formulario de ingreso."
+                        : "Habits reported in the intake form."}
+                    </p>
+                  </div>
+
+                  <div className="
+                    grid grid-cols-1 lg:grid-cols-2 gap-3
+                  ">
+                    {habitos.map(
+                      (item: any, index: number) => (
+                        <div
+                          key={item?.id || `habito-${index}`}
+                          className="
+                            rounded-2xl
+                            border border-[var(--mint-border)]
+                            bg-[var(--mint-bg-soft)] p-4
+                          "
+                        >
+                          <div className="
+                            flex items-start justify-between gap-4
+                          ">
+                            <p className="
+                              text-sm font-semibold mint-text-primary
+                            ">
+                              {item?.pregunta ||
+                                (es ? "Hábito" : "Habit")}
+                            </p>
+
+                            <span className="
+                              shrink-0 rounded-full border
+                              border-[var(--mint-border)]
+                              bg-[var(--mint-surface)]
+                              px-2.5 py-1 text-xs font-bold
+                              mint-text-secondary
+                            ">
+                              {textoRespuesta(item?.respuesta)}
+                            </span>
+                          </div>
+
+                          {item?.detalle && (
+                            <p className="
+                              mt-3 text-sm mint-text-secondary
+                              whitespace-pre-wrap
+                            ">
+                              {String(item.detalle)}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+
+                <div className="
+                  rounded-[22px]
+                  border border-[var(--mint-border-teal)]
+                  bg-[var(--mint-surface)]
+                  p-6
+                  shadow-[var(--mint-shadow-card)]
+                ">
+                  <h3 className="
+                    text-xl font-bold mint-text-primary
+                  ">
+                    {es
+                      ? "Observaciones del paciente"
+                      : "Patient observations"}
+                  </h3>
+
+                  <div className="
+                    mt-4 rounded-2xl
+                    border border-[var(--mint-border)]
+                    bg-[var(--mint-bg-soft)]
+                    p-4 text-sm mint-text-primary
+                    whitespace-pre-wrap
+                  ">
+                    {historial?.observaciones || "-"}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="
+                rounded-[22px]
+                border border-[var(--mint-border-teal)]
+                bg-[var(--mint-surface)]
+                p-6
+                shadow-[var(--mint-shadow-card)]
+              ">
+                <h3 className="
+                  text-xl font-bold mint-text-primary mb-5
+                ">
+                  {es
+                    ? "Historial médico anterior"
+                    : "Previous medical history"}
+                </h3>
+
+                <div className="
+                  grid grid-cols-1 md:grid-cols-2 gap-3
+                ">
+                  {[
+                    [
+                      es ? "Fuma" : "Smokes",
+                      textoRespuesta(historial?.fuma),
+                    ],
+                    [
+                      es ? "Consume alcohol" : "Consumes alcohol",
+                      textoRespuesta(historial?.alcohol),
+                    ],
+                    [
+                      es ? "Embarazo" : "Pregnancy",
+                      textoRespuesta(historial?.embarazo),
+                    ],
+                  ].map(([etiqueta, valor]) => (
+                    <div
+                      key={String(etiqueta)}
+                      className="
+                        rounded-2xl
+                        border border-[var(--mint-border)]
+                        bg-[var(--mint-bg-soft)] p-4
+                      "
+                    >
+                      <p className="
+                        text-sm mint-text-secondary
+                      ">
+                        {String(etiqueta)}
+                      </p>
+
+                      <p className="
+                        mt-1 font-bold mint-text-primary
+                      ">
+                        {String(valor)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-4 space-y-3">
+                  {[
+                    [
+                      es ? "Alergias" : "Allergies",
+                      historial?.alergias,
+                    ],
+                    [
+                      es ? "Enfermedades" : "Conditions",
+                      historial?.enfermedades,
+                    ],
+                    [
+                      es ? "Medicamentos" : "Medications",
+                      historial?.medicamentos,
+                    ],
+                  ].map(([etiqueta, valor]) => (
+                    <div key={String(etiqueta)}>
+                      <p className="
+                        mb-1 text-sm mint-text-secondary
+                      ">
+                        {String(etiqueta)}
+                      </p>
+
+                      <div className="
+                        rounded-2xl
+                        border border-[var(--mint-border)]
+                        bg-[var(--mint-bg-soft)]
+                        p-4 mint-text-primary
+                        whitespace-pre-wrap
+                      ">
+                        {valor ? String(valor) : "-"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="
-              bg-[var(--mint-bg-soft)]
-              border
-              border-[var(--mint-border)]
-              rounded-2xl
-              p-4
-              mint-text-primary
+              rounded-[22px]
+              border border-[var(--mint-border-teal)]
+              bg-[var(--mint-surface)]
+              p-6
+              shadow-[var(--mint-shadow-card)]
             ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.enfermedades || "-"
-              }
+              <div className="
+                flex flex-col gap-4
+                md:flex-row md:items-start md:justify-between
+              ">
+                <div>
+                  <h3 className="
+                    text-xl font-bold mint-text-primary
+                  ">
+                    {es
+                      ? "Consentimiento informado"
+                      : "Informed consent"}
+                  </h3>
+
+                  <p className="
+                    mt-1 text-sm mint-text-secondary
+                  ">
+                    {es
+                      ? "Consentimiento y firma registrados durante el ingreso."
+                      : "Consent and signature recorded during intake."}
+                  </p>
+                </div>
+
+                <span className={`
+                  inline-flex self-start rounded-full
+                  border px-3 py-1 text-xs font-bold
+                  ${
+                    pacienteAbierto?.consentimiento_firmado
+                      ? "border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] mint-text-brand"
+                      : "border-[var(--mint-border)] bg-[var(--mint-bg-soft)] mint-text-secondary"
+                  }
+                `}>
+                  {pacienteAbierto?.consentimiento_firmado
+                    ? (es ? "Firmado" : "Signed")
+                    : (es ? "No firmado" : "Not signed")}
+                </span>
+              </div>
+
+              {pacienteAbierto?.texto_consentimiento && (
+                <div className="
+                  mt-5 max-h-52 overflow-y-auto
+                  rounded-2xl
+                  border border-[var(--mint-border)]
+                  bg-[var(--mint-bg-soft)]
+                  p-4 text-sm leading-6
+                  mint-text-secondary whitespace-pre-wrap
+                ">
+                  {pacienteAbierto.texto_consentimiento}
+                </div>
+              )}
+
+              {pacienteAbierto?.firma_paciente ? (
+                <div className="mt-5">
+                  <p className="
+                    mb-2 text-xs font-semibold uppercase
+                    tracking-wide mint-text-muted
+                  ">
+                    {es
+                      ? "Firma del paciente"
+                      : "Patient signature"}
+                  </p>
+
+                  <div className="
+                    inline-flex max-w-full rounded-2xl
+                    border border-[var(--mint-border)]
+                    bg-white p-3
+                  ">
+                    <img
+                      src={pacienteAbierto.firma_paciente}
+                      alt={
+                        es
+                          ? "Firma del paciente"
+                          : "Patient signature"
+                      }
+                      className="
+                        max-h-40 max-w-full object-contain
+                      "
+                    />
+                  </div>
+                </div>
+              ) : (
+                <p className="
+                  mt-5 text-sm mint-text-muted
+                ">
+                  {es
+                    ? "No hay firma digital registrada."
+                    : "No digital signature is recorded."}
+                </p>
+              )}
             </div>
-
-          </div>
-
-          <div>
-
-            <p className="
-              text-sm
-              mint-text-secondary
-              mb-1
-            ">
-              {es ? "Medicamentos" : "Medications"}
-            </p>
-
-            <div className="
-              bg-[var(--mint-bg-soft)]
-              border
-              border-[var(--mint-border)]
-              rounded-2xl
-              p-4
-              mint-text-primary
-            ">
-              {
-                pacienteAbierto
-                  ?.historial_clinico
-                  ?.medicamentos || "-"
-              }
-            </div>
-
-          </div>
-
-        </div>
-
-      </div>
+          </>
+        );
+      })()}
 
       <div className="
         rounded-[22px]
@@ -8592,43 +9187,144 @@ const pacientesFiltrados =
                 </div>
               </section>
 
-              <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-                <div className="relative overflow-hidden rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface)] px-5 py-4 shadow-[var(--mint-shadow-soft)]">
+              <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiltroRapido("todos")
+                  }
+                  aria-pressed={
+                    filtroRapido === "todos"
+                  }
+                  className={`
+                    relative overflow-hidden rounded-[18px]
+                    border bg-[var(--mint-surface)]
+                    px-5 py-4 text-left
+                    shadow-[var(--mint-shadow-soft)]
+                    transition
+                    hover:-translate-y-0.5
+                    hover:border-[var(--mint-border-teal)]
+                    ${
+                      filtroRapido === "todos"
+                        ? "border-[var(--mint-teal)] ring-2 ring-[var(--mint-teal-pale)]"
+                        : "border-[var(--mint-border)]"
+                    }
+                  `}
+                >
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mint-teal)]" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--mint-text-muted)]">
                     {es ? "Registrados" : "Registered"}
                   </p>
                   <div className="mt-2 flex items-end justify-between gap-3">
-                    <p className="text-[26px] font-bold leading-none text-[var(--mint-text-primary)]">{pacientes.length}</p>
-                    <span className="rounded-full bg-[var(--mint-teal-pale)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider text-[var(--mint-teal)]">
-                      {es ? "Total" : "Total"}
+                    <p className="text-[26px] font-bold leading-none text-[var(--mint-text-primary)]">
+                      {pacientes.length}
+                    </p>
+                    <span className="rounded-full border border-[var(--mint-border-teal)] bg-[var(--mint-teal-pale)] px-2.5 py-1 text-[9px] font-bold uppercase tracking-wide text-[var(--mint-teal)]">
+                      {filtroRapido === "todos"
+                        ? (es ? "Activo" : "Active")
+                        : (es ? "Ver todos" : "View all")}
                     </span>
                   </div>
-                </div>
+                </button>
 
-                <div className="relative overflow-hidden rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface)] px-5 py-4 shadow-[var(--mint-shadow-soft)]">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiltroRapido("nuevos")
+                  }
+                  aria-pressed={
+                    filtroRapido === "nuevos"
+                  }
+                  className={`
+                    relative overflow-hidden rounded-[18px]
+                    border bg-[var(--mint-surface)]
+                    px-5 py-4 text-left
+                    shadow-[var(--mint-shadow-soft)]
+                    transition
+                    hover:-translate-y-0.5
+                    hover:border-[var(--mint-border-teal)]
+                    ${
+                      filtroRapido === "nuevos"
+                        ? "border-[var(--mint-teal)] ring-2 ring-[var(--mint-teal-pale)]"
+                        : "border-[var(--mint-border)]"
+                    }
+                  `}
+                >
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mint-teal-soft)]" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--mint-text-muted)]">
                     {es ? "Nuevos este mes" : "New this month"}
                   </p>
-                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-teal)]">{pacientesNuevosMes}</p>
-                </div>
+                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-teal)]">
+                    {pacientesNuevosMes}
+                  </p>
+                </button>
 
-                <div className="relative overflow-hidden rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface)] px-5 py-4 shadow-[var(--mint-shadow-soft)]">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiltroRapido("saldo")
+                  }
+                  aria-pressed={
+                    filtroRapido === "saldo"
+                  }
+                  className={`
+                    relative overflow-hidden rounded-[18px]
+                    border bg-[var(--mint-surface)]
+                    px-5 py-4 text-left
+                    shadow-[var(--mint-shadow-soft)]
+                    transition
+                    hover:-translate-y-0.5
+                    hover:border-[var(--mint-danger)]
+                    ${
+                      filtroRapido === "saldo"
+                        ? "border-[var(--mint-danger)] ring-2 ring-[var(--mint-teal-pale)]"
+                        : "border-[var(--mint-border)]"
+                    }
+                  `}
+                >
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mint-danger)]" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--mint-text-muted)]">
                     {es ? "Saldo pendiente" : "Outstanding balance"}
                   </p>
-                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-danger)]">{pacientesConSaldo}</p>
-                </div>
+                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-danger)]">
+                    {pacientesConSaldo}
+                  </p>
+                </button>
 
-                <div className="relative overflow-hidden rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface)] px-5 py-4 shadow-[var(--mint-shadow-soft)]">
+                <button
+                  type="button"
+                  onClick={() =>
+                    setFiltroRapido(
+                      "tratamientos"
+                    )
+                  }
+                  aria-pressed={
+                    filtroRapido ===
+                    "tratamientos"
+                  }
+                  className={`
+                    relative overflow-hidden rounded-[18px]
+                    border bg-[var(--mint-surface)]
+                    px-5 py-4 text-left
+                    shadow-[var(--mint-shadow-soft)]
+                    transition
+                    hover:-translate-y-0.5
+                    hover:border-[var(--mint-gold)]
+                    ${
+                      filtroRapido === "tratamientos"
+                        ? "border-[var(--mint-gold)] ring-2 ring-[var(--mint-teal-pale)]"
+                        : "border-[var(--mint-border)]"
+                    }
+                  `}
+                >
                   <div className="absolute left-0 top-0 h-full w-[3px] bg-[var(--mint-gold)]" />
                   <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[var(--mint-text-muted)]">
                     {es ? "Tratamientos pendientes" : "Pending treatments"}
                   </p>
-                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-warning)]">{tratamientosPendientesGlobal}</p>
-                </div>
+                  <p className="mt-2 text-[26px] font-bold leading-none text-[var(--mint-warning)]">
+                    {tratamientosPendientesGlobal}
+                  </p>
+                </button>
               </section>
 
               <section className="relative overflow-hidden rounded-[22px] border border-[var(--mint-border)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
@@ -8686,12 +9382,13 @@ const pacientesFiltrados =
                   <p className="text-xs font-semibold text-[var(--mint-text-secondary)]">
                     {es ? "Selecciona un paciente para entrar a su expediente clínico" : "Select a patient to open their clinical record"}
                   </p>
-                  {(busqueda || busquedaTelefono) && (
+                  {(busqueda || busquedaTelefono || filtroRapido !== "todos") && (
                     <button
                       type="button"
                       onClick={() => {
                         setBusqueda("");
                         setBusquedaTelefono("");
+                        setFiltroRapido("todos");
                       }}
                       className="shrink-0 text-xs font-bold text-[var(--mint-teal)] hover:text-[var(--mint-navy-soft)]"
                     >
