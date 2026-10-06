@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
 import type { Paciente } from "../../types/Paciente";
 import type { Tratamiento } from "../../types/Tratamiento";
 
@@ -26,6 +28,7 @@ type ResumenProps = {
   cajaUSD: number;
 
   totalTarjeta: number;
+  totalComisionBanco: number;
 
   totalTransferencia: number;
   totalTransferenciaUSD: number;
@@ -59,6 +62,7 @@ export default function Resumen({
   cajaUSD,
 
   totalTarjeta,
+  totalComisionBanco,
 
   totalTransferencia,
   totalTransferenciaUSD,
@@ -67,6 +71,48 @@ export default function Resumen({
 
   tratamientosFiltrados,
 }: ResumenProps) {
+
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+
+  const mostrarMXN =
+    monedaPrincipal === "MXN" || monedaSecundariaActiva;
+
+  const mostrarUSD =
+    monedaPrincipal === "USD" || monedaSecundariaActiva;
+
+  useEffect(() => {
+    async function cargarConfiguracionMoneda() {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", [
+          "moneda_principal",
+          "moneda_secundaria_activa",
+        ]);
+
+      if (error) {
+        console.error("Error cargando configuración de moneda:", error);
+        return;
+      }
+
+      const valores = Object.fromEntries(
+        (data ?? []).map((fila) => [
+          fila.clave,
+          String(fila.valor ?? ""),
+        ])
+      );
+
+      setMonedaPrincipal(
+        valores.moneda_principal === "USD" ? "USD" : "MXN"
+      );
+      setMonedaSecundariaActiva(
+        valores.moneda_secundaria_activa !== "false"
+      );
+    }
+
+    cargarConfiguracionMoneda();
+  }, []);
 
   const formatoMoneda = (
     valor: number
@@ -139,6 +185,8 @@ export default function Resumen({
             "
           >
 
+            {mostrarMXN && (
+              <>
             {/* CAJA MXN */}
 
             <div
@@ -193,6 +241,11 @@ export default function Resumen({
 
             </div>
 
+              </>
+            )}
+
+            {mostrarUSD && (
+              <>
             {/* CAJA USD */}
 
             <div
@@ -247,6 +300,11 @@ export default function Resumen({
 
             </div>
 
+              </>
+            )}
+
+            {mostrarMXN && (
+              <>
             {/* TARJETAS */}
 
             <div
@@ -306,6 +364,9 @@ export default function Resumen({
 
             </div>
 
+              </>
+            )}
+
             {/* TRANSFERENCIAS */}
 
             <div
@@ -333,7 +394,8 @@ export default function Resumen({
                 "
               >
 
-                <div>
+  {mostrarMXN && (
+              <div>
 
                   <p
                     className="
@@ -361,8 +423,10 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
-                <div
+  {mostrarUSD && (
+              <div
                   className="
                     border-l
                     border-[var(--mint-border)]
@@ -396,6 +460,7 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
               </div>
 
@@ -486,6 +551,8 @@ export default function Resumen({
           "
         >
 
+          {mostrarMXN && (
+            <>
           {/* INGRESOS */}
 
           <div
@@ -532,7 +599,7 @@ export default function Resumen({
                     mint-text-muted
                   "
                 >
-                  Ingresos
+                  Producción
                 </p>
 
                 <p
@@ -542,7 +609,7 @@ export default function Resumen({
                     mt-1
                   "
                 >
-                  Valor total generado
+                  Valor de tratamientos generados
                 </p>
 
               </div>
@@ -599,6 +666,9 @@ export default function Resumen({
             </div>
 
           </div>
+
+            </>
+          )}
 
           {/* COBRADO */}
 
@@ -689,6 +759,7 @@ export default function Resumen({
               "
             >
 
+{mostrarMXN && (
               <div>
 
                 <p
@@ -718,7 +789,9 @@ export default function Resumen({
                 </p>
 
               </div>
+              )}
 
+{mostrarUSD && (
               <div
                 className="
                   border-l
@@ -754,11 +827,14 @@ export default function Resumen({
                 </p>
 
               </div>
+              )}
 
             </div>
 
           </div>
 
+          {mostrarMXN && (
+            <>
           {/* PENDIENTE */}
 
           <div
@@ -873,6 +949,9 @@ export default function Resumen({
 
           </div>
 
+            </>
+          )}
+
           {/* GANANCIA NETA */}
 
           <div
@@ -962,6 +1041,7 @@ export default function Resumen({
               "
             >
 
+{mostrarMXN && (
               <div>
 
                 <p
@@ -991,7 +1071,9 @@ export default function Resumen({
                 </p>
 
               </div>
+              )}
 
+{mostrarUSD && (
               <div
                 className="
                   border-l
@@ -1027,6 +1109,7 @@ export default function Resumen({
                 </p>
 
               </div>
+              )}
 
             </div>
 
@@ -1091,7 +1174,7 @@ export default function Resumen({
             "
           >
 
-            {/* TRATAMIENTOS */}
+            {/* COMISIONES BANCARIAS */}
 
             <div
               className="
@@ -1111,30 +1194,42 @@ export default function Resumen({
                   mb-2
                 "
               >
-                Tratamientos
+                Comisiones bancarias
               </p>
 
               <p
                 className="
                   text-2xl
                   font-bold
-                  mint-text-primary
+                  text-[var(--mint-warning)]
                 "
               >
-                {
-                  tratamientosFiltrados
-                    .length
-                }
+                ${formatoMoneda(
+                  totalComisionBanco
+                )}
+              </p>
+
+              <p
+                className="
+                  text-[10px]
+                  uppercase
+                  tracking-[0.08em]
+                  font-bold
+                  mint-text-muted
+                  mt-1
+                "
+              >
+                MXN
               </p>
 
               <p
                 className="
                   text-[11px]
                   mint-text-muted
-                  mt-1
+                  mt-2
                 "
               >
-                Registrados en el período
+                Comisiones por pagos con tarjeta
               </p>
 
             </div>
@@ -1171,7 +1266,8 @@ export default function Resumen({
                 "
               >
 
-                <div>
+  {mostrarMXN && (
+              <div>
 
                   <p
                     className="
@@ -1199,8 +1295,10 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
-                <div
+  {mostrarUSD && (
+              <div
                   className="
                     border-l
                     border-[var(--mint-border)]
@@ -1234,6 +1332,7 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
               </div>
 
@@ -1281,7 +1380,8 @@ export default function Resumen({
                 "
               >
 
-                <div>
+  {mostrarMXN && (
+              <div>
 
                   <p
                     className="
@@ -1309,8 +1409,10 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
-                <div
+  {mostrarUSD && (
+              <div
                   className="
                     border-l
                     border-[var(--mint-border)]
@@ -1344,6 +1446,7 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
               </div>
 
@@ -1387,7 +1490,8 @@ export default function Resumen({
                 "
               >
 
-                <div>
+  {mostrarMXN && (
+              <div>
 
                   <p
                     className="
@@ -1415,8 +1519,10 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
-                <div
+  {mostrarUSD && (
+              <div
                   className="
                     border-l
                     border-[var(--mint-border)]
@@ -1450,6 +1556,7 @@ export default function Resumen({
                   </p>
 
                 </div>
+              )}
 
               </div>
 
@@ -1472,7 +1579,9 @@ export default function Resumen({
       </section>
 
 
-            {/* MOVIMIENTOS */}
+            {mostrarMXN && (
+        <>
+      {/* MOVIMIENTOS */}
 
       <section>
 
@@ -1518,7 +1627,7 @@ export default function Resumen({
                   mint-text-primary
                 "
               >
-                Movimientos
+                Tratamientos del período
               </h2>
 
             </div>
@@ -1778,7 +1887,7 @@ export default function Resumen({
                     "
                     colSpan={3}
                   >
-                    TOTAL GENERAL
+                    TOTAL TRATAMIENTOS
                   </td>
 
                   <td
@@ -1839,6 +1948,8 @@ export default function Resumen({
         </div>
 
       </section>
+        </>
+      )}
 
     </>
   );

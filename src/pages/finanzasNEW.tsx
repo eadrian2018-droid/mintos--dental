@@ -391,6 +391,8 @@ export default function Finanzas() {
 
     totalTarjeta,
 
+    totalComisionBanco,
+
     totalTransferencia,
 
     totalTransferenciaUSD,
@@ -1166,6 +1168,10 @@ export default function Finanzas() {
 
     totalTarjeta={
       totalTarjeta
+    }
+
+    totalComisionBanco={
+      totalComisionBanco
     }
 
     totalTransferencia={

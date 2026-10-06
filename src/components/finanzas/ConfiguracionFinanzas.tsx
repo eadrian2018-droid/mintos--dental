@@ -176,191 +176,363 @@ export default function ConfiguracionFinanzas({
   ] = useState(false);
 
   const monedas = [
-    { codigo: "AED", nombreEs: "Dírham de Emiratos Árabes Unidos", nombreEn: "UAE dirham" },
-    { codigo: "ARS", nombreEs: "Peso argentino", nombreEn: "Argentine peso" },
-    { codigo: "AUD", nombreEs: "Dólar australiano", nombreEn: "Australian dollar" },
-    { codigo: "BOB", nombreEs: "Boliviano", nombreEn: "Bolivian boliviano" },
-    { codigo: "BRL", nombreEs: "Real brasileño", nombreEn: "Brazilian real" },
-    { codigo: "CAD", nombreEs: "Dólar canadiense", nombreEn: "Canadian dollar" },
-    { codigo: "CHF", nombreEs: "Franco suizo", nombreEn: "Swiss franc" },
-    { codigo: "CLP", nombreEs: "Peso chileno", nombreEn: "Chilean peso" },
-    { codigo: "CNY", nombreEs: "Yuan chino", nombreEn: "Chinese yuan" },
-    { codigo: "COP", nombreEs: "Peso colombiano", nombreEn: "Colombian peso" },
-    { codigo: "CRC", nombreEs: "Colón costarricense", nombreEn: "Costa Rican colón" },
-    { codigo: "DOP", nombreEs: "Peso dominicano", nombreEn: "Dominican peso" },
-    { codigo: "EUR", nombreEs: "Euro", nombreEn: "Euro" },
-    { codigo: "GBP", nombreEs: "Libra esterlina", nombreEn: "British pound" },
-    { codigo: "GTQ", nombreEs: "Quetzal guatemalteco", nombreEn: "Guatemalan quetzal" },
-    { codigo: "HKD", nombreEs: "Dólar de Hong Kong", nombreEn: "Hong Kong dollar" },
-    { codigo: "HNL", nombreEs: "Lempira hondureño", nombreEn: "Honduran lempira" },
-    { codigo: "INR", nombreEs: "Rupia india", nombreEn: "Indian rupee" },
-    { codigo: "JPY", nombreEs: "Yen japonés", nombreEn: "Japanese yen" },
-    { codigo: "KRW", nombreEs: "Won surcoreano", nombreEn: "South Korean won" },
-    { codigo: "MXN", nombreEs: "Peso mexicano", nombreEn: "Mexican peso" },
-    { codigo: "NIO", nombreEs: "Córdoba nicaragüense", nombreEn: "Nicaraguan córdoba" },
-    { codigo: "NOK", nombreEs: "Corona noruega", nombreEn: "Norwegian krone" },
-    { codigo: "NZD", nombreEs: "Dólar neozelandés", nombreEn: "New Zealand dollar" },
-    { codigo: "PAB", nombreEs: "Balboa panameño", nombreEn: "Panamanian balboa" },
-    { codigo: "PEN", nombreEs: "Sol peruano", nombreEn: "Peruvian sol" },
-    { codigo: "PYG", nombreEs: "Guaraní paraguayo", nombreEn: "Paraguayan guaraní" },
-    { codigo: "SEK", nombreEs: "Corona sueca", nombreEn: "Swedish krona" },
-    { codigo: "SGD", nombreEs: "Dólar de Singapur", nombreEn: "Singapore dollar" },
-    { codigo: "USD", nombreEs: "Dólar estadounidense", nombreEn: "U.S. dollar" },
-    { codigo: "UYU", nombreEs: "Peso uruguayo", nombreEn: "Uruguayan peso" },
-    { codigo: "ZAR", nombreEs: "Rand sudafricano", nombreEn: "South African rand" },
+    {
+      codigo: "MXN",
+      nombreEs: "Peso mexicano",
+      nombreEn: "Mexican peso",
+    },
+    {
+      codigo: "USD",
+      nombreEs: "Dólar estadounidense",
+      nombreEn: "U.S. dollar",
+    },
   ];
 
-  function cambiarMonedaPrincipal(nuevaMoneda: string) {
-    setMonedaPrincipal(nuevaMoneda);
+  function cambiarMonedaPrincipal(
+    nuevaMoneda: string
+  ) {
 
-    if (nuevaMoneda === monedaSecundaria) {
-      setMonedaSecundaria("");
-      setTipoCambio("");
-    }
+    const principal =
+      nuevaMoneda === "USD"
+        ? "USD"
+        : "MXN";
+
+    setMonedaPrincipal(
+      principal
+    );
+
+    setMonedaSecundaria(
+      principal === "MXN"
+        ? "USD"
+        : "MXN"
+    );
+
+    setTipoCambio("");
+
   }
 
   useEffect(() => {
+
     cargarConfiguracionMoneda();
+
   }, []);
 
   async function cargarConfiguracionMoneda() {
+
     setCargandoMoneda(true);
 
-    const { data, error } = await supabase
-      .from("configuracion_finanzas")
-      .select("clave, valor")
-      .in("clave", [
-        "moneda_principal",
-        "moneda_secundaria",
-        "moneda_secundaria_activa",
-        "tipo_cambio",
-      ]);
+    const {
+      data,
+      error,
+    } = await supabase
+      .from(
+        "configuracion_finanzas"
+      )
+      .select(
+        "clave, valor"
+      )
+      .in(
+        "clave",
+        [
+          "moneda_principal",
+          "moneda_secundaria",
+          "moneda_secundaria_activa",
+          "tipo_cambio",
+        ]
+      );
 
     if (error) {
-      console.error("Error cargando configuración de moneda:", error);
+
+      console.error(
+        "Error cargando configuración de moneda:",
+        error
+      );
+
       setCargandoMoneda(false);
+
       return;
+
     }
 
-    const valores = Object.fromEntries(
-      (data ?? []).map((fila) => [fila.clave, String(fila.valor ?? "")])
+    const valores =
+      Object.fromEntries(
+        (data ?? []).map(
+          (fila) => [
+            fila.clave,
+            String(
+              fila.valor ?? ""
+            ),
+          ]
+        )
+      );
+
+    const principalGuardada =
+      valores.moneda_principal ||
+      "MXN";
+
+    const principal =
+      principalGuardada === "USD"
+        ? "USD"
+        : "MXN";
+
+    const secundariaEsperada =
+      principal === "MXN"
+        ? "USD"
+        : "MXN";
+
+    const secundariaGuardada =
+      valores.moneda_secundaria ||
+      secundariaEsperada;
+
+    const secundaria =
+      secundariaGuardada === principal ||
+      ![
+        "MXN",
+        "USD",
+      ].includes(
+        secundariaGuardada
+      )
+        ? secundariaEsperada
+        : secundariaGuardada;
+
+    const secundariaActiva =
+      valores
+        .moneda_secundaria_activa !==
+      "false";
+
+    const cambio =
+      valores.tipo_cambio || "";
+
+    setMonedaPrincipal(
+      principal
     );
 
-    const principal = valores.moneda_principal || "MXN";
-    const secundaria = valores.moneda_secundaria || "USD";
-    const secundariaActiva = valores.moneda_secundaria_activa !== "false";
-    const cambio = valores.tipo_cambio || "";
+    setMonedaSecundaria(
+      secundaria
+    );
 
-    setMonedaPrincipal(principal);
-    setMonedaSecundaria(secundaria);
-    setMonedaSecundariaActiva(secundariaActiva);
-    setTipoCambio(cambio);
+    setMonedaSecundariaActiva(
+      secundariaActiva
+    );
+
+    setTipoCambio(
+      cambio
+    );
+
     setConfiguracionMonedaOriginal({
-      monedaPrincipal: principal,
-      monedaSecundaria: secundaria,
-      monedaSecundariaActiva: secundariaActiva,
-      tipoCambio: cambio,
+      monedaPrincipal:
+        principal,
+
+      monedaSecundaria:
+        secundaria,
+
+      monedaSecundariaActiva:
+        secundariaActiva,
+
+      tipoCambio:
+        cambio,
     });
 
     setCargandoMoneda(false);
+
   }
 
   async function guardarConfiguracionMoneda() {
-    if (monedaSecundariaActiva && !monedaSecundaria) {
+
+    if (
+      monedaSecundariaActiva &&
+      !monedaSecundaria
+    ) {
+
       alert(
         es
           ? "Selecciona una moneda secundaria."
           : "Select a secondary currency."
       );
+
       return;
+
     }
 
-    if (monedaSecundariaActiva && monedaPrincipal === monedaSecundaria) {
+    if (
+      monedaSecundariaActiva &&
+      monedaPrincipal ===
+        monedaSecundaria
+    ) {
+
       alert(
         es
           ? "La moneda secundaria debe ser diferente de la moneda principal."
           : "The secondary currency must be different from the primary currency."
       );
+
       return;
+
     }
 
-    const valorCambio = Number(tipoCambio);
+    const valorCambio =
+      Number(
+        tipoCambio
+      );
 
-    if (monedaSecundariaActiva && (!valorCambio || valorCambio <= 0)) {
+    if (
+      monedaSecundariaActiva &&
+      (
+        !valorCambio ||
+        valorCambio <= 0
+      )
+    ) {
+
       alert(
         es
           ? "Ingresa un tipo de cambio válido."
           : "Enter a valid exchange rate."
       );
+
       return;
+
     }
 
     setGuardandoMoneda(true);
 
-    const ahora = new Date().toISOString();
+    const ahora =
+      new Date()
+        .toISOString();
+
     const filas = [
       {
-        clave: "moneda_principal",
-        valor: monedaPrincipal,
-        descripcion: "Moneda principal utilizada por la clínica",
-        updated_at: ahora,
+        clave:
+          "moneda_principal",
+
+        valor:
+          monedaPrincipal,
+
+        descripcion:
+          "Moneda principal utilizada por la clínica",
+
+        updated_at:
+          ahora,
       },
       {
-        clave: "moneda_secundaria",
-        valor: monedaSecundaria,
-        descripcion: "Moneda secundaria opcional utilizada por la clínica",
-        updated_at: ahora,
+        clave:
+          "moneda_secundaria",
+
+        valor:
+          monedaSecundaria,
+
+        descripcion:
+          "Moneda secundaria opcional utilizada por la clínica",
+
+        updated_at:
+          ahora,
       },
       {
-        clave: "moneda_secundaria_activa",
-        valor: String(monedaSecundariaActiva),
-        descripcion: "Indica si la clínica utiliza una segunda moneda",
-        updated_at: ahora,
+        clave:
+          "moneda_secundaria_activa",
+
+        valor:
+          String(
+            monedaSecundariaActiva
+          ),
+
+        descripcion:
+          "Indica si la clínica utiliza una segunda moneda",
+
+        updated_at:
+          ahora,
       },
       {
-        clave: "tipo_cambio",
-        valor: monedaSecundariaActiva ? valorCambio.toFixed(4) : "1",
-        descripcion: "Tipo de cambio entre la moneda secundaria y la moneda principal",
-        updated_at: ahora,
+        clave:
+          "tipo_cambio",
+
+        valor:
+          monedaSecundariaActiva
+            ? valorCambio
+                .toFixed(4)
+            : "1",
+
+        descripcion:
+          "Tipo de cambio entre la moneda secundaria y la moneda principal",
+
+        updated_at:
+          ahora,
       },
     ];
 
-    const { error } = await supabase
-      .from("configuracion_finanzas")
-      .upsert(filas, { onConflict: "clave" });
+    const {
+      error,
+    } = await supabase
+      .from(
+        "configuracion_finanzas"
+      )
+      .upsert(
+        filas,
+        {
+          onConflict:
+            "clave",
+        }
+      );
 
     if (error) {
-      console.error("Error guardando configuración de moneda:", error);
+
+      console.error(
+        "Error guardando configuración de moneda:",
+        error
+      );
+
       alert(
         es
           ? "Error guardando la configuración de moneda."
           : "Error saving currency settings."
       );
+
       setGuardandoMoneda(false);
+
       return;
+
     }
 
-    const cambioGuardado = monedaSecundariaActiva
-      ? valorCambio.toFixed(4)
-      : "1";
+    const cambioGuardado =
+      monedaSecundariaActiva
+        ? valorCambio
+            .toFixed(4)
+        : "1";
 
     await registrarBitacora({
-      accion: "Cambiar configuración de moneda",
-      modulo: "Configuración financiera",
+      accion:
+        "Cambiar configuración de moneda",
+
+      modulo:
+        "Configuración financiera",
+
       detalle:
         `${configuracionMonedaOriginal.monedaPrincipal}` +
-        `${configuracionMonedaOriginal.monedaSecundariaActiva ? ` + ${configuracionMonedaOriginal.monedaSecundaria} (${configuracionMonedaOriginal.tipoCambio || "—"})` : ""}` +
+        `${
+          configuracionMonedaOriginal
+            .monedaSecundariaActiva
+            ? ` + ${configuracionMonedaOriginal.monedaSecundaria} (${configuracionMonedaOriginal.tipoCambio || "—"})`
+            : ""
+        }` +
         ` → ${monedaPrincipal}` +
-        `${monedaSecundariaActiva ? ` + ${monedaSecundaria} (${cambioGuardado})` : ""}`,
+        `${
+          monedaSecundariaActiva
+            ? ` + ${monedaSecundaria} (${cambioGuardado})`
+            : ""
+        }`,
     });
 
-    setTipoCambio(cambioGuardado);
+    setTipoCambio(
+      cambioGuardado
+    );
+
     setConfiguracionMonedaOriginal({
       monedaPrincipal,
       monedaSecundaria,
       monedaSecundariaActiva,
-      tipoCambio: cambioGuardado,
+      tipoCambio:
+        cambioGuardado,
     });
+
     setGuardandoMoneda(false);
 
     alert(
@@ -368,6 +540,7 @@ export default function ConfiguracionFinanzas({
         ? "Configuración de moneda actualizada correctamente."
         : "Currency settings updated successfully."
     );
+
   }
 
   return (
@@ -413,7 +586,11 @@ export default function ConfiguracionFinanzas({
             `}
           >
 
-            {es ? "Tratamientos" : "Treatments"}
+            {
+              es
+                ? "Tratamientos"
+                : "Treatments"
+            }
 
           </button>
 
@@ -437,7 +614,11 @@ export default function ConfiguracionFinanzas({
             `}
           >
 
-            {es ? "Comisiones y costos" : "Commissions and costs"}
+            {
+              es
+                ? "Comisiones y costos"
+                : "Commissions and costs"
+            }
 
           </button>
 
@@ -466,7 +647,11 @@ export default function ConfiguracionFinanzas({
               `}
             >
 
-             {es ? "Métodos de pago" : "Payment Methods"}
+              {
+                es
+                  ? "Métodos de pago"
+                  : "Payment Methods"
+              }
 
             </button>
           }
@@ -496,7 +681,11 @@ export default function ConfiguracionFinanzas({
               `}
             >
 
-              {es ? "Moneda" : "Currency"}
+              {
+                es
+                  ? "Moneda"
+                  : "Currency"
+              }
 
             </button>
           }
@@ -613,7 +802,13 @@ export default function ConfiguracionFinanzas({
               text-[var(--mint-navy)]
             "
           >
-            {es ? "Moneda" : "Currency"}
+
+            {
+              es
+                ? "Moneda"
+                : "Currency"
+            }
+
           </h2>
 
           <p
@@ -622,11 +817,13 @@ export default function ConfiguracionFinanzas({
               mt-2
             "
           >
+
             {
               es
                 ? "Configura la moneda principal de la clínica y, si lo necesitas, una segunda moneda con su tipo de cambio."
                 : "Configure the clinic's primary currency and, if needed, a secondary currency with its exchange rate."
             }
+
           </p>
 
           {
@@ -642,7 +839,13 @@ export default function ConfiguracionFinanzas({
                     mint-text-secondary
                   "
                 >
-                  {es ? "Cargando configuración..." : "Loading settings..."}
+
+                  {
+                    es
+                      ? "Cargando configuración..."
+                      : "Loading settings..."
+                  }
+
                 </div>
 
               )
@@ -671,29 +874,93 @@ export default function ConfiguracionFinanzas({
                       p-5
                     "
                   >
-                    <label className="block text-sm font-bold text-[var(--mint-navy)] mb-2">
-                      {es ? "Moneda principal" : "Primary currency"}
+
+                    <label
+                      className="
+                        block
+                        text-sm
+                        font-bold
+                        text-[var(--mint-navy)]
+                        mb-2
+                      "
+                    >
+
+                      {
+                        es
+                          ? "Moneda principal"
+                          : "Primary currency"
+                      }
+
                     </label>
 
                     <select
-                      value={monedaPrincipal}
-                      onChange={(e) => cambiarMonedaPrincipal(e.target.value)}
-                      className="mint-input w-full p-3"
+                      value={
+                        monedaPrincipal
+                      }
+                      onChange={
+                        (e) =>
+                          cambiarMonedaPrincipal(
+                            e.target.value
+                          )
+                      }
+                      className="
+                        mint-input
+                        w-full
+                        p-3
+                      "
                     >
-                      {monedas.map((moneda) => (
-                        <option key={moneda.codigo} value={moneda.codigo}>
-                          {moneda.codigo} — {es ? moneda.nombreEs : moneda.nombreEn}
-                        </option>
-                      ))}
+
+                      {
+                        monedas.map(
+                          (
+                            moneda
+                          ) => (
+
+                            <option
+                              key={
+                                moneda.codigo
+                              }
+                              value={
+                                moneda.codigo
+                              }
+                            >
+
+                              {
+                                moneda.codigo
+                              }
+
+                              {" — "}
+
+                              {
+                                es
+                                  ? moneda.nombreEs
+                                  : moneda.nombreEn
+                              }
+
+                            </option>
+
+                          )
+                        )
+                      }
+
                     </select>
 
-                    <p className="text-xs mint-text-muted mt-2">
+                    <p
+                      className="
+                        text-xs
+                        mint-text-muted
+                        mt-2
+                      "
+                    >
+
                       {
                         es
                           ? "Esta será la moneda predeterminada para precios, cobros, gastos y reportes."
                           : "This will be the default currency for prices, payments, expenses, and reports."
                       }
+
                     </p>
+
                   </div>
 
                   <div
@@ -709,26 +976,69 @@ export default function ConfiguracionFinanzas({
                       p-5
                     "
                   >
+
                     <div>
-                      <p className="font-semibold mint-text-primary">
-                        {es ? "Usar segunda moneda" : "Use secondary currency"}
-                      </p>
-                      <p className="text-sm mint-text-secondary mt-1">
+
+                      <p
+                        className="
+                          font-semibold
+                          mint-text-primary
+                        "
+                      >
+
                         {
                           es
-                            ? "Actívala si la clínica cobra o registra importes en otra moneda."
-                            : "Enable it if the clinic charges or records amounts in another currency."
+                            ? "Usar segunda moneda"
+                            : "Use secondary currency"
                         }
+
                       </p>
+
+                      <p
+                        className="
+                          text-sm
+                          mint-text-secondary
+                          mt-1
+                        "
+                      >
+
+                        {
+                          es
+                            ? `Actívala para utilizar también ${monedaSecundaria}.`
+                            : `Enable it to also use ${monedaSecundaria}.`
+                        }
+
+                      </p>
+
                     </div>
 
-                    <label className="relative inline-flex shrink-0 cursor-pointer items-center">
+                    <label
+                      className="
+                        relative
+                        inline-flex
+                        shrink-0
+                        cursor-pointer
+                        items-center
+                      "
+                    >
+
                       <input
                         type="checkbox"
-                        checked={monedaSecundariaActiva}
-                        onChange={(e) => setMonedaSecundariaActiva(e.target.checked)}
-                        className="peer sr-only"
+                        checked={
+                          monedaSecundariaActiva
+                        }
+                        onChange={
+                          (e) =>
+                            setMonedaSecundariaActiva(
+                              e.target.checked
+                            )
+                        }
+                        className="
+                          peer
+                          sr-only
+                        "
                       />
+
                       <span
                         className="
                           h-7
@@ -750,7 +1060,9 @@ export default function ConfiguracionFinanzas({
                           peer-checked:after:translate-x-5
                         "
                       />
+
                     </label>
+
                   </div>
 
                   {
@@ -759,47 +1071,157 @@ export default function ConfiguracionFinanzas({
                     &&
 
                     <>
-                      <div>
-                        <label className="block text-sm font-semibold mint-text-primary mb-2">
-                          {es ? "Moneda secundaria" : "Secondary currency"}
-                        </label>
 
-                        <select
-                          value={monedaSecundaria}
-                          onChange={(e) => setMonedaSecundaria(e.target.value)}
-                          className="mint-input w-full p-3"
+                      <div
+                        className="
+                          rounded-[18px]
+                          border
+                          border-[var(--mint-border)]
+                          bg-white
+                          p-5
+                        "
+                      >
+
+                        <p
+                          className="
+                            block
+                            text-sm
+                            font-semibold
+                            mint-text-primary
+                            mb-2
+                          "
                         >
-                          <option value="">
-                            {es ? "Selecciona una moneda" : "Select a currency"}
-                          </option>
 
-                          {monedas
-                            .filter((moneda) => moneda.codigo !== monedaPrincipal)
-                            .map((moneda) => (
-                              <option key={moneda.codigo} value={moneda.codigo}>
-                                {moneda.codigo} — {es ? moneda.nombreEs : moneda.nombreEn}
-                              </option>
-                            ))}
-                        </select>
+                          {
+                            es
+                              ? "Moneda secundaria"
+                              : "Secondary currency"
+                          }
+
+                        </p>
+
+                        <div
+                          className="
+                            mint-input
+                            w-full
+                            p-3
+                            font-semibold
+                            mint-text-primary
+                          "
+                        >
+
+                          {
+                            monedaSecundaria
+                          }
+
+                          {" — "}
+
+                          {
+                            monedaSecundaria ===
+                            "USD"
+
+                              ? (
+                                es
+                                  ? "Dólar estadounidense"
+                                  : "U.S. dollar"
+                              )
+
+                              : (
+                                es
+                                  ? "Peso mexicano"
+                                  : "Mexican peso"
+                              )
+                          }
+
+                        </div>
+
+                        <p
+                          className="
+                            text-xs
+                            mint-text-muted
+                            mt-2
+                          "
+                        >
+
+                          {
+                            es
+                              ? `Al usar ${monedaPrincipal} como moneda principal, ${monedaSecundaria} será automáticamente la segunda moneda.`
+                              : `When ${monedaPrincipal} is the primary currency, ${monedaSecundaria} is automatically used as the secondary currency.`
+                          }
+
+                        </p>
+
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold mint-text-primary mb-2">
-                          {es ? "Tipo de cambio" : "Exchange rate"}
+
+                        <label
+                          className="
+                            block
+                            text-sm
+                            font-semibold
+                            mint-text-primary
+                            mb-2
+                          "
+                        >
+
+                          {
+                            es
+                              ? "Tipo de cambio"
+                              : "Exchange rate"
+                          }
+
                         </label>
 
-                        <p className="text-xs font-semibold mint-text-muted mb-2">
-                          1 {monedaSecundaria} {es ? "equivale a:" : "equals:"}
+                        <p
+                          className="
+                            text-xs
+                            font-semibold
+                            mint-text-muted
+                            mb-2
+                          "
+                        >
+
+                          1{" "}
+                          {
+                            monedaSecundaria
+                          }{" "}
+
+                          {
+                            es
+                              ? "equivale a:"
+                              : "equals:"
+                          }
+
                         </p>
 
-                        <div className="relative">
+                        <div
+                          className="
+                            relative
+                          "
+                        >
+
                           <input
                             type="number"
                             min="0"
                             step="0.0001"
-                            value={tipoCambio}
-                            onChange={(e) => setTipoCambio(e.target.value)}
-                            className="mint-input w-full p-3 pr-20 text-lg font-semibold"
+                            value={
+                              tipoCambio
+                            }
+                            onChange={
+                              (e) =>
+                                setTipoCambio(
+                                  e.target.value
+                                )
+                            }
+                            className="
+                              mint-input
+                              w-full
+                              p-3
+                              pr-20
+                              text-lg
+                              font-semibold
+                            "
                           />
 
                           <span
@@ -813,9 +1235,15 @@ export default function ConfiguracionFinanzas({
                               mint-text-secondary
                             "
                           >
-                            {monedaPrincipal}
+
+                            {
+                              monedaPrincipal
+                            }
+
                           </span>
+
                         </div>
+
                       </div>
 
                       <div
@@ -829,22 +1257,77 @@ export default function ConfiguracionFinanzas({
                           shadow-[0_10px_26px_rgba(15,42,65,0.12)]
                         "
                       >
-                        <p className="text-xs uppercase tracking-wide font-semibold text-white/60">
-                          {es ? "Tipo de cambio actual" : "Current exchange rate"}
+
+                        <p
+                          className="
+                            text-xs
+                            uppercase
+                            tracking-wide
+                            font-semibold
+                            text-white/60
+                          "
+                        >
+
+                          {
+                            es
+                              ? "Tipo de cambio actual"
+                              : "Current exchange rate"
+                          }
+
                         </p>
 
-                        <p className="text-2xl font-bold text-white mt-1">
-                          1 {monedaSecundaria} = {Number(tipoCambio || 0).toFixed(4)} {monedaPrincipal}
+                        <p
+                          className="
+                            text-2xl
+                            font-bold
+                            text-white
+                            mt-1
+                          "
+                        >
+
+                          1{" "}
+                          {
+                            monedaSecundaria
+                          }
+
+                          {" = "}
+
+                          {
+                            Number(
+                              tipoCambio ||
+                              0
+                            ).toFixed(4)
+                          }
+
+                          {" "}
+
+                          {
+                            monedaPrincipal
+                          }
+
                         </p>
+
                       </div>
+
                     </>
                   }
 
-                  <div className="flex justify-end pt-2">
+                  <div
+                    className="
+                      flex
+                      justify-end
+                      pt-2
+                    "
+                  >
+
                     <button
                       type="button"
-                      onClick={guardarConfiguracionMoneda}
-                      disabled={guardandoMoneda}
+                      onClick={
+                        guardarConfiguracionMoneda
+                      }
+                      disabled={
+                        guardandoMoneda
+                      }
                       className="
                         mint-btn
                         mint-btn-primary
@@ -854,12 +1337,25 @@ export default function ConfiguracionFinanzas({
                         disabled:cursor-not-allowed
                       "
                     >
+
                       {
                         guardandoMoneda
-                          ? es ? "Guardando..." : "Saving..."
-                          : es ? "Guardar cambios" : "Save changes"
+
+                          ? (
+                            es
+                              ? "Guardando..."
+                              : "Saving..."
+                          )
+
+                          : (
+                            es
+                              ? "Guardar cambios"
+                              : "Save changes"
+                          )
                       }
+
                     </button>
+
                   </div>
 
                 </div>
@@ -868,6 +1364,7 @@ export default function ConfiguracionFinanzas({
           }
 
         </div>
+
       }
 
     </div>
