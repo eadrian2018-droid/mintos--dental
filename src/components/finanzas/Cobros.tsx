@@ -8,6 +8,10 @@ import {
   supabase,
 } from "../../lib/supabase";
 
+import {
+  useLanguage,
+} from "../../context/LanguageContext";
+
 type Cobro = {
   id: number;
   paciente_id: number;
@@ -50,6 +54,18 @@ type DiaSemanaFiltro = {
 
 export default function Cobros() {
 
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
+
+  const locale =
+    es
+      ? "es-MX"
+      : "en-US";
+
   const [
     cobros,
     setCobros,
@@ -69,6 +85,24 @@ export default function Cobros() {
     cargando,
     setCargando,
   ] = useState(true);
+
+  const [
+    monedaPrincipal,
+    setMonedaPrincipal,
+  ] = useState<"MXN" | "USD">("MXN");
+
+  const [
+    monedaSecundariaActiva,
+    setMonedaSecundariaActiva,
+  ] = useState(true);
+
+  const mostrarMXN =
+    monedaPrincipal === "MXN" ||
+    monedaSecundariaActiva;
+
+  const mostrarUSD =
+    monedaPrincipal === "USD" ||
+    monedaSecundariaActiva;
 
   const [
     periodo,
@@ -108,6 +142,7 @@ export default function Cobros() {
       resultadoCobros,
       resultadoPacientes,
       resultadoTratamientos,
+      resultadoConfiguracionFinanzas,
     ] = await Promise.all([
 
       supabase
@@ -130,6 +165,17 @@ export default function Cobros() {
         .from("tratamientos")
         .select(
           "id, tratamiento"
+        ),
+
+      supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in(
+          "clave",
+          [
+            "moneda_principal",
+            "moneda_secundaria_activa",
+          ]
         ),
 
     ]);
@@ -180,6 +226,35 @@ export default function Cobros() {
     setTratamientos(
       resultadoTratamientos.data ||
       []
+    );
+
+    if (
+      resultadoConfiguracionFinanzas.error
+    ) {
+      console.error(
+        "Error cargando configuración financiera:",
+        resultadoConfiguracionFinanzas.error
+      );
+    }
+
+    const valoresConfiguracion =
+      Object.fromEntries(
+        (resultadoConfiguracionFinanzas.data ?? []).map(
+          (fila) => [
+            fila.clave,
+            String(fila.valor ?? ""),
+          ]
+        )
+      );
+
+    setMonedaPrincipal(
+      valoresConfiguracion.moneda_principal === "USD"
+        ? "USD"
+        : "MXN"
+    );
+
+    setMonedaSecundariaActiva(
+      valoresConfiguracion.moneda_secundaria_activa !== "false"
     );
 
     setCargando(false);
@@ -292,14 +367,24 @@ export default function Cobros() {
     useMemo<DiaSemanaFiltro[]>(
       () => {
 
-        const nombres = [
-          "Lun",
-          "Mar",
-          "Mié",
-          "Jue",
-          "Vie",
-          "Sáb",
-        ];
+        const nombres =
+          es
+            ? [
+                "Lun",
+                "Mar",
+                "Mié",
+                "Jue",
+                "Vie",
+                "Sáb",
+              ]
+            : [
+                "Mon",
+                "Tue",
+                "Wed",
+                "Thu",
+                "Fri",
+                "Sat",
+              ];
 
         return nombres.map(
           (
@@ -349,6 +434,7 @@ export default function Cobros() {
       },
       [
         lunesSemana,
+        es,
       ]
     );
 
@@ -607,7 +693,7 @@ export default function Cobros() {
           paciente.id ===
           pacienteId
       )?.nombre ||
-      `Paciente #${pacienteId}`
+      `${es ? "Paciente" : "Patient"} #${pacienteId}`
     );
 
   }
@@ -624,7 +710,7 @@ export default function Cobros() {
           tratamiento.id ===
           tratamientoId
       )?.tratamiento ||
-      `Tratamiento #${tratamientoId}`
+      `${es ? "Tratamiento" : "Treatment"} #${tratamientoId}`
     );
 
   }
@@ -637,7 +723,7 @@ export default function Cobros() {
       valor ||
       0
     ).toLocaleString(
-      "es-MX",
+      locale,
       {
         minimumFractionDigits:
           2,
@@ -658,13 +744,13 @@ export default function Cobros() {
 
       return (
         `${lunesSemana.toLocaleDateString(
-          "es-MX",
+          locale,
           {
             day: "numeric",
             month: "short",
           }
         )} — ${sabadoSemana.toLocaleDateString(
-          "es-MX",
+          locale,
           {
             day: "numeric",
             month: "short",
@@ -681,7 +767,7 @@ export default function Cobros() {
     ) {
 
       return hoy.toLocaleDateString(
-        "es-MX",
+        locale,
         {
           month: "long",
           year: "numeric",
@@ -701,7 +787,7 @@ export default function Cobros() {
 
     }
 
-    return "Todos los registros";
+    return es ? "Todos los registros" : "All records";
 
   }
 
@@ -726,12 +812,15 @@ export default function Cobros() {
       >
 
         <div
+          style={{
+            background:
+              "linear-gradient(120deg, #102f4f 0%, #1b4f68 55%, #0b8f80 100%)",
+          }}
           className="
             px-6
             py-5
-            bg-gradient-to-r
-            from-[var(--mint-surface)]
-            to-[var(--mint-surface-teal)]
+            relative
+            overflow-hidden
             flex
             flex-col
             xl:flex-row
@@ -749,18 +838,18 @@ export default function Cobros() {
                 font-bold
                 uppercase
                 tracking-[0.14em]
-                mint-text-muted
+                text-[#7ee3cf]
                 mb-1
               "
             >
-              Período de cobros
+              {es ? "Período de cobros" : "Collections period"}
             </p>
 
             <h2
               className="
                 text-xl
                 font-bold
-                mint-text-primary
+                text-white
               "
             >
               {
@@ -771,13 +860,13 @@ export default function Cobros() {
             <p
               className="
                 text-sm
-                mint-text-secondary
+                !text-white/80
                 mt-1
               "
             >
-              Los indicadores y
-              transacciones corresponden
-              al período seleccionado.
+              {es
+                ? "Los indicadores y transacciones corresponden al período seleccionado."
+                : "Indicators and transactions correspond to the selected period."}
             </p>
 
           </div>
@@ -790,8 +879,8 @@ export default function Cobros() {
               xl:self-center
               rounded-xl
               border
-              border-[var(--mint-border-teal)]
-              bg-white/80
+              border-white/20
+              bg-white/10
               p-1
               shadow-[0_5px_14px_rgba(15,42,65,0.07)]
             "
@@ -817,21 +906,22 @@ export default function Cobros() {
                   "semana"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        !bg-white
+                        !text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/30
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        !text-white/80
+                        hover:!text-white
+                        hover:bg-white/10
                       `
                 }
               `}
             >
-              Semana
+              {es ? "Semana" : "Week"}
             </button>
 
             <button
@@ -854,21 +944,22 @@ export default function Cobros() {
                   "mes"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        !bg-white
+                        !text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/30
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        !text-white/80
+                        hover:!text-white
+                        hover:bg-white/10
                       `
                 }
               `}
             >
-              Mes
+              {es ? "Mes" : "Month"}
             </button>
 
             <button
@@ -891,21 +982,22 @@ export default function Cobros() {
                   "anio"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        !bg-white
+                        !text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/30
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        !text-white/80
+                        hover:!text-white
+                        hover:bg-white/10
                       `
                 }
               `}
             >
-              Año
+              {es ? "Año" : "Year"}
             </button>
 
             <button
@@ -928,21 +1020,22 @@ export default function Cobros() {
                   "historico"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        !bg-white
+                        !text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/30
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        !text-white/80
+                        hover:!text-white
+                        hover:bg-white/10
                       `
                 }
               `}
             >
-              Histórico
+              {es ? "Histórico" : "History"}
             </button>
 
           </div>
@@ -978,7 +1071,7 @@ export default function Cobros() {
                 mb-1
               "
             >
-              Operación
+              {es ? "Operación" : "Operations"}
             </p>
 
             <h2
@@ -988,7 +1081,7 @@ export default function Cobros() {
                 mint-text-primary
               "
             >
-              Resumen de cobros
+              {es ? "Resumen de cobros" : "Collections summary"}
             </h2>
 
           </div>
@@ -1005,7 +1098,7 @@ export default function Cobros() {
               cobrosFiltradosPeriodo
                 .length
             }{" "}
-            transacciones
+            {es ? "transacciones" : "transactions"}
           </p>
 
         </div>
@@ -1014,13 +1107,15 @@ export default function Cobros() {
           className="
             grid
             grid-cols-1
-            md:grid-cols-3
+            md:grid-cols-2
+            xl:grid-cols-3
             gap-4
           "
         >
 
           {/* TOTAL MXN */}
 
+          {mostrarMXN && (
           <div
             className="
               mint-card
@@ -1072,7 +1167,7 @@ export default function Cobros() {
                     mint-text-muted
                   "
                 >
-                  Total cobrado MXN
+                  {es ? "Total cobrado MXN" : "Total collected MXN"}
                 </p>
 
                 <p
@@ -1082,7 +1177,7 @@ export default function Cobros() {
                     mt-1
                   "
                 >
-                  Pagos recibidos en pesos
+                  {es ? "Pagos recibidos en pesos" : "Payments received in pesos"}
                 </p>
 
               </div>
@@ -1144,10 +1239,13 @@ export default function Cobros() {
             </div>
 
           </div>
+          )}
+
 
 
           {/* TOTAL USD */}
 
+          {mostrarUSD && (
           <div
             className="
               mint-card
@@ -1199,7 +1297,7 @@ export default function Cobros() {
                     mint-text-muted
                   "
                 >
-                  Total cobrado USD
+                  {es ? "Total cobrado USD" : "Total collected USD"}
                 </p>
 
                 <p
@@ -1209,7 +1307,7 @@ export default function Cobros() {
                     mt-1
                   "
                 >
-                  Pagos recibidos en dólares
+                  {es ? "Pagos recibidos en dólares" : "Payments received in dollars"}
                 </p>
 
               </div>
@@ -1271,10 +1369,13 @@ export default function Cobros() {
             </div>
 
           </div>
+          )}
+
 
 
           {/* TOTAL TARJETA */}
 
+          {mostrarMXN && (
           <div
             className="
               mint-card
@@ -1326,7 +1427,7 @@ export default function Cobros() {
                     mint-text-muted
                   "
                 >
-                  Total cobrado con tarjeta
+                  {es ? "Total cobrado con tarjeta" : "Total collected by card"}
                 </p>
 
                 <p
@@ -1336,7 +1437,7 @@ export default function Cobros() {
                     mt-1
                   "
                 >
-                  Depósito recibido después de comisiones
+                  {es ? "Depósito recibido después de comisiones" : "Deposit received after fees"}
                 </p>
 
               </div>
@@ -1392,12 +1493,14 @@ export default function Cobros() {
                   mt-1
                 "
               >
-                MXN depositados
+                {es ? "MXN depositados" : "MXN deposited"}
               </p>
 
             </div>
 
           </div>
+          )}
+
 
         </div>
 
@@ -1448,7 +1551,7 @@ export default function Cobros() {
                   mb-1
                 "
               >
-                Transacciones
+                {es ? "Transacciones" : "Transactions"}
               </p>
 
               <h3
@@ -1458,7 +1561,7 @@ export default function Cobros() {
                   mint-text-primary
                 "
               >
-                Historial de cobros
+                {es ? "Historial de cobros" : "Collections history"}
               </h3>
 
               <p
@@ -1468,8 +1571,9 @@ export default function Cobros() {
                   mt-1
                 "
               >
-                Cada registro corresponde
-                a una transacción individual.
+                {es
+                  ? "Cada registro corresponde a una transacción individual."
+                  : "Each record represents an individual transaction."}
               </p>
 
             </div>
@@ -1507,8 +1611,8 @@ export default function Cobros() {
             >
               {
                 cargando
-                  ? "Actualizando..."
-                  : "Actualizar"
+                  ? (es ? "Actualizando..." : "Refreshing...")
+                  : (es ? "Actualizar" : "Refresh")
               }
             </button>
 
@@ -1578,7 +1682,7 @@ export default function Cobros() {
                     }
                   `}
                 >
-                  Todos
+                  {es ? "Todos" : "All"}
                 </button>
 
                 {
@@ -1676,43 +1780,43 @@ export default function Cobros() {
                 >
 
                   <th className="px-5 py-3 text-left text-xs font-semibold mint-text-secondary">
-                    Fecha
+                    {es ? "Fecha" : "Date"}
                   </th>
 
                   <th className="px-5 py-3 text-left text-xs font-semibold mint-text-secondary">
-                    Paciente
+                    {es ? "Paciente" : "Patient"}
                   </th>
 
                   <th className="px-5 py-3 text-left text-xs font-semibold mint-text-secondary">
-                    Tratamiento
+                    {es ? "Tratamiento" : "Treatment"}
                   </th>
 
                   <th className="px-5 py-3 text-left text-xs font-semibold mint-text-secondary">
-                    Método
+                    {es ? "Método" : "Method"}
                   </th>
 
                   <th className="px-5 py-3 text-center text-xs font-semibold mint-text-secondary">
-                    Moneda
+                    {es ? "Moneda" : "Currency"}
                   </th>
 
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
-                    Monto
+                    {es ? "Monto" : "Amount"}
                   </th>
 
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
-                    Tipo cambio
+                    {es ? "Tipo cambio" : "Exchange rate"}
                   </th>
 
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
-                    Equivalente MXN
+                    {es ? "Equivalente MXN" : "MXN equivalent"}
                   </th>
 
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
-                    Comisión
+                    {es ? "Comisión" : "Fee"}
                   </th>
 
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
-                    Neto
+                    {es ? "Neto" : "Net"}
                   </th>
 
                 </tr>
@@ -1736,7 +1840,7 @@ export default function Cobros() {
                             mint-text-muted
                           "
                         >
-                          Cargando cobros...
+                          {es ? "Cargando cobros..." : "Loading collections..."}
                         </td>
 
                       </tr>
@@ -1764,8 +1868,7 @@ export default function Cobros() {
                                 mint-text-primary
                               "
                             >
-                              No hay cobros
-                              registrados
+                              {es ? "No hay cobros registrados" : "No collections recorded"}
                             </p>
 
                             <p
@@ -1775,9 +1878,9 @@ export default function Cobros() {
                                 mt-1
                               "
                             >
-                              No existen
-                              transacciones para
-                              este filtro.
+                              {es
+                                ? "No existen transacciones para este filtro."
+                                : "There are no transactions for this filter."}
                             </p>
 
                           </td>
@@ -1818,7 +1921,7 @@ export default function Cobros() {
                                   new Date(
                                     cobro.fecha
                                   ).toLocaleString(
-                                    "es-MX",
+                                    locale,
                                     {
                                       dateStyle:
                                         "short",
@@ -2049,16 +2152,16 @@ export default function Cobros() {
                   mint-text-muted
                 "
               >
-                Mostrando{" "}
+                {es ? "Mostrando" : "Showing"}{" "}
                 {
                   cobrosTabla.length
                 }{" "}
-                de{" "}
+                {es ? "de" : "of"}{" "}
                 {
                   cobrosFiltradosPeriodo
                     .length
                 }{" "}
-                transacciones del período
+                {es ? "transacciones del período" : "transactions for the period"}
               </p>
 
             </div>

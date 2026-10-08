@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -14,6 +15,12 @@ import type {
 
 import { useAuth }
   from "../../context/AuthContext";
+
+import { useLanguage }
+  from "../../context/LanguageContext";
+
+import { supabase }
+  from "../../lib/supabase";
 
 type PeriodoGastos =
   | "semana"
@@ -123,7 +130,7 @@ export default function Gastos({
   montoGasto,
   setMontoGasto,
 
-    monedaGasto,
+  monedaGasto,
   setMonedaGasto,
 
   metodoPagoGasto,
@@ -150,6 +157,168 @@ export default function Gastos({
     permisos
       ?.anular_gastos ===
     true;
+
+  const {
+    language,
+  } = useLanguage();
+
+  const es =
+    language === "es";
+
+  const locale =
+    es
+      ? "es-MX"
+      : "en-US";
+
+  const [
+    monedaPrincipal,
+    setMonedaPrincipal,
+  ] = useState<
+    "MXN" |
+    "USD"
+  >(
+    "MXN"
+  );
+
+  const [
+    monedaSecundariaActiva,
+    setMonedaSecundariaActiva,
+  ] = useState(
+    true
+  );
+
+  useEffect(
+    () => {
+
+      let activo =
+        true;
+
+      async function cargarConfiguracionMonedas() {
+
+        const {
+          data,
+          error,
+        } =
+          await supabase
+            .from(
+              "configuracion_finanzas"
+            )
+            .select(
+              "clave, valor"
+            )
+            .in(
+              "clave",
+              [
+                "moneda_principal",
+                "moneda_secundaria_activa",
+              ]
+            );
+
+        if (
+          error ||
+          !activo
+        ) {
+
+          return;
+
+        }
+
+        const valores =
+          Object.fromEntries(
+            (
+              data ?? []
+            ).map(
+              (
+                fila
+              ) => [
+                fila.clave,
+                String(
+                  fila.valor ??
+                  ""
+                ),
+              ]
+            )
+          );
+
+        setMonedaPrincipal(
+          valores
+            .moneda_principal ===
+          "USD"
+
+            ? "USD"
+
+            : "MXN"
+        );
+
+        setMonedaSecundariaActiva(
+          valores
+            .moneda_secundaria_activa !==
+          "false"
+        );
+
+      }
+
+      void cargarConfiguracionMonedas();
+
+      return () => {
+
+        activo =
+          false;
+
+      };
+
+    },
+    []
+  );
+
+  const mostrarMXN =
+    monedaPrincipal ===
+      "MXN" ||
+    monedaSecundariaActiva;
+
+  const mostrarUSD =
+    monedaPrincipal ===
+      "USD" ||
+    monedaSecundariaActiva;
+
+  useEffect(
+    () => {
+
+      if (
+        monedaGasto ===
+          "MXN" &&
+        !mostrarMXN
+      ) {
+
+        setMonedaGasto(
+          monedaPrincipal
+        );
+
+        return;
+
+      }
+
+      if (
+        monedaGasto ===
+          "USD" &&
+        !mostrarUSD
+      ) {
+
+        setMonedaGasto(
+          monedaPrincipal
+        );
+
+      }
+
+    },
+    [
+      monedaGasto,
+      monedaPrincipal,
+      mostrarMXN,
+      mostrarUSD,
+      setMonedaGasto,
+    ]
+  );
 
   /*
     total, cantidad y gastosPorCategoria
@@ -271,7 +440,9 @@ export default function Gastos({
         }
 
         return gastosFiltrados.filter(
-          (gasto) => {
+          (
+            gasto
+          ) => {
 
             if (
               !gasto.fecha
@@ -351,11 +522,14 @@ export default function Gastos({
       () =>
         gastosPeriodo
           .filter(
-            (gasto) =>
+            (
+              gasto
+            ) =>
               (
                 gasto.moneda ||
                 "MXN"
-              ) === "MXN"
+              ) ===
+              "MXN"
           )
           .reduce(
             (
@@ -364,7 +538,8 @@ export default function Gastos({
             ) =>
               acumulado +
               Number(
-                gasto.monto || 0
+                gasto.monto ||
+                0
               ),
             0
           ),
@@ -378,7 +553,9 @@ export default function Gastos({
       () =>
         gastosPeriodo
           .filter(
-            (gasto) =>
+            (
+              gasto
+            ) =>
               gasto.moneda ===
               "USD"
           )
@@ -389,7 +566,8 @@ export default function Gastos({
             ) =>
               acumulado +
               Number(
-                gasto.monto || 0
+                gasto.monto ||
+                0
               ),
             0
           ),
@@ -434,7 +612,8 @@ export default function Gastos({
               categoria
             ][moneda] +=
               Number(
-                gasto.monto || 0
+                gasto.monto ||
+                0
               );
 
             return acumulado;
@@ -458,10 +637,13 @@ export default function Gastos({
   ) {
 
     return monto.toLocaleString(
-      "es-MX",
+      locale,
       {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
+        minimumFractionDigits:
+          2,
+
+        maximumFractionDigits:
+          2,
       }
     );
 
@@ -471,7 +653,9 @@ export default function Gastos({
     fecha: string
   ) {
 
-    if (!fecha) {
+    if (
+      !fecha
+    ) {
 
       return "—";
 
@@ -484,11 +668,16 @@ export default function Gastos({
 
     return fechaLocal
       .toLocaleDateString(
-        "es-MX",
+        locale,
         {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
+          day:
+            "2-digit",
+
+          month:
+            "short",
+
+          year:
+            "numeric",
         }
       );
 
@@ -504,22 +693,36 @@ export default function Gastos({
         ) {
 
           return (
-            `${lunesSemana.toLocaleDateString(
-              "es-MX",
-              {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              }
-            )} — ${
-              sabadoSemana.toLocaleDateString(
-                "es-MX",
-                {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                }
-              )
+            `${
+              lunesSemana
+                .toLocaleDateString(
+                  locale,
+                  {
+                    day:
+                      "numeric",
+
+                    month:
+                      "short",
+
+                    year:
+                      "numeric",
+                  }
+                )
+            } — ${
+              sabadoSemana
+                .toLocaleDateString(
+                  locale,
+                  {
+                    day:
+                      "numeric",
+
+                    month:
+                      "short",
+
+                    year:
+                      "numeric",
+                  }
+                )
             }`
           );
 
@@ -530,13 +733,17 @@ export default function Gastos({
           "mes"
         ) {
 
-          return hoy.toLocaleDateString(
-            "es-MX",
-            {
-              month: "long",
-              year: "numeric",
-            }
-          );
+          return hoy
+            .toLocaleDateString(
+              locale,
+              {
+                month:
+                  "long",
+
+                year:
+                  "numeric",
+              }
+            );
 
         }
 
@@ -551,7 +758,9 @@ export default function Gastos({
 
         }
 
-        return "Todos los registros";
+        return es
+          ? "Todos los registros"
+          : "All records";
 
       },
       [
@@ -559,8 +768,66 @@ export default function Gastos({
         lunesSemana,
         sabadoSemana,
         hoy,
+        es,
+        locale,
       ]
     );
+
+  function etiquetaCategoria(
+    categoria: string
+  ) {
+
+    if (
+      es
+    ) {
+
+      return categoria;
+
+    }
+
+    const traducciones:
+      Record<
+        string,
+        string
+      > = {
+
+        "Material Dental":
+          "Dental Supplies",
+
+        Limpieza:
+          "Cleaning",
+
+        Laboratorio:
+          "Laboratory",
+
+        Especialistas:
+          "Specialists",
+
+        "Nómina":
+          "Payroll",
+
+        Servicios:
+          "Services",
+
+        Marketing:
+          "Marketing",
+
+        Otros:
+          "Other",
+
+        "Sin categoría":
+          "Uncategorized",
+
+      };
+
+    return (
+      traducciones[
+        categoria
+      ] ||
+      categoria
+    );
+
+  }
 
   return (
 
@@ -585,8 +852,7 @@ export default function Gastos({
           className="
             px-6
             py-6
-            border-b
-            border-[var(--mint-border)]
+            bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
             flex
             flex-col
             xl:flex-row
@@ -612,10 +878,10 @@ export default function Gastos({
                   inline-flex
                   items-center
                   rounded-full
-                  bg-[var(--mint-danger-bg)]
-                  text-[var(--mint-danger)]
+                  bg-white/10
+                  text-white
                   border
-                  border-[var(--mint-danger-border)]
+                  border-white/20
                   px-3
                   py-1
                   text-[11px]
@@ -625,7 +891,11 @@ export default function Gastos({
                 "
               >
 
-                Control de egresos
+                {
+                  es
+                    ? "Control de egresos"
+                    : "Expense control"
+                }
 
               </span>
 
@@ -636,11 +906,15 @@ export default function Gastos({
                 text-2xl
                 font-bold
                 tracking-tight
-                mint-text-primary
+                text-white
               "
             >
 
-              Gastos operativos
+              {
+                es
+                  ? "Gastos operativos"
+                  : "Operating expenses"
+              }
 
             </h2>
 
@@ -648,14 +922,18 @@ export default function Gastos({
               className="
                 mt-2
                 text-sm
-                mint-text-secondary
+                text-white/80
                 max-w-2xl
               "
             >
 
-              Registra y consulta los gastos de
-              operación de la clínica sin mezclar
-              movimientos en pesos y dólares.
+              {
+                es
+
+                  ? "Registra y consulta los gastos de operación de la clínica sin mezclar movimientos en pesos y dólares."
+
+                  : "Record and review clinic operating expenses while keeping peso and dollar transactions separate."
+              }
 
             </p>
 
@@ -669,8 +947,8 @@ export default function Gastos({
               xl:self-center
               rounded-xl
               border
-              border-[var(--mint-border)]
-              bg-[var(--mint-bg-soft)]
+              border-white/20
+              bg-white/10
               p-1
               shadow-sm
             "
@@ -696,22 +974,26 @@ export default function Gastos({
                   "semana"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        bg-white
+                        text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/20
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        text-white/75
+                        hover:text-white
                       `
                 }
               `}
             >
 
-              Semana
+              {
+                es
+                  ? "Semana"
+                  : "Week"
+              }
 
             </button>
 
@@ -735,22 +1017,26 @@ export default function Gastos({
                   "mes"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        bg-white
+                        text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/20
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        text-white/75
+                        hover:text-white
                       `
                 }
               `}
             >
 
-              Mes
+              {
+                es
+                  ? "Mes"
+                  : "Month"
+              }
 
             </button>
 
@@ -774,22 +1060,26 @@ export default function Gastos({
                   "anio"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        bg-white
+                        text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/20
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        text-white/75
+                        hover:text-white
                       `
                 }
               `}
             >
 
-              Año
+              {
+                es
+                  ? "Año"
+                  : "Year"
+              }
 
             </button>
 
@@ -813,28 +1103,39 @@ export default function Gastos({
                   "historico"
 
                     ? `
-                        bg-[var(--mint-bg-card)]
-                        text-[var(--mint-primary)]
+                        bg-white
+                        text-[#102f4f]
                         shadow-sm
                         ring-1
-                        ring-[var(--mint-border)]
+                        ring-white/20
                       `
 
                     : `
-                        mint-text-secondary
-                        hover:text-[var(--mint-text-primary)]
+                        text-white/75
+                        hover:text-white
                       `
                 }
               `}
             >
 
-              Histórico
+              {
+                es
+                  ? "Histórico"
+                  : "History"
+              }
 
             </button>
 
           </div>
 
         </div>
+
+        <div
+          className="
+            h-1
+            bg-[linear-gradient(90deg,#249884_0%,#63c8b2_58%,#d8bd72_100%)]
+          "
+        />
 
         <div
           className="
@@ -863,7 +1164,11 @@ export default function Gastos({
               "
             >
 
-              Período seleccionado
+              {
+                es
+                  ? "Período seleccionado"
+                  : "Selected period"
+              }
 
             </p>
 
@@ -875,7 +1180,9 @@ export default function Gastos({
               "
             >
 
-              {textoPeriodo}
+              {
+                textoPeriodo
+              }
 
             </p>
 
@@ -918,9 +1225,17 @@ export default function Gastos({
               gastosPeriodo.length ===
               1
 
-                ? "movimiento"
+                ? (
+                  es
+                    ? "movimiento"
+                    : "transaction"
+                )
 
-                : "movimientos"
+                : (
+                  es
+                    ? "movimientos"
+                    : "transactions"
+                )
             }
 
           </div>
@@ -934,219 +1249,256 @@ export default function Gastos({
       ========================== */}
 
       <div
-        className="
+        className={`
           grid
           grid-cols-1
-          md:grid-cols-3
+
+          ${
+            mostrarMXN &&
+            mostrarUSD
+
+              ? "md:grid-cols-3"
+
+              : "md:grid-cols-2"
+          }
+
           gap-4
-        "
+        `}
       >
 
-        <div
-          className="
-            mint-card
-            overflow-hidden
-          "
-        >
-
-          <div
-            className="
-              h-1
-              bg-[var(--mint-danger)]
-            "
-          />
-
-          <div
-            className="
-              p-5
-            "
-          >
+        {
+          mostrarMXN && (
 
             <div
               className="
-                flex
-                items-start
-                justify-between
-                gap-4
+                mint-card
+                overflow-hidden
               "
             >
 
-              <div>
-
-                <p
-                  className="
-                    text-[11px]
-                    uppercase
-                    tracking-[0.1em]
-                    font-bold
-                    mint-text-muted
-                  "
-                >
-
-                  Gastos MXN
-
-                </p>
-
-                <h3
-                  className="
-                    text-3xl
-                    font-bold
-                    mt-2
-                    text-[var(--mint-danger)]
-                  "
-                >
-
-                  $
-                  {
-                    formatoMonto(
-                      totalGastosMXN
-                    )
-                  }
-
-                </h3>
-
-                <p
-                  className="
-                    text-xs
-                    mint-text-muted
-                    mt-2
-                  "
-                >
-
-                  Pesos mexicanos
-
-                </p>
-
-              </div>
-
-              <span
+              <div
                 className="
-                  inline-flex
-                  items-center
-                  justify-center
-                  min-w-[52px]
-                  h-8
-                  px-2
-                  rounded-lg
-                  bg-[var(--mint-danger-bg)]
-                  text-[var(--mint-danger)]
-                  text-xs
-                  font-bold
+                  h-1
+                  bg-[var(--mint-danger)]
+                "
+              />
+
+              <div
+                className="
+                  p-5
                 "
               >
 
-                MXN
+                <div
+                  className="
+                    flex
+                    items-start
+                    justify-between
+                    gap-4
+                  "
+                >
 
-              </span>
+                  <div>
+
+                    <p
+                      className="
+                        text-[11px]
+                        uppercase
+                        tracking-[0.1em]
+                        font-bold
+                        mint-text-muted
+                      "
+                    >
+
+                      {
+                        es
+                          ? "Gastos MXN"
+                          : "MXN expenses"
+                      }
+
+                    </p>
+
+                    <h3
+                      className="
+                        text-3xl
+                        font-bold
+                        mt-2
+                        text-[var(--mint-danger)]
+                      "
+                    >
+
+                      $
+                      {
+                        formatoMonto(
+                          totalGastosMXN
+                        )
+                      }
+
+                    </h3>
+
+                    <p
+                      className="
+                        text-xs
+                        mint-text-muted
+                        mt-2
+                      "
+                    >
+
+                      {
+                        es
+                          ? "Pesos mexicanos"
+                          : "Mexican pesos"
+                      }
+
+                    </p>
+
+                  </div>
+
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+                      min-w-[52px]
+                      h-8
+                      px-2
+                      rounded-lg
+                      bg-[var(--mint-danger-bg)]
+                      text-[var(--mint-danger)]
+                      text-xs
+                      font-bold
+                    "
+                  >
+
+                    MXN
+
+                  </span>
+
+                </div>
+
+              </div>
 
             </div>
 
-          </div>
+          )
+        }
 
-        </div>
-
-        <div
-          className="
-            mint-card
-            overflow-hidden
-          "
-        >
-
-          <div
-            className="
-              h-1
-              bg-[var(--mint-accent)]
-            "
-          />
-
-          <div
-            className="
-              p-5
-            "
-          >
+        {
+          mostrarUSD && (
 
             <div
               className="
-                flex
-                items-start
-                justify-between
-                gap-4
+                mint-card
+                overflow-hidden
               "
             >
 
-              <div>
-
-                <p
-                  className="
-                    text-[11px]
-                    uppercase
-                    tracking-[0.1em]
-                    font-bold
-                    mint-text-muted
-                  "
-                >
-
-                  Gastos USD
-
-                </p>
-
-                <h3
-                  className="
-                    text-3xl
-                    font-bold
-                    mt-2
-                    text-[var(--mint-accent)]
-                  "
-                >
-
-                  $
-                  {
-                    formatoMonto(
-                      totalGastosUSD
-                    )
-                  }
-
-                </h3>
-
-                <p
-                  className="
-                    text-xs
-                    mint-text-muted
-                    mt-2
-                  "
-                >
-
-                  Dólares estadounidenses
-
-                </p>
-
-              </div>
-
-              <span
+              <div
                 className="
-                  inline-flex
-                  items-center
-                  justify-center
-                  min-w-[52px]
-                  h-8
-                  px-2
-                  rounded-lg
-                  bg-[var(--mint-warning-bg)]
-                  text-[var(--mint-warning)]
-                  text-xs
-                  font-bold
+                  h-1
+                  bg-[var(--mint-accent)]
+                "
+              />
+
+              <div
+                className="
+                  p-5
                 "
               >
 
-                USD
+                <div
+                  className="
+                    flex
+                    items-start
+                    justify-between
+                    gap-4
+                  "
+                >
 
-              </span>
+                  <div>
+
+                    <p
+                      className="
+                        text-[11px]
+                        uppercase
+                        tracking-[0.1em]
+                        font-bold
+                        mint-text-muted
+                      "
+                    >
+
+                      {
+                        es
+                          ? "Gastos USD"
+                          : "USD expenses"
+                      }
+
+                    </p>
+
+                    <h3
+                      className="
+                        text-3xl
+                        font-bold
+                        mt-2
+                        text-[var(--mint-accent)]
+                      "
+                    >
+
+                      $
+                      {
+                        formatoMonto(
+                          totalGastosUSD
+                        )
+                      }
+
+                    </h3>
+
+                    <p
+                      className="
+                        text-xs
+                        mint-text-muted
+                        mt-2
+                      "
+                    >
+
+                      {
+                        es
+                          ? "Dólares estadounidenses"
+                          : "U.S. dollars"
+                      }
+
+                    </p>
+
+                  </div>
+
+                  <span
+                    className="
+                      inline-flex
+                      items-center
+                      justify-center
+                      min-w-[52px]
+                      h-8
+                      px-2
+                      rounded-lg
+                      bg-[var(--mint-warning-bg)]
+                      text-[var(--mint-warning)]
+                      text-xs
+                      font-bold
+                    "
+                  >
+
+                    USD
+
+                  </span>
+
+                </div>
+
+              </div>
 
             </div>
 
-          </div>
-
-        </div>
+          )
+        }
 
         <div
           className="
@@ -1178,7 +1530,11 @@ export default function Gastos({
               "
             >
 
-              Registros
+              {
+                es
+                  ? "Registros"
+                  : "Records"
+              }
 
             </p>
 
@@ -1205,7 +1561,11 @@ export default function Gastos({
               "
             >
 
-              Gastos en el período seleccionado
+              {
+                es
+                  ? "Gastos en el período seleccionado"
+                  : "Expenses in the selected period"
+              }
 
             </p>
 
@@ -1252,7 +1612,11 @@ export default function Gastos({
               "
             >
 
-              Nuevo movimiento
+              {
+                es
+                  ? "Nuevo movimiento"
+                  : "New transaction"
+              }
 
             </p>
 
@@ -1264,7 +1628,11 @@ export default function Gastos({
               "
             >
 
-              Registrar gasto
+              {
+                es
+                  ? "Registrar gasto"
+                  : "Record expense"
+              }
 
             </h3>
 
@@ -1300,7 +1668,11 @@ export default function Gastos({
                 "
               >
 
-                Fecha
+                {
+                  es
+                    ? "Fecha"
+                    : "Date"
+                }
 
               </label>
 
@@ -1339,13 +1711,21 @@ export default function Gastos({
                 "
               >
 
-                Concepto
+                {
+                  es
+                    ? "Concepto"
+                    : "Description"
+                }
 
               </label>
 
               <input
                 type="text"
-                placeholder="Ej. Compra de anestesia"
+                placeholder={
+                  es
+                    ? "Ej. Compra de anestesia"
+                    : "E.g. Anesthetic purchase"
+                }
                 value={
                   conceptoGasto
                 }
@@ -1375,7 +1755,11 @@ export default function Gastos({
                 "
               >
 
-                Categoría
+                {
+                  es
+                    ? "Categoría"
+                    : "Category"
+                }
 
               </label>
 
@@ -1396,31 +1780,59 @@ export default function Gastos({
               >
 
                 <option value="">
-                  Seleccionar categoría
+                  {
+                    es
+                      ? "Seleccionar categoría"
+                      : "Select category"
+                  }
                 </option>
 
                 <option value="Material Dental">
-                  Material Dental
+                  {
+                    es
+                      ? "Material Dental"
+                      : "Dental Supplies"
+                  }
                 </option>
 
                 <option value="Limpieza">
-                  Limpieza
+                  {
+                    es
+                      ? "Limpieza"
+                      : "Cleaning"
+                  }
                 </option>
 
                 <option value="Laboratorio">
-                  Laboratorio
+                  {
+                    es
+                      ? "Laboratorio"
+                      : "Laboratory"
+                  }
                 </option>
 
                 <option value="Especialistas">
-                  Especialistas
+                  {
+                    es
+                      ? "Especialistas"
+                      : "Specialists"
+                  }
                 </option>
 
                 <option value="Nómina">
-                  Nómina
+                  {
+                    es
+                      ? "Nómina"
+                      : "Payroll"
+                  }
                 </option>
 
                 <option value="Servicios">
-                  Servicios
+                  {
+                    es
+                      ? "Servicios"
+                      : "Services"
+                  }
                 </option>
 
                 <option value="Marketing">
@@ -1428,7 +1840,11 @@ export default function Gastos({
                 </option>
 
                 <option value="Otros">
-                  Otros
+                  {
+                    es
+                      ? "Otros"
+                      : "Other"
+                  }
                 </option>
 
               </select>
@@ -1462,7 +1878,11 @@ export default function Gastos({
                 "
               >
 
-                Monto
+                {
+                  es
+                    ? "Monto"
+                    : "Amount"
+                }
 
               </label>
 
@@ -1514,83 +1934,95 @@ export default function Gastos({
                   "
                 >
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMonedaGasto(
-                        "MXN"
-                      )
-                    }
-                    className={`
-                      px-4
-                      py-2
-                      rounded-lg
-                      text-sm
-                      font-bold
-                      transition-all
+                  {
+                    mostrarMXN && (
 
-                      ${
-                        monedaGasto ===
-                        "MXN"
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMonedaGasto(
+                            "MXN"
+                          )
+                        }
+                        className={`
+                          px-4
+                          py-2
+                          rounded-lg
+                          text-sm
+                          font-bold
+                          transition-all
 
-                          ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-primary)]
-                              shadow-sm
-                              ring-1
-                              ring-[var(--mint-border)]
-                            `
+                          ${
+                            monedaGasto ===
+                            "MXN"
 
-                          : `
-                              mint-text-muted
-                              hover:text-[var(--mint-text-primary)]
-                            `
-                      }
-                    `}
-                  >
+                              ? `
+                                  bg-[var(--mint-bg-card)]
+                                  text-[var(--mint-primary)]
+                                  shadow-sm
+                                  ring-1
+                                  ring-[var(--mint-border)]
+                                `
 
-                    MXN
+                              : `
+                                  mint-text-muted
+                                  hover:text-[var(--mint-text-primary)]
+                                `
+                          }
+                        `}
+                      >
 
-                  </button>
+                        MXN
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setMonedaGasto(
-                        "USD"
-                      )
-                    }
-                    className={`
-                      px-4
-                      py-2
-                      rounded-lg
-                      text-sm
-                      font-bold
-                      transition-all
+                      </button>
 
-                      ${
-                        monedaGasto ===
-                        "USD"
+                    )
+                  }
 
-                          ? `
-                              bg-[var(--mint-bg-card)]
-                              text-[var(--mint-accent)]
-                              shadow-sm
-                              ring-1
-                              ring-[var(--mint-border)]
-                            `
+                  {
+                    mostrarUSD && (
 
-                          : `
-                              mint-text-muted
-                              hover:text-[var(--mint-text-primary)]
-                            `
-                      }
-                    `}
-                  >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setMonedaGasto(
+                            "USD"
+                          )
+                        }
+                        className={`
+                          px-4
+                          py-2
+                          rounded-lg
+                          text-sm
+                          font-bold
+                          transition-all
 
-                    USD
+                          ${
+                            monedaGasto ===
+                            "USD"
 
-                  </button>
+                              ? `
+                                  bg-[var(--mint-bg-card)]
+                                  text-[var(--mint-accent)]
+                                  shadow-sm
+                                  ring-1
+                                  ring-[var(--mint-border)]
+                                `
+
+                              : `
+                                  mint-text-muted
+                                  hover:text-[var(--mint-text-primary)]
+                                `
+                          }
+                        `}
+                      >
+
+                        USD
+
+                      </button>
+
+                    )
+                  }
 
                 </div>
 
@@ -1604,15 +2036,22 @@ export default function Gastos({
                 "
               >
 
-                El gasto se guardará en
+                {
+                  es
+                    ? "El gasto se guardará en"
+                    : "The expense will be saved in"
+                }
                 {" "}
+
                 <strong
                   className="
                     mint-text-secondary
                   "
                 >
 
-                  {monedaGasto}
+                  {
+                    monedaGasto
+                  }
 
                 </strong>
                 .
@@ -1635,7 +2074,11 @@ export default function Gastos({
                 "
               >
 
-                Método de pago
+                {
+                  es
+                    ? "Método de pago"
+                    : "Payment method"
+                }
 
               </label>
 
@@ -1688,7 +2131,11 @@ export default function Gastos({
                   `}
                 >
 
-                  Efectivo
+                  {
+                    es
+                      ? "Efectivo"
+                      : "Cash"
+                  }
 
                 </button>
 
@@ -1728,7 +2175,11 @@ export default function Gastos({
                   `}
                 >
 
-                  Transferencia
+                  {
+                    es
+                      ? "Transferencia"
+                      : "Transfer"
+                  }
 
                 </button>
 
@@ -1768,7 +2219,11 @@ export default function Gastos({
                   `}
                 >
 
-                  Tarjeta
+                  {
+                    es
+                      ? "Tarjeta"
+                      : "Card"
+                  }
 
                 </button>
 
@@ -1782,7 +2237,11 @@ export default function Gastos({
                 "
               >
 
-                Indica de dónde salió el dinero.
+                {
+                  es
+                    ? "Indica de dónde salió el dinero."
+                    : "Indicate how the expense was paid."
+                }
 
               </p>
 
@@ -1802,12 +2261,20 @@ export default function Gastos({
                 "
               >
 
-                Notas
+                {
+                  es
+                    ? "Notas"
+                    : "Notes"
+                }
 
               </label>
 
               <textarea
-                placeholder="Información adicional del gasto..."
+                placeholder={
+                  es
+                    ? "Información adicional del gasto..."
+                    : "Additional expense information..."
+                }
                 value={
                   notasGasto
                 }
@@ -1854,7 +2321,11 @@ export default function Gastos({
               "
             >
 
-              Guardar gasto
+              {
+                es
+                  ? "Guardar gasto"
+                  : "Save expense"
+              }
 
             </button>
 
@@ -1864,7 +2335,7 @@ export default function Gastos({
 
       </div>
 
-      {/* =========================
+            {/* =========================
           HISTORIAL
       ========================== */}
 
@@ -1903,7 +2374,11 @@ export default function Gastos({
               "
             >
 
-              Actividad
+              {
+                es
+                  ? "Actividad"
+                  : "Activity"
+              }
 
             </p>
 
@@ -1915,7 +2390,11 @@ export default function Gastos({
               "
             >
 
-              Historial de gastos
+              {
+                es
+                  ? "Historial de gastos"
+                  : "Expense history"
+              }
 
             </h3>
 
@@ -1943,9 +2422,17 @@ export default function Gastos({
               gastosPeriodo.length ===
               1
 
-                ? "registro"
+                ? (
+                  es
+                    ? "registro"
+                    : "record"
+                )
 
-                : "registros"
+                : (
+                  es
+                    ? "registros"
+                    : "records"
+                )
             }
 
           </div>
@@ -1981,7 +2468,11 @@ export default function Gastos({
                   "
                 >
 
-                  Fecha
+                  {
+                    es
+                      ? "Fecha"
+                      : "Date"
+                  }
 
                 </th>
 
@@ -1992,7 +2483,11 @@ export default function Gastos({
                   "
                 >
 
-                  Concepto
+                  {
+                    es
+                      ? "Concepto"
+                      : "Description"
+                  }
 
                 </th>
 
@@ -2003,7 +2498,11 @@ export default function Gastos({
                   "
                 >
 
-                  Categoría
+                  {
+                    es
+                      ? "Categoría"
+                      : "Category"
+                  }
 
                 </th>
 
@@ -2014,7 +2513,11 @@ export default function Gastos({
                   "
                 >
 
-                  Moneda
+                  {
+                    es
+                      ? "Moneda"
+                      : "Currency"
+                  }
 
                 </th>
 
@@ -2025,7 +2528,11 @@ export default function Gastos({
                   "
                 >
 
-                  Método de pago
+                  {
+                    es
+                      ? "Método de pago"
+                      : "Payment method"
+                  }
 
                 </th>
 
@@ -2036,7 +2543,11 @@ export default function Gastos({
                   "
                 >
 
-                  Monto
+                  {
+                    es
+                      ? "Monto"
+                      : "Amount"
+                  }
 
                 </th>
 
@@ -2047,7 +2558,11 @@ export default function Gastos({
                   "
                 >
 
-                  Acción
+                  {
+                    es
+                      ? "Acción"
+                      : "Action"
+                  }
 
                 </th>
 
@@ -2075,8 +2590,11 @@ export default function Gastos({
                         "
                       >
 
-                        No hay gastos registrados
-                        en este período.
+                        {
+                          es
+                            ? "No hay gastos registrados en este período."
+                            : "There are no expenses recorded for this period."
+                        }
 
                       </td>
 
@@ -2085,11 +2603,53 @@ export default function Gastos({
                   )
 
                   : gastosPeriodo.map(
-                    (gasto) => {
+                    (
+                      gasto
+                    ) => {
+
+                      /*
+                        IMPORTANTE:
+                        La moneda de cada gasto histórico
+                        se conserva exactamente como fue
+                        registrada.
+
+                        La configuración global solamente
+                        controla qué monedas pueden usarse
+                        para NUEVOS gastos y qué KPIs
+                        principales se muestran.
+                      */
 
                       const moneda =
                         gasto.moneda ||
                         "MXN";
+
+                      const metodoPago =
+                        gasto.metodo_pago ||
+                        "Efectivo";
+
+                      const etiquetaMetodo =
+                        !es
+
+                          ? (
+                            metodoPago ===
+                            "Efectivo"
+
+                              ? "Cash"
+
+                              : metodoPago ===
+                                "Transferencia"
+
+                                ? "Transfer"
+
+                                : metodoPago ===
+                                  "Tarjeta"
+
+                                  ? "Card"
+
+                                  : metodoPago
+                          )
+
+                          : metodoPago;
 
                       return (
 
@@ -2175,7 +2735,14 @@ export default function Gastos({
                             >
 
                               {
-                                gasto.categoria
+                                etiquetaCategoria(
+                                  gasto.categoria ||
+                                  (
+                                    es
+                                      ? "Sin categoría"
+                                      : "Uncategorized"
+                                  )
+                                )
                               }
 
                             </span>
@@ -2217,7 +2784,9 @@ export default function Gastos({
                               `}
                             >
 
-                              {moneda}
+                              {
+                                moneda
+                              }
 
                             </span>
 
@@ -2246,8 +2815,7 @@ export default function Gastos({
                             >
 
                               {
-                                gasto.metodo_pago ||
-                                "Efectivo"
+                                etiquetaMetodo
                               }
 
                             </span>
@@ -2289,7 +2857,9 @@ export default function Gastos({
                               "
                             >
 
-                              {moneda}
+                              {
+                                moneda
+                              }
 
                             </span>
 
@@ -2319,7 +2889,11 @@ export default function Gastos({
                                   "
                                 >
 
-                                  Eliminar
+                                  {
+                                    es
+                                      ? "Eliminar"
+                                      : "Delete"
+                                  }
 
                                 </button>
 
@@ -2344,7 +2918,7 @@ export default function Gastos({
 
       </div>
 
-            {/* =========================
+      {/* =========================
           RESUMEN POR CATEGORÍA
       ========================== */}
 
@@ -2375,7 +2949,11 @@ export default function Gastos({
             "
           >
 
-            Distribución
+            {
+              es
+                ? "Distribución"
+                : "Distribution"
+            }
 
           </p>
 
@@ -2387,7 +2965,11 @@ export default function Gastos({
             "
           >
 
-            Gastos por categoría
+            {
+              es
+                ? "Gastos por categoría"
+                : "Expenses by category"
+            }
 
           </h3>
 
@@ -2399,8 +2981,36 @@ export default function Gastos({
             "
           >
 
-            Los importes en MXN y USD
-            permanecen separados.
+            {
+              mostrarMXN &&
+              mostrarUSD
+
+                ? (
+                  es
+
+                    ? "Los importes en MXN y USD permanecen separados."
+
+                    : "MXN and USD amounts remain separate."
+                )
+
+                : mostrarMXN
+
+                  ? (
+                    es
+
+                      ? "Resumen de gastos activos en MXN."
+
+                      : "Summary of active expenses in MXN."
+                  )
+
+                  : (
+                    es
+
+                      ? "Resumen de gastos activos en USD."
+
+                      : "Summary of active expenses in USD."
+                  )
+            }
 
           </p>
 
@@ -2415,7 +3025,8 @@ export default function Gastos({
           {
             Object.keys(
               categorias
-            ).length === 0
+            ).length ===
+            0
 
               ? (
 
@@ -2427,8 +3038,11 @@ export default function Gastos({
                   "
                 >
 
-                  No hay información por
-                  categoría para mostrar.
+                  {
+                    es
+                      ? "No hay información por categoría para mostrar."
+                      : "There is no category information to display."
+                  }
 
                 </div>
 
@@ -2487,7 +3101,11 @@ export default function Gastos({
                               "
                             >
 
-                              {categoria}
+                              {
+                                etiquetaCategoria(
+                                  categoria
+                                )
+                              }
 
                             </p>
 
@@ -2508,83 +3126,95 @@ export default function Gastos({
                             "
                           >
 
-                            <div
-                              className="
-                                flex
-                                items-center
-                                justify-between
-                                gap-3
-                              "
-                            >
+                            {
+                              mostrarMXN && (
 
-                              <span
-                                className="
-                                  text-xs
-                                  mint-text-muted
-                                "
-                              >
+                                <div
+                                  className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                    gap-3
+                                  "
+                                >
 
-                                MXN
+                                  <span
+                                    className="
+                                      text-xs
+                                      mint-text-muted
+                                    "
+                                  >
 
-                              </span>
+                                    MXN
 
-                              <span
-                                className="
-                                  text-sm
-                                  font-bold
-                                  mint-text-primary
-                                "
-                              >
+                                  </span>
 
-                                $
-                                {
-                                  formatoMonto(
-                                    valores.MXN
-                                  )
-                                }
+                                  <span
+                                    className="
+                                      text-sm
+                                      font-bold
+                                      mint-text-primary
+                                    "
+                                  >
 
-                              </span>
+                                    $
+                                    {
+                                      formatoMonto(
+                                        valores.MXN
+                                      )
+                                    }
 
-                            </div>
+                                  </span>
 
-                            <div
-                              className="
-                                flex
-                                items-center
-                                justify-between
-                                gap-3
-                              "
-                            >
+                                </div>
 
-                              <span
-                                className="
-                                  text-xs
-                                  mint-text-muted
-                                "
-                              >
+                              )
+                            }
 
-                                USD
+                            {
+                              mostrarUSD && (
 
-                              </span>
+                                <div
+                                  className="
+                                    flex
+                                    items-center
+                                    justify-between
+                                    gap-3
+                                  "
+                                >
 
-                              <span
-                                className="
-                                  text-sm
-                                  font-bold
-                                  text-[var(--mint-accent)]
-                                "
-                              >
+                                  <span
+                                    className="
+                                      text-xs
+                                      mint-text-muted
+                                    "
+                                  >
 
-                                $
-                                {
-                                  formatoMonto(
-                                    valores.USD
-                                  )
-                                }
+                                    USD
 
-                              </span>
+                                  </span>
 
-                            </div>
+                                  <span
+                                    className="
+                                      text-sm
+                                      font-bold
+                                      text-[var(--mint-accent)]
+                                    "
+                                  >
+
+                                    $
+                                    {
+                                      formatoMonto(
+                                        valores.USD
+                                      )
+                                    }
+
+                                  </span>
+
+                                </div>
+
+                              )
+                            }
 
                           </div>
 

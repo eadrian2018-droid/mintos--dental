@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
+import { useLanguage } from "../../context/LanguageContext";
 import type { Paciente } from "../../types/Paciente";
 import type { Tratamiento } from "../../types/Tratamiento";
 
@@ -72,6 +73,9 @@ export default function Resumen({
   tratamientosFiltrados,
 }: ResumenProps) {
 
+  const { language } = useLanguage();
+  const es = language === "es";
+
   const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
   const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
 
@@ -120,7 +124,7 @@ export default function Resumen({
     Number(
       valor || 0
     ).toLocaleString(
-      "es-MX",
+      es ? "es-MX" : "en-US",
       {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -154,7 +158,7 @@ export default function Resumen({
               mb-1
             "
           >
-            Liquidez
+            {es ? "Liquidez" : "Liquidity"}
           </p>
 
           <h2
@@ -164,7 +168,7 @@ export default function Resumen({
               mint-text-primary
             "
           >
-            Corte de caja
+            {es ? "Corte de caja" : "Cash position"}
           </h2>
 
         </div>
@@ -206,7 +210,7 @@ export default function Resumen({
                   mb-2
                 "
               >
-                Caja MXN
+                {es ? "Caja MXN" : "MXN cash"}
               </p>
 
               <p
@@ -236,7 +240,7 @@ export default function Resumen({
                   tracking-wide
                 "
               >
-                Efectivo MXN
+                {es ? "Efectivo MXN" : "MXN CASH"}
               </span>
 
             </div>
@@ -265,7 +269,7 @@ export default function Resumen({
                   mb-2
                 "
               >
-                Caja USD
+                {es ? "Caja USD" : "USD cash"}
               </p>
 
               <p
@@ -295,7 +299,7 @@ export default function Resumen({
                   tracking-wide
                 "
               >
-                Efectivo USD
+                {es ? "Efectivo USD" : "USD CASH"}
               </span>
 
             </div>
@@ -324,7 +328,7 @@ export default function Resumen({
                   mb-2
                 "
               >
-                Tarjetas
+                {es ? "Tarjetas" : "Cards"}
               </p>
 
               <p
@@ -349,7 +353,7 @@ export default function Resumen({
                   mt-1
                 "
               >
-                MXN neto
+                {es ? "MXN neto" : "NET MXN"}
               </p>
 
               <p
@@ -359,7 +363,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Depósito después de comisión
+                {es ? "Depósito después de comisión" : "Deposit after bank fee"}
               </p>
 
             </div>
@@ -382,7 +386,7 @@ export default function Resumen({
                   mb-3
                 "
               >
-                Transferencias
+                {es ? "Transferencias" : "Transfers"}
               </p>
 
               <div
@@ -471,7 +475,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Transferencias recibidas
+                {es ? "Transferencias recibidas" : "Transfers received"}
               </p>
 
             </div>
@@ -513,7 +517,7 @@ export default function Resumen({
                 mb-1
               "
             >
-              Rendimiento
+              {es ? "Rendimiento" : "Performance"}
             </p>
 
             <h2
@@ -523,7 +527,7 @@ export default function Resumen({
                 mint-text-primary
               "
             >
-              Panorama financiero
+              {es ? "Panorama financiero" : "Financial overview"}
             </h2>
 
           </div>
@@ -536,7 +540,7 @@ export default function Resumen({
               mint-text-muted
             "
           >
-            Resultados del período seleccionado
+            {es ? "Resultados del período seleccionado" : "Results for the selected period"}
           </p>
 
         </div>
@@ -599,7 +603,7 @@ export default function Resumen({
                     mint-text-muted
                   "
                 >
-                  Producción
+                  {es ? "Producción" : "Production"}
                 </p>
 
                 <p
@@ -609,7 +613,7 @@ export default function Resumen({
                     mt-1
                   "
                 >
-                  Valor de tratamientos generados
+                  {es ? "Valor de tratamientos generados" : "Value of treatments generated"}
                 </p>
 
               </div>
@@ -716,7 +720,7 @@ export default function Resumen({
                     mint-text-muted
                   "
                 >
-                  Cobrado
+                  {es ? "Cobrado" : "Collected"}
                 </p>
 
                 <p
@@ -726,7 +730,7 @@ export default function Resumen({
                     mt-1
                   "
                 >
-                  Pagos realmente recibidos
+                  {es ? "Pagos realmente recibidos" : "Payments actually received"}
                 </p>
 
               </div>
@@ -881,7 +885,7 @@ export default function Resumen({
                     mint-text-muted
                   "
                 >
-                  Pendiente
+                  {es ? "Pendiente" : "Outstanding"}
                 </p>
 
                 <p
@@ -891,7 +895,7 @@ export default function Resumen({
                     mt-1
                   "
                 >
-                  Saldo por cobrar
+                  {es ? "Saldo por cobrar" : "Balance to collect"}
                 </p>
 
               </div>
@@ -998,7 +1002,7 @@ export default function Resumen({
                     mint-text-muted
                   "
                 >
-                  Ganancia neta
+                  {es ? "Ganancia neta" : "Net profit"}
                 </p>
 
                 <p
@@ -1008,7 +1012,7 @@ export default function Resumen({
                     mt-1
                   "
                 >
-                  Resultado estimado
+                  {es ? "Resultado estimado" : "Estimated result"}
                 </p>
 
               </div>
@@ -1143,7 +1147,7 @@ export default function Resumen({
               mb-1
             "
           >
-            Operación
+            {es ? "Operación" : "Operations"}
           </p>
 
           <h2
@@ -1153,7 +1157,7 @@ export default function Resumen({
               mint-text-primary
             "
           >
-            Indicadores operativos
+            {es ? "Indicadores operativos" : "Operational indicators"}
           </h2>
 
         </div>
@@ -1166,14 +1170,16 @@ export default function Resumen({
         >
 
           <div
-            className="
+            className={`
               grid
               grid-cols-1
               sm:grid-cols-2
-              xl:grid-cols-4
-            "
+              ${mostrarMXN ? "xl:grid-cols-4" : "xl:grid-cols-3"}
+            `}
           >
 
+            {mostrarMXN && (
+              <>
             {/* COMISIONES BANCARIAS */}
 
             <div
@@ -1194,7 +1200,7 @@ export default function Resumen({
                   mb-2
                 "
               >
-                Comisiones bancarias
+                {es ? "Comisiones bancarias" : "Bank fees"}
               </p>
 
               <p
@@ -1229,10 +1235,13 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Comisiones por pagos con tarjeta
+                {es ? "Comisiones por pagos con tarjeta" : "Fees from card payments"}
               </p>
 
             </div>
+
+              </>
+            )}
 
             {/* GASTOS */}
 
@@ -1254,7 +1263,7 @@ export default function Resumen({
                   mb-3
                 "
               >
-                Gastos
+                {es ? "Gastos" : "Expenses"}
               </p>
 
               <div
@@ -1343,7 +1352,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Egresos registrados
+                {es ? "Egresos registrados" : "Recorded expenses"}
               </p>
 
             </div>
@@ -1368,7 +1377,7 @@ export default function Resumen({
                   mb-3
                 "
               >
-                Base clínica
+                {es ? "Base clínica" : "Clinic base"}
               </p>
 
               <div
@@ -1457,7 +1466,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Después de costos clínicos
+                {es ? "Después de costos clínicos" : "After clinical costs"}
               </p>
 
             </div>
@@ -1478,7 +1487,7 @@ export default function Resumen({
                   mb-3
                 "
               >
-                Comisiones doctores
+                {es ? "Comisiones doctores" : "Doctor commissions"}
               </p>
 
               <div
@@ -1567,7 +1576,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                Comisiones de tratamientos finalizados
+                {es ? "Comisiones de tratamientos finalizados" : "Commissions from completed treatments"}
               </p>
 
             </div>
@@ -1617,7 +1626,7 @@ export default function Resumen({
                   mb-1
                 "
               >
-                Actividad
+                {es ? "Actividad" : "Activity"}
               </p>
 
               <h2
@@ -1627,7 +1636,7 @@ export default function Resumen({
                   mint-text-primary
                 "
               >
-                Tratamientos del período
+                {es ? "Tratamientos del período" : "Treatments for the period"}
               </h2>
 
             </div>
@@ -1652,7 +1661,7 @@ export default function Resumen({
                 tratamientosFiltrados
                   .length
               }{" "}
-              registros
+              {es ? "registros" : "records"}
             </div>
 
           </div>
@@ -1686,7 +1695,7 @@ export default function Resumen({
                       text-left
                     "
                   >
-                    Fecha
+                    {es ? "Fecha" : "Date"}
                   </th>
 
                   <th
@@ -1696,7 +1705,7 @@ export default function Resumen({
                       text-left
                     "
                   >
-                    Paciente
+                    {es ? "Paciente" : "Patient"}
                   </th>
 
                   <th
@@ -1706,7 +1715,7 @@ export default function Resumen({
                       text-left
                     "
                   >
-                    Tratamiento
+                    {es ? "Tratamiento" : "Treatment"}
                   </th>
 
                   <th
@@ -1726,7 +1735,7 @@ export default function Resumen({
                       text-right
                     "
                   >
-                    Pagado
+                    {es ? "Pagado" : "Paid"}
                   </th>
 
                   <th
@@ -1736,7 +1745,7 @@ export default function Resumen({
                       text-right
                     "
                   >
-                    Pendiente
+                    {es ? "Pendiente" : "Outstanding"}
                   </th>
 
                 </tr>
@@ -1887,7 +1896,7 @@ export default function Resumen({
                     "
                     colSpan={3}
                   >
-                    TOTAL TRATAMIENTOS
+                    {es ? "TOTAL TRATAMIENTOS" : "TOTAL TREATMENTS"}
                   </td>
 
                   <td

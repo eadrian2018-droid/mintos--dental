@@ -40,6 +40,9 @@ import useFinanzas
 import { useAuth }
   from "../context/AuthContext";
 
+import { useLanguage }
+  from "../context/LanguageContext";
+
 import type {
   Doctor,
 } from "../types/Doctor";
@@ -67,6 +70,9 @@ export default function Finanzas() {
     perfil,
     permisos,
   } = useAuth();
+
+  const { language } = useLanguage();
+  const es = language === "es";
 
   const esAdmin =
     perfil?.rol === "admin";
@@ -495,7 +501,7 @@ export default function Finanzas() {
                       "
                     >
 
-                      Finanzas
+                      {es ? "Finanzas" : "Finances"}
 
                     </span>
 
@@ -513,8 +519,8 @@ export default function Finanzas() {
                     {
                       seccionActiva ===
                       "reportes"
-                        ? "Reportes"
-                        : "Resumen financiero"
+                        ? (es ? "Reportes" : "Reports")
+                        : (es ? "Resumen financiero" : "Financial summary")
                     }
 
                   </h1>
@@ -530,8 +536,12 @@ export default function Finanzas() {
                     {
                       seccionActiva ===
                       "reportes"
-                        ? "Cierre financiero del período seleccionado."
-                        : "Visión general del rendimiento financiero de la clínica."
+                        ? (es
+                            ? "Cierre financiero del período seleccionado."
+                            : "Financial close for the selected period.")
+                        : (es
+                            ? "Visión general del rendimiento financiero de la clínica."
+                            : "Overview of the clinic’s financial performance.")
                     }
 
                   </p>
@@ -590,7 +600,7 @@ export default function Finanzas() {
                     `}
                   >
 
-                    Semana
+                    {es ? "Semana" : "Week"}
 
                   </button>
 
@@ -630,7 +640,7 @@ export default function Finanzas() {
                     `}
                   >
 
-                    Mes
+                    {es ? "Mes" : "Month"}
 
                   </button>
 
@@ -670,7 +680,7 @@ export default function Finanzas() {
                     `}
                   >
 
-                    Año
+                    {es ? "Año" : "Year"}
 
                   </button>
 
@@ -710,7 +720,7 @@ export default function Finanzas() {
                     `}
                   >
 
-                    Histórico
+                    {es ? "Histórico" : "History"}
 
                   </button>
 
@@ -743,7 +753,7 @@ export default function Finanzas() {
                     "
                   >
 
-                    Período seleccionado
+                    {es ? "Período seleccionado" : "Selected period"}
 
                   </p>
 
@@ -766,7 +776,7 @@ export default function Finanzas() {
                         {
                           lunesSemana
                             .toLocaleDateString(
-                              "es-MX",
+                              es ? "es-MX" : "en-US",
                               {
                                 day: "numeric",
                                 month: "short",
@@ -780,7 +790,7 @@ export default function Finanzas() {
                         {
                           sabadoSemana
                             .toLocaleDateString(
-                              "es-MX",
+                              es ? "es-MX" : "en-US",
                               {
                                 day: "numeric",
                                 month: "short",
@@ -798,7 +808,7 @@ export default function Finanzas() {
 
                       &&
 
-                      <>Mes actual</>
+                      <>{es ? "Mes actual" : "Current month"}</>
                     }
 
                     {
@@ -807,7 +817,7 @@ export default function Finanzas() {
 
                       &&
 
-                      <>Año actual</>
+                      <>{es ? "Año actual" : "Current year"}</>
                     }
 
                     {
@@ -816,7 +826,7 @@ export default function Finanzas() {
 
                       &&
 
-                      <>Todos los registros</>
+                      <>{es ? "Todos los registros" : "All records"}</>
                     }
 
                   </p>
@@ -834,7 +844,7 @@ export default function Finanzas() {
                   "
                 >
 
-                  Datos financieros de MintOS
+                  {es ? "Datos financieros de MintOS" : "MintOS financial data"}
 
                 </div>
 
@@ -876,7 +886,7 @@ export default function Finanzas() {
                   mb-3
                 "
               >
-                Finanzas
+                {es ? "Finanzas" : "Finances"}
               </div>
 
               <h1
@@ -892,24 +902,24 @@ export default function Finanzas() {
                   seccionActiva ===
                   "cobros"
 
-                    ? "Cobros"
+                    ? (es ? "Cobros" : "Collections")
 
                     : seccionActiva ===
                       "gastos"
 
-                      ? "Gastos"
+                      ? (es ? "Gastos" : "Expenses")
 
                       : seccionActiva ===
                         "comisiones"
 
-                        ? "Comisiones"
+                        ? (es ? "Comisiones" : "Commissions")
 
                         : seccionActiva ===
                           "cierre"
 
-                          ? "Cierre mensual"
+                          ? (es ? "Cierre mensual" : "Monthly close")
 
-                          : "Reportes"
+                          : (es ? "Reportes" : "Reports")
                 }
 
               </h1>
