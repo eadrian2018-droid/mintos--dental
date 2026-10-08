@@ -974,11 +974,11 @@ export default function Gastos({
                   "semana"
 
                     ? `
-                        bg-white
-                        text-[#102f4f]
+                        !bg-[#102f4f]
+                        !text-white
                         shadow-sm
                         ring-1
-                        ring-white/20
+                        ring-[#63c8b2]
                       `
 
                     : `
@@ -1017,11 +1017,11 @@ export default function Gastos({
                   "mes"
 
                     ? `
-                        bg-white
-                        text-[#102f4f]
+                        !bg-[#102f4f]
+                        !text-white
                         shadow-sm
                         ring-1
-                        ring-white/20
+                        ring-[#63c8b2]
                       `
 
                     : `
@@ -1060,11 +1060,11 @@ export default function Gastos({
                   "anio"
 
                     ? `
-                        bg-white
-                        text-[#102f4f]
+                        !bg-[#102f4f]
+                        !text-white
                         shadow-sm
                         ring-1
-                        ring-white/20
+                        ring-[#63c8b2]
                       `
 
                     : `
@@ -1103,11 +1103,11 @@ export default function Gastos({
                   "historico"
 
                     ? `
-                        bg-white
-                        text-[#102f4f]
+                        !bg-[#102f4f]
+                        !text-white
                         shadow-sm
                         ring-1
-                        ring-white/20
+                        ring-[#63c8b2]
                       `
 
                     : `

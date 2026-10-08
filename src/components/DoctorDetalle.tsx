@@ -1,3 +1,7 @@
+import { useEffect, useState } from "react";
+import { useLanguage } from "../context/LanguageContext";
+import { supabase } from "../lib/supabase";
+
 import type {
   Doctor,
 } from "../types/Doctor";
@@ -66,10 +70,41 @@ export default function DoctorDetalle({
 
 }: DoctorDetalleProps) {
 
+  const { language } = useLanguage();
+  const es = language === "es";
+  const locale = es ? "es-MX" : "en-US";
+  const t = (espanol: string, ingles: string) => es ? espanol : ingles;
+
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    const cargarMonedas = async () => {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+      if (error) {
+        console.error("Error consultando monedas financieras:", error);
+        return;
+      }
+      if (!activo) return;
+      const valores = Object.fromEntries(
+        (data ?? []).map(fila => [fila.clave, String(fila.valor ?? "")])
+      );
+      setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
+      setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
+    };
+    void cargarMonedas();
+    return () => { activo = false; };
+  }, []);
+
+  const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
+  const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
+
   if (!doctor) {
-
     return null;
-
   }
 
   const formatoMonto =
@@ -77,7 +112,7 @@ export default function DoctorDetalle({
       monto: number
     ) =>
       monto.toLocaleString(
-        "es-MX",
+        locale,
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -112,7 +147,7 @@ export default function DoctorDetalle({
 
       return fechaLocal
         .toLocaleDateString(
-          "es-MX",
+          locale,
           {
             day: "2-digit",
             month: "short",
@@ -144,7 +179,7 @@ export default function DoctorDetalle({
 
       return fechaReal
         .toLocaleString(
-          "es-MX",
+          locale,
           {
             day: "2-digit",
             month: "short",
@@ -617,7 +652,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Detalle de comisión
+                  {t("Detalle de comisión", "Commission details")}
 
                 </span>
 
@@ -687,7 +722,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Comisión
+                  {t("Comisión", "Commission")}
 
                 </p>
 
@@ -723,7 +758,7 @@ const comisionGenerada =
               "
             >
 
-              Cerrar
+              {t("Cerrar", "Close")}
 
             </button>
 
@@ -777,7 +812,7 @@ const comisionGenerada =
               "
             >
 
-              Tratamientos
+              {t("Tratamientos", "Treatments")}
 
             </p>
 
@@ -804,7 +839,7 @@ const comisionGenerada =
               "
             >
 
-              Vinculados al doctor
+              {t("Vinculados al doctor", "Assigned to this doctor")}
 
             </p>
 
@@ -842,7 +877,7 @@ const comisionGenerada =
               "
             >
 
-              Total cobrado
+              {t("Total cobrado", "Total collected")}
 
             </p>
 
@@ -863,7 +898,8 @@ const comisionGenerada =
                 "
               >
 
-                <span>
+                {mostrarMXN && (
+<span>
                   $
                   {
                     formatoMonto(
@@ -873,8 +909,10 @@ const comisionGenerada =
                   {" "}
                   MXN
                 </span>
+)}
 
-                <span
+                {mostrarUSD && (
+<span
                   className="
                     text-lg
                     mint-text-secondary
@@ -889,6 +927,7 @@ const comisionGenerada =
                   {" "}
                   USD
                 </span>
+)}
 
               </div>
 
@@ -902,7 +941,7 @@ const comisionGenerada =
               "
             >
 
-              Pagos reales registrados
+              {t("Pagos reales registrados", "Actual payments recorded")}
 
             </p>
 
@@ -940,7 +979,7 @@ const comisionGenerada =
               "
             >
 
-              Base clínica
+              {t("Base clínica", "Clinic base")}
 
             </p>
 
@@ -961,7 +1000,8 @@ const comisionGenerada =
                 "
               >
 
-                <span>
+                {mostrarMXN && (
+<span>
                   $
                   {
                     formatoMonto(
@@ -971,8 +1011,10 @@ const comisionGenerada =
                   {" "}
                   MXN
                 </span>
+)}
 
-                <span
+                {mostrarUSD && (
+<span
                   className="
                     text-lg
                     mint-text-secondary
@@ -987,6 +1029,7 @@ const comisionGenerada =
                   {" "}
                   USD
                 </span>
+)}
 
               </div>
 
@@ -1000,7 +1043,7 @@ const comisionGenerada =
               "
             >
 
-              Pagos de tratamientos finalizados
+              {t("Pagos de tratamientos finalizados", "Payments from completed treatments")}
 
             </p>
 
@@ -1038,7 +1081,7 @@ const comisionGenerada =
               "
             >
 
-              Comisión doctor
+              {t("Comisión doctor", "Doctor commission")}
 
             </p>
 
@@ -1059,7 +1102,8 @@ const comisionGenerada =
                 "
               >
 
-                <span>
+                {mostrarMXN && (
+<span>
                   $
                   {
                     formatoMonto(
@@ -1069,8 +1113,10 @@ const comisionGenerada =
                   {" "}
                   MXN
                 </span>
+)}
 
-                <span
+                {mostrarUSD && (
+<span
                   className="
                     text-lg
                     mint-text-secondary
@@ -1085,6 +1131,7 @@ const comisionGenerada =
                   {" "}
                   USD
                 </span>
+)}
 
               </div>
 
@@ -1098,7 +1145,7 @@ const comisionGenerada =
               "
             >
 
-              Comisión calculada
+              {t("Comisión calculada", "Calculated commission")}
 
             </p>
 
@@ -1147,7 +1194,7 @@ const comisionGenerada =
               "
             >
 
-              Movimientos clínicos
+              {t("Movimientos clínicos", "Clinical activity")}
 
             </p>
 
@@ -1159,7 +1206,7 @@ const comisionGenerada =
               "
             >
 
-              Detalle de tratamientos
+              {t("Detalle de tratamientos", "Treatment details")}
 
             </h3>
 
@@ -1187,9 +1234,9 @@ const comisionGenerada =
               tratamientosDoctor.length ===
               1
 
-                ? "tratamiento"
+                ? t("tratamiento", "treatment")
 
-                : "tratamientos"
+                : t("tratamientos", "treatments")
             }
 
           </div>
@@ -1225,7 +1272,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Fecha
+                  {t("Fecha", "Date")}
 
                 </th>
 
@@ -1236,7 +1283,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Paciente
+                  {t("Paciente", "Patient")}
 
                 </th>
 
@@ -1247,7 +1294,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Tratamiento
+                  {t("Tratamiento", "Treatment")}
 
                 </th>
 
@@ -1258,7 +1305,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Pagado
+                  {t("Pagado", "Paid")}
 
                 </th>
 
@@ -1269,7 +1316,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Base clínica
+                  {t("Base clínica", "Clinic base")}
 
                 </th>
 
@@ -1280,7 +1327,7 @@ const comisionGenerada =
                   "
                 >
 
-                  Comisión
+                  {t("Comisión", "Commission")}
 
                 </th>
 
@@ -1370,7 +1417,7 @@ const comisionGenerada =
 
                             {
                               paciente?.nombre ||
-                              "Sin paciente"
+                              t("Sin paciente", "No patient")
                             }
 
                           </p>
@@ -1407,7 +1454,8 @@ const comisionGenerada =
                             "
                           >
 
-                            <span
+                            {mostrarMXN && (
+<span
                               className="
                                 font-semibold
                                 mint-text-primary
@@ -1422,8 +1470,10 @@ const comisionGenerada =
                               {" "}
                               MXN
                             </span>
+)}
 
-                            <span
+                            {mostrarUSD && (
+<span
                               className="
                                 text-xs
                                 mint-text-muted
@@ -1438,6 +1488,7 @@ const comisionGenerada =
                               {" "}
                               USD
                             </span>
+)}
 
                           </div>
 
@@ -1460,7 +1511,8 @@ const comisionGenerada =
                             "
                           >
 
-                            <span
+                            {mostrarMXN && (
+<span
                               className="
                                 font-bold
                                 text-[var(--mint-info)]
@@ -1475,8 +1527,10 @@ const comisionGenerada =
                               {" "}
                               MXN
                             </span>
+)}
 
-                            <span
+                            {mostrarUSD && (
+<span
                               className="
                                 text-xs
                                 mint-text-muted
@@ -1491,6 +1545,7 @@ const comisionGenerada =
                               {" "}
                               USD
                             </span>
+)}
 
                           </div>
 
@@ -1513,7 +1568,8 @@ const comisionGenerada =
                             "
                           >
 
-                            <span
+                            {mostrarMXN && (
+<span
                               className="
                                 font-bold
                                 text-[var(--mint-success)]
@@ -1528,8 +1584,10 @@ const comisionGenerada =
                               {" "}
                               MXN
                             </span>
+)}
 
-                            <span
+                            {mostrarUSD && (
+<span
                               className="
                                 text-xs
                                 mint-text-muted
@@ -1544,6 +1602,7 @@ const comisionGenerada =
                               {" "}
                               USD
                             </span>
+)}
 
                           </div>
 
@@ -1602,7 +1661,7 @@ const comisionGenerada =
                 mb-1
               "
             >
-              Historial financiero
+              {t("Historial financiero", "Financial history")}
             </p>
 
             <h3
@@ -1612,7 +1671,7 @@ const comisionGenerada =
                 mint-text-primary
               "
             >
-              Comisiones por cobro
+              {t("Comisiones por cobro", "Commissions per payment")}
             </h3>
 
             <p
@@ -1637,7 +1696,8 @@ const comisionGenerada =
             "
           >
 
-            <div
+            {mostrarMXN && (
+<div
               className="
                 rounded-xl
                 border
@@ -1648,7 +1708,7 @@ const comisionGenerada =
               "
             >
               <p className="text-[10px] uppercase font-bold text-[var(--mint-danger)]">
-                Pendiente MXN
+                {t("Pendiente MXN", "Pending MXN")}
               </p>
               <p className="font-bold text-[var(--mint-danger)]">
                 $
@@ -1659,8 +1719,10 @@ const comisionGenerada =
                 }
               </p>
             </div>
+)}
 
-            <div
+            {mostrarMXN && (
+<div
               className="
                 rounded-xl
                 border
@@ -1671,7 +1733,7 @@ const comisionGenerada =
               "
             >
               <p className="text-[10px] uppercase font-bold text-[var(--mint-success)]">
-                Pagado MXN
+                {t("Pagado MXN", "Paid MXN")}
               </p>
               <p className="font-bold text-[var(--mint-success)]">
                 $
@@ -1682,8 +1744,10 @@ const comisionGenerada =
                 }
               </p>
             </div>
+)}
 
-            <div
+            {mostrarUSD && (
+<div
               className="
                 rounded-xl
                 border
@@ -1694,7 +1758,7 @@ const comisionGenerada =
               "
             >
               <p className="text-[10px] uppercase font-bold text-[var(--mint-warning)]">
-                Pendiente USD
+                {t("Pendiente USD", "Pending USD")}
               </p>
               <p className="font-bold text-[var(--mint-warning)]">
                 $
@@ -1705,8 +1769,10 @@ const comisionGenerada =
                 }
               </p>
             </div>
+)}
 
-            <div
+            {mostrarUSD && (
+<div
               className="
                 rounded-xl
                 border
@@ -1717,7 +1783,7 @@ const comisionGenerada =
               "
             >
               <p className="text-[10px] uppercase font-bold text-[var(--mint-primary)]">
-                Pagado USD
+                {t("Pagado USD", "Paid USD")}
               </p>
               <p className="font-bold text-[var(--mint-primary)]">
                 $
@@ -1728,6 +1794,7 @@ const comisionGenerada =
                 }
               </p>
             </div>
+)}
 
           </div>
 
@@ -1741,31 +1808,31 @@ const comisionGenerada =
               <tr>
 
                 <th className="p-4 text-left">
-                  Fecha cobro
+                  {t("Fecha cobro", "Payment date")}
                 </th>
 
                 <th className="p-4 text-left">
-                  Paciente
+                  {t("Paciente", "Patient")}
                 </th>
 
                 <th className="p-4 text-left">
-                  Tratamiento
+                  {t("Tratamiento", "Treatment")}
                 </th>
 
                 <th className="p-4 text-right">
-                  Cobro
+                  {t("Cobro", "Payment")}
                 </th>
 
                 <th className="p-4 text-right">
-                  Comisión
+                  {t("Comisión", "Commission")}
                 </th>
 
                 <th className="p-4 text-center">
-                  Estado
+                  {t("Estado", "Status")}
                 </th>
 
                 <th className="p-4 text-left">
-                  Pago comisión
+                  {t("Pago comisión", "Commission payment")}
                 </th>
 
               </tr>
@@ -1904,7 +1971,7 @@ const comisionGenerada =
                                       border-[var(--mint-success-border)]
                                     "
                                   >
-                                    Pagado
+                                    {t("Pagado", "Paid")}
                                   </span>
                                 )
 
@@ -1923,7 +1990,7 @@ const comisionGenerada =
                                       border-[var(--mint-danger-border)]
                                     "
                                   >
-                                    Pendiente
+                                    {t("Pendiente", "Pending")}
                                   </span>
                                 )
                             }
@@ -1976,7 +2043,7 @@ const comisionGenerada =
                                 : (
 
                                   <span className="text-xs mint-text-muted">
-                                    Sin liquidar
+                                    {t("Sin liquidar", "Unpaid")}
                                   </span>
 
                                 )
@@ -2029,7 +2096,7 @@ const comisionGenerada =
             "
           >
 
-            Cálculo
+            {t("Cálculo", "Calculation")}
 
           </p>
 
@@ -2041,7 +2108,7 @@ const comisionGenerada =
             "
           >
 
-            Resumen de comisión
+            {t("Resumen de comisión", "Commission summary")}
 
           </h3>
 
@@ -2079,7 +2146,7 @@ const comisionGenerada =
                 "
               >
 
-                Total cobrado
+                {t("Total cobrado", "Total collected")}
 
               </p>
 
@@ -2091,6 +2158,7 @@ const comisionGenerada =
                   mint-text-primary
                 "
               >
+{mostrarMXN && (<> 
 
                 $
                 {
@@ -2100,7 +2168,8 @@ const comisionGenerada =
                 }
                 {" MXN"}
 
-                <br />
+                 </>)}
+{mostrarUSD && (<> 
 
                 $
                 {
@@ -2110,7 +2179,8 @@ const comisionGenerada =
                 }
                 {" USD"}
 
-              </p>
+               </>)}
+</p>
 
             </div>
 
@@ -2131,7 +2201,7 @@ const comisionGenerada =
                 "
               >
 
-                Tratamientos finalizados
+                {t("Tratamientos finalizados", "Completed treatments")}
 
               </p>
 
@@ -2169,7 +2239,7 @@ const comisionGenerada =
                 "
               >
 
-                Base clínica
+                {t("Base clínica", "Clinic base")}
 
               </p>
 
@@ -2181,6 +2251,7 @@ const comisionGenerada =
                   text-[var(--mint-info)]
                 "
               >
+{mostrarMXN && (<> 
 
                 $
                 {
@@ -2190,7 +2261,8 @@ const comisionGenerada =
                 }
                 {" MXN"}
 
-                <br />
+                 </>)}
+{mostrarUSD && (<> 
 
                 $
                 {
@@ -2200,7 +2272,8 @@ const comisionGenerada =
                 }
                 {" USD"}
 
-              </p>
+               </>)}
+</p>
 
             </div>
 
@@ -2240,6 +2313,7 @@ const comisionGenerada =
                   text-[var(--mint-success)]
                 "
               >
+{mostrarMXN && (<> 
 
                 $
                 {
@@ -2249,7 +2323,8 @@ const comisionGenerada =
                 }
                 {" MXN"}
 
-                <br />
+                 </>)}
+{mostrarUSD && (<> 
 
                 $
                 {
@@ -2259,7 +2334,8 @@ const comisionGenerada =
                 }
                 {" USD"}
 
-              </p>
+               </>)}
+</p>
 
             </div>
 

@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -21,6 +22,9 @@ import { supabase }
 
 import { useAuth }
   from "../../context/AuthContext";
+
+import { useLanguage }
+  from "../../context/LanguageContext";
 
 import { registrarBitacora }
   from "../../lib/registrarBitacora";
@@ -85,6 +89,42 @@ export default function Comisiones({
   const esAdmin =
     perfil?.rol === "admin";
 
+  const { language } = useLanguage();
+  const es = language === "es";
+  const locale = es ? "es-MX" : "en-US";
+  const tr = (espanol: string, english: string) => es ? espanol : english;
+
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    async function cargarConfiguracionMonedas() {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+      if (error || !activo) return;
+      const valores = Object.fromEntries(
+        (data ?? []).map((fila) => [fila.clave, String(fila.valor ?? "")])
+      );
+      setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
+      setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
+    }
+    void cargarConfiguracionMonedas();
+    return () => { activo = false; };
+  }, []);
+
+  const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
+  const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
+  const monedasActivas = (["MXN", "USD"] as const).filter(
+    (moneda) => moneda === "MXN" ? mostrarMXN : mostrarUSD
+  );
+
+  const traducirMetodo = (metodo: string) =>
+    es ? metodo : ({ "Efectivo": "Cash", "Transferencia": "Transfer", "Tarjeta": "Card" } as Record<string, string>)[metodo] || metodo;
+
+
   const [
     vista,
     setVista,
@@ -135,6 +175,16 @@ export default function Comisiones({
     setGuardando,
   ] = useState(false);
 
+  // Los pagos históricos conservan su moneda original; la configuración
+  // únicamente afecta las opciones y los resúmenes visibles.
+  useEffect(() => {
+    if (formaPagoDoctor === "MXN" && !mostrarMXN) setFormaPagoDoctor("USD");
+    if (formaPagoDoctor === "USD" && !mostrarUSD) setFormaPagoDoctor("MXN");
+    if (formaPagoEspecialista === "MXN" && !mostrarMXN) setFormaPagoEspecialista("USD");
+    if (formaPagoEspecialista === "USD" && !mostrarUSD) setFormaPagoEspecialista("MXN");
+  }, [mostrarMXN, mostrarUSD, formaPagoDoctor, formaPagoEspecialista]);
+
+
   const formatoMonto =
     (
       monto: number
@@ -142,7 +192,7 @@ export default function Comisiones({
       Number(
         monto || 0
       ).toLocaleString(
-        "es-MX",
+        locale,
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -496,12 +546,12 @@ export default function Comisiones({
       !Number.isFinite(monto) ||
       monto <= 0
     ) {
-      alert("Ingresa una cantidad válida.");
+      alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
       return;
     }
 
     const monedaPago =
-      formaPagoDoctor === "USD"
+      formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
         ? "USD"
         : "MXN";
 
@@ -517,7 +567,7 @@ export default function Comisiones({
 
     if (monto > pendiente + 0.01) {
       alert(
-        "La cantidad no puede ser mayor a la comisión pendiente."
+        tr("La cantidad no puede ser mayor a la comisión pendiente.", "The amount cannot exceed the outstanding commission.")
       );
       return;
     }
@@ -577,7 +627,7 @@ export default function Comisiones({
       ) > 0.01
     ) {
       alert(
-        `Para mantener el control exacto por cobro, paga la comisión pendiente completa: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`
+        tr(`Para mantener el control exacto por cobro, paga la comisión pendiente completa: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`, `To keep payment records accurate, pay the full outstanding commission: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`)
       );
       return;
     }
@@ -641,7 +691,7 @@ export default function Comisiones({
         );
 
         alert(
-          "No se pudo registrar el pago de la comisión."
+          tr("No se pudo registrar el pago de la comisión.", "The commission payment could not be recorded.")
         );
 
         return;
@@ -671,12 +721,12 @@ export default function Comisiones({
     const monto = Number(montoPagoEspecialista);
 
     if (!Number.isFinite(monto) || monto <= 0) {
-      alert("Ingresa una cantidad válida.");
+      alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
       return;
     }
 
     const monedaPago =
-      formaPagoEspecialista === "USD"
+      formaPagoEspecialista === "USD" || (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
         ? "USD"
         : "MXN";
 
@@ -711,7 +761,7 @@ export default function Comisiones({
         error
       );
       alert(
-        "No se pudo registrar el pago al especialista."
+        tr("No se pudo registrar el pago al especialista.", "The specialist payment could not be recorded.")
       );
       return;
     }
@@ -737,66 +787,15 @@ export default function Comisiones({
       "
     >
 
-      <div
-        className="
-          mint-card
-          relative
-          overflow-hidden
-          p-6
-          border
-          border-[var(--mint-border-teal)]
-          bg-[linear-gradient(135deg,var(--mint-surface)_0%,var(--mint-surface-teal)_100%)]
-          shadow-[0_12px_32px_rgba(15,42,65,0.06)]
-        "
-      >
-
-        <div
-          className="
-            flex
-            flex-col
-            lg:flex-row
-            lg:items-center
-            lg:justify-between
-            gap-5
-          "
-        >
-
+      <div className="mint-card overflow-hidden border border-[var(--mint-border)]">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 px-6 py-5 bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]">
           <div>
-
-            <p
-              className="
-                text-[11px]
-                uppercase
-                tracking-[0.14em]
-                font-bold
-                mint-text-brand
-              "
-            >
-              Finanzas
+            <p className="text-[11px] uppercase tracking-[0.14em] font-bold text-[#63c8b2]">
+              {tr("Control de comisiones", "Commission management")}
             </p>
-
-            <h2
-              className="
-                text-2xl
-                font-bold
-                mint-text-primary
-                mt-1
-              "
-            >
-              Comisiones y especialistas
-            </h2>
-
-            <p
-              className="
-                text-sm
-                mint-text-secondary
-                mt-1
-              "
-            >
-              Comisiones clínicas y adeudos
-              reales a especialistas.
+            <p className="text-sm text-white/85 mt-1">
+              {tr("Consulta comisiones de doctores y adeudos a especialistas.", "Review doctor commissions and outstanding specialist payments.")}
             </p>
-
           </div>
 
           <div
@@ -804,9 +803,9 @@ export default function Comisiones({
               inline-flex
               p-1
               rounded-xl
-              bg-[var(--mint-surface-teal)]
+              bg-white/10
               border
-              border-[var(--mint-border-teal)]
+              border-white/25
               self-start
               shadow-sm
             "
@@ -831,20 +830,20 @@ export default function Comisiones({
                   "doctores"
 
                     ? `
-                      bg-[var(--mint-surface)]
-                      text-[var(--mint-teal)]
+                      !bg-[#102f4f]
+                      !text-white
                       shadow-[0_3px_10px_rgba(15,42,65,0.08)]
                       ring-1
                       ring-[var(--mint-border-teal)]
                     `
 
                     : `
-                      mint-text-secondary
+                      !text-white/80 hover:!text-white
                     `
                 }
               `}
             >
-              Doctores
+              {tr("Doctores", "Doctors")}
             </button>
 
             <button
@@ -876,26 +875,26 @@ export default function Comisiones({
                   "especialistas"
 
                     ? `
-                        bg-[var(--mint-surface)]
-                        text-[var(--mint-teal)]
+                        !bg-[#102f4f]
+                        !text-white
                         shadow-[0_3px_10px_rgba(15,42,65,0.08)]
                         ring-1
                         ring-[var(--mint-border-teal)]
                       `
 
                     : `
-                        mint-text-secondary
+                        !text-white/80 hover:!text-white
                       `
                 }
               `}
             >
-              Especialistas
+              {tr("Especialistas", "Specialists")}
             </button>
 
           </div>
 
         </div>
-
+        <div className="h-1 bg-[linear-gradient(90deg,#249884_0%,#63c8b2_58%,#d8bd72_100%)]" />
       </div>
 
       {
@@ -907,11 +906,11 @@ export default function Comisiones({
             <>
 
               <div
-                className="
+                className={`
                   grid
-                  md:grid-cols-3
+                  ${mostrarMXN && mostrarUSD ? "md:grid-cols-3" : "md:grid-cols-2"}
                   gap-4
-                "
+                `}
               >
 
                 <div
@@ -926,7 +925,7 @@ export default function Comisiones({
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Doctores
+                    {tr("Doctores", "Doctors")}
                   </p>
 
                   <p className="text-2xl font-bold mint-text-primary mt-2">
@@ -936,7 +935,8 @@ export default function Comisiones({
                   </p>
                 </div>
 
-                <div
+                {mostrarMXN && (
+<div
                   className="
                     mint-card
                     relative
@@ -948,7 +948,7 @@ export default function Comisiones({
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Por pagar MXN
+                    {tr("Por pagar MXN", "MXN due")}
                   </p>
 
                   <p className="text-2xl font-bold text-[var(--mint-success)] mt-2">
@@ -960,8 +960,10 @@ export default function Comisiones({
                     }
                   </p>
                 </div>
+)}
 
-                <div
+                {mostrarUSD && (
+<div
                   className="
                     mint-card-accent
                     relative
@@ -973,7 +975,7 @@ export default function Comisiones({
                   "
                 >
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Por pagar USD
+                    {tr("Por pagar USD", "USD due")}
                   </p>
 
                   <p className="text-2xl font-bold mint-text-accent mt-2">
@@ -985,6 +987,7 @@ export default function Comisiones({
                     }
                   </p>
                 </div>
+)}
 
               </div>
 
@@ -1011,22 +1014,22 @@ export default function Comisiones({
                           %
                         </th>
                         <th className="p-4 text-center">
-                          Finalizados
+                          {tr("Finalizados", "Completed")}
                         </th>
+                        {mostrarMXN && (<th className="p-4 text-right">
+                          {tr("Pendiente MXN", "MXN pending")}
+                        </th>)}
+                        {mostrarMXN && (<th className="p-4 text-right">
+                          {tr("Pagado MXN", "MXN paid")}
+                        </th>)}
+                        {mostrarUSD && (<th className="p-4 text-right">
+                          {tr("Pendiente USD", "USD pending")}
+                        </th>)}
+                        {mostrarUSD && (<th className="p-4 text-right">
+                          {tr("Pagado USD", "USD paid")}
+                        </th>)}
                         <th className="p-4 text-right">
-                          Pendiente MXN
-                        </th>
-                        <th className="p-4 text-right">
-                          Pagado MXN
-                        </th>
-                        <th className="p-4 text-right">
-                          Pendiente USD
-                        </th>
-                        <th className="p-4 text-right">
-                          Pagado USD
-                        </th>
-                        <th className="p-4 text-right">
-                          Acción
+                          {tr("Acción", "Action")}
                         </th>
                       </tr>
                     </thead>
@@ -1058,7 +1061,7 @@ export default function Comisiones({
                                 <p className="text-xs mint-text-muted mt-1">
                                   {
                                     item.doctor.especialidad ||
-                                    "Doctor clínico"
+                                    tr("Doctor clínico", "Clinical doctor")
                                   }
                                 </p>
                               </td>
@@ -1078,7 +1081,7 @@ export default function Comisiones({
                                 }
                               </td>
 
-                              <td className="p-4 text-right">
+                              {mostrarMXN && (<td className="p-4 text-right">
                                 <span className="font-bold text-[var(--mint-danger)]">
                                   $
                                   {
@@ -1087,9 +1090,9 @@ export default function Comisiones({
                                     )
                                   }
                                 </span>
-                              </td>
+                              </td>)}
 
-                              <td className="p-4 text-right">
+                              {mostrarMXN && (<td className="p-4 text-right">
                                 <span className="font-bold text-[var(--mint-success)]">
                                   $
                                   {
@@ -1098,9 +1101,9 @@ export default function Comisiones({
                                     )
                                   }
                                 </span>
-                              </td>
+                              </td>)}
 
-                              <td className="p-4 text-right">
+                              {mostrarUSD && (<td className="p-4 text-right">
                                 <span className="font-bold text-[var(--mint-warning)]">
                                   $
                                   {
@@ -1109,9 +1112,9 @@ export default function Comisiones({
                                     )
                                   }
                                 </span>
-                              </td>
+                              </td>)}
 
-                              <td className="p-4 text-right">
+                              {mostrarUSD && (<td className="p-4 text-right">
                                 <span className="font-bold mint-text-accent">
                                   $
                                   {
@@ -1120,7 +1123,7 @@ export default function Comisiones({
                                     )
                                   }
                                 </span>
-                              </td>
+                              </td>)}
 
                               <td className="p-4 text-right">
 
@@ -1138,7 +1141,7 @@ export default function Comisiones({
                                       onClick={() => {
 
                                         const usarUSD =
-                                          item.pendienteMXN <= 0 &&
+                                          (!mostrarMXN || item.pendienteMXN <= 0) &&
                                           item.pendienteUSD > 0;
 
                                         setFormaPagoDoctor(
@@ -1166,7 +1169,7 @@ export default function Comisiones({
                                         mint-btn-sm
                                       "
                                     >
-                                      Pagar
+                                      {tr("Pagar", "Pay")}
                                     </button>
                                   }
 
@@ -1189,7 +1192,7 @@ export default function Comisiones({
                                       mint-btn-sm
                                     "
                                   >
-                                    Ver detalle
+                                    {tr("Ver detalle", "View details")}
                                   </button>
 
                                 </div>
@@ -1219,16 +1222,16 @@ export default function Comisiones({
             <>
 
               <div
-                className="
+                className={`
                   grid
-                  md:grid-cols-3
+                  ${mostrarMXN && mostrarUSD ? "md:grid-cols-3" : "md:grid-cols-2"}
                   gap-4
-                "
+                `}
               >
 
                 <div className="mint-card-primary relative overflow-hidden p-5 border border-[var(--mint-border-teal)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Especialistas
+                    {tr("Especialistas", "Specialists")}
                   </p>
 
                   <p className="text-2xl font-bold mint-text-primary mt-2">
@@ -1238,9 +1241,10 @@ export default function Comisiones({
                   </p>
                 </div>
 
-                <div className="mint-card relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
+                {mostrarMXN && (
+<div className="mint-card relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Por pagar MXN
+                    {tr("Por pagar MXN", "MXN due")}
                   </p>
 
                   <p className="text-2xl font-bold text-[var(--mint-danger)] mt-2">
@@ -1252,10 +1256,12 @@ export default function Comisiones({
                     }
                   </p>
                 </div>
+)}
 
-                <div className="mint-card-accent relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
+                {mostrarUSD && (
+<div className="mint-card-accent relative overflow-hidden p-5 border border-[var(--mint-border)] shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
                   <p className="text-xs font-bold mint-text-muted uppercase">
-                    Por pagar USD
+                    {tr("Por pagar USD", "USD due")}
                   </p>
 
                   <p className="text-2xl font-bold mint-text-accent mt-2">
@@ -1267,6 +1273,7 @@ export default function Comisiones({
                     }
                   </p>
                 </div>
+)}
 
               </div>
 
@@ -1278,7 +1285,7 @@ export default function Comisiones({
 
                     <div className="mint-card p-10 text-center">
                       <p className="font-semibold mint-text-primary">
-                        No hay tratamientos con especialista.
+                        {tr("No hay tratamientos con especialista.", "There are no specialist treatments.")}
                       </p>
                     </div>
 
@@ -1319,7 +1326,7 @@ export default function Comisiones({
 
                             <div>
                               <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
-                                Especialista
+                                {tr("Especialista", "Specialist")}
                               </p>
 
                               <h3 className="text-xl font-bold mint-text-primary mt-1">
@@ -1331,9 +1338,9 @@ export default function Comisiones({
 
                             <div className="flex gap-3 flex-wrap">
 
-                              <div className="px-4 py-2 rounded-xl bg-[var(--mint-danger-bg)] border border-[var(--mint-danger-border)]">
+                              {mostrarMXN && (<div className="px-4 py-2 rounded-xl bg-[var(--mint-danger-bg)] border border-[var(--mint-danger-border)]">
                                 <p className="text-[10px] uppercase font-bold text-[var(--mint-danger)]">
-                                  Pendiente MXN
+                                  {tr("Pendiente MXN", "MXN pending")}
                                 </p>
 
                                 <p className="font-bold text-[var(--mint-danger)]">
@@ -1344,11 +1351,11 @@ export default function Comisiones({
                                     )
                                   }
                                 </p>
-                              </div>
+                              </div>)}
 
-                              <div className="px-4 py-2 rounded-xl bg-[var(--mint-warning-bg)] border border-[var(--mint-warning-border)]">
+                              {mostrarUSD && (<div className="px-4 py-2 rounded-xl bg-[var(--mint-warning-bg)] border border-[var(--mint-warning-border)]">
                                 <p className="text-[10px] uppercase font-bold text-[var(--mint-warning)]">
-                                  Pendiente USD
+                                  {tr("Pendiente USD", "USD pending")}
                                 </p>
 
                                 <p className="font-bold text-[var(--mint-warning)]">
@@ -1359,7 +1366,7 @@ export default function Comisiones({
                                     )
                                   }
                                 </p>
-                              </div>
+                              </div>)}
 
                             </div>
 
@@ -1372,22 +1379,22 @@ export default function Comisiones({
                               <thead>
                                 <tr>
                                   <th className="p-4 text-left">
-                                    Fecha
+                                    {tr("Fecha", "Date")}
                                   </th>
                                   <th className="p-4 text-left">
-                                    Tratamiento
+                                    {tr("Tratamiento", "Treatment")}
                                   </th>
                                   <th className="p-4 text-left">
-                                    Estado
+                                    {tr("Estado", "Status")}
                                   </th>
                                   <th className="p-4 text-right">
-                                    Costo
+                                    {tr("Costo", "Cost")}
                                   </th>
                                   <th className="p-4 text-center">
-                                    Pago
+                                    {tr("Pago", "Payment")}
                                   </th>
                                   <th className="p-4 text-right">
-                                    Acción
+                                    {tr("Acción", "Action")}
                                   </th>
                                 </tr>
                               </thead>
@@ -1431,7 +1438,7 @@ export default function Comisiones({
                                               <p className="font-semibold mint-text-primary">
                                                 {
                                                   tratamiento.tratamiento ||
-                                                  "Tratamiento"
+                                                  tr("Tratamiento", "Treatment")
                                                 }
                                               </p>
                                             </td>
@@ -1466,7 +1473,7 @@ export default function Comisiones({
                                               >
                                                 {
                                                   tratamiento.estado ||
-                                                  "Pendiente"
+                                                  tr("Pendiente", "Pending")
                                                 }
                                               </span>
                                             </td>
@@ -1503,13 +1510,12 @@ export default function Comisiones({
 
                                                     <div>
                                                       <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[var(--mint-success-bg)] text-[var(--mint-success)] border border-[var(--mint-success-border)]">
-                                                        Pagado
+                                                        {tr("Pagado", "Paid")}
                                                       </span>
 
                                                       <p className="text-[10px] mint-text-muted mt-1">
                                                         {
-                                                          tratamiento.especialista_metodo_pago ||
-                                                          "—"
+                                                          traducirMetodo(tratamiento.especialista_metodo_pago || "—")
                                                         }
                                                       </p>
                                                     </div>
@@ -1519,7 +1525,7 @@ export default function Comisiones({
                                                   : (
 
                                                     <span className="inline-flex px-3 py-1 rounded-full text-xs font-semibold bg-[var(--mint-danger-bg)] text-[var(--mint-danger)] border border-[var(--mint-danger-border)]">
-                                                      Pendiente
+                                                      {tr("Pendiente", "Pending")}
                                                     </span>
 
                                                   )
@@ -1541,9 +1547,9 @@ export default function Comisiones({
                                                               tratamiento.especialista_fecha_pago
                                                             )
                                                               .toLocaleDateString(
-                                                                "es-MX"
+                                                                locale
                                                               )
-                                                          : "Registrado"
+                                                          : tr("Registrado", "Recorded")
                                                       }
                                                     </span>
 
@@ -1585,7 +1591,7 @@ export default function Comisiones({
                                                           mint-btn-sm
                                                         "
                                                       >
-                                                        Pagar
+                                                        {tr("Pagar", "Pay")}
                                                       </button>
 
                                                     )
@@ -1593,7 +1599,7 @@ export default function Comisiones({
                                                     : (
 
                                                       <span className="text-xs mint-text-muted">
-                                                        Al finalizar
+                                                        {tr("Al finalizar", "When completed")}
                                                       </span>
 
                                                     )
@@ -1660,7 +1666,7 @@ export default function Comisiones({
           >
 
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
-              Pago de comisión
+              {tr("Pago de comisión", "Commission payment")}
             </p>
 
             <h3 className="text-xl font-bold mint-text-primary mt-1">
@@ -1673,12 +1679,12 @@ export default function Comisiones({
             <div className="mt-5 p-4 rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)]">
 
               <p className="text-xs font-bold uppercase mint-text-muted">
-                Comisión pendiente
+                {tr("Comisión pendiente", "Outstanding commission")}
               </p>
 
-              <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className={`grid ${mostrarMXN && mostrarUSD ? "grid-cols-2" : "grid-cols-1"} gap-3 mt-3`}>
 
-                <div>
+                {mostrarMXN && (<div>
                   <p className="text-xs mint-text-muted">
                     MXN
                   </p>
@@ -1691,9 +1697,9 @@ export default function Comisiones({
                       )
                     }
                   </p>
-                </div>
+                </div>)}
 
-                <div>
+                {mostrarUSD && (<div>
                   <p className="text-xs mint-text-muted">
                     USD
                   </p>
@@ -1706,7 +1712,7 @@ export default function Comisiones({
                       )
                     }
                   </p>
-                </div>
+                </div>)}
 
               </div>
 
@@ -1715,14 +1721,13 @@ export default function Comisiones({
             <div className="mt-5">
 
               <label className="text-sm font-semibold mint-text-primary">
-                Forma de pago
+                {tr("Forma de pago", "Payment method")}
               </label>
 
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {(
                   [
-                    "MXN",
-                    "USD",
+                    ...monedasActivas,
                     "Transferencia",
                   ] as FormaPagoDoctor[]
                 ).map((forma) => (
@@ -1732,9 +1737,9 @@ export default function Comisiones({
                     disabled={
                       forma === "MXN"
                         ? doctorPago.pendienteMXN <= 0
-                        : forma === "USD"
+                        : (forma === "USD" || (forma === "Transferencia" && !mostrarMXN))
                           ? doctorPago.pendienteUSD <= 0
-                          : doctorPago.pendienteMXN <= 0
+                          : (mostrarMXN ? doctorPago.pendienteMXN : doctorPago.pendienteUSD) <= 0
                     }
                     onClick={() => {
 
@@ -1744,7 +1749,7 @@ export default function Comisiones({
 
                       setMontoPagoDoctor(
                         String(
-                          forma === "USD"
+                          (forma === "USD" || (forma === "Transferencia" && !mostrarMXN))
                             ? doctorPago.pendienteUSD
                             : doctorPago.pendienteMXN
                         )
@@ -1759,7 +1764,7 @@ export default function Comisiones({
                       ${
                         formaPagoDoctor === forma
                           ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
-                          : "bg-white mint-text-secondary border-[var(--mint-border)]"
+                          : "bg-[var(--mint-bg-card)] mint-text-secondary border-[var(--mint-border)]"
                       }
                     `}
                   >
@@ -1771,7 +1776,7 @@ export default function Comisiones({
               <div className="mt-4">
 
                 <label className="text-sm font-semibold mint-text-primary">
-                  Cantidad
+                  {tr("Cantidad", "Amount")}
                 </label>
 
                 <div className="relative mt-2">
@@ -1795,7 +1800,7 @@ export default function Comisiones({
                     className="
                       w-full rounded-xl border
                       border-[var(--mint-border)]
-                      bg-white pl-8 pr-16 py-2.5
+                      bg-[var(--mint-bg-card)] pl-8 pr-16 py-2.5
                       text-sm font-semibold
                       mint-text-primary outline-none
                       focus:border-[var(--mint-primary)]
@@ -1805,7 +1810,7 @@ export default function Comisiones({
 
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
                     {
-                      formaPagoDoctor === "USD"
+                      formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
                         ? "USD"
                         : "MXN"
                     }
@@ -1834,7 +1839,7 @@ export default function Comisiones({
                   mint-btn-secondary
                 "
               >
-                Cancelar
+                {tr("Cancelar", "Cancel")}
               </button>
 
               <button
@@ -1852,8 +1857,8 @@ export default function Comisiones({
               >
                 {
                   guardando
-                    ? "Guardando..."
-                    : "Confirmar pago"
+                    ? tr("Guardando...", "Saving...")
+                    : tr("Confirmar pago", "Confirm payment")
                 }
               </button>
 
@@ -1898,13 +1903,13 @@ export default function Comisiones({
           >
 
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
-              Pago a especialista
+              {tr("Pago a especialista", "Specialist payment")}
             </p>
 
             <h3 className="text-xl font-bold mint-text-primary mt-1">
               {
                 tratamientoPago.especialista_nombre ||
-                "Especialista"
+                tr("Especialista", "Specialist")
               }
             </h3>
 
@@ -1942,14 +1947,13 @@ export default function Comisiones({
             <div className="mt-5">
 
               <label className="text-sm font-semibold mint-text-primary">
-                Forma de pago
+                {tr("Forma de pago", "Payment method")}
               </label>
 
               <div className="grid grid-cols-3 gap-2 mt-2">
                 {(
                   [
-                    "MXN",
-                    "USD",
+                    ...monedasActivas,
                     "Transferencia",
                   ] as FormaPagoEspecialista[]
                 ).map((forma) => (
@@ -1965,7 +1969,7 @@ export default function Comisiones({
                       ${
                         formaPagoEspecialista === forma
                           ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
-                          : "bg-white mint-text-secondary border-[var(--mint-border)]"
+                          : "bg-[var(--mint-bg-card)] mint-text-secondary border-[var(--mint-border)]"
                       }
                     `}
                   >
@@ -1977,7 +1981,7 @@ export default function Comisiones({
               <div className="mt-4">
 
                 <label className="text-sm font-semibold mint-text-primary">
-                  Cantidad
+                  {tr("Cantidad", "Amount")}
                 </label>
 
                 <div className="relative mt-2">
@@ -1999,7 +2003,7 @@ export default function Comisiones({
                     className="
                       w-full rounded-xl border
                       border-[var(--mint-border)]
-                      bg-white pl-8 pr-16 py-2.5
+                      bg-[var(--mint-bg-card)] pl-8 pr-16 py-2.5
                       text-sm font-semibold
                       mint-text-primary outline-none
                       focus:border-[var(--mint-primary)]
@@ -2009,7 +2013,7 @@ export default function Comisiones({
 
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
                     {
-                      formaPagoEspecialista === "USD"
+                      formaPagoEspecialista === "USD" || (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
                         ? "USD"
                         : "MXN"
                     }
@@ -2038,7 +2042,7 @@ export default function Comisiones({
                   mint-btn-secondary
                 "
               >
-                Cancelar
+                {tr("Cancelar", "Cancel")}
               </button>
 
               <button
@@ -2056,8 +2060,8 @@ export default function Comisiones({
               >
                 {
                   guardando
-                    ? "Guardando..."
-                    : "Confirmar pago"
+                    ? tr("Guardando...", "Saving...")
+                    : tr("Confirmar pago", "Confirm payment")
                 }
               </button>
 

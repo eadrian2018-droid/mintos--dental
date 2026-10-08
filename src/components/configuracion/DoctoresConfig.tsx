@@ -1168,7 +1168,7 @@ async function guardarPrecioEspecialista() {
         rounded-[24px]
         border
         border-[var(--mint-border)]
-        bg-white
+        bg-[var(--mint-surface)]
         shadow-[0_14px_38px_rgba(15,42,65,0.08)]
       "
     >
@@ -1268,15 +1268,14 @@ async function guardarPrecioEspecialista() {
 
       {
         mostrarFormulario && (
-
-          <div
-            className="
-              p-6
-              bg-[linear-gradient(180deg,#f7fbfa_0%,#eef8f6_100%)]
-              border-b
-              border-[var(--mint-border-teal)]
-            "
-          >
+          <div className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[#071b2c]/75 p-4 backdrop-blur-[5px]" onMouseDown={(e) => { if (e.target === e.currentTarget && !guardando) cancelarFormulario(); }}>
+          <div role="dialog" aria-modal="true" aria-label={es ? "Administrar doctor" : "Manage doctor"} className="my-auto w-full max-w-[780px] overflow-hidden rounded-[24px] border border-[var(--mint-border)] bg-[var(--mint-surface)] shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
+          <div className="flex items-center justify-between border-b-[3px] border-[#63c8b2] bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_52%,#0b8f80_100%)] px-6 py-5">
+            <div><p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#75dfc8]">{es ? "PERSONAL CLÍNICO" : "CLINICAL STAFF"}</p><h3 className="text-xl font-bold !text-white">{esAdmin ? (doctorEditando !== null ? (es ? "Editar doctor" : "Edit doctor") : (es ? "Nuevo doctor" : "New doctor")) : (es ? "Editar comisión" : "Edit commission")}</h3></div>
+            <button type="button" onClick={cancelarFormulario} disabled={guardando} aria-label={es ? "Cerrar" : "Close"} className="rounded-xl border border-white/25 bg-white/10 p-2.5 !text-white hover:bg-white/20"><X size={18}/></button>
+          </div>
+          <div className="p-6 bg-[var(--mint-surface)]">
+          
 
             <div
               className="
@@ -1284,6 +1283,7 @@ async function guardarPrecioEspecialista() {
                 items-center
                 justify-between
                 mb-4
+                hidden
               "
             >
 
@@ -1338,7 +1338,7 @@ async function guardarPrecioEspecialista() {
                       grid
                       grid-cols-1
                       md:grid-cols-2
-                      xl:grid-cols-5
+                      xl:grid-cols-2
                       gap-4
                     "
                   >
@@ -1736,6 +1736,8 @@ async function guardarPrecioEspecialista() {
             }
 
           </div>
+          </div>
+          </div>
 
         )
 
@@ -1776,7 +1778,7 @@ async function guardarPrecioEspecialista() {
                 transition-all
                 ${
                   seccionActiva === "doctores"
-                    ? "bg-white text-[var(--mint-navy)] shadow-[0_4px_14px_rgba(15,42,65,0.10)]"
+                    ? "!bg-[#102f4f] !text-white shadow-[0_4px_14px_rgba(15,42,65,0.10)]"
                     : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-navy)]"
                 }
               `}
@@ -1796,7 +1798,7 @@ async function guardarPrecioEspecialista() {
                 transition-all
                 ${
                   seccionActiva === "especialistas"
-                    ? "bg-[var(--mint-navy)] text-white shadow-[0_4px_14px_rgba(15,42,65,0.14)]"
+                    ? "!bg-[#102f4f] !text-white shadow-[0_4px_14px_rgba(15,42,65,0.14)]"
                     : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-navy)]"
                 }
               `}
@@ -1815,7 +1817,7 @@ async function guardarPrecioEspecialista() {
           py-5
           border-b
           border-[var(--mint-border-teal)]
-          bg-[linear-gradient(90deg,#eef9f6_0%,#f8fbfa_68%,#ffffff_100%)]
+          bg-[var(--mint-surface-soft)]
         "
       >
 
@@ -1869,7 +1871,7 @@ async function guardarPrecioEspecialista() {
 
           <thead
             className="
-              bg-[#f3f8f7]
+              bg-[var(--mint-surface-soft)]
               text-[var(--mint-text-secondary)]
               border-b
               border-[var(--mint-border)]
@@ -2236,7 +2238,7 @@ async function guardarPrecioEspecialista() {
             py-5
             border-b
             border-[var(--mint-border-teal)]
-            bg-[linear-gradient(90deg,#f7f4ea_0%,#fbfaf5_34%,#ffffff_100%)]
+            bg-[var(--mint-surface-soft)]
           "
         >
 
@@ -2583,7 +2585,7 @@ async function guardarPrecioEspecialista() {
                                   size={15}
                                 />
 
-                                Editar
+                                {es ? "Editar" : "Edit"}
 
                               </button>
 

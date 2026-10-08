@@ -621,9 +621,10 @@ export default function UsuariosRoles() {
           rounded-[24px]
           border
           border-[rgba(255,255,255,0.12)]
-          bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_52%,var(--mint-teal)_100%)]
+          bg-[#102f4f]
           shadow-[0_18px_42px_rgba(15,42,65,0.16)]
         "
+        style={{ background: "linear-gradient(120deg, #102f4f 0%, #1b4f68 52%, #0b8f80 100%)" }}
       >
 
         <div
@@ -1345,10 +1346,11 @@ export default function UsuariosRoles() {
                 className="
                   relative
                   overflow-hidden
-                  bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_55%,var(--mint-teal)_100%)]
+                  bg-[#102f4f]
                   px-6
                   py-5
                 "
+                style={{ background: "linear-gradient(120deg, #102f4f 0%, #1b4f68 55%, #0b8f80 100%)" }}
               >
 
                 <div

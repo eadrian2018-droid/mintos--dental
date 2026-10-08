@@ -4,6 +4,8 @@ import { supabase } from "../../lib/supabase";
 
 import { registrarBitacora } from "../../lib/registrarBitacora";
 
+import { useLanguage } from "../../context/LanguageContext";
+
 type RolUsuario =
   | "admin"
   | "doctor"
@@ -175,12 +177,73 @@ const gruposPermisos = [
   },
 ] as const;
 
+const traducciones: Record<string, string> = {
+  "Agenda": "Schedule",
+  "Ver agenda": "View schedule",
+  "Crear y editar citas": "Create and edit appointments",
+  "Pacientes": "Patients",
+  "Registrar nuevos pacientes": "Register new patients",
+  "Ver pacientes": "View patients",
+  "Editar datos de pacientes": "Edit patient information",
+  "Ver expediente clínico": "View clinical records",
+  "Agregar notas clínicas": "Add clinical notes",
+  "Tratamientos": "Treatments",
+  "Crear tratamientos": "Create treatments",
+  "Cambiar estado de tratamientos": "Change treatment status",
+  "Anular tratamientos": "Void treatments",
+  "Cobros y gastos": "Payments and expenses",
+  "Registrar cobros y abonos": "Record payments and installments",
+  "Aplicar descuentos": "Apply discounts",
+  "Registrar gastos": "Record expenses",
+  "Anular cobros": "Void payments",
+  "Anular gastos": "Void expenses",
+  "Finanzas": "Finances",
+  "Ver resumen financiero": "View financial summary",
+  "Ver utilidades": "View profits",
+  "Ver comisiones": "View commissions",
+  "Configuración": "Settings",
+  "Configurar precios y costos": "Configure prices and costs",
+  "Configurar comisiones": "Configure commissions",
+  "Administrar usuarios": "Manage users",
+  "Ver bitácora": "View audit log",
+  "No se pudieron cargar los permisos.": "Could not load permissions.",
+  "Ingresa el nombre del usuario.": "Enter the user name.",
+  "Selecciona el doctor que corresponde a esta cuenta.": "Select the doctor associated with this account.",
+  "No se pudo actualizar el usuario.": "Could not update the user.",
+  "El usuario fue actualizado, pero no se pudieron guardar sus permisos.": "The user was updated, but their permissions could not be saved.",
+  "Ocurrió un error inesperado.": "An unexpected error occurred.",
+  "Administrar usuario": "Manage user",
+  "Configura la cuenta y los permisos individuales.": "Configure the account and individual permissions.",
+  "Nombre": "Name",
+  "Rol": "Role",
+  "Administrador": "Administrator",
+  "Recepcionista": "Receptionist",
+  "Tablet de recepción": "Reception tablet",
+  "Registro QR": "QR registration",
+  "Doctor vinculado": "Linked doctor",
+  "Seleccionar doctor": "Select doctor",
+  "Usuario activo": "Active user",
+  "Permisos": "Permissions",
+  "Selecciona exactamente qué puede hacer este usuario en MintOS.": "Choose exactly what this user can do in MintOS.",
+  "Acceso exclusivo de Tablet": "Tablet-only access",
+  "Acceso exclusivo de Registro QR": "QR registration-only access",
+  "Esta cuenta únicamente puede registrar nuevos pacientes. No tiene acceso a pacientes existentes, expedientes, agenda, finanzas, configuración ni bitácora.": "This account can only register new patients. It cannot access existing patients, clinical records, appointments, finances, settings, or the audit log.",
+  "Cargando permisos...": "Loading permissions...",
+  "Cancelar": "Cancel",
+  "Guardando...": "Saving...",
+  "Guardar cambios": "Save changes"
+};
+
 export default function AdministrarUsuario({
   perfil,
   doctores,
   onCerrar,
   onGuardado,
 }: Props) {
+
+  const { language } = useLanguage();
+  const es = language === "es";
+  const traducir = (texto: string) => es ? texto : (traducciones[texto] ?? texto);
 
   const [
     nombre,
@@ -302,7 +365,7 @@ export default function AdministrarUsuario({
       );
 
       setError(
-        "No se pudieron cargar los permisos."
+        traducir("No se pudieron cargar los permisos.")
       );
 
       setLoading(
@@ -353,7 +416,7 @@ export default function AdministrarUsuario({
     if (!nombreLimpio) {
 
       setError(
-        "Ingresa el nombre del usuario."
+        traducir("Ingresa el nombre del usuario.")
       );
 
       return;
@@ -365,7 +428,7 @@ export default function AdministrarUsuario({
     ) {
 
       setError(
-        "Selecciona el doctor que corresponde a esta cuenta."
+        traducir("Selecciona el doctor que corresponde a esta cuenta.")
       );
 
       return;
@@ -558,7 +621,7 @@ export default function AdministrarUsuario({
       );
 
       setError(
-        "Ocurrió un error inesperado."
+        traducir("Ocurrió un error inesperado.")
       );
 
     } finally {
@@ -591,37 +654,32 @@ export default function AdministrarUsuario({
           max-w-4xl
           max-h-[90vh]
           overflow-y-auto
+          overflow-x-hidden
+          rounded-[24px]
+          border
+          border-[var(--mint-border)]
+          shadow-[0_28px_80px_rgba(15,42,65,0.30)]
         "
       >
 
-        <div
-          className="
-            p-5
-            border-b
-            border-[var(--mint-border)]
-          "
-        >
-
-          <h3
-            className="
-              text-xl
-              font-bold
-              mint-text-primary
-            "
-          >
-            Administrar usuario
-          </h3>
-
-          <p
-            className="
-              text-sm
-              mint-text-secondary
-              mt-1
-            "
-          >
-            Configura la cuenta y los permisos individuales.
-          </p>
-
+        <div className="relative overflow-hidden bg-[#102f4f] px-6 py-5" style={{ background: "linear-gradient(120deg, #102f4f 0%, #1b4f68 55%, #0b8f80 100%)" }}>
+          <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[linear-gradient(90deg,#63c8b2_0%,#d8bd72_100%)]" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[#63c8b2]">
+                {es ? "CONFIGURACIÓN · ACCESOS" : "SETTINGS · ACCESS"}
+              </p>
+              <h3 className="text-xl font-bold text-white">{traducir("Administrar usuario")}</h3>
+              <p className="mt-1 text-sm text-white/75">
+                {traducir("Configura la cuenta y los permisos individuales.")}
+              </p>
+            </div>
+            <button type="button" onClick={onCerrar} disabled={guardando}
+              aria-label={es ? "Cerrar" : "Close"}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/25 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50">
+              ×
+            </button>
+          </div>
         </div>
 
         <div className="p-5">
@@ -666,7 +724,7 @@ export default function AdministrarUsuario({
                   mb-2
                 "
               >
-                Nombre
+                {traducir("Nombre")}
               </label>
 
               <input
@@ -696,7 +754,7 @@ export default function AdministrarUsuario({
                   mb-2
                 "
               >
-                Rol
+                {traducir("Rol")}
               </label>
 
               <select
@@ -730,7 +788,7 @@ export default function AdministrarUsuario({
               >
 
                 <option value="admin">
-                  Administrador
+                  {traducir("Administrador")}
                 </option>
 
                 <option value="doctor">
@@ -738,15 +796,15 @@ export default function AdministrarUsuario({
                 </option>
 
                 <option value="recepcionista">
-                  Recepcionista
+                  {traducir("Recepcionista")}
                 </option>
 
                 <option value="tablet">
-                  Tablet de recepción
+                  {traducir("Tablet de recepción")}
                 </option>
 
                 <option value="registro">
-                  Registro QR
+                  {traducir("Registro QR")}
                 </option>
 
               </select>
@@ -765,7 +823,7 @@ export default function AdministrarUsuario({
                       mb-2
                     "
                   >
-                    Doctor vinculado
+                    {traducir("Doctor vinculado")}
                   </label>
 
                   <select
@@ -784,7 +842,7 @@ export default function AdministrarUsuario({
                   >
 
                     <option value="">
-                      Seleccionar doctor
+                      {traducir("Seleccionar doctor")}
                     </option>
 
                     {
@@ -851,7 +909,7 @@ export default function AdministrarUsuario({
                     mint-text-primary
                   "
                 >
-                  Usuario activo
+                  {traducir("Usuario activo")}
                 </span>
 
               </label>
@@ -876,7 +934,7 @@ export default function AdministrarUsuario({
                 mb-1
               "
             >
-              Permisos
+              {traducir("Permisos")}
             </h4>
 
             <p
@@ -886,7 +944,7 @@ export default function AdministrarUsuario({
                 mb-5
               "
             >
-              Selecciona exactamente qué puede hacer este usuario en MintOS.
+              {traducir("Selecciona exactamente qué puede hacer este usuario en MintOS.")}
             </p>
 
             {
@@ -909,8 +967,8 @@ export default function AdministrarUsuario({
                       "
                     >
                       {rol === "tablet"
-                        ? "Acceso exclusivo de Tablet"
-                        : "Acceso exclusivo de Registro QR"}
+                        ? traducir("Acceso exclusivo de Tablet")
+                        : traducir("Acceso exclusivo de Registro QR")}
                     </p>
 
                     <p
@@ -920,7 +978,7 @@ export default function AdministrarUsuario({
                         mt-2
                       "
                     >
-                      Esta cuenta únicamente puede registrar nuevos pacientes. No tiene acceso a pacientes existentes, expedientes, agenda, finanzas, configuración ni bitácora.
+                      {traducir("Esta cuenta únicamente puede registrar nuevos pacientes. No tiene acceso a pacientes existentes, expedientes, agenda, finanzas, configuración ni bitácora.")}
                     </p>
                   </div>
 
@@ -936,7 +994,7 @@ export default function AdministrarUsuario({
                       mint-text-secondary
                     "
                   >
-                    Cargando permisos...
+                    {traducir("Cargando permisos...")}
                   </p>
 
                 )
@@ -957,10 +1015,12 @@ export default function AdministrarUsuario({
                         (grupo) => (
 
                           <div
-                            key={grupo.titulo}
+                            key={traducir(grupo.titulo)}
                             className="
                               mint-card
                               p-4
+                              rounded-2xl
+                              border-[var(--mint-border)]
                             "
                           >
 
@@ -971,7 +1031,7 @@ export default function AdministrarUsuario({
                                 mb-3
                               "
                             >
-                              {grupo.titulo}
+                              {traducir(grupo.titulo)}
                             </h5>
 
                             <div
@@ -1015,7 +1075,7 @@ export default function AdministrarUsuario({
                                       />
 
                                       <span>
-                                        {etiqueta}
+                                        {traducir(etiqueta)}
                                       </span>
 
                                     </label>
@@ -1062,7 +1122,7 @@ export default function AdministrarUsuario({
               disabled:opacity-50
             "
           >
-            Cancelar
+            {traducir("Cancelar")}
           </button>
 
           <button
@@ -1080,8 +1140,8 @@ export default function AdministrarUsuario({
           >
             {
               guardando
-                ? "Guardando..."
-                : "Guardar cambios"
+                ? traducir("Guardando...")
+                : traducir("Guardar cambios")
             }
           </button>
 

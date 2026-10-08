@@ -4,6 +4,7 @@ import {
 } from "react";
 
 import jsPDF from "jspdf";
+import { useLanguage } from "../../context/LanguageContext";
 
 import {
   supabase,
@@ -150,6 +151,38 @@ export default function Reportes({
 
 }: ReportesProps) {
 
+  const { language } = useLanguage();
+  const es = language === "es";
+  const locale = es ? "es-MX" : "en-US";
+  const t = (esText: string, enText: string) => es ? esText : enText;
+
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+  const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
+  const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
+
+  useEffect(() => {
+    let activo = true;
+    async function cargarMonedas() {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+      if (error) {
+        console.error("Error cargando configuración de monedas:", error);
+        return;
+      }
+      if (!activo) return;
+      const valores = Object.fromEntries(
+        (data ?? []).map(fila => [fila.clave, String(fila.valor ?? "")])
+      );
+      setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
+      setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
+    }
+    void cargarMonedas();
+    return () => { activo = false; };
+  }, []);
+
   const [
     cierres,
     setCierres,
@@ -242,7 +275,7 @@ export default function Reportes({
       new Date(
         fecha
       ).toLocaleString(
-        "es-MX",
+        locale,
         {
           dateStyle: "medium",
           timeStyle: "short",
@@ -256,7 +289,7 @@ export default function Reportes({
       Number(
         valor || 0
       ).toLocaleString(
-        "es-MX",
+        locale,
         {
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
@@ -294,14 +327,14 @@ export default function Reportes({
     periodo === "semana"
 
       ? `${lunesSemana.toLocaleDateString(
-          "es-MX",
+          locale,
           {
             day: "2-digit",
             month: "short",
             year: "numeric",
           }
         )} — ${sabadoSemana.toLocaleDateString(
-          "es-MX",
+          locale,
           {
             day: "2-digit",
             month: "short",
@@ -312,7 +345,7 @@ export default function Reportes({
       : periodo === "mes"
 
         ? new Date().toLocaleDateString(
-            "es-MX",
+            locale,
             {
               month: "long",
               year: "numeric",
@@ -325,7 +358,7 @@ export default function Reportes({
               new Date().getFullYear()
             )
 
-          : "Histórico completo";
+          : t("Histórico completo", "Complete history");
 
   function generarPDF() {
 
@@ -438,7 +471,7 @@ export default function Reportes({
         `$${Number(
           valor || 0
         ).toLocaleString(
-          "es-MX",
+          locale,
           {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -649,7 +682,7 @@ export default function Reportes({
     );
 
     pdf.text(
-      "Reporte financiero",
+      t("Reporte financiero", "Financial report"),
       margen + 7,
       y + 20
     );
@@ -664,7 +697,7 @@ export default function Reportes({
     );
 
     pdf.text(
-      `Período: ${etiquetaPeriodo}`,
+      `${t("Período", "Period")}: ${etiquetaPeriodo}`,
       margen + 7,
       y + 27
     );
@@ -672,7 +705,7 @@ export default function Reportes({
     const fechaGeneracion =
       new Date()
         .toLocaleString(
-          "es-MX",
+          locale,
           {
             dateStyle: "medium",
             timeStyle: "short",
@@ -680,7 +713,7 @@ export default function Reportes({
         );
 
     pdf.text(
-      `Generado: ${fechaGeneracion}`,
+      `${t("Generado", "Generated")}: ${fechaGeneracion}`,
       anchoPagina -
       margen -
       7,
@@ -693,32 +726,32 @@ export default function Reportes({
     y += 44;
 
     tituloSeccion(
-      "Resumen de operación"
+      t("Resumen de operación", "Operations summary")
     );
 
     const tarjetas =
       [
         {
           titulo:
-            "Tratamientos",
+            t("Tratamientos", "Treatments"),
           valor:
             tratamientosFiltrados.length,
         },
         {
           titulo:
-            "Finalizados",
+            t("Finalizados", "Completed"),
           valor:
             tratamientosFinalizados,
         },
         {
           titulo:
-            "En proceso",
+            t("En proceso", "In progress"),
           valor:
             tratamientosPendientes,
         },
         {
           titulo:
-            "Cancelados",
+            t("Cancelados", "Canceled"),
           valor:
             tratamientosCancelados,
         },
@@ -812,12 +845,13 @@ export default function Reportes({
 
     y += 31;
 
+    if (mostrarMXN) {
     tituloSeccion(
-      "Estado de resultados MXN"
+      t("Estado de resultados MXN", "Income statement MXN")
     );
 
     fila(
-      "Cobros recibidos",
+      t("Cobros recibidos", "Payments received"),
       formatoPDF(
         cobradoMXN,
         "MXN"
@@ -826,7 +860,7 @@ export default function Reportes({
     );
 
     fila(
-      "Base clínica",
+      t("Base clínica", "Clinical base"),
       formatoPDF(
         totalBaseClinicaMXN,
         "MXN"
@@ -834,7 +868,7 @@ export default function Reportes({
     );
 
     fila(
-      "Comisiones doctores",
+      t("Comisiones doctores", "Doctor commissions"),
       formatoPDF(
         totalComisionesDoctorMXN,
         "MXN"
@@ -843,7 +877,7 @@ export default function Reportes({
     );
 
     fila(
-      "Gastos generales",
+      t("Gastos generales", "General expenses"),
       formatoPDF(
         totalGastos,
         "MXN"
@@ -881,7 +915,7 @@ export default function Reportes({
     );
 
     pdf.text(
-      "Utilidad neta MXN",
+      t("Utilidad neta MXN", "Net profit MXN"),
       margen + 5,
       y + 10
     );
@@ -902,12 +936,15 @@ export default function Reportes({
 
     y += 24;
 
+    }
+
+    if (mostrarUSD) {
     tituloSeccion(
-      "Estado de resultados USD"
+      t("Estado de resultados USD", "Income statement USD")
     );
 
     fila(
-      "Cobros recibidos",
+      t("Cobros recibidos", "Payments received"),
       formatoPDF(
         cobradoUSD,
         "USD"
@@ -916,7 +953,7 @@ export default function Reportes({
     );
 
     fila(
-      "Base clínica",
+      t("Base clínica", "Clinical base"),
       formatoPDF(
         totalBaseClinicaUSD,
         "USD"
@@ -924,7 +961,7 @@ export default function Reportes({
     );
 
     fila(
-      "Comisiones doctores",
+      t("Comisiones doctores", "Doctor commissions"),
       formatoPDF(
         totalComisionesDoctorUSD,
         "USD"
@@ -933,7 +970,7 @@ export default function Reportes({
     );
 
     fila(
-      "Gastos generales",
+      t("Gastos generales", "General expenses"),
       formatoPDF(
         totalGastosUSD,
         "USD"
@@ -971,7 +1008,7 @@ export default function Reportes({
     );
 
     pdf.text(
-      "Utilidad neta USD",
+      t("Utilidad neta USD", "Net profit USD"),
       margen + 5,
       y + 10
     );
@@ -992,61 +1029,74 @@ export default function Reportes({
 
     y += 24;
 
+    }
+
     tituloSeccion(
-      "Liquidez"
+      t("Liquidez", "Liquidity")
     );
 
+    if (mostrarMXN) {
     fila(
-      "Caja MXN",
+      t("Caja MXN", "Cash MXN"),
       formatoPDF(
         cajaMXN,
         "MXN"
       ),
       "positivo"
     );
+    }
 
+    if (mostrarUSD) {
     fila(
-      "Caja USD",
+      t("Caja USD", "Cash USD"),
       formatoPDF(
         cajaUSD,
         "USD"
       ),
       "info"
     );
+    }
 
+    if (mostrarMXN) {
     fila(
-      "Tarjeta / Banco",
+      t("Tarjeta / Banco", "Card / Bank"),
       formatoPDF(
         totalTarjeta,
         "MXN"
       )
     );
+    }
 
+    if (mostrarMXN) {
     fila(
-      "Transferencias MXN",
+      t("Transferencias MXN", "Transfers MXN"),
       formatoPDF(
         totalTransferencia,
         "MXN"
       )
     );
+    }
 
+    if (mostrarUSD) {
     fila(
-      "Transferencias USD",
+      t("Transferencias USD", "Transfers USD"),
       formatoPDF(
         totalTransferenciaUSD,
         "USD"
       ),
       "info"
     );
+    }
 
     y += 4;
 
+    if (mostrarMXN) {
     tituloSeccion(
-      "Cuentas por cobrar y producción"
+      t("Cuentas por cobrar y producción", "Receivables and production")
     );
 
     fila(
-      "Saldo pendiente de pacientes",
+      t("Saldo pendiente de pacientes", "Outstanding patient balances"),
       formatoPDF(
         pendiente,
         "MXN"
@@ -1055,13 +1105,15 @@ export default function Reportes({
     );
 
     fila(
-      "Valor generado",
+      t("Valor generado", "Production value"),
       formatoPDF(
         ingresos,
         "MXN"
       ),
       "positivo"
     );
+
+    }
 
     const totalPaginas =
       pdf.getNumberOfPages();
@@ -1101,13 +1153,13 @@ export default function Reportes({
       );
 
       pdf.text(
-        "MintOS Dental System · Reporte financiero",
+        t("MintOS Dental System · Reporte financiero", "MintOS Dental System · Financial report"),
         margen,
         altoPagina - 7
       );
 
       pdf.text(
-        `Página ${pagina} de ${totalPaginas}`,
+        `${t("Página", "Page")} ${pagina} ${t("de", "of")} ${totalPaginas}`,
         anchoPagina -
         margen,
         altoPagina - 7,
@@ -1190,7 +1242,7 @@ export default function Reportes({
                 text-[var(--mint-teal)]
               "
             >
-              Finanzas
+              {t("Finanzas", "Finances")}
             </p>
 
             <h2
@@ -1202,7 +1254,7 @@ export default function Reportes({
                 mt-1
               "
             >
-              Reporte financiero
+              {t("Reporte financiero", "Financial report")}
             </h2>
 
             <p
@@ -1213,9 +1265,9 @@ export default function Reportes({
                 max-w-2xl
               "
             >
-              Cierre financiero del período seleccionado,
-              con ingresos, costos, comisiones, gastos y
-              utilidad separados por moneda.
+              {t("Cierre financiero del período seleccionado,", "Financial close for the selected period,")}
+              {t("con ingresos, costos, comisiones, gastos y", "with income, costs, commissions, expenses and")}
+              {t("utilidad separados por moneda.", "profit separated by currency.")}
             </p>
 
           </div>
@@ -1251,7 +1303,7 @@ export default function Reportes({
                     mint-text-muted
                   "
                 >
-                  Tratamientos
+                  {t("Tratamientos", "Treatments")}
                 </p>
 
                 <p
@@ -1280,7 +1332,7 @@ export default function Reportes({
                     mint-text-muted
                   "
                 >
-                  Finalizados
+                  {t("Finalizados", "Completed")}
                 </p>
 
                 <p
@@ -1310,7 +1362,7 @@ export default function Reportes({
                 mint-btn-primary
               "
             >
-              Exportar PDF
+              {t("Exportar PDF", "Export PDF")}
             </button>
 
           </div>
@@ -1346,7 +1398,7 @@ export default function Reportes({
                 mb-1
               "
             >
-              Estado financiero
+              {t("Estado financiero", "Financial statement")}
             </p>
 
             <h3
@@ -1356,7 +1408,7 @@ export default function Reportes({
                 mint-text-primary
               "
             >
-              Resultado del período
+              {t("Resultado del período", "Period results")}
             </h3>
 
           </div>
@@ -1369,7 +1421,7 @@ export default function Reportes({
               mint-text-muted
             "
           >
-            Comparativo MXN / USD
+            {mostrarMXN && mostrarUSD ? t("Comparativo MXN / USD", "MXN / USD comparison") : (mostrarMXN ? "MXN" : "USD")}
           </p>
 
         </div>
@@ -1388,16 +1440,16 @@ export default function Reportes({
           {/* CABECERA */}
 
           <div
-            className="
+            className={`
               grid
-              grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
+              ${mostrarMXN && mostrarUSD ? "grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]" : "grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)]"}
               items-center
               px-6
               py-4
               bg-[var(--mint-surface-teal)]
               border-b
               border-[var(--mint-border-teal)]
-            "
+            `}
           >
 
             <div>
@@ -1411,11 +1463,12 @@ export default function Reportes({
                   mint-text-muted
                 "
               >
-                Concepto
+                {t("Concepto", "Description")}
               </p>
 
             </div>
 
+            {mostrarMXN && (
             <div
               className="
                 text-right
@@ -1441,7 +1494,9 @@ export default function Reportes({
               </span>
 
             </div>
+            )}
 
+            {mostrarUSD && (
             <div
               className="
                 text-right
@@ -1469,49 +1524,58 @@ export default function Reportes({
               </span>
 
             </div>
+            )}
 
           </div>
 
           <FilaEstadoFinanciero
-            titulo="Cobros recibidos"
-            subtitulo="Pagos reales registrados"
+            titulo={t("Cobros recibidos", "Payments received")}
+            subtitulo={t("Pagos reales registrados", "Actual recorded payments")}
             valorMXN={cobradoMXN}
             valorUSD={cobradoUSD}
             formatoMonto={formatoMonto}
+            mostrarMXN={mostrarMXN}
+            mostrarUSD={mostrarUSD}
             tipo="positivo"
           />
 
           <FilaEstadoFinanciero
-            titulo="Base clínica"
-            subtitulo="Resultado después de costos clínicos"
+            titulo={t("Base clínica", "Clinical base")}
+            subtitulo={t("Resultado después de costos clínicos", "Result after clinical costs")}
             valorMXN={totalBaseClinicaMXN}
             valorUSD={totalBaseClinicaUSD}
             formatoMonto={formatoMonto}
+            mostrarMXN={mostrarMXN}
+            mostrarUSD={mostrarUSD}
           />
 
           <FilaEstadoFinanciero
-            titulo="Comisiones doctores"
-            subtitulo="Comisiones generadas por tratamientos finalizados"
+            titulo={t("Comisiones doctores", "Doctor commissions")}
+            subtitulo={t("Comisiones generadas por tratamientos finalizados", "Commissions generated from completed treatments")}
             valorMXN={totalComisionesDoctorMXN}
             valorUSD={totalComisionesDoctorUSD}
             formatoMonto={formatoMonto}
+            mostrarMXN={mostrarMXN}
+            mostrarUSD={mostrarUSD}
             tipo="negativo"
           />
 
           <FilaEstadoFinanciero
-            titulo="Gastos generales"
-            subtitulo="Egresos registrados en el período"
+            titulo={t("Gastos generales", "General expenses")}
+            subtitulo={t("Egresos registrados en el período", "Expenses recorded in the period")}
             valorMXN={totalGastos}
             valorUSD={totalGastosUSD}
             formatoMonto={formatoMonto}
+            mostrarMXN={mostrarMXN}
+            mostrarUSD={mostrarUSD}
             tipo="negativo"
           />
 
           <div
-            className="
+            className={`
               grid
               grid-cols-1
-              md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
+              ${mostrarMXN && mostrarUSD ? "md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]" : "md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)]"}
               items-center
               gap-3
               px-6
@@ -1519,7 +1583,7 @@ export default function Reportes({
               bg-[linear-gradient(90deg,var(--mint-surface-teal)_0%,var(--mint-surface)_100%)]
               border-t
               border-[var(--mint-border-teal)]
-            "
+            `}
           >
 
             <div>
@@ -1531,7 +1595,7 @@ export default function Reportes({
                   mint-text-primary
                 "
               >
-                Utilidad neta
+                {t("Utilidad neta", "Net profit")}
               </p>
 
               <p
@@ -1541,11 +1605,12 @@ export default function Reportes({
                   mt-1
                 "
               >
-                Resultado final del período
+                {t("Resultado final del período", "Final result for the period")}
               </p>
 
             </div>
 
+            {mostrarMXN && (
             <div
               className="
                 md:text-right
@@ -1587,7 +1652,9 @@ export default function Reportes({
               </p>
 
             </div>
+            )}
 
+            {mostrarUSD && (
             <div
               className="
                 md:text-right
@@ -1631,6 +1698,7 @@ export default function Reportes({
               </p>
 
             </div>
+            )}
 
           </div>
 
@@ -1659,7 +1727,7 @@ export default function Reportes({
               mb-1
             "
           >
-            Tesorería
+            {t("Tesorería", "Treasury")}
           </p>
 
           <h3
@@ -1669,7 +1737,7 @@ export default function Reportes({
               mint-text-primary
             "
           >
-            Disponibilidad financiera
+            {t("Disponibilidad financiera", "Available funds")}
           </h3>
 
         </div>
@@ -1681,7 +1749,7 @@ export default function Reportes({
             rounded-[22px]
             border
             border-[var(--mint-border-teal)]
-            bg-[linear-gradient(120deg,var(--mint-navy)_0%,var(--mint-navy-soft)_50%,var(--mint-teal)_100%)]
+            !bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_50%,#0b8f80_100%)]
             shadow-[0_14px_34px_rgba(15,42,65,0.13)]
           "
         >
@@ -1697,51 +1765,22 @@ export default function Reportes({
             "
           />
 
-          <div
-            className="
-              grid
-              grid-cols-1
-              sm:grid-cols-2
-              xl:grid-cols-5
-            "
-          >
-
-            <DatoTesoreria
-              titulo="Caja MXN"
-              valor={cajaMXN}
-              moneda="MXN"
-              formatoMonto={formatoMonto}
-            />
-
-            <DatoTesoreria
-              titulo="Caja USD"
-              valor={cajaUSD}
-              moneda="USD"
-              formatoMonto={formatoMonto}
-            />
-
-            <DatoTesoreria
-              titulo="Tarjeta / Banco"
-              valor={totalTarjeta}
-              moneda="MXN"
-              formatoMonto={formatoMonto}
-            />
-
-            <DatoTesoreria
-              titulo="Transferencias"
-              valor={totalTransferencia}
-              moneda="MXN"
-              formatoMonto={formatoMonto}
-            />
-
-            <DatoTesoreria
-              titulo="Transferencias"
-              valor={totalTransferenciaUSD}
-              moneda="USD"
-              formatoMonto={formatoMonto}
-              ultimo
-            />
-
+          <div className={`grid grid-cols-1 sm:grid-cols-2 ${mostrarMXN && mostrarUSD ? "xl:grid-cols-5" : mostrarMXN ? "xl:grid-cols-3" : "xl:grid-cols-2"}`}>
+            {mostrarMXN && (
+              <DatoTesoreria titulo={t("Caja MXN", "Cash MXN")} valor={cajaMXN} moneda="MXN" formatoMonto={formatoMonto} />
+            )}
+            {mostrarUSD && (
+              <DatoTesoreria titulo={t("Caja USD", "Cash USD")} valor={cajaUSD} moneda="USD" formatoMonto={formatoMonto} />
+            )}
+            {mostrarMXN && (
+              <DatoTesoreria titulo={t("Tarjeta / Banco", "Card / Bank")} valor={totalTarjeta} moneda="MXN" formatoMonto={formatoMonto} />
+            )}
+            {mostrarMXN && (
+              <DatoTesoreria titulo={t("Transferencias", "Transfers")} valor={totalTransferencia} moneda="MXN" formatoMonto={formatoMonto} />
+            )}
+            {mostrarUSD && (
+              <DatoTesoreria titulo={t("Transferencias", "Transfers")} valor={totalTransferenciaUSD} moneda="USD" formatoMonto={formatoMonto} ultimo />
+            )}
           </div>
 
         </div>
@@ -1778,7 +1817,7 @@ export default function Reportes({
                 mb-1
               "
             >
-              Operación
+              {t("Operación", "Operations")}
             </p>
 
             <h3
@@ -1788,7 +1827,7 @@ export default function Reportes({
                 mint-text-primary
               "
             >
-              Estado de tratamientos
+              {t("Estado de tratamientos", "Treatment status")}
             </h3>
 
           </div>
@@ -1807,7 +1846,7 @@ export default function Reportes({
               valor={
                 tratamientosFiltrados.length
               }
-              descripcion="Registrados"
+              descripcion={t("Registrados", "Registered")}
             />
 
             <IndicadorOperacion
@@ -1815,25 +1854,25 @@ export default function Reportes({
               valor={
                 tratamientosFinalizados
               }
-              descripcion="Completados"
+              descripcion={t("Completados", "Completed")}
               tipo="success"
             />
 
             <IndicadorOperacion
-              titulo="En proceso"
+              titulo={t("En proceso", "In progress")}
               valor={
                 tratamientosPendientes
               }
-              descripcion="Pendientes"
+              descripcion={t("Pendientes", "Pending")}
               tipo="warning"
             />
 
             <IndicadorOperacion
-              titulo="Cancelados"
+              titulo={t("Cancelados", "Canceled")}
               valor={
                 tratamientosCancelados
               }
-              descripcion="Sin concluir"
+              descripcion={t("Sin concluir", "Unfinished")}
               tipo="danger"
             />
 
@@ -1841,6 +1880,7 @@ export default function Reportes({
 
         </div>
 
+        {mostrarMXN && (
         <div>
 
           <div
@@ -1859,7 +1899,7 @@ export default function Reportes({
                 mb-1
               "
             >
-              Actividad financiera
+              {t("Actividad financiera", "Financial activity")}
             </p>
 
             <h3
@@ -1869,7 +1909,7 @@ export default function Reportes({
                 mint-text-primary
               "
             >
-              Pendiente y producción
+              {t("Pendiente y producción", "Outstanding and production")}
             </h3>
 
           </div>
@@ -1910,7 +1950,7 @@ export default function Reportes({
                     text-[var(--mint-danger)]
                   "
                 >
-                  Por cobrar
+                  {t("Por cobrar", "Receivables")}
                 </p>
 
                 <p
@@ -1938,7 +1978,7 @@ export default function Reportes({
                     mt-1
                   "
                 >
-                  MXN pendiente
+                  {t("MXN pendiente", "MXN outstanding")}
                 </p>
 
                 <p
@@ -1948,7 +1988,7 @@ export default function Reportes({
                     mt-3
                   "
                 >
-                  Saldo pendiente de pacientes.
+                  {t("Saldo pendiente de pacientes.", "Outstanding patient balances.")}
                 </p>
 
               </div>
@@ -1971,7 +2011,7 @@ export default function Reportes({
                     text-[var(--mint-teal)]
                   "
                 >
-                  Producción
+                  {t("Producción", "Production")}
                 </p>
 
                 <p
@@ -1999,7 +2039,7 @@ export default function Reportes({
                     mt-1
                   "
                 >
-                  MXN generado
+                  {t("MXN generado", "MXN generated")}
                 </p>
 
                 <p
@@ -2009,7 +2049,7 @@ export default function Reportes({
                     mt-3
                   "
                 >
-                  Valor total registrado en tratamientos.
+                  {t("Valor total registrado en tratamientos.", "Total value recorded in treatments.")}
                 </p>
 
               </div>
@@ -2019,6 +2059,7 @@ export default function Reportes({
           </div>
 
         </div>
+        )}
 
       </section>
 
@@ -2050,7 +2091,7 @@ export default function Reportes({
                 mb-1
               "
             >
-              Cierres oficiales
+              {t("Cierres oficiales", "Official closes")}
             </p>
 
             <h3
@@ -2060,7 +2101,7 @@ export default function Reportes({
                 mint-text-primary
               "
             >
-              Historial financiero cerrado
+              {t("Historial financiero cerrado", "Closed financial history")}
             </h3>
 
             <p
@@ -2070,8 +2111,8 @@ export default function Reportes({
                 mt-1
               "
             >
-              Consulta las fotografías financieras
-              guardadas al cerrar cada mes.
+              {t("Consulta las fotografías financieras", "View the financial snapshots")}
+              {t("guardadas al cerrar cada mes.", "saved at each month-end close.")}
             </p>
 
           </div>
@@ -2108,7 +2149,7 @@ export default function Reportes({
                 text-[var(--mint-teal)]
               "
             >
-              {cierres.length} cierres guardados
+              {cierres.length} {t("cierres guardados", "saved closes")}
             </span>
 
           </div>
@@ -2141,7 +2182,7 @@ export default function Reportes({
                     mint-text-muted
                   "
                 >
-                  Cargando cierres financieros...
+                  {t("Cargando cierres financieros...", "Loading financial closes...")}
                 </div>
 
               )
@@ -2196,7 +2237,7 @@ export default function Reportes({
                         mint-text-primary
                       "
                     >
-                      Todavía no hay cierres mensuales.
+                      {t("Todavía no hay cierres mensuales.", "There are no monthly closes yet.")}
                     </p>
 
                     <p
@@ -2206,9 +2247,9 @@ export default function Reportes({
                         mt-1
                       "
                     >
-                      Los meses cerrados desde
-                      Finanzas → Cierre mensual
-                      aparecerán aquí.
+                      {t("Los meses cerrados desde", "Months closed from")}
+                      {t("Finanzas → Cierre mensual", "Finances → Monthly close")}
+                      {t("aparecerán aquí.", "will appear here.")}
                     </p>
 
                   </div>
@@ -2256,7 +2297,7 @@ export default function Reportes({
                                 "
                               >
                                 {
-                                  MESES[
+                                  (es ? MESES : ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])[
                                     cierre.mes - 1
                                   ]
                                 }{" "}
@@ -2275,13 +2316,14 @@ export default function Reportes({
                                   mt-1
                                 "
                               >
-                                Cierre oficial
+                                {t("Cierre oficial", "Official close")}
                               </p>
 
                             </div>
 
+                            {mostrarMXN && (
                             <DatoCierre
-                              titulo="Cobrado MXN"
+                              titulo={t("Cobrado MXN", "Collected MXN")}
                               valor={
                                 cierre.cobrado_mxn
                               }
@@ -2290,9 +2332,11 @@ export default function Reportes({
                               }
                               tipo="success"
                             />
+                            )}
 
+                            {mostrarUSD && (
                             <DatoCierre
-                              titulo="Cobrado USD"
+                              titulo={t("Cobrado USD", "Collected USD")}
                               valor={
                                 cierre.cobrado_usd
                               }
@@ -2301,9 +2345,11 @@ export default function Reportes({
                               }
                               tipo="info"
                             />
+                            )}
 
+                            {mostrarMXN && (
                             <DatoCierre
-                              titulo="Gastos MXN"
+                              titulo={t("Gastos MXN", "Expenses MXN")}
                               valor={
                                 cierre.gastos_mxn
                               }
@@ -2312,9 +2358,11 @@ export default function Reportes({
                               }
                               tipo="danger"
                             />
+                            )}
 
+                            {mostrarMXN && (
                             <DatoCierre
-                              titulo="Utilidad MXN"
+                              titulo={t("Utilidad MXN", "Profit MXN")}
                               valor={
                                 cierre.utilidad_neta_mxn
                               }
@@ -2327,9 +2375,11 @@ export default function Reportes({
                                   : "danger"
                               }
                             />
+                            )}
 
+                            {mostrarUSD && (
                             <DatoCierre
-                              titulo="Utilidad USD"
+                              titulo={t("Utilidad USD", "Profit USD")}
                               valor={
                                 cierre.utilidad_neta_usd
                               }
@@ -2342,6 +2392,7 @@ export default function Reportes({
                                   : "danger"
                               }
                             />
+                            )}
 
                             <div
                               className="
@@ -2358,7 +2409,7 @@ export default function Reportes({
                                   mint-text-muted
                                 "
                               >
-                                Fecha cierre
+                                {t("Fecha cierre", "Closing date")}
                               </p>
 
                               <p
@@ -2420,6 +2471,9 @@ type FilaEstadoFinancieroProps = {
     | "positivo"
     | "negativo";
 
+  mostrarMXN: boolean;
+  mostrarUSD: boolean;
+
 };
 
 function FilaEstadoFinanciero({
@@ -2435,6 +2489,9 @@ function FilaEstadoFinanciero({
   formatoMonto,
 
   tipo = "normal",
+
+  mostrarMXN,
+  mostrarUSD,
 
 }: FilaEstadoFinancieroProps) {
 
@@ -2452,10 +2509,10 @@ function FilaEstadoFinanciero({
   return (
 
     <div
-      className="
+      className={`
         grid
         grid-cols-1
-        md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]
+        ${mostrarMXN && mostrarUSD ? "md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)_minmax(150px,0.7fr)]" : "md:grid-cols-[minmax(0,1.4fr)_minmax(150px,0.7fr)]"}
         items-center
         gap-3
         px-6
@@ -2465,7 +2522,7 @@ function FilaEstadoFinanciero({
         last:border-b-0
         hover:bg-[var(--mint-surface-soft)]
         transition-colors
-      "
+      `}
     >
 
       <div>
@@ -2492,6 +2549,7 @@ function FilaEstadoFinanciero({
 
       </div>
 
+      {mostrarMXN && (
       <div
         className="
           md:text-right
@@ -2533,7 +2591,9 @@ function FilaEstadoFinanciero({
         </p>
 
       </div>
+      )}
 
+      {mostrarUSD && (
       <div
         className="
           md:text-right
@@ -2577,6 +2637,7 @@ function FilaEstadoFinanciero({
         </p>
 
       </div>
+      )}
 
     </div>
 
@@ -2646,7 +2707,7 @@ function DatoTesoreria({
           uppercase
           tracking-[0.1em]
           font-bold
-          text-white/60
+          !text-white/85
         "
       >
         {titulo}
@@ -2656,7 +2717,7 @@ function DatoTesoreria({
         className="
           text-2xl
           font-bold
-          text-white
+          !text-white
           mt-2
         "
       >
@@ -2674,7 +2735,7 @@ function DatoTesoreria({
           uppercase
           tracking-[0.1em]
           font-bold
-          text-white/50
+          !text-white/75
           mt-1
         "
       >

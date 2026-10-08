@@ -14,6 +14,8 @@ import {
   supabase,
 } from "../../lib/supabase";
 
+import { useLanguage } from "../../context/LanguageContext";
+
 import { registrarBitacora }
   from "../../lib/registrarBitacora";
 
@@ -145,6 +147,39 @@ export default function CierreMensual({
   tratamientosFinalizados,
 
 }: Props) {
+
+  const { language } = useLanguage();
+  const es = language === "es";
+  const locale = es ? "es-MX" : "en-US";
+  const tr = (espanol: string, english: string) => es ? espanol : english;
+
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+  const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
+  const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
+  const columnasMonedas = mostrarMXN && mostrarUSD ? 2 : 1;
+
+  useEffect(() => {
+    let activo = true;
+    const cargarMonedas = async () => {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+      if (error) {
+        console.error("Error cargando configuración de monedas:", error);
+        return;
+      }
+      if (!activo) return;
+      const valores = Object.fromEntries(
+        (data ?? []).map(fila => [fila.clave, String(fila.valor ?? "")])
+      );
+      setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
+      setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
+    };
+    void cargarMonedas();
+    return () => { activo = false; };
+  }, []);
 
   const hoy =
     new Date();
@@ -349,7 +384,7 @@ export default function CierreMensual({
     return `$${Number(
       valor || 0
     ).toLocaleString(
-      "es-MX",
+      locale,
       {
         minimumFractionDigits:
           2,
@@ -368,7 +403,7 @@ export default function CierreMensual({
     return new Date(
       fecha
     ).toLocaleString(
-      "es-MX",
+      locale,
       {
         dateStyle:
           "medium",
@@ -387,7 +422,7 @@ export default function CierreMensual({
     ) {
 
       alert(
-        "Este mes ya fue cerrado."
+        tr("Este mes ya fue cerrado.", "This month has already been closed.")
       );
 
       return;
@@ -396,9 +431,7 @@ export default function CierreMensual({
 
     const confirmar =
       window.confirm(
-        `¿Confirmas el cierre financiero de ${MESES[
-          mesActual - 1
-        ]} ${anioActual}?\n\nUna vez guardado, este cierre conservará la fotografía financiera del mes.`
+        es ? `¿Confirmas el cierre financiero de ${MESES[mesActual - 1]} ${anioActual}?\n\nUna vez guardado, este cierre conservará la fotografía financiera del mes.` : `Confirm the financial close for ${new Intl.DateTimeFormat(locale, {month:"long"}).format(new Date(anioActual,mesActual-1,1))} ${anioActual}?\n\nOnce saved, this close will preserve the monthly financial snapshot.`
       );
 
     if (
@@ -544,7 +577,7 @@ export default function CierreMensual({
       );
 
       alert(
-        "No se pudo realizar el cierre mensual."
+        tr("No se pudo realizar el cierre mensual.", "The monthly close could not be completed.")
       );
 
       setCerrando(
@@ -569,7 +602,7 @@ export default function CierreMensual({
     );
 
     alert(
-      "Cierre mensual guardado correctamente."
+      tr("Cierre mensual guardado correctamente.", "Monthly close saved successfully.")
     );
 
   }
@@ -663,7 +696,7 @@ export default function CierreMensual({
                   text-[var(--mint-teal)]
                 "
               >
-                Cierre financiero
+                {tr("Cierre financiero", "Financial close")}
               </p>
 
               <h2
@@ -676,10 +709,7 @@ export default function CierreMensual({
                 "
               >
                 {
-                  MESES[
-                    mesActual -
-                      1
-                  ]
+                  new Intl.DateTimeFormat(locale, { month: "long" }).format(new Date(anioActual, mesActual - 1, 1))
                 }{" "}
                 {
                   anioActual
@@ -694,11 +724,7 @@ export default function CierreMensual({
                   mt-1
                 "
               >
-                Guarda una fotografía
-                definitiva del resultado
-                financiero del mes sin
-                modificar los movimientos
-                originales.
+                {tr("Guarda una fotografía definitiva del resultado financiero del mes sin modificar los movimientos originales.", "Save a final snapshot of the monthly financial results without modifying the original transactions.")}
               </p>
 
             </div>
@@ -733,7 +759,7 @@ export default function CierreMensual({
                     }
                   />
 
-                  Mes cerrado
+                  {tr("Mes cerrado", "Month closed")}
 
                 </div>
 
@@ -765,7 +791,7 @@ export default function CierreMensual({
                     }
                   />
 
-                  Mes abierto
+                  {tr("Mes abierto", "Month open")}
 
                 </div>
 
@@ -804,7 +830,7 @@ export default function CierreMensual({
                 mb-1
               "
             >
-              Resumen para cierre
+              {tr("Resumen para cierre", "Closing summary")}
             </p>
 
             <h3
@@ -814,7 +840,7 @@ export default function CierreMensual({
                 mint-text-primary
               "
             >
-              Fotografía financiera
+              {tr("Fotografía financiera", "Financial snapshot")}
             </h3>
 
             <p
@@ -826,8 +852,8 @@ export default function CierreMensual({
             >
               {
                 cierreActual
-                  ? "Valores almacenados en el cierre definitivo del mes."
-                  : "Revisa la fotografía financiera completa antes de cerrar el período."
+                  ? tr("Valores almacenados en el cierre definitivo del mes.", "Values saved in the final monthly close.")
+                  : tr("Revisa la fotografía financiera completa antes de cerrar el período.", "Review the complete financial snapshot before closing the period.")
               }
             </p>
 
@@ -849,8 +875,8 @@ export default function CierreMensual({
           >
             {
               cierreActual
-                ? "Cierre guardado"
-                : "Datos actuales"
+                ? tr("Cierre guardado", "Close saved")
+                : tr("Datos actuales", "Current data")
             }
           </span>
 
@@ -879,9 +905,10 @@ export default function CierreMensual({
           >
 
             <div
+              style={{ gridTemplateColumns: `minmax(0,1.3fr) repeat(${columnasMonedas},minmax(135px,0.7fr))` }}
               className="
                 grid
-                grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+                
                 items-center
                 px-6
                 py-4
@@ -902,11 +929,12 @@ export default function CierreMensual({
                     mint-text-muted
                   "
                 >
-                  Estado de resultados
+                  {tr("Estado de resultados", "Income statement")}
                 </p>
 
               </div>
 
+              {mostrarMXN && (
               <div
                 className="
                   text-right
@@ -932,7 +960,9 @@ export default function CierreMensual({
                 </span>
 
               </div>
+              )}
 
+              {mostrarUSD && (
               <div
                 className="
                   text-right
@@ -960,11 +990,14 @@ export default function CierreMensual({
                 </span>
 
               </div>
+              )}
 
             </div>
 
             <FilaCierre
-              titulo="Cobrado"
+              mostrarMXN={mostrarMXN}
+              mostrarUSD={mostrarUSD}
+              titulo={tr("Cobrado", "Collected")}
               valorMXN={
                 resumenCierre.cobradoMXN
               }
@@ -978,7 +1011,9 @@ export default function CierreMensual({
             />
 
             <FilaCierre
-              titulo="Base clínica"
+              mostrarMXN={mostrarMXN}
+              mostrarUSD={mostrarUSD}
+              titulo={tr("Base clínica", "Clinic base")}
               valorMXN={
                 resumenCierre.baseClinicaMXN
               }
@@ -991,7 +1026,9 @@ export default function CierreMensual({
             />
 
             <FilaCierre
-              titulo="Comisiones"
+              mostrarMXN={mostrarMXN}
+              mostrarUSD={mostrarUSD}
+              titulo={tr("Comisiones", "Commissions")}
               valorMXN={
                 resumenCierre.comisionesMXN
               }
@@ -1004,7 +1041,9 @@ export default function CierreMensual({
             />
 
             <FilaCierre
-              titulo="Gastos"
+              mostrarMXN={mostrarMXN}
+              mostrarUSD={mostrarUSD}
+              titulo={tr("Gastos", "Expenses")}
               valorMXN={
                 resumenCierre.gastosMXN
               }
@@ -1018,10 +1057,11 @@ export default function CierreMensual({
             />
 
             <div
+              style={{ gridTemplateColumns: `minmax(0,1.3fr) repeat(${columnasMonedas},minmax(135px,0.7fr))` }}
               className="
                 grid
                 grid-cols-1
-                md:grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+                
                 items-center
                 gap-3
                 px-6
@@ -1041,7 +1081,7 @@ export default function CierreMensual({
                     mint-text-primary
                   "
                 >
-                  Utilidad neta
+                  {tr("Utilidad neta", "Net profit")}
                 </p>
 
                 <p
@@ -1051,11 +1091,12 @@ export default function CierreMensual({
                     mt-1
                   "
                 >
-                  Resultado final del mes
+                  {tr("Resultado final del mes", "Final monthly result")}
                 </p>
 
               </div>
 
+              {mostrarMXN && (
               <div
                 className="
                   md:text-right
@@ -1079,7 +1120,9 @@ export default function CierreMensual({
                 </p>
 
               </div>
+              )}
 
+              {mostrarUSD && (
               <div
                 className="
                   md:text-right
@@ -1105,6 +1148,7 @@ export default function CierreMensual({
                 </p>
 
               </div>
+              )}
 
             </div>
 
@@ -1120,7 +1164,7 @@ export default function CierreMensual({
               rounded-[22px]
               border
               border-[var(--mint-border-teal)]
-              bg-[linear-gradient(135deg,var(--mint-navy)_0%,var(--mint-navy-soft)_52%,var(--mint-teal)_100%)]
+              !bg-[linear-gradient(135deg,#102f4f_0%,#1b4f68_52%,#0b8f80_100%)]
               shadow-[0_14px_34px_rgba(15,42,65,0.13)]
             "
           >
@@ -1153,7 +1197,7 @@ export default function CierreMensual({
                   text-white/60
                 "
               >
-                Posición al cierre
+                {tr("Posición al cierre", "Closing position")}
               </p>
 
               <h4
@@ -1164,7 +1208,7 @@ export default function CierreMensual({
                   mt-1
                 "
               >
-                Disponibilidad y cartera
+                {tr("Disponibilidad y cartera", "Available funds and receivables")}
               </h4>
 
             </div>
@@ -1178,8 +1222,10 @@ export default function CierreMensual({
               "
             >
 
+              {mostrarMXN && (
+
               <DatoPosicion
-                titulo="Caja MXN"
+                titulo={tr("Caja MXN", "Cash MXN")}
                 valor={
                   resumenCierre.cajaMXN
                 }
@@ -1189,8 +1235,12 @@ export default function CierreMensual({
                 }
               />
 
+              )}
+
+              {mostrarUSD && (
+
               <DatoPosicion
-                titulo="Caja USD"
+                titulo={tr("Caja USD", "Cash USD")}
                 valor={
                   resumenCierre.cajaUSD
                 }
@@ -1200,8 +1250,12 @@ export default function CierreMensual({
                 }
               />
 
+              )}
+
+              {mostrarMXN && (
+
               <DatoPosicion
-                titulo="Banco"
+                titulo={tr("Banco", "Bank")}
                 valor={
                   resumenCierre.bancoMXN
                 }
@@ -1211,8 +1265,12 @@ export default function CierreMensual({
                 }
               />
 
+              )}
+
+              {mostrarMXN && (
+
               <DatoPosicion
-                titulo="Por cobrar"
+                titulo={tr("Por cobrar", "Receivables")}
                 valor={
                   resumenCierre.pendienteMXN
                 }
@@ -1222,6 +1280,8 @@ export default function CierreMensual({
                 }
                 warning
               />
+
+              )}
 
             </div>
 
@@ -1249,7 +1309,7 @@ export default function CierreMensual({
                     text-white/50
                   "
                 >
-                  Tratamientos del mes
+                  {tr("Tratamientos del mes", "Monthly treatments")}
                 </p>
 
                 <p
@@ -1282,7 +1342,7 @@ export default function CierreMensual({
                     text-white/50
                   "
                 >
-                  Finalizados
+                  {tr("Finalizados", "Completed")}
                 </p>
 
                 <p
@@ -1378,7 +1438,7 @@ export default function CierreMensual({
                       mint-text-primary
                     "
                   >
-                    Cerrar período
+                    {tr("Cerrar período", "Close period")}
                   </h3>
 
                   <p
@@ -1388,9 +1448,9 @@ export default function CierreMensual({
                       mt-1
                     "
                   >
-                    Revisa los indicadores
-                    antes de guardar el
-                    cierre definitivo.
+                    {tr("Revisa los indicadores", "Review the figures")}
+                    {tr("antes de guardar el", "before saving the")}
+                    {tr("cierre definitivo.", "final close.")}
                   </p>
 
                 </div>
@@ -1422,8 +1482,8 @@ export default function CierreMensual({
 
                 {
                   cerrando
-                    ? "Cerrando..."
-                    : "Cerrar mes"
+                    ? tr("Cerrando...", "Closing...")
+                    : tr("Cerrar mes", "Close month")
                 }
 
               </button>
@@ -1464,7 +1524,7 @@ export default function CierreMensual({
                 mb-1
               "
             >
-              Archivo financiero
+              {tr("Archivo financiero", "Financial archive")}
             </p>
 
             <h3
@@ -1474,7 +1534,7 @@ export default function CierreMensual({
                 mint-text-primary
               "
             >
-              Historial de cierres
+              {tr("Historial de cierres", "Closing history")}
             </h3>
 
             <p
@@ -1484,8 +1544,8 @@ export default function CierreMensual({
                 mt-1
               "
             >
-              Fotografías financieras
-              almacenadas por período.
+              {tr("Fotografías financieras", "Financial snapshots")}
+              {tr("almacenadas por período.", "stored by period.")}
             </p>
 
           </div>
@@ -1522,7 +1582,7 @@ export default function CierreMensual({
                 text-[var(--mint-teal)]
               "
             >
-              {cierres.length} cierres guardados
+              {cierres.length} {tr("cierres guardados", "saved closes")}
             </span>
 
           </div>
@@ -1555,7 +1615,7 @@ export default function CierreMensual({
                     mint-text-muted
                   "
                 >
-                  Cargando cierres...
+                  {tr("Cargando cierres...", "Loading closes...")}
                 </div>
 
               )
@@ -1611,8 +1671,8 @@ export default function CierreMensual({
                         mint-text-primary
                       "
                     >
-                      Todavía no hay
-                      cierres registrados.
+                      {tr("Todavía no hay", "There are no")}
+                      {tr("cierres registrados.", "recorded closes yet.")}
                     </p>
 
                     <p
@@ -1622,9 +1682,9 @@ export default function CierreMensual({
                         mt-1
                       "
                     >
-                      El historial comenzará
-                      cuando se cierre el
-                      primer período.
+                      {tr("El historial comenzará", "The history will begin")}
+                      {tr("cuando se cierre el", "when the first")}
+                      {tr("primer período.", "period is closed.")}
                     </p>
 
                   </div>
@@ -1692,13 +1752,15 @@ export default function CierreMensual({
                                   mt-1
                                 "
                               >
-                                Cierre oficial
+                                {tr("Cierre oficial", "Official close")}
                               </p>
 
                             </div>
 
+                            {mostrarMXN && (
+
                             <DatoHistorial
-                              titulo="Utilidad MXN"
+                              titulo={tr("Utilidad MXN", "Profit MXN")}
                               valor={
                                 cierre.utilidad_neta_mxn
                               }
@@ -1713,8 +1775,12 @@ export default function CierreMensual({
                               }
                             />
 
+                            )}
+
+                            {mostrarUSD && (
+
                             <DatoHistorial
-                              titulo="Utilidad USD"
+                              titulo={tr("Utilidad USD", "Profit USD")}
                               valor={
                                 cierre.utilidad_neta_usd
                               }
@@ -1729,8 +1795,12 @@ export default function CierreMensual({
                               }
                             />
 
+                            )}
+
+                            {mostrarMXN && (
+
                             <DatoHistorial
-                              titulo="Cobrado MXN"
+                              titulo={tr("Cobrado MXN", "Collected MXN")}
                               valor={
                                 cierre.cobrado_mxn
                               }
@@ -1741,8 +1811,12 @@ export default function CierreMensual({
                               tipo="normal"
                             />
 
+                            )}
+
+                            {mostrarUSD && (
+
                             <DatoHistorial
-                              titulo="Cobrado USD"
+                              titulo={tr("Cobrado USD", "Collected USD")}
                               valor={
                                 cierre.cobrado_usd
                               }
@@ -1752,6 +1826,8 @@ export default function CierreMensual({
                               }
                               tipo="normal"
                             />
+
+                            )}
 
                             <div
                               className="
@@ -1768,7 +1844,7 @@ export default function CierreMensual({
                                   mint-text-muted
                                 "
                               >
-                                Fecha cierre
+                                {tr("Fecha cierre", "Closing date")}
                               </p>
 
                               <p
@@ -1811,6 +1887,8 @@ export default function CierreMensual({
 
 
 type FilaCierreProps = {
+  mostrarMXN: boolean;
+  mostrarUSD: boolean;
 
   titulo: string;
 
@@ -1834,6 +1912,8 @@ type FilaCierreProps = {
 };
 
 function FilaCierre({
+  mostrarMXN,
+  mostrarUSD,
 
   titulo,
 
@@ -1861,10 +1941,11 @@ function FilaCierre({
   return (
 
     <div
+      style={{ gridTemplateColumns: `minmax(0,1.3fr) repeat(${Number(mostrarMXN) + Number(mostrarUSD)},minmax(135px,0.7fr))` }}
       className="
         grid
         grid-cols-1
-        md:grid-cols-[minmax(0,1.3fr)_minmax(135px,0.7fr)_minmax(135px,0.7fr)]
+        
         items-center
         gap-3
         px-6
@@ -1890,6 +1971,7 @@ function FilaCierre({
 
       </div>
 
+      {mostrarMXN && (
       <div
         className="
           md:text-right
@@ -1913,7 +1995,9 @@ function FilaCierre({
         </p>
 
       </div>
+      )}
 
+      {mostrarUSD && (
       <div
         className="
           md:text-right
@@ -1939,6 +2023,7 @@ function FilaCierre({
         </p>
 
       </div>
+      )}
 
     </div>
 
