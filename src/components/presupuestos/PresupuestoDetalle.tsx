@@ -227,15 +227,11 @@ export default function PresupuestoDetalle({
 
     const nombreClinica =
       clinica?.nombre?.trim() ||
-      "Dra. Marlene Group";
+      (documentoEnIngles ? "Dental clinic" : "Clínica dental");
 
     const responsableClinica =
       clinica?.responsable?.trim() ||
-      (
-        documentoEnIngles
-          ? "Dr. Marlene Verdugo"
-          : "Dra. Marlene Verdugo"
-      );
+      "";
 
     const direccionClinica =
       clinica
@@ -362,11 +358,13 @@ export default function PresupuestoDetalle({
       pdf.setTextColor(...slate);
       pdf.setFont("helvetica", "bold");
       pdf.setFontSize(7.5);
-      pdf.text(
-        responsableClinica,
-        margen + 5,
-        21
-      );
+      if (responsableClinica) {
+        pdf.text(
+          responsableClinica,
+          margen + 5,
+          21
+        );
+      }
 
       pdf.setTextColor(...muted);
       pdf.setFont("helvetica", "normal");
@@ -1332,7 +1330,7 @@ export default function PresupuestoDetalle({
                   text-white/75
                 "
               >
-                Presupuesto
+                {es ? "Presupuesto" : "Estimate"}
               </p>
 
               <h2
@@ -1407,7 +1405,7 @@ export default function PresupuestoDetalle({
                       size={16}
                     />
 
-                    Enviar presupuesto
+                    {es ? "Enviar presupuesto" : "Send estimate"}
                   </button>
 
                   ) : null
@@ -1431,7 +1429,7 @@ export default function PresupuestoDetalle({
                       size={16}
                     />
 
-                    Descargar PDF
+                    {es ? "Descargar PDF" : "Download PDF"}
                   </button>
 
                 )
@@ -1530,7 +1528,7 @@ export default function PresupuestoDetalle({
                     mint-text-primary
                   "
                 >
-                  Tratamientos
+                  {es ? "Tratamientos" : "Treatments"}
                 </h3>
 
                 <p
@@ -1588,7 +1586,7 @@ export default function PresupuestoDetalle({
                             mint-text-muted
                           "
                         >
-                          Diente
+                          {es ? "Diente" : "Tooth"}
                         </th>
 
                         <th
@@ -1601,7 +1599,7 @@ export default function PresupuestoDetalle({
                             mint-text-muted
                           "
                         >
-                          Tratamiento
+                          {es ? "Tratamiento" : "Treatment"}
                         </th>
 
                         <th
@@ -1614,7 +1612,7 @@ export default function PresupuestoDetalle({
                             mint-text-muted
                           "
                         >
-                          Cant.
+                          {es ? "Cant." : "Qty."}
                         </th>
 
                         <th
@@ -1627,7 +1625,7 @@ export default function PresupuestoDetalle({
                             mint-text-muted
                           "
                         >
-                          Precio
+                          {es ? "Precio" : "Price"}
                         </th>
 
                         <th
@@ -1820,7 +1818,7 @@ export default function PresupuestoDetalle({
                 mb-4
               "
             >
-              Resumen
+              {es ? "Resumen" : "Summary"}
             </h3>
 
             <div
@@ -1843,7 +1841,7 @@ export default function PresupuestoDetalle({
                     mint-text-secondary
                   "
                 >
-                  Fecha
+                  {es ? "Fecha" : "Date"}
                 </span>
 
                 <span
@@ -1876,7 +1874,7 @@ export default function PresupuestoDetalle({
                     mint-text-secondary
                   "
                 >
-                  Moneda
+                  {es ? "Moneda" : "Currency"}
                 </span>
 
                 <span
@@ -1962,7 +1960,7 @@ export default function PresupuestoDetalle({
                       mint-text-secondary
                     "
                   >
-                    Descuento
+                    {es ? "Descuento" : "Discount"}
                   </span>
 
                   <strong
@@ -2041,7 +2039,7 @@ export default function PresupuestoDetalle({
                 mint-text-primary
               "
             >
-              Notas
+              {es ? "Notas" : "Notes"}
             </h3>
 
             <p

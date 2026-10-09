@@ -448,7 +448,7 @@ export default function CatalogoTratamientos({
           rounded-[22px]
           border
           border-[var(--mint-border)]
-          bg-white
+          bg-[var(--mint-bg-card)]
           shadow-[0_10px_30px_rgba(15,42,65,0.06)]
         "
       >
@@ -462,19 +462,25 @@ export default function CatalogoTratamientos({
             gap-4
             px-6
             py-5
+            relative
             border-b
-            border-[var(--mint-border-teal)]
-            bg-[linear-gradient(90deg,#eaf8f5_0%,#f8fbfa_72%,#ffffff_100%)]
+            border-white/10
+            bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_52%,#0b8f80_100%)]
+            after:absolute
+            after:inset-x-0
+            after:bottom-0
+            after:h-[3px]
+            after:bg-[linear-gradient(90deg,#0b8f80_0%,#63c8b2_55%,#d8bd72_100%)]
           "
         >
           <div>
-            <p className="text-[10px] uppercase tracking-[0.16em] font-extrabold text-[var(--mint-teal)]">
+            <p className="text-[10px] uppercase tracking-[0.16em] font-extrabold !text-[#a9f0dc]">
               {es ? "Catálogo clínico" : "Clinical catalog"}
             </p>
-            <h3 className="mt-1 text-xl font-bold text-[var(--mint-navy)]">
+            <h3 className="mt-1 text-xl font-bold !text-white">
               {es ? "Tratamientos Configurados" : "Configured Treatments"}
             </h3>
-            <p className="mt-1 text-sm text-[var(--mint-text-secondary)]">
+            <p className="mt-1 text-sm !text-white/85">
               {es
                 ? "Administra tratamientos, precios de clínica y costos de especialistas."
                 : "Manage treatments, clinic prices and specialist costs."}
@@ -490,16 +496,18 @@ export default function CatalogoTratamientos({
               justify-center
               gap-2
               rounded-xl
-              bg-[var(--mint-teal)]
+              border
+              border-white/25
+              !bg-white
               px-4
               py-2.5
               text-sm
               font-bold
-              text-white
+              !text-[#102f4f]
               shadow-[0_7px_18px_rgba(11,143,128,0.18)]
               transition
               hover:-translate-y-0.5
-              hover:bg-[var(--mint-navy-soft)]
+              hover:!bg-[#eaf8f5]
             "
           >
             <span className="text-lg leading-none">+</span>
@@ -882,7 +890,7 @@ export default function CatalogoTratamientos({
                 rounded-[24px]
                 border
                 border-white/20
-                bg-white
+                bg-[var(--mint-bg-card)]
                 shadow-[0_30px_90px_rgba(15,42,65,0.34)]
               "
             >

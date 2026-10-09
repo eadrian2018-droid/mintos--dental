@@ -553,8 +553,11 @@ export default function ConfiguracionFinanzas({
 
       <div
         className="
-          mint-card
+          rounded-[22px]
+          border !border-[#2a6170]
+          !bg-[linear-gradient(115deg,#102f4f_0%,#1b4f68_52%,#126c70_100%)]
           p-4
+          shadow-[0_12px_30px_rgba(4,28,45,0.22)]
         "
       >
 
@@ -562,7 +565,8 @@ export default function ConfiguracionFinanzas({
           className="
             flex
             flex-wrap
-            gap-2
+            items-center
+            gap-2.5
           "
         >
 
@@ -573,15 +577,16 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              mint-tab
-
+              inline-flex items-center justify-center
+              min-h-[44px] rounded-xl border px-5 py-2.5
+              text-sm font-bold transition-all duration-200
               ${
                 seccion ===
                 "tratamientos"
 
-                  ? "mint-tab-active"
+                  ? "!border-[#67d7c6] !bg-[linear-gradient(120deg,#0b8f80_0%,#2db4a0_100%)] !text-white shadow-[0_7px_20px_rgba(3,18,27,0.25)]"
 
-                  : ""
+                  : "!border-white/25 !bg-white/10 !text-white hover:!border-[#69d4c0] hover:!bg-white/20"
               }
             `}
           >
@@ -601,15 +606,16 @@ export default function ConfiguracionFinanzas({
               )
             }
             className={`
-              mint-tab
-
+              inline-flex items-center justify-center
+              min-h-[44px] rounded-xl border px-5 py-2.5
+              text-sm font-bold transition-all duration-200
               ${
                 seccion ===
                 "comisiones"
 
-                  ? "mint-tab-active"
+                  ? "!border-[#67d7c6] !bg-[linear-gradient(120deg,#0b8f80_0%,#2db4a0_100%)] !text-white shadow-[0_7px_20px_rgba(3,18,27,0.25)]"
 
-                  : ""
+                  : "!border-white/25 !bg-white/10 !text-white hover:!border-[#69d4c0] hover:!bg-white/20"
               }
             `}
           >
@@ -634,15 +640,16 @@ export default function ConfiguracionFinanzas({
                 )
               }
               className={`
-                mint-tab
-
+                inline-flex items-center justify-center
+                min-h-[44px] rounded-xl border px-5 py-2.5
+                text-sm font-bold transition-all duration-200
                 ${
                   seccion ===
                   "pagos"
 
-                    ? "mint-tab-active"
+                    ? "!border-[#67d7c6] !bg-[linear-gradient(120deg,#0b8f80_0%,#2db4a0_100%)] !text-white shadow-[0_7px_20px_rgba(3,18,27,0.25)]"
 
-                    : ""
+                    : "!border-white/25 !bg-white/10 !text-white hover:!border-[#69d4c0] hover:!bg-white/20"
                 }
               `}
             >
@@ -668,15 +675,16 @@ export default function ConfiguracionFinanzas({
                 )
               }
               className={`
-                mint-tab
-
+                inline-flex items-center justify-center
+                min-h-[44px] rounded-xl border px-5 py-2.5
+                text-sm font-bold transition-all duration-200
                 ${
                   seccion ===
                   "moneda"
 
-                    ? "mint-tab-active"
+                    ? "!border-[#67d7c6] !bg-[linear-gradient(120deg,#0b8f80_0%,#2db4a0_100%)] !text-white shadow-[0_7px_20px_rgba(3,18,27,0.25)]"
 
-                    : ""
+                    : "!border-white/25 !bg-white/10 !text-white hover:!border-[#69d4c0] hover:!bg-white/20"
                 }
               `}
             >
@@ -789,17 +797,21 @@ export default function ConfiguracionFinanzas({
             rounded-[24px]
             border
             border-[var(--mint-border)]
-            bg-white
+            bg-[var(--mint-app-bg)]
             p-6
             shadow-[0_12px_34px_rgba(15,42,65,0.06)]
           "
         >
 
+          <div className="rounded-[18px] border border-white/10 !bg-[linear-gradient(115deg,#102f4f_0%,#1b4f68_55%,#178e82_100%)] px-6 py-5 shadow-[0_12px_28px_rgba(5,28,45,0.18)]">
+          <p className="mb-1 text-[10px] font-extrabold uppercase tracking-[0.18em] !text-[#6ce2cc]">
+            {es ? "CONFIGURACIÓN FINANCIERA" : "FINANCIAL SETTINGS"}
+          </p>
           <h2
             className="
               text-xl
               font-bold
-              text-[var(--mint-navy)]
+              !text-white
             "
           >
 
@@ -813,7 +825,7 @@ export default function ConfiguracionFinanzas({
 
           <p
             className="
-              mint-text-secondary
+              !text-[#d0e6e8]
               mt-2
             "
           >
@@ -825,6 +837,7 @@ export default function ConfiguracionFinanzas({
             }
 
           </p>
+          </div>
 
           {
             cargandoMoneda
@@ -870,7 +883,7 @@ export default function ConfiguracionFinanzas({
                       rounded-[18px]
                       border
                       border-[var(--mint-border)]
-                      bg-white
+                      bg-[var(--mint-card-bg,var(--mint-app-bg))]
                       p-5
                     "
                   >
@@ -880,7 +893,7 @@ export default function ConfiguracionFinanzas({
                         block
                         text-sm
                         font-bold
-                        text-[var(--mint-navy)]
+                        mint-text-primary
                         mb-2
                       "
                     >
@@ -972,7 +985,7 @@ export default function ConfiguracionFinanzas({
                       rounded-[18px]
                       border
                       border-[var(--mint-border-teal)]
-                      bg-[linear-gradient(100deg,#f1faf8_0%,#ffffff_100%)]
+                      bg-[linear-gradient(115deg,#15384b_0%,#11515b_100%)]
                       p-5
                     "
                   >
@@ -982,7 +995,7 @@ export default function ConfiguracionFinanzas({
                       <p
                         className="
                           font-semibold
-                          mint-text-primary
+                          !text-white
                         "
                       >
 
@@ -997,7 +1010,7 @@ export default function ConfiguracionFinanzas({
                       <p
                         className="
                           text-sm
-                          mint-text-secondary
+                          !text-[#c7e6e4]
                           mt-1
                         "
                       >

@@ -559,17 +559,17 @@ export default function ClinicaConfig() {
           px-6
           py-4
           border-b
-          border-[var(--mint-border-teal)]
-          bg-[linear-gradient(90deg,#eaf8f5_0%,#f7fbfa_72%,#ffffff_100%)]
+          border-white/10
+          !bg-[linear-gradient(105deg,#102f4f_0%,#17475b_58%,#1b615f_100%)]
         "
       >
         <div className="flex items-start gap-3">
-          <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-[var(--mint-teal)] shadow-[0_0_0_4px_rgba(11,143,128,0.10)]" />
+          <div className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full !bg-[#63c8b2] shadow-[0_0_0_4px_rgba(99,200,178,0.16)]" />
           <div>
-            <p className="text-sm font-bold text-[var(--mint-navy)]">
+            <p className="text-sm font-bold !text-white">
               {es ? "Información institucional" : "Institutional information"}
             </p>
-            <p className="mt-0.5 text-xs leading-5 text-[var(--mint-text-secondary)]">
+            <p className="mt-0.5 text-xs leading-5 !text-[#d8e9ec]">
               {es
                 ? "Estos datos identifican a la clínica dentro de MintOS y se utilizan en documentos generados por el sistema, como consentimientos y presupuestos."
                 : "These details identify the clinic within MintOS and are used in system-generated documents such as consent forms and estimates."}
