@@ -393,6 +393,12 @@ export default function ConfiguracionFinanzas({
 
     }
 
+    // Conservar el último tipo de cambio válido al desactivar la segunda moneda.
+    const cambioGuardado =
+      Number.isFinite(valorCambio) && valorCambio > 0
+        ? valorCambio.toFixed(4)
+        : configuracionMonedaOriginal.tipoCambio || "1";
+
     setGuardandoMoneda(true);
 
     const ahora =
@@ -446,10 +452,7 @@ export default function ConfiguracionFinanzas({
           "tipo_cambio",
 
         valor:
-          monedaSecundariaActiva
-            ? valorCambio
-                .toFixed(4)
-            : "1",
+          cambioGuardado,
 
         descripcion:
           "Tipo de cambio entre la moneda secundaria y la moneda principal",
@@ -491,12 +494,6 @@ export default function ConfiguracionFinanzas({
       return;
 
     }
-
-    const cambioGuardado =
-      monedaSecundariaActiva
-        ? valorCambio
-            .toFixed(4)
-        : "1";
 
     await registrarBitacora({
       accion:

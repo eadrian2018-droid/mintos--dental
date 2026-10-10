@@ -256,11 +256,11 @@ export default function AjustesConfig() {
                     ${
                       language === "es"
                         ? `
-                            bg-white
-                            text-[var(--mint-teal)]
-                            shadow-sm
+                            !bg-[linear-gradient(115deg,#087b80_0%,#119f91_55%,#19b5a0_100%)]
+                            !text-white
+                            shadow-[0_5px_14px_rgba(3,93,98,0.28)]
                             ring-1
-                            ring-[var(--mint-border-teal)]
+                            !ring-[#4ad6c3]
                           `
                         : `
                             text-[var(--mint-text-muted)]
@@ -289,11 +289,11 @@ export default function AjustesConfig() {
                     ${
                       language === "en"
                         ? `
-                            bg-white
-                            text-[var(--mint-teal)]
-                            shadow-sm
+                            !bg-[linear-gradient(115deg,#087b80_0%,#119f91_55%,#19b5a0_100%)]
+                            !text-white
+                            shadow-[0_5px_14px_rgba(3,93,98,0.28)]
                             ring-1
-                            ring-[var(--mint-border-teal)]
+                            !ring-[#4ad6c3]
                           `
                         : `
                             text-[var(--mint-text-muted)]
@@ -438,11 +438,11 @@ export default function AjustesConfig() {
                     ${
                       theme === "light"
                         ? `
-                            bg-white
-                            text-[var(--mint-teal)]
-                            shadow-sm
+                            !bg-[linear-gradient(115deg,#087b80_0%,#119f91_55%,#19b5a0_100%)]
+                            !text-white
+                            shadow-[0_5px_14px_rgba(3,93,98,0.28)]
                             ring-1
-                            ring-[var(--mint-border-teal)]
+                            !ring-[#4ad6c3]
                           `
                         : `
                             text-[var(--mint-text-muted)]
@@ -481,11 +481,11 @@ export default function AjustesConfig() {
                     ${
                       theme === "dark"
                         ? `
-                            bg-white
-                            text-[var(--mint-teal)]
-                            shadow-sm
+                            !bg-[linear-gradient(115deg,#087b80_0%,#119f91_55%,#19b5a0_100%)]
+                            !text-white
+                            shadow-[0_5px_14px_rgba(3,93,98,0.28)]
                             ring-1
-                            ring-[var(--mint-border-teal)]
+                            !ring-[#4ad6c3]
                           `
                         : `
                             text-[var(--mint-text-muted)]

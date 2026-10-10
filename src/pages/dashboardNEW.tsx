@@ -1,6 +1,7 @@
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -75,6 +76,36 @@ export default function Dashboard() {
     guardandoRecordatorio,
     setGuardandoRecordatorio,
   ] = useState(false);
+
+
+  const recordatorioTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!mostrarNuevoRecordatorio) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusTimer = window.setTimeout(() => {
+      recordatorioTextareaRef.current?.focus();
+    }, 0);
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !guardandoRecordatorio) {
+        setMostrarNuevoRecordatorio(false);
+        setMensajeRecordatorio("");
+        setPrioridadRecordatorio("normal");
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [mostrarNuevoRecordatorio, guardandoRecordatorio]);
 
   const [
     ,
@@ -731,157 +762,6 @@ export default function Dashboard() {
 
           <div className="px-5 pb-5">
 
-            {mostrarNuevoRecordatorio && (
-              <div
-                className="
-                  mb-4
-                  rounded-[18px]
-                  border
-                  border-[#cfe5e2]
-                  dark:border-white/10
-                  bg-[#f7fbfa]
-                  dark:bg-white/[0.035]
-                  p-4
-                "
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div>
-                    <p className="text-sm font-extrabold mint-text-primary">
-                      {es ? "Nuevo recordatorio" : "New reminder"}
-                    </p>
-                    <p className="mt-0.5 text-[11px] mint-text-secondary">
-                      {es ? "Visible para todo el equipo" : "Visible to the entire team"}
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setMostrarNuevoRecordatorio(false);
-                      setMensajeRecordatorio("");
-                      setPrioridadRecordatorio("normal");
-                    }}
-                    className="
-                      w-8
-                      h-8
-                      rounded-full
-                      flex
-                      items-center
-                      justify-center
-                      mint-text-secondary
-                      hover:bg-black/[0.04]
-                      dark:hover:bg-white/[0.06]
-                      transition
-                    "
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-
-                <textarea
-                  value={mensajeRecordatorio}
-                  onChange={(event) => setMensajeRecordatorio(event.target.value)}
-                  rows={3}
-                  placeholder={
-                    es
-                      ? "Escribe algo que el equipo no debe olvidar..."
-                      : "Write something the team should not forget..."
-                  }
-                  className="
-                    w-full
-                    rounded-[14px]
-                    border
-                    border-[#d9e7e8]
-                    dark:border-white/10
-                    bg-white
-                    dark:bg-[#0d2232]
-                    mint-text-primary
-                    px-4
-                    py-3
-                    text-sm
-                    outline-none
-                    focus:border-[#48bfa9]
-                    focus:ring-4
-                    focus:ring-[#48bfa9]/10
-                    resize-none
-                    transition
-                  "
-                />
-
-                <div className="mt-3 space-y-3">
-                  <div
-                    className="
-                      inline-flex
-                      p-1
-                      rounded-full
-                      border
-                      border-[#dce8e9]
-                      dark:border-white/10
-                      bg-white
-                      dark:bg-[#0d2232]
-                    "
-                  >
-                    {[
-                      ["normal", es ? "Normal" : "Normal"],
-                      ["importante", es ? "Importante" : "Important"],
-                      ["urgente", es ? "Urgente" : "Urgent"],
-                    ].map(([valor, etiqueta]) => (
-                      <button
-                        key={valor}
-                        type="button"
-                        onClick={() => setPrioridadRecordatorio(valor)}
-                        className={`
-                          px-3
-                          py-1.5
-                          rounded-full
-                          text-[10px]
-                          font-extrabold
-                          transition
-                          ${
-                            prioridadRecordatorio === valor
-                              ? "bg-[#102f4f] text-white"
-                              : "mint-text-secondary hover:bg-[#f1f6f7] dark:hover:bg-white/[0.05]"
-                          }
-                        `}
-                      >
-                        {etiqueta}
-                      </button>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={crearRecordatorio}
-                    disabled={
-                      guardandoRecordatorio ||
-                      !mensajeRecordatorio.trim()
-                    }
-                    className="
-                      w-full
-                      min-h-10
-                      rounded-full
-                      bg-gradient-to-r
-                      from-[#087e86]
-                      to-[#0aa17f]
-                      text-white
-                      px-5
-                      text-xs
-                      font-extrabold
-                      shadow-[0_7px_18px_rgba(10,143,128,0.18)]
-                      hover:-translate-y-0.5
-                      disabled:opacity-50
-                      disabled:cursor-not-allowed
-                      disabled:translate-y-0
-                      transition
-                    "
-                  >
-                    {guardandoRecordatorio
-                      ? (es ? "Guardando..." : "Saving...")
-                      : (es ? "Guardar recordatorio" : "Save reminder")}
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div
               className="
@@ -1228,7 +1108,11 @@ export default function Dashboard() {
             "
           >
             <Clock3 size={14} className="text-[#0b8f80]" />
-            {citasHoy.length} {es ? "programadas" : "scheduled"}
+            {citasHoy.filter((cita) =>
+              !["cancelada", "cancelado", "cancelled", "canceled"].includes(
+                String(cita.estado || "").trim().toLowerCase()
+              )
+            ).length} {es ? "programadas" : "scheduled"}
           </div>
         </div>
 
@@ -1443,6 +1327,131 @@ export default function Dashboard() {
           )}
         </div>
       </section>
+
+      {/* MODAL NUEVO RECORDATORIO */}
+      {mostrarNuevoRecordatorio && (
+        <div
+          className="fixed inset-0 z-[1000] flex items-center justify-center overflow-y-auto bg-[#071b2d]/70 p-4 backdrop-blur-[5px] sm:p-6"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !guardandoRecordatorio) {
+              setMostrarNuevoRecordatorio(false);
+              setMensajeRecordatorio("");
+              setPrioridadRecordatorio("normal");
+            }
+          }}
+        >
+          <section
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="nuevo-recordatorio-title"
+            className="my-auto w-full max-w-[540px] overflow-hidden rounded-[26px] border border-[#cce6e2] bg-white shadow-[0_32px_90px_rgba(0,15,30,0.38)] dark:border-white/10 dark:bg-[#102331]"
+          >
+            <div className="relative overflow-hidden bg-[linear-gradient(120deg,#163e59_0%,#1b6172_56%,#139b86_100%)] px-6 py-6 sm:px-7">
+              <div className="relative z-10 flex items-start justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10 text-white">
+                    <Bell size={20} />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#a6eee0]">
+                      {es ? "Comunicación del equipo" : "Team communication"}
+                    </p>
+                    <h2 id="nuevo-recordatorio-title" className="mt-1 text-xl font-extrabold text-white">
+                      {es ? "Nuevo recordatorio" : "New reminder"}
+                    </h2>
+                    <p className="mt-1 text-xs text-white/75">
+                      {es ? "Visible para todo el equipo" : "Visible to the entire team"}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  aria-label={es ? "Cerrar" : "Close"}
+                  disabled={guardandoRecordatorio}
+                  onClick={() => {
+                    setMostrarNuevoRecordatorio(false);
+                    setMensajeRecordatorio("");
+                    setPrioridadRecordatorio("normal");
+                  }}
+                  className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20 disabled:opacity-50"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 h-[3px] bg-gradient-to-r from-[#19a991] via-[#65cdb8] to-[#d8bd72]" />
+            </div>
+
+            <div className="space-y-6 px-6 py-6 sm:px-7">
+              <div>
+                <label htmlFor="nuevo-recordatorio-mensaje" className="mb-2 block text-xs font-extrabold text-[#163b53] dark:text-white">
+                  {es ? "Recordatorio" : "Reminder"}
+                </label>
+                <textarea
+                  id="nuevo-recordatorio-mensaje"
+                  ref={recordatorioTextareaRef}
+                  value={mensajeRecordatorio}
+                  onChange={(event) => setMensajeRecordatorio(event.target.value)}
+                  rows={4}
+                  placeholder={es ? "Escribe algo que el equipo no debe olvidar..." : "Write something the team should not forget..."}
+                  className="w-full resize-none rounded-2xl border border-[#cfe2e3] bg-[#f8fbfa] px-4 py-3.5 text-sm text-[#17384e] outline-none transition placeholder:text-[#879da8] focus:border-[#27a892] focus:ring-4 focus:ring-[#27a892]/10 dark:border-white/10 dark:bg-[#0b1e2b] dark:text-white dark:placeholder:text-slate-500"
+                />
+              </div>
+
+              <div>
+                <p className="mb-2.5 text-xs font-extrabold text-[#163b53] dark:text-white">
+                  {es ? "Prioridad" : "Priority"}
+                </p>
+                <div className="flex w-full gap-1 rounded-xl border border-[#d7e7e6] bg-[#eff6f5] p-1 dark:border-white/10 dark:bg-[#0b1e2b]">
+                  {([
+                    ["normal", es ? "Normal" : "Normal"],
+                    ["importante", es ? "Importante" : "Important"],
+                    ["urgente", es ? "Urgente" : "Urgent"],
+                  ] as const).map(([valor, etiqueta]) => (
+                    <button
+                      key={valor}
+                      type="button"
+                      aria-pressed={prioridadRecordatorio === valor}
+                      onClick={() => setPrioridadRecordatorio(valor)}
+                      className={`min-w-0 flex-1 rounded-lg px-2 py-2.5 text-xs font-bold transition-all sm:text-sm ${
+                        prioridadRecordatorio === valor
+                          ? "bg-[linear-gradient(110deg,#15506a_0%,#098f80_100%)] text-white shadow-[0_4px_12px_rgba(12,103,108,0.25)]"
+                          : "text-[#58717e] hover:bg-white/80 dark:text-slate-300 dark:hover:bg-white/10"
+                      }`}
+                    >
+                      {etiqueta}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-[#e3ecec] pt-5 dark:border-white/10 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  disabled={guardandoRecordatorio}
+                  onClick={() => {
+                    setMostrarNuevoRecordatorio(false);
+                    setMensajeRecordatorio("");
+                    setPrioridadRecordatorio("normal");
+                  }}
+                  className="min-h-11 rounded-xl border border-[#cfe0e0] bg-white px-5 text-sm font-bold text-[#3d596a] transition hover:bg-[#f3f8f7] disabled:opacity-50 dark:border-white/15 dark:bg-white/5 dark:text-slate-200 dark:hover:bg-white/10"
+                >
+                  {es ? "Cancelar" : "Cancel"}
+                </button>
+                <button
+                  type="button"
+                  onClick={crearRecordatorio}
+                  disabled={guardandoRecordatorio || !mensajeRecordatorio.trim()}
+                  className="min-h-11 rounded-xl bg-[linear-gradient(110deg,#15506a_0%,#079e88_100%)] px-6 text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(9,143,128,0.23)] transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {guardandoRecordatorio
+                    ? (es ? "Guardando..." : "Saving...")
+                    : (es ? "Guardar recordatorio" : "Save reminder")}
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
 
     </div>
 

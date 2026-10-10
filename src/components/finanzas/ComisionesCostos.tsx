@@ -1,6 +1,10 @@
 import {
+  useEffect,
   useState,
 } from "react";
+
+import { useLanguage } from "../../context/LanguageContext";
+import { supabase } from "../../lib/supabase";
 
 import type {
   Doctor,
@@ -49,6 +53,50 @@ export default function ComisionesCostos({
   actualizarTratamientoCatalogo,
 
 }: ComisionesCostosProps) {
+
+  const { language } = useLanguage();
+  const es = language === "es";
+  const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
+  const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
+
+  useEffect(() => {
+    let activo = true;
+    async function cargarMonedas() {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("clave, valor")
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+      if (error) {
+        console.error("Error cargando configuración de moneda:", error);
+        return;
+      }
+      if (!activo) return;
+      const valores = Object.fromEntries(
+        (data ?? []).map((fila) => [fila.clave, String(fila.valor ?? "")])
+      );
+      setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
+      setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
+    }
+    void cargarMonedas();
+    return () => { activo = false; };
+  }, []);
+
+  const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
+  const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
+
+  function traducirCategoria(valor: string) {
+    if (!es) return valor;
+    const categorias: Record<string, string> = {
+      Preventive: "Preventivo", Restorative: "Restaurativo",
+      Endodontics: "Endodoncia", Periodontics: "Periodoncia",
+      Surgery: "Cirugía", Prosthodontics: "Prótesis",
+      Implants: "Implantes", Orthodontics: "Ortodoncia",
+      Cosmetic: "Estética", Diagnostic: "Diagnóstico",
+      Pediatric: "Odontopediatría", Other: "Otro",
+    };
+    return categorias[valor] ?? valor;
+  }
+
 
   const tratamientosEspecialistas =
     catalogoTratamientos.filter(
@@ -215,7 +263,7 @@ export default function ComisionesCostos({
     if (!nombre.trim()) {
 
       alert(
-        "Ingresa el nombre del tratamiento."
+        es ? "Ingresa el nombre del tratamiento." : "Enter the treatment name."
       );
 
       return;
@@ -225,7 +273,7 @@ export default function ComisionesCostos({
     if (!categoria.trim()) {
 
       alert(
-        "Ingresa la categoría."
+        es ? "Ingresa la categoría." : "Enter a category."
       );
 
       return;
@@ -235,7 +283,7 @@ export default function ComisionesCostos({
     if (!doctorId) {
 
       alert(
-        "Selecciona un especialista."
+        es ? "Selecciona un especialista." : "Select a specialist."
       );
 
       return;
@@ -270,7 +318,7 @@ export default function ComisionesCostos({
     ) {
 
       alert(
-        "Los precios y costos no pueden ser negativos."
+        es ? "Los precios y costos no pueden ser negativos." : "Prices and costs cannot be negative."
       );
 
       return;
@@ -338,7 +386,7 @@ export default function ComisionesCostos({
       );
 
       alert(
-        "No se pudo guardar el tratamiento de especialista."
+        es ? "No se pudo guardar el tratamiento de especialista." : "Could not save the specialist treatment."
       );
 
     } finally {
@@ -360,38 +408,21 @@ export default function ComisionesCostos({
     >
 
       <div
-        className="
-          mint-card
-          p-6
-        "
+        className="relative overflow-hidden rounded-[24px] border border-white/10 px-7 py-7 shadow-[0_16px_36px_rgba(15,42,65,0.18)]"
+        style={{ background: "linear-gradient(112deg, #102f4f 0%, #1b4f68 56%, #0b8f80 100%)", color: "#ffffff" }}
       >
-
-        <h2
-          className="
-            text-2xl
-            font-bold
-            mint-text-primary
-          "
-        >
-
-          Comisiones y Costos
-
-        </h2>
-
-        <p
-          className="
-            mint-text-secondary
-            mt-2
-          "
-        >
-
-          Resumen de comisiones
-          de doctores y costos
-          configurados para
-          especialistas.
-
+        <div className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,#63c8b2,#d8bd72)]" />
+        <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.18em]" style={{ color: "#9ce5d7" }}>
+          {es ? "Configuración financiera" : "Financial settings"}
         </p>
-
+        <h2 className="text-[25px] font-extrabold tracking-tight" style={{ color: "#ffffff" }}>
+          {es ? "Comisiones y costos" : "Commissions and costs"}
+        </h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6" style={{ color: "#e4f4f3" }}>
+          {es
+            ? "Resumen de comisiones de doctores y costos configurados para especialistas."
+            : "Overview of doctor commissions and configured specialist costs."}
+        </p>
       </div>
 
       <div
@@ -417,7 +448,7 @@ export default function ComisionesCostos({
             "
           >
 
-            Doctores configurados
+            {es ? "Doctores configurados" : "Configured doctors"}
 
           </p>
 
@@ -451,7 +482,7 @@ export default function ComisionesCostos({
             "
           >
 
-            Tratamientos de especialista
+            {es ? "Tratamientos de especialista" : "Specialist treatments"}
 
           </p>
 
@@ -475,30 +506,29 @@ export default function ComisionesCostos({
 
       </div>
 
-      <div className="rounded-[22px] border border-[var(--mint-border)] bg-white p-2 shadow-[0_8px_24px_rgba(15,42,65,0.05)]">
-        <div className="grid grid-cols-2 gap-2 rounded-[16px] bg-[var(--mint-surface-teal)] p-1.5">
+      <div className="rounded-[22px] border border-[var(--mint-border)] bg-[var(--mint-bg-card)] p-2 shadow-[0_8px_24px_rgba(15,42,65,0.07)]">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => setSeccionActiva("comisiones")}
-            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
-              seccionActiva === "comisiones"
-                ? "bg-white text-[var(--mint-navy)] shadow-[0_5px_16px_rgba(15,42,65,0.10)]"
-                : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-teal)]"
-            }`}
+            aria-pressed={seccionActiva === "comisiones"}
+            className="rounded-[14px] border px-5 py-3.5 text-sm font-extrabold tracking-wide shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            style={seccionActiva === "comisiones"
+              ? { background: "linear-gradient(110deg,#102f4f,#0b8f80)", color: "#ffffff", borderColor: "#0b8f80", boxShadow: "0 7px 18px rgba(11,143,128,.20)" }
+              : { background: "var(--mint-bg-card)", color: "var(--mint-text-primary)", borderColor: "var(--mint-border)" }}
           >
-            Comisión por doctor
+            {es ? "Comisión por doctor" : "Commission by doctor"}
           </button>
-
           <button
             type="button"
             onClick={() => setSeccionActiva("especialistas")}
-            className={`rounded-xl px-4 py-3 text-sm font-bold transition ${
-              seccionActiva === "especialistas"
-                ? "bg-white text-[var(--mint-navy)] shadow-[0_5px_16px_rgba(15,42,65,0.10)]"
-                : "text-[var(--mint-text-secondary)] hover:text-[var(--mint-teal)]"
-            }`}
+            aria-pressed={seccionActiva === "especialistas"}
+            className="rounded-[14px] border px-5 py-3.5 text-sm font-extrabold tracking-wide shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+            style={seccionActiva === "especialistas"
+              ? { background: "linear-gradient(110deg,#102f4f,#0b8f80)", color: "#ffffff", borderColor: "#0b8f80", boxShadow: "0 7px 18px rgba(11,143,128,.20)" }
+              : { background: "var(--mint-bg-card)", color: "var(--mint-text-primary)", borderColor: "var(--mint-border)" }}
           >
-            Costos especialistas
+            {es ? "Costos de especialistas" : "Specialist costs"}
           </button>
         </div>
       </div>
@@ -520,7 +550,7 @@ export default function ComisionesCostos({
           "
         >
 
-          Comisión por Doctor
+          {es ? "Comisión por doctor" : "Commission by doctor"}
 
         </h3>
 
@@ -531,9 +561,9 @@ export default function ComisionesCostos({
           "
         >
 
-          Este porcentaje se utiliza
-          para calcular la comisión
-          correspondiente al doctor.
+          {es
+            ? "Este porcentaje se utiliza para calcular la comisión correspondiente al doctor."
+            : "This percentage is used to calculate the doctor's commission."}
 
         </p>
 
@@ -574,7 +604,7 @@ export default function ComisionesCostos({
                     text-left
                   "
                 >
-                  Especialidad
+                  {es ? "Especialidad" : "Specialty"}
                 </th>
 
                 <th
@@ -583,7 +613,7 @@ export default function ComisionesCostos({
                     text-left
                   "
                 >
-                  Comisión
+                  {es ? "Comisión" : "Commission"}
                 </th>
 
               </tr>
@@ -691,7 +721,7 @@ export default function ComisionesCostos({
             "
           >
 
-            Costos de Especialistas
+            {es ? "Costos de especialistas" : "Specialist costs"}
 
           </h3>
 
@@ -701,11 +731,9 @@ export default function ComisionesCostos({
             "
           >
 
-            Consulta y ajusta los
-            precios cobrados al
-            paciente y los costos
-            configurados para cada
-            especialista.
+            {es
+              ? "Consulta y ajusta los precios cobrados al paciente y los costos configurados para cada especialista."
+              : "Review and adjust patient prices and costs configured for each specialist."}
 
           </p>
 
@@ -734,35 +762,43 @@ export default function ComisionesCostos({
               <tr>
 
                 <th className="p-3 text-left">
-                  Tratamiento
+                  {es ? "Tratamiento" : "Treatment"}
                 </th>
 
                 <th className="p-3 text-left">
-                  Categoría
+                  {es ? "Categoría" : "Category"}
                 </th>
 
                 <th className="p-3 text-left">
-                  Especialista
+                  {es ? "Especialista" : "Specialist"}
                 </th>
 
+                {mostrarMXN && (
                 <th className="p-3 text-left">
-                  Precio MXN
+                  {es ? "Precio MXN" : "Price MXN"}
                 </th>
+                )}
 
+                {mostrarUSD && (
                 <th className="p-3 text-left">
-                  Precio USD
+                  {es ? "Precio USD" : "Price USD"}
                 </th>
+                )}
 
+                {mostrarMXN && (
                 <th className="p-3 text-left">
-                  Costo MXN
+                  {es ? "Costo MXN" : "Cost MXN"}
                 </th>
+                )}
 
+                {mostrarUSD && (
                 <th className="p-3 text-left">
-                  Costo USD
+                  {es ? "Costo USD" : "Cost USD"}
                 </th>
+                )}
 
                 <th className="p-3 text-right">
-                  Acción
+                  {es ? "Acción" : "Action"}
                 </th>
 
               </tr>
@@ -825,7 +861,7 @@ export default function ComisionesCostos({
                             >
 
                               {
-                                tratamiento.categoria
+                                traducirCategoria(tratamiento.categoria)
                               }
 
                             </span>
@@ -841,11 +877,12 @@ export default function ComisionesCostos({
 
                             {
                               doctor?.nombre ||
-                              "Sin asignar"
+                              (es ? "Sin asignar" : "Unassigned")
                             }
 
                           </td>
 
+{mostrarMXN && (
                           <td
                             className="
                               p-3
@@ -865,7 +902,9 @@ export default function ComisionesCostos({
                             }
 
                           </td>
+                          )}
 
+{mostrarUSD && (
                           <td
                             className="
                               p-3
@@ -885,7 +924,9 @@ export default function ComisionesCostos({
                             }
 
                           </td>
+                          )}
 
+{mostrarMXN && (
                           <td
                             className="
                               p-3
@@ -905,7 +946,9 @@ export default function ComisionesCostos({
                             }
 
                           </td>
+                          )}
 
+{mostrarUSD && (
                           <td
                             className="
                               p-3
@@ -925,6 +968,7 @@ export default function ComisionesCostos({
                             }
 
                           </td>
+                          )}
 
                           <td
                             className="
@@ -948,7 +992,7 @@ export default function ComisionesCostos({
                               "
                             >
 
-                              Editar
+                              {es ? "Editar" : "Edit"}
 
                             </button>
 
@@ -971,7 +1015,7 @@ export default function ComisionesCostos({
                 <tr>
 
                   <td
-                    colSpan={8}
+                    colSpan={4 + Number(mostrarMXN) * 2 + Number(mostrarUSD) * 2}
                     className="
                       p-8
                       text-center
@@ -979,9 +1023,9 @@ export default function ComisionesCostos({
                     "
                   >
 
-                    No hay tratamientos
-                    de especialista
-                    configurados.
+                    {es
+                      ? "No hay tratamientos de especialista configurados."
+                      : "No specialist treatments configured."}
 
                   </td>
 
@@ -1072,7 +1116,7 @@ export default function ComisionesCostos({
                       text-[var(--mint-teal-soft)]
                     "
                   >
-                    Tratamiento configurado
+                    {es ? "Tratamiento configurado" : "Configured treatment"}
                   </p>
 
                   <h4
@@ -1082,7 +1126,7 @@ export default function ComisionesCostos({
                       text-white
                     "
                   >
-                    Editar costos de especialista
+                    {es ? "Editar costos de especialista" : "Edit specialist costs"}
                   </h4>
 
                 </div>
@@ -1114,7 +1158,7 @@ export default function ComisionesCostos({
                     disabled:cursor-not-allowed
                     disabled:opacity-50
                   "
-                  aria-label="Cerrar"
+                  aria-label={es ? "Cerrar" : "Close"}
                 >
                   ×
                 </button>
@@ -1152,7 +1196,7 @@ export default function ComisionesCostos({
                         dark:text-slate-400
                       "
                     >
-                      Tratamiento
+                      {es ? "Tratamiento" : "Treatment"}
                     </label>
 
                     <div
@@ -1190,7 +1234,7 @@ export default function ComisionesCostos({
                         dark:text-slate-400
                       "
                     >
-                      Categoría
+                      {es ? "Categoría" : "Category"}
                     </label>
 
                     <div
@@ -1211,7 +1255,7 @@ export default function ComisionesCostos({
                         dark:text-slate-100
                       "
                     >
-                      {categoria}
+                      {traducirCategoria(categoria)}
                     </div>
 
                   </div>
@@ -1229,7 +1273,7 @@ export default function ComisionesCostos({
                       dark:text-slate-100
                     "
                   >
-                    Clínica
+                    {es ? "Clínica" : "Clinic"}
                   </p>
 
                   <div
@@ -1241,6 +1285,7 @@ export default function ComisionesCostos({
                     "
                   >
 
+                    {mostrarMXN && (
                     <div>
 
                       <label
@@ -1253,7 +1298,7 @@ export default function ComisionesCostos({
                           dark:text-slate-400
                         "
                       >
-                        Precio paciente MXN
+                        {es ? "Precio paciente MXN" : "Patient price MXN"}
                       </label>
 
                       <div className="relative">
@@ -1308,9 +1353,10 @@ export default function ComisionesCostos({
                         />
 
                       </div>
-
                     </div>
+                    )}
 
+                    {mostrarUSD && (
                     <div>
 
                       <label
@@ -1323,7 +1369,7 @@ export default function ComisionesCostos({
                           dark:text-slate-400
                         "
                       >
-                        Precio paciente USD
+                        {es ? "Precio paciente USD" : "Patient price USD"}
                       </label>
 
                       <div className="relative">
@@ -1378,8 +1424,8 @@ export default function ComisionesCostos({
                         />
 
                       </div>
-
                     </div>
+                    )}
 
                   </div>
 
@@ -1406,7 +1452,7 @@ export default function ComisionesCostos({
                         dark:text-slate-100
                       "
                     >
-                      Especialista
+                      {es ? "Especialista" : "Specialist"}
                     </p>
 
                     <p
@@ -1424,7 +1470,7 @@ export default function ComisionesCostos({
                             doctor.id ===
                             Number(doctorId)
                         )?.nombre ||
-                        "Sin especialista"
+                        (es ? "Sin especialista" : "No specialist")
                       }
                     </p>
 
@@ -1439,6 +1485,7 @@ export default function ComisionesCostos({
                     "
                   >
 
+                    {mostrarMXN && (
                     <div>
 
                       <label
@@ -1451,7 +1498,7 @@ export default function ComisionesCostos({
                           dark:text-slate-400
                         "
                       >
-                        Costo especialista MXN
+                        {es ? "Costo especialista MXN" : "Specialist cost MXN"}
                       </label>
 
                       <div className="relative">
@@ -1506,9 +1553,10 @@ export default function ComisionesCostos({
                         />
 
                       </div>
-
                     </div>
+                    )}
 
+                    {mostrarUSD && (
                     <div>
 
                       <label
@@ -1521,7 +1569,7 @@ export default function ComisionesCostos({
                           dark:text-slate-400
                         "
                       >
-                        Costo especialista USD
+                        {es ? "Costo especialista USD" : "Specialist cost USD"}
                       </label>
 
                       <div className="relative">
@@ -1576,8 +1624,8 @@ export default function ComisionesCostos({
                         />
 
                       </div>
-
                     </div>
+                    )}
 
                   </div>
 
@@ -1592,7 +1640,7 @@ export default function ComisionesCostos({
                   gap-3
                   border-t
                   border-[var(--mint-border)]
-                  bg-white
+                  bg-[var(--mint-bg-card)]
                   px-6
                   py-4
                 "
@@ -1626,7 +1674,7 @@ export default function ComisionesCostos({
                     dark:hover:bg-slate-700
                   "
                 >
-                  Cancelar
+                  {es ? "Cancelar" : "Cancel"}
                 </button>
 
                 <button
@@ -1654,8 +1702,8 @@ export default function ComisionesCostos({
                 >
                   {
                     guardando
-                      ? "Guardando..."
-                      : "Guardar cambios"
+                      ? (es ? "Guardando..." : "Saving...")
+                      : (es ? "Guardar cambios" : "Save changes")
                   }
                 </button>
 
@@ -1687,7 +1735,7 @@ export default function ComisionesCostos({
           "
         >
 
-          Regla de cálculo
+          {es ? "Regla de cálculo" : "Calculation rule"}
 
         </h3>
 
@@ -1698,19 +1746,9 @@ export default function ComisionesCostos({
           "
         >
 
-          La base de la clínica se
-          calcula tomando el monto
-          pagado y descontando los
-          costos asociados al
-          tratamiento, como
-          laboratorio, especialista
-          y comisión bancaria.
-
-          {" "}
-
-          Después se calcula la
-          comisión correspondiente
-          al doctor sobre esa base.
+          {es
+            ? "La base de la clínica se calcula tomando el monto pagado y descontando los costos asociados al tratamiento, como laboratorio, especialista y comisión bancaria. Después se calcula la comisión correspondiente al doctor sobre esa base."
+            : "The clinic's base amount is calculated by subtracting treatment-related costs, such as laboratory fees, specialist costs and bank fees, from the amount paid. The doctor's commission is then calculated on that base."}
 
         </p>
 

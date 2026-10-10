@@ -191,6 +191,13 @@ export default function BitacoraConfig() {
     const traducciones: Record<string, string> = {
       "Presupuestos": "Estimates",
       "Configuración": "Settings",
+      "Configuración financiera": "Financial settings",
+      "Configuración de clínica": "Clinic settings",
+      "Cobros": "Payments",
+      "Gastos": "Expenses",
+      "Comisiones": "Commissions",
+      "Métodos de pago": "Payment methods",
+      "Expedientes": "Patient records",
       "Pacientes": "Patients",
       "Agenda": "Schedule",
       "Citas": "Appointments",
@@ -229,6 +236,31 @@ export default function BitacoraConfig() {
       "Eliminar paciente": "Delete patient",
       "Guardar expediente": "Save patient record",
       "Cambiar contraseña": "Change password",
+       "Cerrar otras sesiones": "Sign out other sessions",
+      "Cambiar configuración de moneda": "Change currency settings",
+      "Editar configuración de pago": "Edit payment settings",
+      "Registrar cobro": "Record payment",
+      "Cambiar estado de tratamiento": "Change treatment status",
+      "Abrir expediente clínico": "Open patient record",
+      "Crear tratamiento": "Create treatment",
+      "Editar tratamiento": "Edit treatment",
+      "Eliminar tratamiento": "Delete treatment",
+      "Guardar tratamiento": "Save treatment",
+      "Registrar gasto": "Record expense",
+      "Editar gasto": "Edit expense",
+      "Eliminar gasto": "Delete expense",
+      "Registrar comisión": "Record commission",
+      "Editar comisión": "Edit commission",
+      "Eliminar comisión": "Delete commission",
+      "Iniciar sesión": "Sign in",
+      "Cerrar sesión": "Sign out",
+      "Crear usuario": "Create user",
+      "Editar usuario": "Edit user",
+      "Desactivar usuario": "Deactivate user",
+      "Activar usuario": "Activate user",
+      "Crear doctor": "Create doctor",
+      "Editar doctor": "Edit doctor",
+      "Eliminar doctor": "Delete doctor",
     };
 
     return traducciones[valor] || valor;
@@ -244,7 +276,8 @@ export default function BitacoraConfig() {
     }
 
     return valor
-      .replace(/Presupuesto ID:/g, "Estimate ID:")
+      .replace(/Cierre de sesiones en otros dispositivos solicitado correctamente\./g, "Sign-out of sessions on other devices successfully requested.")
+       .replace(/Presupuesto ID:/g, "Estimate ID:")
       .replace(/Paciente ID:/g, "Patient ID:")
       .replace(/Paciente:/g, "Patient:")
       .replace(/Clínica:/g, "Clinic:")
@@ -256,7 +289,26 @@ export default function BitacoraConfig() {
       .replace(/Fecha:/g, "Date:")
       .replace(/Hora:/g, "Time:")
       .replace(/Doctor:/g, "Doctor:")
-      .replace(/Estado:/g, "Status:");
+      .replace(/Estado:/g, "Status:")
+      .replace(/Tratamiento ID:/g, "Treatment ID:")
+      .replace(/Tratamiento:/g, "Treatment:")
+      .replace(/Nuevo estado:/g, "New status:")
+      .replace(/Configuración de pago ID:/g, "Payment setting ID:")
+      .replace(/Configuración de pago:/g, "Payment setting:")
+      .replace(/Cobro real:/g, "Actual payment:")
+      .replace(/Cobro:/g, "Payment:")
+      .replace(/Método:/g, "Method:")
+      .replace(/Monto:/g, "Amount:")
+      .replace(/Moneda:/g, "Currency:")
+      .replace(/Tipo de cambio:/g, "Exchange rate:")
+      .replace(/Finalizado/g, "Completed")
+      .replace(/En proceso/g, "In progress")
+      .replace(/Pendiente/g, "Pending")
+      .replace(/Cancelado/g, "Cancelled")
+      .replace(/Efectivo/g, "Cash")
+      .replace(/Transferencia/g, "Bank transfer")
+      .replace(/Tarjeta de crédito/g, "Credit card")
+      .replace(/Tarjeta de débito/g, "Debit card");
 
   }
 

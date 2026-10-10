@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLanguage } from "../../context/LanguageContext";
 
 import type {
   ConfiguracionPago,
@@ -37,6 +38,27 @@ export default function ConfiguracionPagos({
   ] = useState<number | null>(
     null
   );
+
+  const { language } = useLanguage();
+  const es = language === "es";
+
+  const traducirMetodo = (metodo: string) => {
+    const clave = metodo.trim().toLowerCase();
+    const metodos: Record<string, [string, string]> = {
+      efectivo: ["Efectivo", "Cash"],
+      cash: ["Efectivo", "Cash"],
+      transferencia: ["Transferencia", "Bank Transfer"],
+      "bank transfer": ["Transferencia", "Bank Transfer"],
+      tarjeta: ["Tarjeta", "Card"],
+      card: ["Tarjeta", "Card"],
+      "credit card": ["Tarjeta de crédito", "Credit Card"],
+      "debit card": ["Tarjeta de débito", "Debit Card"],
+      "tarjeta de crédito": ["Tarjeta de crédito", "Credit Card"],
+      "tarjeta de débito": ["Tarjeta de débito", "Debit Card"],
+    };
+    const nombres = metodos[clave];
+    return nombres ? nombres[es ? 0 : 1] : metodo;
+  };
 
   async function actualizar(
     pago: ConfiguracionPago,
@@ -92,23 +114,24 @@ export default function ConfiguracionPagos({
             justify-between
             gap-4
             border-b
-            border-[var(--mint-border-teal)]
-            bg-[linear-gradient(90deg,#eaf8f5_0%,#f8fbfa_72%,#ffffff_100%)]
+            border-[#12a99b]
+            border-b-[3px]
             px-6
             py-5
           "
+          style={{ background: "linear-gradient(105deg, #12334e 0%, #1b5265 52%, #0a8b7f 100%)" }}
         >
           <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[var(--mint-teal)]">
-              Configuración financiera
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#a3f1e5]">
+              {es ? "Configuración financiera" : "Financial settings"}
             </p>
 
-            <h2 className="mt-1 text-xl font-bold text-[var(--mint-navy)]">
-              Métodos de pago
+            <h2 className="mt-1 text-xl font-bold text-white">
+              {es ? "Métodos de pago" : "Payment methods"}
             </h2>
 
-            <p className="mt-1 text-sm text-[var(--mint-text-secondary)]">
-              Activa los métodos disponibles y configura sus comisiones bancarias.
+            <p className="mt-1 text-sm text-[#dceef0]">
+              {es ? "Activa los métodos disponibles y configura sus comisiones bancarias." : "Enable available payment methods and configure their processing fees."}
             </p>
           </div>
 
@@ -126,7 +149,7 @@ export default function ConfiguracionPagos({
               shadow-sm
             "
           >
-            {configuracionPagos.filter((pago) => pago.activo).length} activos
+            {configuracionPagos.filter((pago) => pago.activo).length} {es ? "activos" : "active"}
           </div>
         </div>
 
@@ -135,12 +158,12 @@ export default function ConfiguracionPagos({
 
             <thead className="mint-table-head">
               <tr>
-                <th className="p-3 text-left">Método</th>
-                <th className="p-3 text-center">Disponible</th>
-                <th className="p-3 text-center">Comisión</th>
-                <th className="p-3 text-left">Comisión %</th>
-                <th className="p-3 text-left">IVA comisión %</th>
-                <th className="p-3 text-left">Estado</th>
+                <th className="p-3 text-left">{es ? "Método" : "Method"}</th>
+                <th className="p-3 text-center">{es ? "Disponible" : "Available"}</th>
+                <th className="p-3 text-center">{es ? "Comisión" : "Fee"}</th>
+                <th className="p-3 text-left">{es ? "Comisión %" : "Fee %"}</th>
+                <th className="p-3 text-left">{es ? "IVA comisión %" : "Fee VAT %"}</th>
+                <th className="p-3 text-left">{es ? "Estado" : "Status"}</th>
               </tr>
             </thead>
 
@@ -171,11 +194,11 @@ export default function ConfiguracionPagos({
                           text-[var(--mint-teal)]
                         "
                       >
-                        {pago.metodo?.trim().charAt(0).toUpperCase() || "P"}
+                        {traducirMetodo(pago.metodo || "").trim().charAt(0).toUpperCase() || "P"}
                       </div>
 
                       <span className="font-bold text-[var(--mint-navy)]">
-                        {pago.metodo}
+                        {traducirMetodo(pago.metodo || "")}
                       </span>
                     </div>
                   </td>
@@ -345,15 +368,15 @@ export default function ConfiguracionPagos({
                   <td className="p-3">
                     {guardandoId === pago.id ? (
                       <span className="mint-badge mint-badge-info">
-                        Guardando...
+                        {es ? "Guardando..." : "Saving..."}
                       </span>
                     ) : pago.activo ? (
                       <span className="mint-badge mint-badge-success">
-                        Activo
+                        {es ? "Activo" : "Active"}
                       </span>
                     ) : (
                       <span className="mint-badge mint-badge-muted">
-                        Inactivo
+                        {es ? "Inactivo" : "Inactive"}
                       </span>
                     )}
                   </td>
@@ -399,14 +422,13 @@ export default function ConfiguracionPagos({
 
           <div>
             <h3 className="font-bold text-[var(--mint-navy)]">
-              Cómo funciona
+              {es ? "Cómo funciona" : "How it works"}
             </h3>
 
             <p className="mt-1 max-w-4xl text-sm leading-6 text-[var(--mint-text-secondary)]">
-              Los métodos sin comisión no generan ningún cargo adicional.
-              Cuando un método tiene comisión activa, MintOS utiliza el
-              porcentaje configurado y su IVA para calcular automáticamente
-              el costo bancario del cobro.
+              {es
+                ? "Los métodos sin comisión no generan ningún cargo adicional. Cuando un método tiene comisión activa, MintOS utiliza el porcentaje configurado y su IVA para calcular automáticamente el costo bancario del cobro."
+                : "Payment methods without a fee do not generate additional charges. When a fee is enabled, MintOS uses the configured percentage and its VAT to automatically calculate the processing cost of the payment."}
             </p>
           </div>
         </div>

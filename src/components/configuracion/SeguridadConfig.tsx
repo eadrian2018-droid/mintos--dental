@@ -20,6 +20,9 @@ import { supabase }
 import { useLanguage }
   from "../../context/LanguageContext";
 
+import { registrarBitacora }
+  from "../../lib/registrarBitacora";
+
 type DatosSesion = {
   email: string;
   expiracion: string;
@@ -186,6 +189,16 @@ export default function SeguridadConfig() {
 
     }
 
+    try {
+      await registrarBitacora({
+        accion: "Cerrar otras sesiones",
+        modulo: "Seguridad",
+        detalle: "Cierre de sesiones en otros dispositivos solicitado correctamente.",
+      });
+    } catch (errorBitacora) {
+      console.error("Error registrando cierre de sesiones en bitácora:", errorBitacora);
+    }
+
     alert(
       es ? "Las demás sesiones fueron cerradas correctamente." : "The other sessions were signed out successfully."
     );
@@ -263,6 +276,16 @@ export default function SeguridadConfig() {
 
       return;
 
+    }
+
+    try {
+      await registrarBitacora({
+        accion: "Cambiar contraseña",
+        modulo: "Seguridad",
+        detalle: "Contraseña de la cuenta actualizada correctamente.",
+      });
+    } catch (errorBitacora) {
+      console.error("Error registrando cambio de contraseña en bitácora:", errorBitacora);
     }
 
     setNuevaPassword("");
@@ -519,10 +542,10 @@ export default function SeguridadConfig() {
             className="
               rounded-[20px]
               border
-              border-[var(--mint-border)]
-              bg-white
+              !border-[#287b82]
+              !bg-[linear-gradient(115deg,#102f4f_0%,#1b4f68_52%,#168a80_100%)]
               p-5
-              shadow-[0_6px_18px_rgba(15,42,65,0.035)]
+              shadow-[0_10px_24px_rgba(8,42,57,0.16)]
             "
           >
 
@@ -550,10 +573,10 @@ export default function SeguridadConfig() {
                     w-10
                     h-10
                     rounded-xl
-                    bg-[var(--mint-warning-bg)]
-                    text-[var(--mint-warning)]
+                    !bg-[#edac54]/15
+                    !text-[#ffca78]
                     border
-                    border-[var(--mint-warning-border)]
+                    !border-[#e9b76b]/35
                     flex
                     items-center
                     justify-center
@@ -572,7 +595,7 @@ export default function SeguridadConfig() {
                   <h2
                     className="
                       font-bold
-                      mint-text-primary
+                      !text-white
                     "
                   >
                     {es ? "Otras sesiones" : "Other sessions"}
@@ -581,7 +604,7 @@ export default function SeguridadConfig() {
                   <p
                     className="
                       text-sm
-                      mint-text-secondary
+                      !text-[#d2e7ea]
                       mt-1
                       max-w-xl
                     "
@@ -603,7 +626,10 @@ export default function SeguridadConfig() {
                 }
                 className="
                   mint-btn
-                  mint-btn-neutral
+                  !border !border-white/25
+                  !bg-white/15 !text-white
+                  hover:!bg-white/25 hover:!border-white/45
+                  transition-colors
                   flex-shrink-0
                   inline-flex
                   items-center
