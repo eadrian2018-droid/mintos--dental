@@ -26,6 +26,8 @@ import { useAuth }
 import { useLanguage }
   from "../../context/LanguageContext";
 
+import { calcularComisionNeta } from "../../lib/comisionNeta";
+
 import { registrarBitacora }
   from "../../lib/registrarBitacora";
 
@@ -34,6 +36,9 @@ type PagoComision = {
   tratamiento_id?: number;
   moneda?: string;
   monto_original?: number;
+  monto_mxn?: number;
+  tipo_cambio?: number | null;
+  comision_banco?: number;
   comision_doctor_porcentaje?: number | null;
   comision_doctor_pagada?: boolean;
   comision_doctor_fecha_pago?: string | null;
@@ -252,30 +257,20 @@ export default function Comisiones({
                     )
                 );
 
-              const calcularComision =
-                (pago: PagoComision) => {
-
-                  const porcentaje =
-                    pago.comision_doctor_porcentaje !==
-                      null &&
-                    pago.comision_doctor_porcentaje !==
-                      undefined
-                      ? Number(
-                          pago.comision_doctor_porcentaje
-                        )
-                      : Number(
-                          doctor.porcentaje || 0
-                        );
-
-                  return (
-                    Number(
-                      pago.monto_original || 0
-                    ) *
-                    porcentaje /
-                    100
-                  );
-
-                };
+              const calcularComision = (pago: PagoComision) => {
+                const tratamiento = finalizados.find(
+                  (item) => Number(item.id) === Number(pago.tratamiento_id)
+                );
+                if (!tratamiento) return 0;
+                // Las comisiones ya liquidadas conservan su importe histórico.
+                if (pago.comision_doctor_pagada === true) {
+                  return pago.comision_doctor_pago_moneda === pago.moneda
+                    ? Number(pago.comision_doctor_pago_monto || 0) : 0;
+                }
+                return calcularComisionNeta(
+                  pago, tratamiento, Number(doctor.porcentaje || 0)
+                ) ?? 0;
+              };
 
               const pagosMXN =
                 pagosDoctor.filter(
@@ -290,19 +285,13 @@ export default function Comisiones({
                 );
 
               const comisionMXN =
-                pagosMXN.reduce(
-                  (total, pago) =>
-                    total +
-                    calcularComision(pago),
-                  0
+                pagosMXN.filter(pago => !pago.comision_doctor_pagada).reduce(
+                  (total, pago) => total + calcularComision(pago), 0
                 );
 
               const comisionUSD =
-                pagosUSD.reduce(
-                  (total, pago) =>
-                    total +
-                    calcularComision(pago),
-                  0
+                pagosUSD.filter(pago => !pago.comision_doctor_pagada).reduce(
+                  (total, pago) => total + calcularComision(pago), 0
                 );
 
               const pagadoMXN =
@@ -349,12 +338,12 @@ export default function Comisiones({
                 pagadoUSD,
                 pendienteMXN:
                   Math.max(
-                    comisionMXN - pagadoMXN,
+                    comisionMXN,
                     0
                   ),
                 pendienteUSD:
                   Math.max(
-                    comisionUSD - pagadoUSD,
+                    comisionUSD,
                     0
                   ),
                 pagosDoctor,
@@ -533,185 +522,61 @@ export default function Comisiones({
       0
     );
 
+  // Fase 1D: la liquidación se ejecuta exclusivamente en una RPC transaccional.
+  // El servidor verifica permisos, costos, autorización, saldos e idempotencia.
   async function registrarPagoDoctor() {
+    if (!doctorPago?.doctor?.id || guardando) return;
 
-    if (!doctorPago?.doctor?.id) return;
-
-    const monto =
-      Number(
-        montoPagoDoctor
-      );
-
-    if (
-      !Number.isFinite(monto) ||
-      monto <= 0
-    ) {
+    const monto = Number(montoPagoDoctor);
+    if (!Number.isFinite(monto) || monto <= 0) {
       alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
       return;
     }
 
     const monedaPago =
-      formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
+      formaPagoDoctor === "USD" ||
+      (formaPagoDoctor === "Transferencia" && !mostrarMXN)
         ? "USD"
         : "MXN";
+    const metodoPago = formaPagoDoctor === "Transferencia"
+      ? "Transferencia"
+      : "Efectivo";
 
-    const metodoPago =
-      formaPagoDoctor === "Transferencia"
-        ? "Transferencia"
-        : "Efectivo";
-
-    const pendiente =
-      monedaPago === "USD"
-        ? Number(doctorPago.pendienteUSD || 0)
-        : Number(doctorPago.pendienteMXN || 0);
-
-    if (monto > pendiente + 0.01) {
-      alert(
-        tr("La cantidad no puede ser mayor a la comisión pendiente.", "The amount cannot exceed the outstanding commission.")
-      );
-      return;
-    }
-
-    /*
-      Cada fila de pagos representa una comisión generada.
-      Con el esquema actual la marcamos pagada por fila,
-      igual que el tratamiento del especialista se liquida
-      como una obligación completa.
-    */
-    const pagosPendientes =
-      doctorPago.pagosDoctor.filter(
-        (pago: PagoComision) =>
-          pago.moneda === monedaPago
-          &&
-          pago.comision_doctor_pagada !== true
-      );
-
-    const totalPendienteFilas =
-      pagosPendientes.reduce(
-        (
-          total: number,
-          pago: PagoComision
-        ) => {
-
-          const porcentaje =
-            pago.comision_doctor_porcentaje !==
-              null &&
-            pago.comision_doctor_porcentaje !==
-              undefined
-              ? Number(
-                  pago.comision_doctor_porcentaje
-                )
-              : Number(
-                  doctorPago.doctor.porcentaje || 0
-                );
-
-          return (
-            total +
-            (
-              Number(
-                pago.monto_original || 0
-              ) *
-              porcentaje /
-              100
-            )
-          );
-
-        },
-        0
-      );
-
-    if (
-      Math.abs(
-        monto -
-        totalPendienteFilas
-      ) > 0.01
-    ) {
-      alert(
-        tr(`Para mantener el control exacto por cobro, paga la comisión pendiente completa: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`, `To keep payment records accurate, pay the full outstanding commission: $${formatoMonto(totalPendienteFilas)} ${monedaPago}.`)
-      );
-      return;
-    }
-
+    // No calcular ni distribuir importes desde el navegador: el servidor
+    // determina el neto real y rechaza cualquier discrepancia.
+    const claveIdempotencia = crypto.randomUUID();
     setGuardando(true);
-
-    const fechaPago =
-      new Date().toISOString();
-
-    for (
-      const pago of
-      pagosPendientes
-    ) {
-
-      const porcentajePago =
-        pago.comision_doctor_porcentaje !==
-          null &&
-        pago.comision_doctor_porcentaje !==
-          undefined
-          ? Number(
-              pago.comision_doctor_porcentaje
-            )
-          : Number(
-              doctorPago.doctor.porcentaje || 0
-            );
-
-      const montoComision =
-        Number(
-          pago.monto_original || 0
-        ) *
-        porcentajePago /
-        100;
-
-      const { error } =
-        await supabase
-          .from("pagos")
-          .update({
-            comision_doctor_pagada:
-              true,
-            comision_doctor_fecha_pago:
-              fechaPago,
-            comision_doctor_metodo_pago:
-              metodoPago,
-            comision_doctor_pago_moneda:
-              monedaPago,
-            comision_doctor_pago_monto:
-              montoComision,
-          })
-          .eq(
-            "id",
-            pago.id
-          );
-
-      if (error) {
-
-        setGuardando(false);
-
-        console.error(
-          "Error registrando pago de comisión:",
-          error
-        );
-
-        alert(
-          tr("No se pudo registrar el pago de la comisión.", "The commission payment could not be recorded.")
-        );
-
-        return;
-
-      }
-
+    try {
+      const { data, error } = await supabase.rpc(
+        "mintos_liquidar_comision_doctor",
+        {
+          p_doctor_id: Number(doctorPago.doctor.id),
+          p_moneda: monedaPago,
+          p_monto: monto,
+          p_metodo_pago: metodoPago,
+          p_clave_idempotencia: claveIdempotencia,
+        }
+      );
+      if (error) throw error;
+      await registrarBitacora({
+        accion: "Pagar comisión a doctor",
+        modulo: "Comisiones",
+        detalle: `Liquidación ID: ${data} | Doctor ID: ${doctorPago.doctor.id} | ${monto} ${monedaPago} | ${metodoPago}`,
+      });
+      setDoctorPago(null);
+      setMontoPagoDoctor("");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error liquidando comisión:", error);
+      alert(tr(
+        "No se registró la liquidación. Verifica costos, autorización y el importe neto. " +
+          (error instanceof Error ? error.message : ""),
+        "Settlement was not recorded. Check costs, authorization and net amount. " +
+          (error instanceof Error ? error.message : "")
+      ));
+    } finally {
+      setGuardando(false);
     }
-
-    await registrarBitacora({
-      accion: "Pagar comisión a doctor",
-      modulo: "Comisiones",
-      detalle:
-        `Doctor ID: ${doctorPago.doctor.id} | Doctor: ${doctorPago.doctor.nombre || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago} | Registros liquidados: ${pagosPendientes.length}`,
-    });
-
-    setGuardando(false);
-    setDoctorPago(null);
-    setMontoPagoDoctor("");
-    window.location.reload();
-
   }
 
   async function registrarPagoEspecialista() {

@@ -1058,7 +1058,7 @@ export default function Finanzas() {
             }
 
             pagos={
-              pagosFiltrados
+              pagos
             }
 
             setDoctorDetalle={
@@ -1092,7 +1092,7 @@ export default function Finanzas() {
             }
 
             pagos={
-              pagosFiltrados
+              pagos
             }
 
             onClose={() =>

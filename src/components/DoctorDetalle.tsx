@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../lib/supabase";
+import { calcularComisionNeta } from "../lib/comisionNeta";
 
 import type {
   Doctor,
@@ -25,6 +26,8 @@ type PagoDoctorDetalle = {
   moneda?: string;
 
   monto_original?: number;
+  monto_mxn?: number;
+  tipo_cambio?: number | null;
 
   comision_banco?: number;
 
@@ -194,8 +197,8 @@ export default function DoctorDetalle({
   const tratamientosDoctor =
     tratamientos.filter(
       (tratamiento) =>
-        tratamiento.doctor_id ===
-        doctor.id
+        Number(tratamiento.doctor_id) ===
+        Number(doctor.id)
     );
 
    const detalleTratamientos =
@@ -214,8 +217,8 @@ export default function DoctorDetalle({
         const pagosTratamiento =
           pagos.filter(
             (pago) =>
-              pago.tratamiento_id ===
-              tratamiento.id
+              Number(pago.tratamiento_id) ===
+              Number(tratamiento.id)
           );
 
         const pagadoMXN =
@@ -264,15 +267,14 @@ export default function DoctorDetalle({
             ? pagadoUSD
             : 0;
 
-        const comisionMXN =
-          baseClinicaMXN *
-          porcentaje /
-          100;
-
-        const comisionUSD =
-          baseClinicaUSD *
-          porcentaje /
-          100;
+        const comisionMXN = tratamientoFinalizado
+          ? pagosTratamiento.filter(pago => pago.moneda === "MXN" && !pago.comision_doctor_pagada)
+              .reduce((total, pago) => total + (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0), 0)
+          : 0;
+        const comisionUSD = tratamientoFinalizado
+          ? pagosTratamiento.filter(pago => pago.moneda === "USD" && !pago.comision_doctor_pagada)
+              .reduce((total, pago) => total + (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0), 0)
+          : 0;
 
         const paciente =
           pacientes.find(
@@ -437,15 +439,10 @@ export default function DoctorDetalle({
         doctor.porcentaje || 0
       );
 
-const montoCobro =
-  Number(
-    pago.monto_original || 0
-  );
-
-const comisionGenerada =
-  montoCobro *
-  porcentaje /
-  100;
+const montoCobro = Number(pago.monto_original || 0);
+const comisionGenerada = pago.comision_doctor_pagada
+  ? Number(pago.comision_doctor_pago_monto || 0)
+  : (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0);
 
           const moneda =
             pago.moneda === "USD"
@@ -543,15 +540,13 @@ const comisionGenerada =
 
   const comisionPendienteMXN =
     Math.max(
-      totalComisionMXN -
-      comisionPagadaMXN,
+      totalComisionMXN,
       0
     );
 
   const comisionPendienteUSD =
     Math.max(
-      totalComisionUSD -
-      comisionPagadaUSD,
+      totalComisionUSD,
       0
     );
 
