@@ -123,7 +123,7 @@ export default function PresupuestosPage() {
 
     cargarDatos();
 
-  }, []);
+  }, [puedeVerPresupuestos]);
 
   async function cargarDatos() {
 

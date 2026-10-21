@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useSearchParams } from "react-router-dom";
 
@@ -65,7 +65,7 @@ type Paciente = {
 
 export default function Pacientes() {
 
-  const { permisos } = useAuth();
+  const { permisos, perfil } = useAuth();
 
   const { language } = useLanguage();
 
@@ -73,6 +73,11 @@ export default function Pacientes() {
     useSearchParams();
 
   const es = language === "es";
+
+  // FIN-01: conservar el ID en reintentos; renovarlo solo tras éxito confirmado.
+  const solicitudCobroPendienteRef = useRef<{ id: string; payload: string } | null>(null);
+  const cobroEnCursoRef = useRef(false);
+
 
   function textoEstado(valor: any) {
     const estado = String(valor || "").toLowerCase();
@@ -131,15 +136,12 @@ export default function Pacientes() {
   }
 
   const puedeRegistrarCobros =
+    perfil?.rol === "admin" ||
     permisos?.registrar_cobros === true;
 
   const puedeAplicarDescuentos =
-    (
-      permisos as
-        | Record<string, boolean>
-        | null
-        | undefined
-    )?.aplicar_descuentos === true;
+    perfil?.rol === "admin" ||
+    permisos?.aplicar_descuentos === true;
 
   const puedeAnularTratamientos =
     permisos?.anular_tratamientos === true;
@@ -555,7 +557,7 @@ async function cargarTipoCambio() {
     .select("valor")
     .eq(
       "clave",
-      "tipo_cambio_usd_mxn"
+      "tipo_cambio"
     )
     .maybeSingle();
 
@@ -1547,7 +1549,7 @@ async function abrirModalCobro(
 
     .eq(
       "clave",
-      "tipo_cambio_usd_mxn"
+      "tipo_cambio"
     )
 
     .maybeSingle();
@@ -1579,27 +1581,16 @@ async function abrirModalCobro(
     tratamiento.moneda ||
     "MXN";
 
-  const montoInicial =
-    String(
-      Math.max(
-        Number(
-          tratamiento.resta_original ??
-          (
-            Number(
-              tratamiento.total_original ??
-              tratamiento.total ??
-              0
-            ) -
-            Number(
-              tratamiento.pagado_original ??
-              tratamiento.pagado ??
-              0
-            )
-          )
-        ),
-        0
-      )
-    );
+  // Para tratamientos MXN, el saldo contable es `pendiente`.
+  // `resta_original` solo representa unidades originales en tratamientos USD.
+  const pendienteMonedaTratamiento =
+    monedaInicial === "USD"
+      ? Number(tratamiento.resta_original ??
+          Math.max(Number(tratamiento.total_original ?? 0) - Number(tratamiento.pagado_original ?? 0), 0))
+      : Number(tratamiento.pendiente ??
+          Math.max(Number(tratamiento.total ?? 0) - Number(tratamiento.pagado ?? 0), 0));
+
+  const montoInicial = String(Math.max(pendienteMonedaTratamiento, 0));
 
   setTipoDescuentoCobro(
     "monto"
@@ -1656,28 +1647,21 @@ const monedaPrecioCobro =
   "MXN";
 
 const totalOriginalCobro =
-  Number(
-    tratamientoCobro?.total_original ??
-    tratamientoCobro?.total ??
-    0
-  );
+  Number(monedaPrecioCobro === "USD"
+    ? tratamientoCobro?.total_original ?? tratamientoCobro?.total ?? 0
+    : tratamientoCobro?.total ?? 0);
 
 const pagadoOriginalCobro =
-  Number(
-    tratamientoCobro?.pagado_original ??
-    tratamientoCobro?.pagado ??
-    0
-  );
+  Number(monedaPrecioCobro === "USD"
+    ? tratamientoCobro?.pagado_original ?? tratamientoCobro?.pagado ?? 0
+    : tratamientoCobro?.pagado ?? 0);
 
-const pendienteOriginalCobro =
-  Math.max(
-    Number(
-      tratamientoCobro?.resta_original ??
-      totalOriginalCobro -
-        pagadoOriginalCobro
-    ),
-    0
-  );
+const pendienteOriginalCobro = Math.max(
+  Number(monedaPrecioCobro === "USD"
+    ? tratamientoCobro?.resta_original ?? (totalOriginalCobro - pagadoOriginalCobro)
+    : tratamientoCobro?.pendiente ?? (totalOriginalCobro - pagadoOriginalCobro)),
+  0
+);
 
 const valorDescuentoCobroSeguro =
   Math.max(
@@ -1797,28 +1781,23 @@ async function registrarCobro(
     tratamientoCobro.moneda_precio ||
     "MXN";
 
-  const totalOriginalActual =
-    Number(
-      tratamientoCobro.total_original ??
-      tratamientoCobro.total ??
-      0
-    );
+  const totalOriginalActual = Number(
+    monedaPrecioTratamiento === "USD"
+      ? tratamientoCobro.total_original ?? tratamientoCobro.total ?? 0
+      : tratamientoCobro.total ?? 0
+  );
 
-  const pagadoOriginalAnterior =
-    Number(
-      tratamientoCobro.pagado_original ??
-      0
-    );
+  const pagadoOriginalAnterior = Number(
+    monedaPrecioTratamiento === "USD"
+      ? tratamientoCobro.pagado_original ?? tratamientoCobro.pagado ?? 0
+      : tratamientoCobro.pagado ?? 0
+  );
 
-  const pendienteOriginalAnterior =
-    Math.max(
-      Number(
-        tratamientoCobro.resta_original ??
-        totalOriginalActual -
-          pagadoOriginalAnterior
-      ),
-      0
-    );
+  const pendienteOriginalAnterior = Math.max(Number(
+    monedaPrecioTratamiento === "USD"
+      ? tratamientoCobro.resta_original ?? (totalOriginalActual - pagadoOriginalAnterior)
+      : tratamientoCobro.pendiente ?? (totalOriginalActual - pagadoOriginalAnterior)
+  ), 0);
 
   const valorDescuento =
     Math.max(
@@ -1930,47 +1909,12 @@ async function registrarCobro(
         : montoCobro
       : 0;
 
-  const totalTratamientoActual =
-    Number(
-      tratamientoCobro.total || 0
-    );
-
-  const pagadoAnterior =
-    Number(
-      tratamientoCobro.pagado || 0
-    );
-
-  const descuentoMXNAplicar =
-    totalOriginalActual > 0
-      ? Math.min(
-          totalTratamientoActual *
-            (
-              descuentoOriginalAplicar /
-              totalOriginalActual
-            ),
-          Math.max(
-            totalTratamientoActual -
-              pagadoAnterior,
-            0
-          )
-        )
-      : 0;
-
   const nuevoTotalOriginalTratamiento =
     Number(
       Math.max(
         totalOriginalActual -
           descuentoOriginalAplicar,
         pagadoOriginalAnterior
-      ).toFixed(2)
-    );
-
-  const nuevoTotalTratamiento =
-    Number(
-      Math.max(
-        totalTratamientoActual -
-          descuentoMXNAplicar,
-        pagadoAnterior
       ).toFixed(2)
     );
 
@@ -2010,374 +1954,160 @@ async function registrarCobro(
     return;
   }
 
-  const nuevoPagadoOriginal =
-    nuevoTotalOriginalTratamiento > 0 &&
-    nuevoPagadoOriginalSinAjuste >
-      nuevoTotalOriginalTratamiento
-      ? nuevoTotalOriginalTratamiento
-      : nuevoPagadoOriginalSinAjuste;
+  // FIN-01: registrar el porcentaje vigente como dato historico del cobro.
+  // Un porcentaje ausente NO equivale a una comision legitima de 0%.
+  const doctorIdCobro = tratamientoCobro.doctor_id;
+  const doctorCobro = doctores.find(
+    (doctor: any) =>
+      doctorIdCobro != null &&
+      Number(doctor.id) === Number(doctorIdCobro)
+  );
 
-  const nuevoPendienteOriginal =
-    Math.max(
-      nuevoTotalOriginalTratamiento -
-        nuevoPagadoOriginal,
-      0
-    );
-
-  const nuevoTotalPagado =
-    Math.min(
-      pagadoAnterior +
-        montoCobroMXN,
-      nuevoTotalTratamiento
-    );
-
-  const nuevoPendiente =
-    Math.max(
-      nuevoTotalTratamiento -
-        nuevoTotalPagado,
-      0
-    );
-
-  const totalAntesDescuento =
-    Number(
-      tratamientoCobro.total_antes_descuento ??
-      totalTratamientoActual
-    );
-
-  const totalOriginalAntesDescuento =
-    Number(
-      tratamientoCobro
-        .total_original_antes_descuento ??
-      totalOriginalActual
-    );
-
-  const descuentoAnterior =
-    Number(
-      tratamientoCobro.descuento || 0
-    );
-
-  const descuentoOriginalAnterior =
-    Number(
-      tratamientoCobro.descuento_original || 0
-    );
-
-  const nuevoDescuento =
-    Number(
-      (
-        descuentoAnterior +
-        descuentoMXNAplicar
-      ).toFixed(2)
-    );
-
-  const nuevoDescuentoOriginal =
-    Number(
-      (
-        descuentoOriginalAnterior +
-        descuentoOriginalAplicar
-      ).toFixed(2)
-    );
-
-  const comisionBancoCobro =
-    montoCobro > 0
-      ? comisionBancoActual
-      : 0;
-
-  const comisionBancoAnterior =
-    Number(
-      tratamientoCobro
-        .comision_banco || 0
-    );
-
-  const nuevaComisionBanco =
-    comisionBancoAnterior +
-    comisionBancoCobro;
-
-  const doctorCobro =
-    doctores.find(
-      (doctor: any) =>
-        doctor.id ===
-        tratamientoCobro.doctor_id
-    );
-
-  const porcentajeDoctorCobro =
-    Number(
-      doctorCobro?.porcentaje || 0
-    );
-
-  if (
-    montoCobro > 0
-  ) {
-
-    const {
-      error: errorPago,
-    } = await supabase
-
-      .from(
-        "pagos"
-      )
-
-      .insert({
-
-        paciente_id:
-          pacienteAbierto.id,
-
-        tratamiento_id:
-          tratamientoCobro.id,
-
-        metodo_pago:
-          nuevoCobro.metodo_pago,
-
-        moneda:
-          nuevoCobro.moneda,
-
-        monto_original:
-          montoCobro,
-
-        tipo_cambio:
-          nuevoCobro.moneda === "USD"
-            ? tipoCambioAplicado
-            : null,
-
-        monto_mxn:
-          montoCobroMXN,
-
-        comision_porcentaje:
-          porcentajeComisionActual,
-
-        iva_comision_porcentaje:
-          porcentajeIvaComisionActual,
-
-        comision_base:
-          comisionBaseActual,
-
-        iva_comision:
-          ivaComisionActual,
-
-        comision_banco:
-          comisionBancoCobro,
-
-        neto_recibido:
-          netoCobroActual,
-
-        comision_doctor_porcentaje:
-          porcentajeDoctorCobro,
-
-      });
+  if (montoCobro > 0) {
+    const porcentajeSinRegistrar =
+      doctorCobro?.porcentaje == null ||
+      String(doctorCobro.porcentaje).trim() === "";
 
     if (
-      errorPago
+      doctorIdCobro == null ||
+      !doctorCobro ||
+      porcentajeSinRegistrar ||
+      !Number.isFinite(Number(doctorCobro.porcentaje)) ||
+      Number(doctorCobro.porcentaje) < 0 ||
+      Number(doctorCobro.porcentaje) > 100
     ) {
-
-      console.error(
-        "Error guardando pago:",
-        errorPago
-      );
-
       alert(
-        es ? "Error registrando el pago." : "Error recording payment."
+        es
+          ? "No se puede registrar el cobro: asigna un doctor con porcentaje de comisión válido (0–100%)."
+          : "Cannot record payment: assign a doctor with a valid commission rate (0–100%)."
       );
-
       return;
     }
-
   }
 
-  const {
-    error: errorTratamiento,
-  } = await supabase
-
-    .from(
-      "tratamientos"
-    )
-
-    .update({
-
-      metodo_pago:
-        montoCobro > 0
-          ? nuevoCobro.metodo_pago
-          : tratamientoCobro.metodo_pago,
-
-      moneda:
-        montoCobro > 0
-          ? nuevoCobro.moneda
-          : tratamientoCobro.moneda,
-
-      tipo_cambio:
-        montoCobro > 0 &&
-        nuevoCobro.moneda === "USD"
-          ? tipoCambioAplicado
-          : tratamientoCobro.tipo_cambio,
-
-      equivalente_mxn:
-        montoCobro > 0
-          ? montoCobroMXN
-          : tratamientoCobro.equivalente_mxn,
-
-      laboratorio:
-        Number(
-          nuevoCobro.laboratorio || 0
-        ),
-
-      especialista:
-        Number(
-          nuevoCobro.especialista || 0
-        ),
-
-      comision_banco:
-        nuevaComisionBanco,
-
-      total_antes_descuento:
-        descuentoOriginalAplicar > 0
-          ? totalAntesDescuento
-          : tratamientoCobro.total_antes_descuento,
-
-      descuento:
-        nuevoDescuento,
-
-      total_original_antes_descuento:
-        descuentoOriginalAplicar > 0
-          ? totalOriginalAntesDescuento
-          : tratamientoCobro
-              .total_original_antes_descuento,
-
-      descuento_original:
-        nuevoDescuentoOriginal,
-
-      total_original:
-        nuevoTotalOriginalTratamiento,
-
-      pagado_original:
-        nuevoPagadoOriginal,
-
-      resta_original:
-        nuevoPendienteOriginal,
-
-      total:
-        nuevoTotalTratamiento,
-
-      pago:
-        nuevoTotalPagado,
-
-      resta:
-        nuevoPendiente,
-
-      pendiente:
-        nuevoPendiente > 0,
-
-    })
-
-    .eq(
-      "id",
-      tratamientoCobro.id
-    );
-
+  // FIN-01: los costos clinicos se editan desde el tratamiento, no desde el cobro.
+  // Evita sobrescribir validaciones clinicas durante una operacion financiera.
   if (
-    errorTratamiento
+    Number(nuevoCobro.laboratorio || 0) !== Number(tratamientoCobro.laboratorio || 0) ||
+    Number(nuevoCobro.especialista || 0) !== Number(tratamientoCobro.especialista || 0)
   ) {
-
-    console.error(
-      "Error actualizando tratamiento:",
-      errorTratamiento
-    );
-
-    alert(
-      montoCobro > 0
-        ? es ? "El pago se registró, pero ocurrió un error actualizando el tratamiento." : "The payment was recorded, but the treatment could not be updated."
-        : es ? "Ocurrió un error aplicando el descuento." : "An error occurred while applying the discount."
-    );
-
+    alert(es
+      ? "Los costos clinicos deben guardarse desde la edicion del tratamiento antes de cobrar."
+      : "Save clinical costs in treatment editing before recording a payment.");
     return;
   }
 
-  setTratamientos(
+  // FIN-01: el servidor registra el cobro/descuento y actualiza el saldo
+  // en una sola transacción. Nunca insertar en pagos desde el navegador.
+  // Impide solicitudes simultáneas y doble clic sobre el mismo cobro.
+  if (cobroEnCursoRef.current) return;
+  cobroEnCursoRef.current = true;
+  try {
+  const payloadCobro = JSON.stringify({
+    tratamiento: tratamientoCobro.id, paciente: pacienteAbierto.id,
+    modo, montoCobro, moneda: nuevoCobro.moneda,
+    metodo: nuevoCobro.metodo_pago, tipoDescuentoCobro, valorDescuento,
+    tipoCambioCobro,
+  });
+  if (solicitudCobroPendienteRef.current?.payload !== payloadCobro) {
+    solicitudCobroPendienteRef.current = {
+      id: crypto.randomUUID(), payload: payloadCobro,
+    };
+  }
 
-    tratamientos.map(
-      (
-        tratamiento
-      ) =>
-
-        tratamiento.id ===
-        tratamientoCobro.id
-
-          ? {
-
-              ...tratamiento,
-
-              metodo_pago:
-                montoCobro > 0
-                  ? nuevoCobro.metodo_pago
-                  : tratamiento.metodo_pago,
-
-              moneda:
-                montoCobro > 0
-                  ? nuevoCobro.moneda
-                  : tratamiento.moneda,
-
-              tipo_cambio:
-                montoCobro > 0 &&
-                nuevoCobro.moneda === "USD"
-                  ? tipoCambioAplicado
-                  : tratamiento.tipo_cambio,
-
-              equivalente_mxn:
-                montoCobro > 0
-                  ? montoCobroMXN
-                  : tratamiento.equivalente_mxn,
-
-              laboratorio:
-                Number(
-                  nuevoCobro.laboratorio || 0
-                ),
-
-              especialista:
-                Number(
-                  nuevoCobro.especialista || 0
-                ),
-
-              comision_banco:
-                nuevaComisionBanco,
-
-              total_antes_descuento:
-                descuentoOriginalAplicar > 0
-                  ? totalAntesDescuento
-                  : tratamiento.total_antes_descuento,
-
-              descuento:
-                nuevoDescuento,
-
-              total_original_antes_descuento:
-                descuentoOriginalAplicar > 0
-                  ? totalOriginalAntesDescuento
-                  : tratamiento
-                      .total_original_antes_descuento,
-
-              descuento_original:
-                nuevoDescuentoOriginal,
-
-              total_original:
-                nuevoTotalOriginalTratamiento,
-
-              pagado_original:
-                nuevoPagadoOriginal,
-
-              resta_original:
-                nuevoPendienteOriginal,
-
-              total:
-                nuevoTotalTratamiento,
-
-              pagado:
-                nuevoTotalPagado,
-
-              pendiente:
-                nuevoPendiente,
-
-            }
-
-          : tratamiento
-    )
-
+  const { data: resultadoCobro, error: errorCobroAtomico } = await supabase.rpc(
+    "mintos_registrar_cobro_v2",
+    {
+      p_solicitud_id: solicitudCobroPendienteRef.current.id,
+      p_tratamiento_id: tratamientoCobro.id,
+      p_paciente_id: pacienteAbierto.id,
+      p_modo: modo,
+      p_monto: modo === "cobro" ? montoCobro : 0,
+      p_moneda: nuevoCobro.moneda,
+      p_metodo_pago: modo === "cobro" ? nuevoCobro.metodo_pago : null,
+      p_tipo_descuento: tipoDescuentoCobro,
+      p_valor_descuento: modo === "descuento" ? valorDescuento : 0,
+      p_laboratorio: null,
+      p_especialista: null,
+      p_tipo_cambio_confirmado:
+        nuevoCobro.moneda === "USD" || monedaPrecioTratamiento === "USD"
+          ? tipoCambioCobro
+          : null,
+    }
   );
+
+  if (errorCobroAtomico || !resultadoCobro) {
+    console.error("Error en cobro transaccional:", errorCobroAtomico);
+    alert(es
+      ? "No se pudo completar la operación. Verifica los datos antes de reintentar."
+      : "The operation could not be completed. Verify the details before retrying.");
+    // No regenerar ID: reintentar la misma operación evita duplicados.
+    return;
+  }
+
+  // La RPC devuelve JSONB: validar el contrato antes de actualizar el estado local.
+  // Si el servidor confirmó pero la respuesta es inválida, conservar el ID para reintentar
+  // de forma idempotente y evitar mostrar un saldo inventado.
+  const saldoServidor = Number(resultadoCobro.saldo_original);
+  if (
+    Number(resultadoCobro.tratamiento_id) !== Number(tratamientoCobro.id) ||
+    resultadoCobro.modo !== modo ||
+    resultadoCobro.solicitud_id !== solicitudCobroPendienteRef.current?.id ||
+    resultadoCobro.saldo_original == null ||
+    !Number.isFinite(saldoServidor) ||
+    saldoServidor < 0
+  ) {
+    console.error("Respuesta de cobro no válida:", resultadoCobro);
+    alert(es
+      ? "El servidor devolvió una respuesta inesperada. Actualiza los datos antes de continuar."
+      : "The server returned an unexpected response. Refresh the data before continuing.");
+    return;
+  }
+
+  // El cobro ya fue confirmado por PostgreSQL. Consultar la fila persistida
+  // evita reconstruir saldos desde cálculos locales que pueden usar otro FX.
+  const { data: tratamientoConfirmado, error: errorRecargaCobro } =
+    await supabase
+      .from("tratamientos")
+      .select("*")
+      .eq("id", tratamientoCobro.id)
+      .eq("paciente_id", pacienteAbierto.id)
+      .single();
+
+  if (errorRecargaCobro || !tratamientoConfirmado) {
+    console.error("Cobro confirmado, pero no se pudo recargar el tratamiento:", errorRecargaCobro);
+    alert(es
+      ? "La operación quedó registrada, pero no se pudo actualizar la pantalla. No vuelvas a cobrar: recarga la página para consultar el saldo."
+      : "The operation was recorded, but the screen could not refresh. Do not charge again: reload the page to see the balance.");
+    // Conservar el ID: un reintento idéntico devuelve la operación anterior.
+    return;
+  }
+
+  if (
+    Number(tratamientoConfirmado.id) !== Number(tratamientoCobro.id) ||
+    Number(tratamientoConfirmado.paciente_id) !== Number(pacienteAbierto.id) ||
+    tratamientoConfirmado.resta_original == null ||
+    !Number.isFinite(Number(tratamientoConfirmado.resta_original)) ||
+    Math.abs(Number(tratamientoConfirmado.resta_original) - saldoServidor) > 0.01
+  ) {
+    console.error("El saldo persistido no coincide con la confirmación RPC:", {
+      resultadoCobro, tratamientoConfirmado,
+    });
+    alert(es
+      ? "La operación quedó registrada, pero el saldo requiere verificación. Recarga la página antes de continuar."
+      : "The operation was recorded, but the balance needs verification. Reload the page before continuing.");
+    return;
+  }
+
+  // Únicamente el registro persistido es fuente de verdad para la UI.
+  setTratamientos((anteriores) =>
+    anteriores.map((tratamiento) =>
+      Number(tratamiento.id) === Number(tratamientoConfirmado.id)
+        ? { ...tratamiento, ...tratamientoConfirmado }
+        : tratamiento
+    )
+  );
+  solicitudCobroPendienteRef.current = null;
 
   setMostrarModalCobro(
     false
@@ -2411,18 +2141,8 @@ async function registrarCobro(
 
   });
 
-  await registrarBitacora({
-    accion:
-      montoCobro > 0 &&
-      descuentoOriginalAplicar > 0
-        ? "Registrar cobro con descuento"
-        : montoCobro > 0
-          ? "Registrar cobro"
-          : "Aplicar descuento",
-    modulo: "Cobros",
-    detalle:
-      `Paciente ID: ${pacienteAbierto.id} | Paciente: ${pacienteAbierto.nombre} | Tratamiento ID: ${tratamientoCobro.id} | Tratamiento: ${tratamientoCobro.tratamiento || "-"} | Descuento: ${descuentoOriginalAplicar.toFixed(2)} ${monedaPrecioTratamiento} | Cobro real: ${montoCobro.toFixed(2)} ${nuevoCobro.moneda}${montoCobro > 0 ? ` | Método: ${nuevoCobro.metodo_pago}` : ""}`,
-  });
+  // La RPC registra la bitacora en la misma transaccion.
+  // No duplicar aqui el evento con registrarBitacora().
 
   alert(
     montoCobro > 0 &&
@@ -2432,6 +2152,15 @@ async function registrarCobro(
         ? es ? "Cobro registrado correctamente." : "Payment recorded successfully."
         : es ? "Descuento aplicado correctamente." : "Discount applied successfully."
   );
+
+  } catch (errorInesperado) {
+    console.error("Error inesperado en flujo de cobro:", errorInesperado);
+    alert(es
+      ? "No se pudo verificar la operación. Consulta el saldo antes de intentar otro cobro."
+      : "The operation could not be verified. Check the balance before attempting another payment.");
+  } finally {
+    cobroEnCursoRef.current = false;
+  }
 
 }
 
@@ -5118,6 +4847,29 @@ if (abriendoPacienteDesdeUrl) {
 
                                   }
 
+                                  // FIN-01: protección preventiva en interfaz.
+                                  // La protección definitiva requiere FOREIGN KEY en PostgreSQL.
+                                  const { count: cantidadPagos, error: errorPagos } =
+                                    await supabase
+                                      .from("pagos")
+                                      .select("id", { count: "exact", head: true })
+                                      .eq("tratamiento_id", tratamientoEliminar.id);
+
+                                  if (errorPagos || cantidadPagos === null) {
+                                    console.error("No se pudo verificar si existen cobros:", errorPagos);
+                                    alert(es
+                                      ? "No se pudo verificar si el tratamiento tiene cobros. No se eliminará por seguridad."
+                                      : "Could not verify whether this treatment has payments. Deletion was blocked for safety.");
+                                    return;
+                                  }
+
+                                  if (cantidadPagos > 0) {
+                                    alert(es
+                                      ? "Este tratamiento tiene cobros registrados y no puede eliminarse."
+                                      : "This treatment has recorded payments and cannot be deleted.");
+                                    return;
+                                  }
+
                                   const confirmar =
                                     window.confirm(
                                       es ? "¿Seguro que deseas eliminar este tratamiento?" : "Are you sure you want to delete this treatment?"
@@ -6422,21 +6174,13 @@ if (abriendoPacienteDesdeUrl) {
   const nuevaMoneda =
     e.target.value;
 
-  const saldoPendienteMXN =
-    Number(
-      tratamientoCobro
-        ?.pendiente || 0
-    );
-
-  const montoConvertido =
-    nuevaMoneda === "USD"
-      ? (
-          tipoCambioCobro > 0
-            ? saldoPendienteMXN /
-              tipoCambioCobro
-            : 0
-        ).toFixed(2)
-      : saldoPendienteMXN.toFixed(2);
+  // Convertir el monto actualmente ingresado, no restablecerlo al saldo total.
+  const montoActual = Number(nuevoCobro.monto || 0);
+  const montoConvertido = nuevaMoneda === nuevoCobro.moneda
+    ? montoActual
+    : nuevaMoneda === "USD"
+      ? (tipoCambioCobro > 0 ? montoActual / tipoCambioCobro : 0)
+      : montoActual * tipoCambioCobro;
 
   setNuevoCobro({
     ...nuevoCobro,
@@ -6445,7 +6189,7 @@ if (abriendoPacienteDesdeUrl) {
       nuevaMoneda,
 
     monto:
-      montoConvertido,
+      montoConvertido.toFixed(2),
   });
 
 }}
@@ -6780,13 +6524,7 @@ if (abriendoPacienteDesdeUrl) {
                   nuevoCobro
                     .laboratorio
                 }
-                onChange={(e) =>
-                  setNuevoCobro({
-                    ...nuevoCobro,
-                    laboratorio:
-                      e.target.value,
-                  })
-                }
+                readOnly
                 className="
                   mint-input
                   w-full
@@ -6816,13 +6554,7 @@ if (abriendoPacienteDesdeUrl) {
                   nuevoCobro
                     .especialista
                 }
-                onChange={(e) =>
-                  setNuevoCobro({
-                    ...nuevoCobro,
-                    especialista:
-                      e.target.value,
-                  })
-                }
+                readOnly
                 className="
                   mint-input
                   w-full
@@ -7099,138 +6831,51 @@ if (abriendoPacienteDesdeUrl) {
               </strong>
             </div>
 
-       <div
-  className="
-    flex
-    justify-between
-    items-start
-    text-sm
-  "
->
-  <span
-    className="
-      mint-text-secondary
-    "
-  >
-    {es ? "Pendiente" : "Pending"}
-  </span>
-
-  <div
-    className="
-      text-right
-    "
-  >
-    <strong
-      className="
-        block
-        text-[var(--mint-danger)]
-      "
-    >
-      $
-      {
-        Number(
-          tratamientoCobro
-            ?.moneda_precio ===
-          "USD"
-            ? tratamientoCobro
-                ?.resta_original ??
-              tratamientoCobro
-                ?.pendiente ??
-              0
-            : tratamientoCobro
-                ?.pendiente || 0
-        ).toLocaleString(
-          "es-MX",
-          {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          }
-        )
-      }
-      {" "}
-      {
-        tratamientoCobro
-          ?.moneda_precio ||
-        "MXN"
-      }
-    </strong>
-
-    {
-      tipoCambioCobro > 0 &&
-      tratamientoCobro
-        ?.moneda_precio ===
-      "USD" && (
-
-        <span
-          className="
-            block
-            text-xs
-            font-semibold
-            mint-text-secondary
-            mt-1
-          "
-        >
-          ≈ $
-          {(
-            Number(
-              tratamientoCobro
-                ?.resta_original ??
-              tratamientoCobro
-                ?.pendiente ??
-              0
-            ) *
-            tipoCambioCobro
-          ).toLocaleString(
-            "es-MX",
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}
-          {" "}
-          MXN
-        </span>
-
-      )
-    }
-
-    {
-      tipoCambioCobro > 0 &&
-      tratamientoCobro
-        ?.moneda_precio !==
-      "USD" && (
-
-        <span
-          className="
-            block
-            text-xs
-            font-semibold
-            mint-text-secondary
-            mt-1
-          "
-        >
-          ≈ $
-          {(
-            Number(
-              tratamientoCobro
-                ?.pendiente || 0
-            ) /
-            tipoCambioCobro
-          ).toLocaleString(
-            "en-US",
-            {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }
-          )}
-          {" "}
-          USD
-        </span>
-
-      )
-    }
-  </div>
-</div>
+       <div className="flex justify-between items-start text-sm">
+         <span className="mint-text-secondary">
+           {es ? "Pendiente" : "Pending"}
+         </span>
+         {(() => {
+           const monedaTratamiento = tratamientoCobro?.moneda_precio || "MXN";
+           const pendienteOriginal = Math.max(0, Number(
+             monedaTratamiento === "USD"
+               ? (tratamientoCobro?.resta_original ?? tratamientoCobro?.pendiente ?? 0)
+               : (tratamientoCobro?.pendiente ?? 0)
+           ));
+           const monedaSeleccionada = nuevoCobro.moneda;
+           const requiereConversion = monedaSeleccionada !== monedaTratamiento;
+           const cambioValido = Number.isFinite(tipoCambioCobro) && tipoCambioCobro > 0;
+           const pendienteMostrado = !requiereConversion || !cambioValido
+             ? pendienteOriginal
+             : monedaTratamiento === "MXN"
+               ? pendienteOriginal / tipoCambioCobro
+               : pendienteOriginal * tipoCambioCobro;
+           const monedaMostrada = requiereConversion && !cambioValido
+             ? monedaTratamiento
+             : monedaSeleccionada;
+           const formato = (valor: number) => valor.toLocaleString("es-MX", {
+             minimumFractionDigits: 2,
+             maximumFractionDigits: 2,
+           });
+           return (
+             <div className="text-right">
+               <strong className="block text-[var(--mint-danger)]">
+                 ${formato(pendienteMostrado)} {monedaMostrada}
+               </strong>
+               {requiereConversion && cambioValido && (
+                 <span className="block text-xs font-semibold mint-text-secondary mt-1">
+                   {es ? "Saldo original" : "Original balance"}: ${formato(pendienteOriginal)} {monedaTratamiento}
+                 </span>
+               )}
+               {requiereConversion && !cambioValido && (
+                 <span className="block text-xs font-semibold text-[var(--mint-danger)] mt-1">
+                   {es ? "Configura un tipo de cambio válido" : "Set a valid exchange rate"}
+                 </span>
+               )}
+             </div>
+           );
+         })()}
+       </div>
           </div>
 
         </div>

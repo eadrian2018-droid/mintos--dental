@@ -907,12 +907,7 @@ const comisionGenerada = pago.comision_doctor_pagada
 )}
 
                 {mostrarUSD && (
-<span
-                  className="
-                    text-lg
-                    mint-text-secondary
-                  "
-                >
+<span>
                   $
                   {
                     formatoMonto(
@@ -1009,12 +1004,7 @@ const comisionGenerada = pago.comision_doctor_pagada
 )}
 
                 {mostrarUSD && (
-<span
-                  className="
-                    text-lg
-                    mint-text-secondary
-                  "
-                >
+<span>
                   $
                   {
                     formatoMonto(
@@ -1111,12 +1101,7 @@ const comisionGenerada = pago.comision_doctor_pagada
 )}
 
                 {mostrarUSD && (
-<span
-                  className="
-                    text-lg
-                    mint-text-secondary
-                  "
-                >
+<span>
                   $
                   {
                     formatoMonto(
@@ -2145,37 +2130,28 @@ const comisionGenerada = pago.comision_doctor_pagada
 
               </p>
 
-              <p
-                className="
-                  mt-2
-                  text-lg
-                  font-bold
-                  mint-text-primary
-                "
-              >
-{mostrarMXN && (<> 
+              <div className="mt-2 flex flex-col gap-1 text-xl font-bold mint-text-primary">
 
-                $
-                {
-                  formatoMonto(
-                    totalPagadoMXN
-                  )
-                }
-                {" MXN"}
 
-                 </>)}
-{mostrarUSD && (<> 
+                {mostrarMXN && (
 
-                $
-                {
-                  formatoMonto(
-                    totalPagadoUSD
-                  )
-                }
-                {" USD"}
 
-               </>)}
-</p>
+                  <span className="block whitespace-nowrap">${formatoMonto(totalPagadoMXN)} MXN</span>
+
+
+                )}
+
+
+                {mostrarUSD && (
+
+
+                  <span className="block whitespace-nowrap">${formatoMonto(totalPagadoUSD)} USD</span>
+
+
+                )}
+
+
+              </div>
 
             </div>
 
@@ -2238,37 +2214,28 @@ const comisionGenerada = pago.comision_doctor_pagada
 
               </p>
 
-              <p
-                className="
-                  mt-2
-                  text-lg
-                  font-bold
-                  text-[var(--mint-info)]
-                "
-              >
-{mostrarMXN && (<> 
+              <div className="mt-2 flex flex-col gap-1 text-xl font-bold text-[var(--mint-info)]">
 
-                $
-                {
-                  formatoMonto(
-                    totalBaseClinicaMXN
-                  )
-                }
-                {" MXN"}
 
-                 </>)}
-{mostrarUSD && (<> 
+                {mostrarMXN && (
 
-                $
-                {
-                  formatoMonto(
-                    totalBaseClinicaUSD
-                  )
-                }
-                {" USD"}
 
-               </>)}
-</p>
+                  <span className="block whitespace-nowrap">${formatoMonto(totalBaseClinicaMXN)} MXN</span>
+
+
+                )}
+
+
+                {mostrarUSD && (
+
+
+                  <span className="block whitespace-nowrap">${formatoMonto(totalBaseClinicaUSD)} USD</span>
+
+
+                )}
+
+
+              </div>
 
             </div>
 
@@ -2300,37 +2267,28 @@ const comisionGenerada = pago.comision_doctor_pagada
 
               </p>
 
-              <p
-                className="
-                  mt-2
-                  text-xl
-                  font-bold
-                  text-[var(--mint-success)]
-                "
-              >
-{mostrarMXN && (<> 
+              <div className="mt-2 flex flex-col gap-1 text-xl font-bold text-[var(--mint-success)]">
 
-                $
-                {
-                  formatoMonto(
-                    totalComisionMXN
-                  )
-                }
-                {" MXN"}
 
-                 </>)}
-{mostrarUSD && (<> 
+                {mostrarMXN && (
 
-                $
-                {
-                  formatoMonto(
-                    totalComisionUSD
-                  )
-                }
-                {" USD"}
 
-               </>)}
-</p>
+                  <span className="block whitespace-nowrap">${formatoMonto(totalComisionMXN)} MXN</span>
+
+
+                )}
+
+
+                {mostrarUSD && (
+
+
+                  <span className="block whitespace-nowrap">${formatoMonto(totalComisionUSD)} USD</span>
+
+
+                )}
+
+
+              </div>
 
             </div>
 

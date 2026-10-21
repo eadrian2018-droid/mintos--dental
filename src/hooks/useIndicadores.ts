@@ -28,6 +28,8 @@ type PagoIndicador = {
 
   monto_mxn?: number;
 
+  monto_aplicado_moneda_tratamiento?: number | null;
+
   comision_banco?: number;
 
   neto_recibido?: number;
@@ -794,33 +796,46 @@ export default function useIndicadores({
 
     }
 
-    const montoAplicadoMXN =
-      Number(
-        pago.monto_mxn || 0
-      ) > 0
-        ? Number(
-            pago.monto_mxn || 0
-          )
-        : pago.moneda === "MXN"
-          ? Number(
-              pago.monto_original || 0
-            )
-          : 0;
+    const monedaTratamiento =
+      tratamiento.moneda_precio === "USD"
+        ? "USD"
+        : "MXN";
+
+    const montoConfirmado =
+      pago.monto_aplicado_moneda_tratamiento;
+
+    // Preferir el importe aplicado que persistió el servidor.
+    // En pagos históricos sin ese dato, usar solo conversiones
+    // inequívocas; nunca interpretar MXN como USD.
+    let montoAplicado = 0;
 
     if (
-      montoAplicadoMXN <= 0
+      montoConfirmado !== null &&
+      montoConfirmado !== undefined &&
+      Number.isFinite(Number(montoConfirmado))
     ) {
-
-      return 0;
-
+      montoAplicado = Number(montoConfirmado);
+    } else if (pago.moneda === monedaTratamiento) {
+      montoAplicado = Number(pago.monto_original || 0);
+    } else if (monedaTratamiento === "MXN") {
+      montoAplicado = Number(pago.monto_mxn || 0);
     }
 
-    return Math.min(
-      montoAplicadoMXN /
-        totalTratamiento,
-      1
-    );
+    if (!Number.isFinite(montoAplicado) || montoAplicado <= 0) {
+      return 0;
+    }
 
+    // Si falta el total original USD, no usar el total MXN como divisor.
+    const totalEnMonedaTratamiento =
+      monedaTratamiento === "USD"
+        ? Number(tratamiento.total_original ?? 0)
+        : totalTratamiento;
+
+    if (!Number.isFinite(totalEnMonedaTratamiento) || totalEnMonedaTratamiento <= 0) {
+      return 0;
+    }
+
+    return Math.min(montoAplicado / totalEnMonedaTratamiento, 1);
   }
 
   const costosClinicosPeriodo =
