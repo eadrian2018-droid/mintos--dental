@@ -1587,8 +1587,7 @@ async function abrirModalCobro(
     monedaInicial === "USD"
       ? Number(tratamiento.resta_original ??
           Math.max(Number(tratamiento.total_original ?? 0) - Number(tratamiento.pagado_original ?? 0), 0))
-      : Number(tratamiento.pendiente ??
-          Math.max(Number(tratamiento.total ?? 0) - Number(tratamiento.pagado ?? 0), 0));
+      : saldoMonetarioMXN(tratamiento);
 
   const montoInicial = String(Math.max(pendienteMonedaTratamiento, 0));
 
@@ -1642,6 +1641,16 @@ async function abrirModalCobro(
 
 }
 
+// FIN-01: `pendiente` en Supabase es un indicador booleano; el saldo MXN vive en `resta`.
+// Usar siempre el saldo monetario persistido, nunca Number(pendiente).
+const saldoMonetarioMXN = (tratamiento: any): number => {
+  const saldo = tratamiento?.resta;
+  if (saldo !== null && saldo !== undefined && Number.isFinite(Number(saldo))) {
+    return Math.max(0, Number(saldo));
+  }
+  return Math.max(0, Number(tratamiento?.total ?? 0) - Number(tratamiento?.pagado ?? tratamiento?.pago ?? 0));
+};
+
 const monedaPrecioCobro =
   tratamientoCobro?.moneda_precio ||
   "MXN";
@@ -1659,7 +1668,7 @@ const pagadoOriginalCobro =
 const pendienteOriginalCobro = Math.max(
   Number(monedaPrecioCobro === "USD"
     ? tratamientoCobro?.resta_original ?? (totalOriginalCobro - pagadoOriginalCobro)
-    : tratamientoCobro?.pendiente ?? (totalOriginalCobro - pagadoOriginalCobro)),
+    : saldoMonetarioMXN(tratamientoCobro)),
   0
 );
 
@@ -1796,7 +1805,7 @@ async function registrarCobro(
   const pendienteOriginalAnterior = Math.max(Number(
     monedaPrecioTratamiento === "USD"
       ? tratamientoCobro.resta_original ?? (totalOriginalActual - pagadoOriginalAnterior)
-      : tratamientoCobro.pendiente ?? (totalOriginalActual - pagadoOriginalAnterior)
+      : saldoMonetarioMXN(tratamientoCobro)
   ), 0);
 
   const valorDescuento =
@@ -2103,7 +2112,7 @@ async function registrarCobro(
   setTratamientos((anteriores) =>
     anteriores.map((tratamiento) =>
       Number(tratamiento.id) === Number(tratamientoConfirmado.id)
-        ? { ...tratamiento, ...tratamientoConfirmado }
+        ? { ...tratamiento, ...tratamientoConfirmado, pagado: tratamientoConfirmado.pago, pendiente: tratamientoConfirmado.resta }
         : tratamiento
     )
   );
@@ -2219,6 +2228,30 @@ const tratamientoCatalogoSeleccionado =
 const monedaPrecioTratamiento =
   nuevoTratamiento.moneda_precio ||
   "MXN";
+
+// FIN-01: editar responsable o notas no debe recalcular un tratamiento
+// con cobros/descuentos ya registrados ni borrar su historial financiero.
+const tratamientoExistenteEdicion =
+  editandoIndex !== null ? tratamientos[editandoIndex] : null;
+const tieneActividadFinanciera = Boolean(
+  tratamientoExistenteEdicion && (
+    Number(tratamientoExistenteEdicion.pagado ?? tratamientoExistenteEdicion.pago ?? 0) > 0 ||
+    Number(tratamientoExistenteEdicion.descuento ?? 0) > 0 ||
+    Number(tratamientoExistenteEdicion.descuento_original ?? 0) > 0
+  )
+);
+if (
+  tieneActividadFinanciera &&
+  (
+    nuevoTratamiento.tratamiento !== tratamientoExistenteEdicion?.tratamiento ||
+    monedaPrecioTratamiento !== (tratamientoExistenteEdicion?.moneda_precio || "MXN")
+  )
+) {
+  alert(es
+    ? "Este tratamiento ya tiene movimientos financieros. No cambies su tratamiento o moneda desde Editar; conserva los cobros y descuentos existentes."
+    : "This treatment already has financial transactions. Do not change its treatment or currency here; preserve existing payments and discounts.");
+  return;
+}
 
 const totalOriginalTratamiento =
   tratamientoCatalogoSeleccionado
@@ -2376,42 +2409,19 @@ estado:
 moneda_precio:
   nuevo.moneda_precio,
 
-total_original:
-  Number(
-    nuevo.total_original || 0
+// Si hubo cobros/descuentos, NO sobrescribir los importes
+// persistidos por la RPC al cambiar doctor/fecha/notas/estado.
+...(tieneActividadFinanciera ? {} : {
+  total_original: Number(nuevo.total_original || 0),
+  pagado_original: Number(tratamientoEditar.pagado_original || 0),
+  resta_original: Math.max(
+    Number(nuevo.total_original || 0) - Number(tratamientoEditar.pagado_original || 0), 0
   ),
-
-pagado_original:
-  Number(
-    tratamientoEditar.pagado_original || 0
+  total: Number(nuevo.total || 0),
+  resta: Math.max(
+    Number(nuevo.total || 0) - Number(tratamientoEditar.pagado ?? tratamientoEditar.pago ?? 0), 0
   ),
-
-resta_original:
-  Math.max(
-    Number(
-      nuevo.total_original || 0
-    ) -
-      Number(
-        tratamientoEditar.pagado_original || 0
-      ),
-    0
-  ),
-
-total:
-  Number(
-    nuevo.total || 0
-  ),
-
-resta:
-  Math.max(
-    Number(
-      nuevo.total || 0
-    ) -
-      Number(
-        tratamientoEditar.pagado || 0
-      ),
-    0
-  ),
+}),
 
 notas:
   nuevo.notas || "",
@@ -2674,6 +2684,21 @@ notas:
       ],
 
       ...nuevo,
+      // Conservar en pantalla los valores financieros originales;
+      // solo el servidor modifica saldos y descuentos existentes.
+      ...(tieneActividadFinanciera ? {
+        total: copia[editandoIndex].total,
+        total_original: copia[editandoIndex].total_original,
+        pagado: copia[editandoIndex].pagado,
+        pagado_original: copia[editandoIndex].pagado_original,
+        resta: copia[editandoIndex].resta,
+        resta_original: copia[editandoIndex].resta_original,
+        pendiente: copia[editandoIndex].pendiente,
+        descuento: copia[editandoIndex].descuento,
+        descuento_original: copia[editandoIndex].descuento_original,
+        total_antes_descuento: copia[editandoIndex].total_antes_descuento,
+        total_original_antes_descuento: copia[editandoIndex].total_original_antes_descuento,
+      } : {}),
 
     };
 
@@ -4160,7 +4185,7 @@ if (abriendoPacienteDesdeUrl) {
                   ) =>
                     total +
                     Number(
-                      tratamiento.pendiente || 0
+                      saldoMonetarioMXN(tratamiento)
                     ),
                   0
                 )
@@ -4187,7 +4212,7 @@ if (abriendoPacienteDesdeUrl) {
           ) =>
             total +
             Number(
-              tratamiento.pendiente || 0
+              saldoMonetarioMXN(tratamiento)
             ),
           0
         ) /
@@ -4579,9 +4604,9 @@ if (abriendoPacienteDesdeUrl) {
                               Number(
                                 tratamiento.moneda_precio === "USD"
                                   ? tratamiento.resta_original ??
-                                    tratamiento.pendiente ??
+                                    tratamiento.resta ??
                                     0
-                                  : tratamiento.pendiente || 0
+                                  : saldoMonetarioMXN(tratamiento)
                               ).toLocaleString()
                             }
                             {" "}
@@ -6839,8 +6864,8 @@ if (abriendoPacienteDesdeUrl) {
            const monedaTratamiento = tratamientoCobro?.moneda_precio || "MXN";
            const pendienteOriginal = Math.max(0, Number(
              monedaTratamiento === "USD"
-               ? (tratamientoCobro?.resta_original ?? tratamientoCobro?.pendiente ?? 0)
-               : (tratamientoCobro?.pendiente ?? 0)
+               ? (tratamientoCobro?.resta_original ?? 0)
+               : saldoMonetarioMXN(tratamientoCobro)
            ));
            const monedaSeleccionada = nuevoCobro.moneda;
            const requiereConversion = monedaSeleccionada !== monedaTratamiento;

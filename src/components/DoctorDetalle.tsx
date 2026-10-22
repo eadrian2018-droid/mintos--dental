@@ -16,6 +16,7 @@ import type {
 } from "../types/Tratamiento";
 
 type PagoDoctorDetalle = {
+  doctor_id?: number | null;
 
   id?: number;
 
@@ -68,8 +69,6 @@ export default function DoctorDetalle({
   tratamientos,
 
   pagos = [],
-
-  onClose,
 
 }: DoctorDetalleProps) {
 
@@ -197,8 +196,12 @@ export default function DoctorDetalle({
   const tratamientosDoctor =
     tratamientos.filter(
       (tratamiento) =>
-        Number(tratamiento.doctor_id) ===
-        Number(doctor.id)
+        (Number(tratamiento.doctor_id) === Number(doctor.id) ||
+         pagos.some(pago =>
+           pago.doctor_id != null &&
+           Number(pago.doctor_id) === Number(doctor.id) &&
+           Number(pago.tratamiento_id) === Number(tratamiento.id)
+         ))
     );
 
    const detalleTratamientos =
@@ -217,8 +220,9 @@ export default function DoctorDetalle({
         const pagosTratamiento =
           pagos.filter(
             (pago) =>
-              Number(pago.tratamiento_id) ===
-              Number(tratamiento.id)
+              Number(pago.tratamiento_id) === Number(tratamiento.id) &&
+              pago.doctor_id != null &&
+              Number(pago.doctor_id) === Number(doctor.id)
           );
 
         const pagadoMXN =
@@ -411,6 +415,8 @@ export default function DoctorDetalle({
             );
 
           if (
+            pago.doctor_id == null ||
+            Number(pago.doctor_id) !== Number(doctor.id) ||
             !tratamiento ||
             tratamiento.estado !==
               "Finalizado"
@@ -741,21 +747,6 @@ const comisionGenerada = pago.comision_doctor_pagada
               </div>
 
             </div>
-
-            <button
-              type="button"
-              onClick={
-                onClose
-              }
-              className="
-                mint-btn
-                mint-btn-danger
-              "
-            >
-
-              {t("Cerrar", "Close")}
-
-            </button>
 
           </div>
 

@@ -7,6 +7,8 @@ import {
   useLocation,
 } from "react-router-dom";
 
+import { createPortal } from "react-dom";
+
 import Gastos
   from "../components/finanzas/Gastos";
 
@@ -247,6 +249,38 @@ export default function Finanzas() {
   ] = useState(
     false
   );
+
+  // Cierra el detalle al cambiar de sección o de ruta.
+  useEffect(() => {
+    setDoctorDetalle(null);
+    setMostrarDetalleDoctor(false);
+  }, [location.pathname, location.search]);
+
+  // El modal mantiene su propio desplazamiento y permite cerrar con Escape.
+  useEffect(() => {
+    if (!doctorDetalle) return;
+
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const cerrarConEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDoctorDetalle(null);
+        setMostrarDetalleDoctor(false);
+      }
+    };
+
+    window.addEventListener("keydown", cerrarConEscape);
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", cerrarConEscape);
+    };
+  }, [doctorDetalle]);
+
+  const cerrarDetalleDoctor = () => {
+    setDoctorDetalle(null);
+    setMostrarDetalleDoctor(false);
+  };
 
   const {
 
@@ -1072,37 +1106,51 @@ export default function Finanzas() {
           />
         }
 
-        {
-          doctorDetalle
-
-          &&
-
-          <DoctorDetalle
-
-            doctor={
-              doctorDetalle
-            }
-
-            pacientes={
-              pacientes
-            }
-
-            tratamientos={
-              tratamientos
-            }
-
-            pagos={
-              pagos
-            }
-
-            onClose={() =>
-              setDoctorDetalle(
-                null
-              )
-            }
-
-          />
-        }
+        {doctorDetalle && createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#081d30]/75 p-3 backdrop-blur-[3px] sm:p-6"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) cerrarDetalleDoctor();
+            }}
+          >
+            <section
+              role="dialog"
+              aria-modal="true"
+              aria-label={es ? "Detalle de comisión del doctor" : "Doctor commission details"}
+              className="flex max-h-[94dvh] w-full max-w-[1440px] flex-col overflow-hidden rounded-[24px] border border-white/20 bg-[var(--mint-surface)] shadow-2xl"
+            >
+              <div className="flex shrink-0 items-center justify-between gap-4 border-b border-white/15 bg-[linear-gradient(120deg,#163d58_0%,#1d6374_55%,#188b80_100%)] px-5 py-4 text-white sm:px-7">
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/70">
+                    {es ? "Finanzas / Comisiones" : "Finances / Commissions"}
+                  </p>
+                  <h2 className="mt-1 truncate text-xl font-bold sm:text-2xl">
+                    {doctorDetalle.nombre}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={cerrarDetalleDoctor}
+                  aria-label={es ? "Cerrar detalle" : "Close details"}
+                  className="shrink-0 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  {es ? "Cerrar ✕" : "Close ✕"}
+                </button>
+              </div>
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-6 sm:px-6">
+                <DoctorDetalle
+                  doctor={doctorDetalle}
+                  pacientes={pacientes}
+                  tratamientos={tratamientos}
+                  pagos={pagos}
+                  onClose={cerrarDetalleDoctor}
+                />
+              </div>
+            </section>
+          </div>,
+          document.body
+        )}
 
      {
   seccionActiva ===

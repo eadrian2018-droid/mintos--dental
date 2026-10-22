@@ -36,6 +36,7 @@ import { registrarBitacora }
 
 type PagoComision = {
   id?: number;
+  doctor_id?: number | null;
   tratamiento_id?: number;
   moneda?: string;
   monto_original?: number;
@@ -315,11 +316,11 @@ export default function Comisiones({
               const tratamientosDoctor =
                 tratamientosAny.filter(
                   (tratamiento) =>
-                    Number(
-                      tratamiento.doctor_id
-                    ) ===
-                    Number(
-                      doctor.id
+                    Number(tratamiento.doctor_id) === Number(doctor.id) ||
+                    pagos.some(pago =>
+                      pago.doctor_id != null &&
+                      Number(pago.doctor_id) === Number(doctor.id) &&
+                      Number(pago.tratamiento_id) === Number(tratamiento.id)
                     )
                 );
 
@@ -343,11 +344,9 @@ export default function Comisiones({
               const pagosDoctor =
                 pagos.filter(
                   (pago) =>
-                    ids.has(
-                      Number(
-                        pago.tratamiento_id
-                      )
-                    )
+                    pago.doctor_id != null &&
+                    Number(pago.doctor_id) === Number(doctor.id) &&
+                    ids.has(Number(pago.tratamiento_id))
                 );
 
               const calcularComision = (pago: PagoComision) => {
