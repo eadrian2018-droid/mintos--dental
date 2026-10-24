@@ -428,14 +428,18 @@ export default function useFinanzas() {
         tratamiento
       );
 
-    await registrarBitacora({
+    void registrarBitacora({
       accion: "Crear tratamiento de catálogo",
       modulo: "Configuración financiera",
       detalle:
         `Tratamiento: ${tratamiento.nombre || "-"}`,
+    }).catch((error) => {
+      console.error("Error registrando bitácora del catálogo:", error);
     });
 
-    await cargarCatalogoTratamientos();
+    void cargarCatalogoTratamientos().catch((error) => {
+      console.error("Error actualizando listado del catálogo:", error);
+    });
 
   }
 
@@ -456,14 +460,18 @@ export default function useFinanzas() {
         cambios
       );
 
-    await registrarBitacora({
+    void registrarBitacora({
       accion: "Editar tratamiento de catálogo",
       modulo: "Configuración financiera",
       detalle:
         `Tratamiento catálogo ID: ${id}`,
+    }).catch((error) => {
+      console.error("Error registrando bitácora del catálogo:", error);
     });
 
-    await cargarCatalogoTratamientos();
+    void cargarCatalogoTratamientos().catch((error) => {
+      console.error("Error actualizando listado del catálogo:", error);
+    });
 
   }
 

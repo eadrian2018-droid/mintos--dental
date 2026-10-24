@@ -253,7 +253,7 @@ export default function CatalogoTratamientos({
 
     }
 
-    if (!categoria.trim()) {
+    if (!categoria.trim() && !esPersonalizado) {
 
       window.alert(
         es
@@ -279,7 +279,7 @@ export default function CatalogoTratamientos({
           : null,
 
       categoria:
-        categoria.trim(),
+        categoria.trim() || "Other",
 
       tipo,
 
@@ -979,100 +979,56 @@ export default function CatalogoTratamientos({
                 >
 
                   <select
-                    value={
-                      esPersonalizado
-                        ? "__custom__"
-                        : tratamientoMaestroId
-                    }
+                    value={tratamientoMaestroId}
+                    disabled={esPersonalizado}
                     onChange={(e) => {
-
-                      const valor =
-                        e.target.value;
-
-                      if (valor === "__custom__") {
-
-                        setEsPersonalizado(true);
-                        setTratamientoMaestroId("");
-                        setNombre("");
-                        setNombreEn("");
-                        setCategoria("");
-
-                        return;
-                      }
-
-                      setEsPersonalizado(false);
+                      const valor = e.target.value;
                       setTratamientoMaestroId(valor);
 
-                      const maestro =
-                        catalogoMaestroTratamientos.find(
-                          (item) =>
-                            item.id === Number(valor)
-                        );
+                      const maestro = catalogoMaestroTratamientos.find(
+                        (item) => item.id === Number(valor)
+                      );
 
                       if (maestro) {
-
-                        setNombre(
-                          maestro.nombre_es
-                        );
-
-                        setNombreEn(
-                          maestro.nombre_en
-                        );
-
-                        setCategoria(
-                          maestro.categoria
-                        );
-
+                        setNombre(maestro.nombre_es);
+                        setNombreEn(maestro.nombre_en);
+                        setCategoria(maestro.categoria);
                       } else {
-
                         setNombre("");
                         setNombreEn("");
                         setCategoria("");
                       }
-
                     }}
-                    className="
-                      mint-input
-                      w-full
-                      p-3
-                      md:col-span-2
-                    "
+                    className="mint-input w-full p-3 md:col-span-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-
                     <option value="">
                       {es ? "Seleccionar tratamiento" : "Select treatment"}
                     </option>
-
-                    {
-                      catalogoMaestroTratamientos.map(
-                        (tratamiento) => (
-
-                          <option
-                            key={tratamiento.id}
-                            value={tratamiento.id}
-                          >
-                            {
-                              es
-                                ? tratamiento.nombre_es
-                                : tratamiento.nombre_en
-                            }
-                            {" — "}
-                            {
-                              traducirCategoria(
-                                tratamiento.categoria
-                              )
-                            }
-                          </option>
-
-                        )
-                      )
-                    }
-
-                    <option value="__custom__">
-                      {es ? "+ Tratamiento personalizado" : "+ Custom treatment"}
-                    </option>
-
+                    {catalogoMaestroTratamientos.map((tratamiento) => (
+                      <option key={tratamiento.id} value={tratamiento.id}>
+                        {es ? tratamiento.nombre_es : tratamiento.nombre_en}
+                        {" — "}
+                        {traducirCategoria(tratamiento.categoria)}
+                      </option>
+                    ))}
                   </select>
+
+                  <label className="md:col-span-2 inline-flex items-center gap-3 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-card)] p-3 cursor-pointer text-sm font-semibold text-[var(--mint-navy)]">
+                    <input
+                      type="checkbox"
+                      checked={esPersonalizado}
+                      onChange={(e) => {
+                        const personalizado = e.target.checked;
+                        setEsPersonalizado(personalizado);
+                        setTratamientoMaestroId("");
+                        setNombre("");
+                        setNombreEn("");
+                        setCategoria(personalizado ? "Other" : "");
+                      }}
+                      className="h-4 w-4 cursor-pointer accent-[var(--mint-primary)]"
+                    />
+                    {es ? "Tratamiento personalizado" : "Custom treatment"}
+                  </label>
 
                   {
                     esPersonalizado
@@ -1113,63 +1069,7 @@ export default function CatalogoTratamientos({
                             "
                           />
 
-                          <select
-                            value={categoria}
-                            onChange={(e) =>
-                              setCategoria(
-                                e.target.value
-                              )
-                            }
-                            className="
-                              mint-input
-                              w-full
-                              p-3
-                              md:col-span-2
-                            "
-                          >
 
-                            <option value="">
-                              {es ? "Seleccionar categoría" : "Select category"}
-                            </option>
-
-                            <option value="Preventive">
-                              {es ? "Preventivo" : "Preventive"}
-                            </option>
-                            <option value="Restorative">
-                              {es ? "Restaurativo" : "Restorative"}
-                            </option>
-                            <option value="Endodontics">
-                              {es ? "Endodoncia" : "Endodontics"}
-                            </option>
-                            <option value="Periodontics">
-                              {es ? "Periodoncia" : "Periodontics"}
-                            </option>
-                            <option value="Surgery">
-                              {es ? "Cirugía" : "Surgery"}
-                            </option>
-                            <option value="Prosthodontics">
-                              {es ? "Prótesis" : "Prosthodontics"}
-                            </option>
-                            <option value="Implants">
-                              {es ? "Implantes" : "Implants"}
-                            </option>
-                            <option value="Orthodontics">
-                              {es ? "Ortodoncia" : "Orthodontics"}
-                            </option>
-                            <option value="Cosmetic">
-                              {es ? "Estética" : "Cosmetic"}
-                            </option>
-                            <option value="Diagnostic">
-                              {es ? "Diagnóstico" : "Diagnostic"}
-                            </option>
-                            <option value="Pediatric">
-                              {es ? "Odontopediatría" : "Pediatric"}
-                            </option>
-                            <option value="Other">
-                              {es ? "Otro" : "Other"}
-                            </option>
-
-                          </select>
 
                         </>
 
@@ -1190,14 +1090,7 @@ export default function CatalogoTratamientos({
                               </p>
                             </div>
 
-                            <div className="mint-card p-4">
-                              <p className="text-xs font-semibold mint-text-muted">
-                                {es ? "Categoría" : "Category"}
-                              </p>
-                              <p className="mt-1 font-semibold mint-text-primary">
-                                {traducirCategoria(categoria)}
-                              </p>
-                            </div>
+
 
                           </>
 
@@ -1238,69 +1131,50 @@ export default function CatalogoTratamientos({
                     "
                   />
 
-                  <select
-                    value={doctorId}
-                    onChange={(e) => {
+                  <div className="md:col-span-2 flex flex-col gap-3 rounded-2xl border border-[var(--mint-border)] bg-[var(--mint-bg-card)] p-4 sm:flex-row sm:items-center">
+                    <label className="inline-flex shrink-0 cursor-pointer items-center gap-3 text-sm font-semibold text-[var(--mint-navy)]">
+                      <input
+                        type="checkbox"
+                        checked={tipo === "especialista"}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setTipo("especialista");
+                          } else {
+                            setTipo("clinica");
+                            setDoctorId("");
+                            setCostoEspecialistaMXN("");
+                            setCostoEspecialistaUSD("");
+                          }
+                        }}
+                        className="h-4 w-4 cursor-pointer accent-[var(--mint-primary)]"
+                      />
+                      {es ? "Especialista" : "Specialist"}
+                    </label>
 
-                      const nuevoDoctorId =
-                        e.target.value;
-
-                      setDoctorId(
-                        nuevoDoctorId
-                      );
-
-                      if (nuevoDoctorId) {
-
-                        setTipo(
-                          "especialista"
-                        );
-
-                      } else {
-
-                        setTipo(
-                          "clinica"
-                        );
-
-                        setCostoEspecialistaMXN(
-                          ""
-                        );
-
-                        setCostoEspecialistaUSD(
-                          ""
-                        );
-                      }
-
-                    }}
-                    className="
-                      mint-input
-                      w-full
-                      p-3
-                      md:col-span-2
-                    "
-                  >
-
-                    <option value="">
-                      {es
-                        ? "Sin especialista — tratamiento de clínica"
-                        : "No specialist — clinic treatment"}
-                    </option>
-
-                    {
-                      doctores.map(
-                        (doctor) => (
-
-                          <option
-                            key={doctor.id}
-                            value={doctor.id}
-                          >
+                    {tipo === "especialista" && (
+                      <select
+                        value={doctorId}
+                        onChange={(e) => {
+                          const nuevoDoctorId = e.target.value;
+                          setDoctorId(nuevoDoctorId);
+                          if (!nuevoDoctorId) {
+                            setCostoEspecialistaMXN("");
+                            setCostoEspecialistaUSD("");
+                          }
+                        }}
+                        className="mint-input w-full min-w-0 flex-1 p-3"
+                      >
+                        <option value="">
+                          {es ? "Seleccionar especialista" : "Select specialist"}
+                        </option>
+                        {doctores.map((doctor) => (
+                          <option key={doctor.id} value={doctor.id}>
                             {doctor.nombre}
                           </option>
-
-                        )
-                      )
-                    }
-
-                  </select>
+                        ))}
+                      </select>
+                    )}
+                  </div>
 
                   {
                     tipo === "especialista" && (

@@ -1994,15 +1994,31 @@ async function registrarCobro(
     }
   }
 
-  // FIN-01: los costos clinicos se editan desde el tratamiento, no desde el cobro.
-  // Evita sobrescribir validaciones clinicas durante una operacion financiera.
-  if (
-    Number(nuevoCobro.laboratorio || 0) !== Number(tratamientoCobro.laboratorio || 0) ||
-    Number(nuevoCobro.especialista || 0) !== Number(tratamientoCobro.especialista || 0)
-  ) {
-    alert(es
-      ? "Los costos clinicos deben guardarse desde la edicion del tratamiento antes de cobrar."
-      : "Save clinical costs in treatment editing before recording a payment.");
+  // FIN-02: laboratorio es un costo del tratamiento, nunca un costo por abono.
+  // Solo enviamos cambios explícitos. Especialista continúa bajo su tarifario.
+  const laboratorioTexto = nuevoCobro.laboratorio.trim();
+  const laboratorioNuevo = laboratorioTexto === "" ? null : Number(laboratorioTexto);
+  const laboratorioActual = tratamientoCobro.laboratorio == null
+    ? null : Number(tratamientoCobro.laboratorio);
+  const laboratorioCambio = laboratorioNuevo !== null &&
+    laboratorioNuevo !== laboratorioActual;
+  if (laboratorioTexto !== "" &&
+      (!Number.isFinite(laboratorioNuevo) || laboratorioNuevo! < 0 ||
+       laboratorioNuevo! > 1000000000000 ||
+       Math.round(laboratorioNuevo! * 100) / 100 !== laboratorioNuevo)) {
+    alert(es ? "Ingresa un costo de laboratorio válido (máximo dos decimales)."
+             : "Enter a valid laboratory cost (up to two decimals).");
+    return;
+  }
+  if (laboratorioCambio &&
+      (modo !== "cobro" || tratamientoCobro.estado === "Finalizado")) {
+    alert(es ? "El laboratorio solo puede modificarse al cobrar un tratamiento no finalizado."
+             : "Laboratory cost can only be changed when charging an unfinished treatment.");
+    return;
+  }
+  if (Number(nuevoCobro.especialista || 0) !== Number(tratamientoCobro.especialista || 0)) {
+    alert(es ? "El costo del especialista se administra desde el tratamiento."
+             : "Specialist costs are managed from the treatment.");
     return;
   }
 
@@ -2017,6 +2033,7 @@ async function registrarCobro(
     modo, montoCobro, moneda: nuevoCobro.moneda,
     metodo: nuevoCobro.metodo_pago, tipoDescuentoCobro, valorDescuento,
     tipoCambioCobro,
+    laboratorio: modo === "cobro" && laboratorioCambio ? laboratorioNuevo : null,
   });
   if (solicitudCobroPendienteRef.current?.payload !== payloadCobro) {
     solicitudCobroPendienteRef.current = {
@@ -2036,7 +2053,7 @@ async function registrarCobro(
       p_metodo_pago: modo === "cobro" ? nuevoCobro.metodo_pago : null,
       p_tipo_descuento: tipoDescuentoCobro,
       p_valor_descuento: modo === "descuento" ? valorDescuento : 0,
-      p_laboratorio: null,
+      p_laboratorio: modo === "cobro" && laboratorioCambio ? laboratorioNuevo : null,
       p_especialista: null,
       p_tipo_cambio_confirmado:
         nuevoCobro.moneda === "USD" || monedaPrecioTratamiento === "USD"
@@ -2240,6 +2257,18 @@ const tieneActividadFinanciera = Boolean(
     Number(tratamientoExistenteEdicion.descuento_original ?? 0) > 0
   )
 );
+if (tratamientoExistenteEdicion?.estado === "Finalizado") {
+  alert(es ? "Un tratamiento finalizado no puede editarse." : "A completed treatment cannot be edited.");
+  return;
+}
+if (tieneActividadFinanciera && (
+  String(doctorSeleccionado?.id ?? tratamientoExistenteEdicion?.doctor_id ?? "") !==
+    String(tratamientoExistenteEdicion?.doctor_id ?? "") ||
+  nuevoTratamiento.doctor !== tratamientoExistenteEdicion?.doctor
+)) {
+  alert(es ? "No se puede cambiar el doctor después de registrar movimientos financieros." : "The doctor cannot be changed after financial transactions have been recorded.");
+  return;
+}
 if (
   tieneActividadFinanciera &&
   (
@@ -2377,6 +2406,13 @@ const nuevo = {
       tratamientoEditar?.id
     ) {
 
+      if (tratamientoEditar.estado === "Finalizado" &&
+          Number(nuevo.laboratorio || 0) !== Number(tratamientoEditar.laboratorio || 0)) {
+        alert(es ? "No puedes modificar el laboratorio de un tratamiento finalizado."
+                 : "You cannot change the laboratory cost of a completed treatment.");
+        return;
+      }
+
       const {
         error,
       } = await supabase
@@ -2422,6 +2458,18 @@ moneda_precio:
     Number(nuevo.total || 0) - Number(tratamientoEditar.pagado ?? tratamientoEditar.pago ?? 0), 0
   ),
 }),
+
+laboratorio: tratamientoEditar.estado === "Finalizado"
+  ? Number(tratamientoEditar.laboratorio || 0)
+  : Number(nuevo.laboratorio || 0),
+
+especialista: Number(nuevo.especialista || 0),
+
+especialista_id: nuevo.especialista_id ? Number(nuevo.especialista_id) : null,
+
+especialista_nombre: nuevo.especialista_nombre || null,
+
+moneda_especialista: nuevo.moneda_especialista || "MXN",
 
 notas:
   nuevo.notas || "",
@@ -2517,6 +2565,12 @@ especialista:
   Number(
     nuevo.especialista || 0
   ),
+
+especialista_id: nuevo.especialista_id ? Number(nuevo.especialista_id) : null,
+
+especialista_nombre: nuevo.especialista_nombre || null,
+
+moneda_especialista: nuevo.moneda_especialista || "MXN",
 
 comision_banco:
   Number(
@@ -4749,7 +4803,8 @@ if (abriendoPacienteDesdeUrl) {
                             ">
 
                               {
-                                puedeCambiarEstadoTratamientos && (
+                                puedeCambiarEstadoTratamientos &&
+                                tratamiento.estado !== "Finalizado" && (
 
                                   <select
                                     value={
@@ -4796,7 +4851,10 @@ if (abriendoPacienteDesdeUrl) {
                               }
 
                               {
-                                puedeRegistrarCobros && (
+                                puedeRegistrarCobros &&
+                                (String(tratamiento.moneda_precio || "MXN") === "USD"
+                                  ? Number(tratamiento.resta_original ?? 0) > 0
+                                  : Number(tratamiento.resta ?? 0) > 0) && (
 
                                   <button
                                     type="button"
@@ -4821,7 +4879,8 @@ if (abriendoPacienteDesdeUrl) {
 
                               {
                                 puedeCrearTratamientos &&
-                                puedeCambiarEstadoTratamientos && (
+                                puedeCambiarEstadoTratamientos &&
+                                tratamiento.estado !== "Finalizado" && (
 
                                   <button
                                     type="button"
@@ -4829,6 +4888,12 @@ if (abriendoPacienteDesdeUrl) {
 
                                       setNuevoTratamiento(
                                         tratamiento
+                                      );
+
+                                      setDoctorSeleccionado(
+                                        doctores.find((d: any) =>
+                                          String(d.id) === String(tratamiento.doctor_id)
+                                        ) || null
                                       );
 
                                       setEditandoIndex(
@@ -4855,7 +4920,11 @@ if (abriendoPacienteDesdeUrl) {
                               }
 
                               {
-                                puedeAnularTratamientos && (
+                                puedeAnularTratamientos &&
+                                tratamiento.estado !== "Finalizado" &&
+                                Number(tratamiento.pagado ?? tratamiento.pago ?? 0) === 0 &&
+                                Number(tratamiento.descuento ?? 0) === 0 &&
+                                Number(tratamiento.descuento_original ?? 0) === 0 && (
 
                               <button
                                 type="button"
@@ -5707,63 +5776,6 @@ if (abriendoPacienteDesdeUrl) {
                 const nombreTratamiento =
                   e.target.value;
 
-                const esEspecialista =
-                  doctorSeleccionado?.tipo_doctor ===
-                    "especialista" ||
-                  doctorSeleccionado?.tipo_doctor ===
-                    "ambos";
-
-                if (esEspecialista) {
-
-                  const tarifaEspecialista =
-                    especialistasDisponibles.find(
-                      (precio: any) =>
-                        String(precio.doctor_id) ===
-                          String(doctorSeleccionado.id) &&
-                        precio.nombre_tratamiento ===
-                          nombreTratamiento
-                    );
-
-                  if (!tarifaEspecialista) {
-                    return;
-                  }
-
-                  setNuevoTratamiento({
-                    ...nuevoTratamiento,
-
-                    tratamiento:
-                      tarifaEspecialista.nombre_tratamiento,
-
-                    total: "",
-
-                    pagado: "0",
-
-                    laboratorio: "",
-
-                    especialista:
-                      String(
-                        Number(
-                          tarifaEspecialista.costo || 0
-                        )
-                      ),
-
-                    especialista_id:
-                      String(doctorSeleccionado.id),
-
-                    especialista_nombre:
-                      doctorSeleccionado.nombre || "",
-
-                    moneda_especialista:
-                      tarifaEspecialista.moneda === "USD"
-                        ? "USD"
-                        : "MXN",
-
-                    comision_banco: "0",
-                  });
-
-                  return;
-                }
-
                 const tratamientoSeleccionado =
                   catalogoTratamientos.find(
                     (tratamiento: any) =>
@@ -5831,56 +5843,92 @@ if (abriendoPacienteDesdeUrl) {
 }
               </option>
 
-              {
-                doctorSeleccionado &&
-                (
-                  doctorSeleccionado.tipo_doctor ===
-                    "especialista" ||
-                  doctorSeleccionado.tipo_doctor ===
-                    "ambos"
-                )
-
-                  ? especialistasDisponibles
-                      .filter(
-                        (precio: any) =>
-                          String(precio.doctor_id) ===
-                            String(doctorSeleccionado.id)
-                      )
-                      .map(
-                        (precio: any) => (
-
-                          <option
-                            key={precio.id}
-                            value={
-                              precio.nombre_tratamiento
-                            }
-                          >
-                            {
-                              precio.nombre_tratamiento
-                            }
-                          </option>
-
-                        )
-                      )
-
-                  : doctorSeleccionado
-                    ? catalogoTratamientos.map(
-                        (tratamiento: any) => (
-
-                          <option
-                            key={tratamiento.id}
-                            value={tratamiento.nombre}
-                          >
-                            {tratamiento.nombre}
-                          </option>
-
-                        )
-                      )
-                    : null
-              }
+              {doctorSeleccionado
+                ? catalogoTratamientos.map((tratamiento: any) => (
+                    <option key={tratamiento.id} value={tratamiento.nombre}>
+                      {tratamiento.nombre}
+                    </option>
+                  ))
+                : null}
 
             </select>
 
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mint-text-primary mb-2">
+              {es ? "Costo de laboratorio" : "Laboratory cost"} (MXN)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              className="mint-input p-3 w-full"
+              value={nuevoTratamiento.laboratorio ?? ""}
+              disabled={editandoIndex !== null && tratamientos[editandoIndex]?.estado === "Finalizado"}
+              onChange={(e) => setNuevoTratamiento({
+                ...nuevoTratamiento,
+                laboratorio: e.target.value,
+              })}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold mint-text-primary mb-2">
+              {es ? "Tarifa de especialista (opcional)" : "Specialist fee (optional)"}
+            </label>
+            <select
+              className="mint-input p-3 w-full"
+              value={
+                especialistasDisponibles.find((tarifa: any) =>
+                  String(tarifa.doctor_id) === String(nuevoTratamiento.especialista_id) &&
+                  tarifa.nombre_tratamiento === nuevoTratamiento.tratamiento &&
+                  Number(tarifa.costo) === Number(nuevoTratamiento.especialista)
+                )?.id ?? ""
+              }
+              onChange={(e) => {
+                const tarifa = especialistasDisponibles.find((item: any) =>
+                  String(item.id) === e.target.value
+                );
+                const especialistaDoctor = doctores.find((d: any) =>
+                  String(d.id) === String(tarifa?.doctor_id)
+                );
+                setNuevoTratamiento({
+                  ...nuevoTratamiento,
+                  especialista_id: tarifa ? String(tarifa.doctor_id) : "",
+                  especialista_nombre: tarifa ? String(especialistaDoctor?.nombre || "") : "",
+                  especialista: tarifa ? String(Number(tarifa.costo || 0)) : "0",
+                  moneda_especialista: tarifa?.moneda === "USD" ? "USD" : "MXN",
+                });
+              }}
+            >
+              <option value="">{es ? "Sin especialista" : "No specialist"}</option>
+              {especialistasDisponibles
+                .filter((tarifa: any) => tarifa.nombre_tratamiento === nuevoTratamiento.tratamiento)
+                .map((tarifa: any) => {
+                  const especialistaDoctor = doctores.find((d: any) =>
+                    String(d.id) === String(tarifa.doctor_id)
+                  );
+                  return (
+                    <option key={tarifa.id} value={tarifa.id}>
+                      {especialistaDoctor?.nombre || (es ? "Especialista" : "Specialist")}
+                      {` — ${tarifa.nombre_tratamiento} — ${tarifa.costo} ${tarifa.moneda || "MXN"}`}
+                    </option>
+                  );
+                })}
+            </select>
+            {nuevoTratamiento.especialista_id && (
+              <p className="text-xs mint-text-secondary mt-2">
+                {es ? "Costo asociado" : "Associated cost"}: {nuevoTratamiento.especialista || 0} {nuevoTratamiento.moneda_especialista || "MXN"}
+              </p>
+            )}
+            {nuevoTratamiento.tratamiento && !especialistasDisponibles.some((tarifa: any) =>
+              tarifa.nombre_tratamiento === nuevoTratamiento.tratamiento
+            ) && (
+              <p className="text-xs mint-text-secondary mt-2">
+                {es ? "No hay tarifas de especialistas vinculadas a este tratamiento." : "No specialist fees are linked to this treatment."}
+              </p>
+            )}
           </div>
 
           <div>
@@ -6538,7 +6586,7 @@ if (abriendoPacienteDesdeUrl) {
                   mb-2
                 "
               >
-                {es ? "Laboratorio" : "Laboratory"}
+                {es ? "Laboratorio" : "Laboratory"} ({tratamientoCobro?.moneda_laboratorio || "MXN"})
               </label>
 
               <input
@@ -6549,7 +6597,8 @@ if (abriendoPacienteDesdeUrl) {
                   nuevoCobro
                     .laboratorio
                 }
-                readOnly
+                onChange={(e) => setNuevoCobro({ ...nuevoCobro, laboratorio: e.target.value })}
+                disabled={tratamientoCobro?.estado === "Finalizado"}
                 className="
                   mint-input
                   w-full
