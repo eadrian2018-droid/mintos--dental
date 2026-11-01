@@ -3391,7 +3391,12 @@ comision_banco:
     );
 
     alert(
-      es ? "Error actualizando estado." : "Error updating status."
+      nuevoEstado === "Finalizado" &&
+      error.message?.includes("FIN02F: no se puede finalizar un tratamiento")
+        ? es
+          ? "No se puede finalizar el tratamiento porque tiene saldo pendiente o un saldo inconsistente."
+          : "This treatment cannot be completed because it has an outstanding or inconsistent balance."
+        : es ? "Error actualizando estado." : "Error updating status."
     );
 
     return;
@@ -4851,18 +4856,25 @@ if (abriendoPacienteDesdeUrl) {
                               }
 
                               {
-                                puedeRegistrarCobros &&
                                 (String(tratamiento.moneda_precio || "MXN") === "USD"
-                                  ? Number(tratamiento.resta_original ?? 0) > 0
-                                  : Number(tratamiento.resta ?? 0) > 0) && (
+                                  ? Number(tratamiento.resta_original ??
+                                      (Number(tratamiento.total_original ?? 0) - Number(tratamiento.pagado_original ?? 0))) > 0
+                                  : saldoMonetarioMXN(tratamiento) > 0) && (
 
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      abrirModalCobro(
-                                        tratamiento
-                                      )
-                                    }
+                                    onClick={() => {
+                                      if (!puedeRegistrarCobros) {
+                                        alert(es
+                                          ? "Tu usuario no tiene permiso para registrar cobros. Revisa Configuración → Usuarios y Roles."
+                                          : "Your account does not have permission to record payments. Check Settings → Users and Roles.");
+                                        return;
+                                      }
+                                      abrirModalCobro(tratamiento);
+                                    }}
+                                    title={!puedeRegistrarCobros
+                                      ? (es ? "Sin permiso para registrar cobros" : "No permission to record payments")
+                                      : undefined}
                                     className="
                                       mint-btn
                                       mint-btn-action

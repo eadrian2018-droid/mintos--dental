@@ -9,6 +9,7 @@ import {
   CalendarDays,
   ChevronDown,
   CircleDollarSign,
+  FileText,
   LayoutDashboard,
   LogOut,
   PanelLeftClose,
@@ -57,7 +58,6 @@ export default function Layout() {
 
   const es =
     language === "es";
-
 
   const [
     menuAbierto,
@@ -741,7 +741,7 @@ export default function Layout() {
             )
           }
 
-          {
+                    {
             puedeVerFinanzas && (
 
               <div>
@@ -845,17 +845,17 @@ export default function Layout() {
                         puedeVerResumenFinanzas && (
 
                           <Link
-                        to="/finanzas"
-                        className={
-                          submenuClasses(
-                            "/finanzas"
-                          )
-                        }
-                      >
+                            to="/finanzas"
+                            className={
+                              submenuClasses(
+                                "/finanzas"
+                              )
+                            }
+                          >
 
-                        {es ? "Resumen financiero" : "Financial summary"}
+                            {es ? "Resumen financiero" : "Financial summary"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -864,18 +864,18 @@ export default function Layout() {
                         puedeVerCobrosFinanzas && (
 
                           <Link
-                        to="/finanzas?seccion=cobros"
-                        className={
-                          submenuClasses(
-                            "/finanzas",
-                            "cobros"
-                          )
-                        }
-                      >
+                            to="/finanzas?seccion=cobros"
+                            className={
+                              submenuClasses(
+                                "/finanzas",
+                                "cobros"
+                              )
+                            }
+                          >
 
-                        {es ? "Cobros" : "Payments"}
+                            {es ? "Cobros" : "Payments"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -884,18 +884,18 @@ export default function Layout() {
                         puedeVerGastosFinanzas && (
 
                           <Link
-                        to="/finanzas?seccion=gastos"
-                        className={
-                          submenuClasses(
-                            "/finanzas",
-                            "gastos"
-                          )
-                        }
-                      >
+                            to="/finanzas?seccion=gastos"
+                            className={
+                              submenuClasses(
+                                "/finanzas",
+                                "gastos"
+                              )
+                            }
+                          >
 
-                        {es ? "Gastos" : "Expenses"}
+                            {es ? "Gastos" : "Expenses"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -904,18 +904,18 @@ export default function Layout() {
                         puedeVerComisionesFinanzas && (
 
                           <Link
-                        to="/finanzas?seccion=comisiones"
-                        className={
-                          submenuClasses(
-                            "/finanzas",
-                            "comisiones"
-                          )
-                        }
-                      >
+                            to="/finanzas?seccion=comisiones"
+                            className={
+                              submenuClasses(
+                                "/finanzas",
+                                "comisiones"
+                              )
+                            }
+                          >
 
-                        {es ? "Comisiones" : "Commissions"}
+                            {es ? "Comisiones" : "Commissions"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -924,18 +924,18 @@ export default function Layout() {
                         puedeVerReportesFinanzas && (
 
                           <Link
-                        to="/finanzas?seccion=reportes"
-                        className={
-                          submenuClasses(
-                            "/finanzas",
-                            "reportes"
-                          )
-                        }
-                      >
+                            to="/finanzas?seccion=reportes"
+                            className={
+                              submenuClasses(
+                                "/finanzas",
+                                "reportes"
+                              )
+                            }
+                          >
 
-                        {es ? "Reportes" : "Reports"}
+                            {es ? "Reportes" : "Reports"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -944,18 +944,18 @@ export default function Layout() {
                         puedeVerCierreFinanzas && (
 
                           <Link
-                        to="/finanzas?seccion=cierre"
-                        className={
-                          submenuClasses(
-                            "/finanzas",
-                            "cierre"
-                          )
-                        }
-                      >
+                            to="/finanzas?seccion=cierre"
+                            className={
+                              submenuClasses(
+                                "/finanzas",
+                                "cierre"
+                              )
+                            }
+                          >
 
-                        {es ? "Cierre mensual" : "Monthly close"}
+                            {es ? "Cierre mensual" : "Monthly close"}
 
-                      </Link>
+                          </Link>
 
                         )
                       }
@@ -966,6 +966,45 @@ export default function Layout() {
                 }
 
               </div>
+
+            )
+          }
+
+          {/* ================================================= */}
+          {/* DOCUMENTOS CLÍNICOS */}
+          {/* ================================================= */}
+
+          {
+            esAdmin && (
+
+              <Link
+                to="/documentos-clinicos"
+                title={
+                  es
+                    ? "Documentos Clínicos"
+                    : "Clinical Documents"
+                }
+                className={
+                  linkClasses(
+                    "/documentos-clinicos"
+                  )
+                }
+              >
+
+                <FileText
+                  size={18}
+                  className="shrink-0"
+                />
+
+                {!sidebarColapsado && (
+                  <span>
+                    {es
+                      ? "Documentos Clínicos"
+                      : "Clinical Documents"}
+                  </span>
+                )}
+
+              </Link>
 
             )
           }
@@ -1362,5 +1401,3 @@ export default function Layout() {
   );
 
 }
-
-

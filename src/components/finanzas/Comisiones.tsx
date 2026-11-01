@@ -331,9 +331,15 @@ export default function Comisiones({
                     "Finalizado"
                 );
 
+              // FIN-02F: incluir tratamientos en proceso sin alterar el conteo de finalizados.
+              const tratamientosLiquidables = tratamientosDoctor.filter(
+                (tratamiento) =>
+                  tratamiento.estado === "Finalizado" || tratamiento.estado === "En proceso"
+              );
+
               const ids =
                 new Set(
-                  finalizados.map(
+                  tratamientosLiquidables.map(
                     (tratamiento) =>
                       Number(
                         tratamiento.id
@@ -350,7 +356,7 @@ export default function Comisiones({
                 );
 
               const calcularComision = (pago: PagoComision) => {
-                const tratamiento = finalizados.find(
+                const tratamiento = tratamientosLiquidables.find(
                   (item) => Number(item.id) === Number(pago.tratamiento_id)
                 );
                 if (!tratamiento) return 0;
@@ -421,14 +427,14 @@ export default function Comisiones({
                   );
 
               const pagosPendientes = pagosDoctor.filter(pago => !pago.comision_doctor_pagada);
-              const tratamientosPorRevisar = finalizados.filter(tratamiento =>
+              const tratamientosPorRevisar = tratamientosLiquidables.filter(tratamiento =>
                 pagosPendientes.some(pago => Number(pago.tratamiento_id) === Number(tratamiento.id))
               );
               // La RPC liquida todos los pagos elegibles de la moneda seleccionada;
               // nunca ofrecer una liquidación parcial si existe alguno sin autorizar.
               const monedaLista = (moneda: "MXN" | "USD") =>
                 pagosPendientes.filter(pago => pago.moneda === moneda).every(pago => {
-                  const tratamiento = finalizados.find(t => Number(t.id) === Number(pago.tratamiento_id));
+                  const tratamiento = tratamientosLiquidables.find(t => Number(t.id) === Number(pago.tratamiento_id));
                   return tratamiento && comisionAutorizada(tratamiento) &&
                     calcularComisionNeta(pago, tratamiento, Number(doctor.porcentaje || 0)) !== null;
                 });

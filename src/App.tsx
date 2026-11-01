@@ -39,6 +39,8 @@ import TabletRegistro from "./components/TabletRegistro";
 
 import Configuracion from "./pages/configuracion";
 
+import DocumentosClinicos from "./pages/DocumentosClinicos";
+
 import AdminMFA from "./components/AdminMFA";
 
 import { useAuth } from "./context/AuthContext";
@@ -716,6 +718,30 @@ export default function App() {
 
                       ? (
                         <Finanzas />
+                      )
+
+                      : (
+                        <Navigate
+                          to="/dashboard"
+                          replace
+                        />
+                      )
+
+                  }
+                />
+
+                {/* ================================================= */}
+                {/* DOCUMENTOS CLÍNICOS */}
+                {/* ================================================= */}
+
+                <Route
+                  path="/documentos-clinicos"
+                  element={
+
+                    perfil?.rol === "admin"
+
+                      ? (
+                        <DocumentosClinicos />
                       )
 
                       : (
