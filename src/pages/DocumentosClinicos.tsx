@@ -6,6 +6,9 @@ import {
   FileHeart,
   FileText,
   ImagePlus,
+  Building2,
+  IdCard,
+  Save,
   Search,
   ShieldCheck,
   Stethoscope,
@@ -13,10 +16,38 @@ import {
 } from "lucide-react";
 
 import { useLanguage } from "../context/LanguageContext";
+import { useAuth } from "../context/AuthContext";
+import { supabase } from "../lib/supabase";
 
 import DocumentosRouter from "../components/documentosclinicos/DocumentosRouter";
 
 import type { ModuloDocumento } from "../components/documentosclinicos/DocumentosRouter";
+
+type ClinicaDocumento = {
+  nombre: string | null;
+  telefono: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  estado: string | null;
+  pais: string | null;
+  responsable: string | null;
+  sitio_web: string | null;
+};
+
+type DoctorDocumento = {
+  id: number;
+  nombre: string;
+  especialidad: string | null;
+  activo: boolean;
+};
+
+type CedulaDocumento = {
+  doctor_id: number;
+  cedula_profesional: string;
+  cedula_especialidad: string | null;
+};
 
 type DocumentCategory = ModuloDocumento;
 
@@ -76,6 +107,22 @@ export default function DocumentosClinicos() {
   const { language } = useLanguage();
 
   const es = language === "es";
+  const { perfil } = useAuth();
+  const esAdmin = perfil?.rol === "admin";
+
+  const [clinica, setClinica] = useState<ClinicaDocumento | null>(null);
+  const [doctores, setDoctores] = useState<DoctorDocumento[]>([]);
+  const [cedulas, setCedulas] = useState<CedulaDocumento[]>([]);
+  const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
+  const [cedulaProfesional, setCedulaProfesional] = useState("");
+  const [cedulaEspecialidad, setCedulaEspecialidad] = useState("");
+  const [cargandoConfig, setCargandoConfig] = useState(true);
+  const [guardandoCedula, setGuardandoCedula] = useState(false);
+  const [guardandoLogo, setGuardandoLogo] = useState(false);
+  const [mensajeConfig, setMensajeConfig] = useState("");
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [logoGuardadoUrl, setLogoGuardadoUrl] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const [moduloActivo, setModuloActivo] =
     useState<ModuloDocumento | null>(null);
@@ -88,6 +135,124 @@ export default function DocumentosClinicos() {
   const [logoName, setLogoName] = useState("");
 
   const [logoError, setLogoError] = useState("");
+
+  useEffect(() => {
+    let vigente = true;
+    async function cargarConfiguracion() {
+      setCargandoConfig(true);
+      const [clinicaRes, doctoresRes, cedulasRes, configRes] = await Promise.all([
+        supabase.from("configuracion_clinica")
+          .select("nombre,telefono,whatsapp,email,direccion,ciudad,estado,pais,responsable,sitio_web")
+          .limit(1).maybeSingle(),
+        supabase.from("doctores")
+          .select("id,nombre,especialidad,activo")
+          .eq("activo", true).order("nombre"),
+        supabase.from("mintos_documentos_profesionales")
+          .select("doctor_id,cedula_profesional,cedula_especialidad"),
+        supabase.from("mintos_documentos_configuracion")
+          .select("logo_path").eq("id", 1).maybeSingle(),
+      ]);
+      if (!vigente) return;
+      const error = clinicaRes.error || doctoresRes.error || cedulasRes.error || configRes.error;
+      if (error) {
+        console.error("Error cargando configuración documental:", error);
+        setMensajeConfig(es ? "No se pudo cargar toda la configuración documental." : "Could not load all document settings.");
+      }
+      setClinica((clinicaRes.data as ClinicaDocumento | null) ?? null);
+      setDoctores((doctoresRes.data as DoctorDocumento[] | null) ?? []);
+      setCedulas((cedulasRes.data as CedulaDocumento[] | null) ?? []);
+      const path = configRes.data?.logo_path ?? null;
+      setLogoPath(path);
+      if (path) {
+        const { data, error: urlError } = await supabase.storage
+          .from("documentos_clinicos").createSignedUrl(path, 3600);
+        if (vigente) {
+          if (urlError) console.error("Error obteniendo logotipo:", urlError);
+          setLogoGuardadoUrl(data?.signedUrl ?? null);
+        }
+      }
+      if (vigente) setCargandoConfig(false);
+    }
+    void cargarConfiguracion();
+    return () => { vigente = false; };
+  }, []);
+
+  useEffect(() => {
+    const registro = cedulas.find(item => String(item.doctor_id) === doctorSeleccionado);
+    setCedulaProfesional(registro?.cedula_profesional ?? "");
+    setCedulaEspecialidad(registro?.cedula_especialidad ?? "");
+  }, [doctorSeleccionado, cedulas]);
+
+  async function guardarCedula() {
+    if (!esAdmin || !doctorSeleccionado || !cedulaProfesional.trim()) {
+      setMensajeConfig(es ? "Selecciona un odontólogo e ingresa su cédula profesional." : "Select a dentist and enter their professional license.");
+      return;
+    }
+    setGuardandoCedula(true);
+    setMensajeConfig("");
+    const doctorId = Number(doctorSeleccionado);
+    const { error } = await supabase.from("mintos_documentos_profesionales").upsert({
+      doctor_id: doctorId,
+      cedula_profesional: cedulaProfesional.trim(),
+      cedula_especialidad: cedulaEspecialidad.trim() || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: "doctor_id" });
+    if (error) {
+      console.error("Error guardando cédula:", error);
+      setMensajeConfig(es ? "No se pudo guardar la cédula." : "Could not save the license.");
+    } else {
+      setCedulas(actual => [...actual.filter(item => item.doctor_id !== doctorId), {
+        doctor_id: doctorId,
+        cedula_profesional: cedulaProfesional.trim(),
+        cedula_especialidad: cedulaEspecialidad.trim() || null,
+      }]);
+      setMensajeConfig(es ? "Cédula guardada correctamente." : "License saved successfully.");
+    }
+    setGuardandoCedula(false);
+  }
+
+  async function guardarLogo() {
+    if (!esAdmin || !logoFile) return;
+    setGuardandoLogo(true);
+    setLogoError("");
+    setMensajeConfig("");
+    const extension = logoFile.type === "image/png" ? "png" : logoFile.type === "image/webp" ? "webp" : "jpg";
+    const nuevoPath = `logos/${crypto.randomUUID()}.${extension}`;
+    const storage = supabase.storage.from("documentos_clinicos");
+    const { error: uploadError } = await storage.upload(nuevoPath, logoFile, {
+      contentType: logoFile.type,
+      upsert: false,
+    });
+    if (uploadError) {
+      console.error("Error subiendo logotipo:", uploadError);
+      setLogoError(es ? "No se pudo subir el logotipo." : "Could not upload the logo.");
+      setGuardandoLogo(false);
+      return;
+    }
+    const { error: dbError } = await supabase.from("mintos_documentos_configuracion").upsert({
+      id: 1, logo_path: nuevoPath, updated_at: new Date().toISOString(),
+    }, { onConflict: "id" });
+    if (dbError) {
+      console.error("Error guardando referencia del logotipo:", dbError);
+      await storage.remove([nuevoPath]);
+      setLogoError(es ? "No se pudo guardar la configuración del logotipo." : "Could not save the logo settings.");
+      setGuardandoLogo(false);
+      return;
+    }
+    const { data } = await storage.createSignedUrl(nuevoPath, 3600);
+    setLogoGuardadoUrl(data?.signedUrl ?? null);
+    setLogoPath(nuevoPath);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setLogoName("");
+    setMensajeConfig(es ? "Logotipo guardado correctamente." : "Logo saved successfully.");
+    if (logoPath && logoPath !== nuevoPath) {
+      const { error: cleanupError } = await storage.remove([logoPath]);
+      if (cleanupError) console.warn("No se pudo eliminar el logotipo anterior:", cleanupError);
+    }
+    setGuardandoLogo(false);
+  }
+
 
   useEffect(() => {
     return () => {
@@ -144,6 +309,7 @@ export default function DocumentosClinicos() {
 
     setLogoError("");
     setLogoName(file.name);
+    setLogoFile(file);
     setLogoPreview(URL.createObjectURL(file));
   }
 
@@ -465,6 +631,55 @@ export default function DocumentosClinicos() {
 
       </section>
 
+      {/* CONFIGURACIÓN DOCUMENTAL: CLÍNICA Y CÉDULAS */}
+      <section className="space-y-5 rounded-[24px] border border-[#e0e9eb] bg-[#f5f9f8] p-5 dark:border-white/10 dark:bg-[#102635] sm:p-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#123b50] text-[#8ee8d7]"><Building2 size={21}/></div>
+          <div>
+            <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">{es ? "Configuración de documentos" : "Document settings"}</h2>
+            <p className="text-xs text-[#5e7885] dark:text-slate-400">{es ? "Datos institucionales y cédulas profesionales." : "Clinic information and professional licenses."}</p>
+          </div>
+        </div>
+        {cargandoConfig ? <p className="text-sm text-[#607987]">{es ? "Cargando configuración..." : "Loading settings..."}</p> : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div className="rounded-[19px] border border-[#e0e8ed] bg-white p-5 dark:border-white/10 dark:bg-[#142f40]">
+              <h3 className="mb-3 font-bold text-[#102f4f] dark:text-white">{es ? "Datos de la clínica" : "Clinic information"}</h3>
+              {clinica ? (
+                <div className="space-y-1.5 text-sm text-[#496675] dark:text-slate-300">
+                  <p className="font-bold">{clinica.nombre || "—"}</p>
+                  <p>{[clinica.direccion, clinica.ciudad, clinica.estado, clinica.pais].filter(Boolean).join(", ") || "—"}</p>
+                  <p>{clinica.telefono || "—"} {clinica.whatsapp ? ` · WhatsApp: ${clinica.whatsapp}` : ""}</p>
+                  <p>{clinica.email || "—"}</p>
+                  <p>{clinica.sitio_web || "—"}</p>
+                  <p>{es ? "Responsable: " : "Contact: "}{clinica.responsable || "—"}</p>
+                </div>
+              ) : <p className="text-sm text-[#607987]">{es ? "No hay información de clínica disponible." : "No clinic information available."}</p>}
+              <p className="mt-4 text-xs text-[#607987] dark:text-slate-400">{es ? "Estos datos se administran en Configuración → Clínica." : "Manage these details in Settings → Clinic."}</p>
+            </div>
+            <div className="rounded-[19px] border border-[#e0e8ed] bg-white p-5 dark:border-white/10 dark:bg-[#142f40]">
+              <div className="mb-3 flex items-center gap-2"><IdCard size={19} className="text-[#0b8f80]"/><h3 className="font-bold text-[#102f4f] dark:text-white">{es ? "Cédulas profesionales" : "Professional licenses"}</h3></div>
+              <div className="space-y-3">
+                <label className="block text-xs font-semibold text-[#496675] dark:text-slate-300">{es ? "Odontólogo" : "Dentist"}
+                  <select value={doctorSeleccionado} onChange={event => setDoctorSeleccionado(event.target.value)} className="mt-1 block w-full rounded-xl border border-[#dce6e8] bg-white px-3 py-2.5 text-sm text-[#102f4f] dark:border-white/20 dark:bg-[#0a2130] dark:text-white">
+                    <option value="">{es ? "Seleccionar odontólogo" : "Select dentist"}</option>
+                    {doctores.map(doctor => <option key={doctor.id} value={doctor.id}>{doctor.nombre}{doctor.especialidad ? ` · ${doctor.especialidad}` : ""}</option>)}
+                  </select>
+                </label>
+                <label className="block text-xs font-semibold text-[#496675] dark:text-slate-300">{es ? "Cédula profesional" : "Professional license"}
+                  <input type="text" maxLength={80} value={cedulaProfesional} disabled={!esAdmin || !doctorSeleccionado} onChange={event => setCedulaProfesional(event.target.value)} className="mt-1 block w-full rounded-xl border border-[#dce6e8] bg-white px-3 py-2.5 text-sm text-[#102f4f] disabled:opacity-60 dark:border-white/20 dark:bg-[#0a2130] dark:text-white" />
+                </label>
+                <label className="block text-xs font-semibold text-[#496675] dark:text-slate-300">{es ? "Cédula de especialidad (opcional)" : "Specialty license (optional)"}
+                  <input type="text" maxLength={80} value={cedulaEspecialidad} disabled={!esAdmin || !doctorSeleccionado} onChange={event => setCedulaEspecialidad(event.target.value)} className="mt-1 block w-full rounded-xl border border-[#dce6e8] bg-white px-3 py-2.5 text-sm text-[#102f4f] disabled:opacity-60 dark:border-white/20 dark:bg-[#0a2130] dark:text-white" />
+                </label>
+                {esAdmin && <button type="button" onClick={() => void guardarCedula()} disabled={guardandoCedula || !doctorSeleccionado || !cedulaProfesional.trim()} className="inline-flex items-center gap-2 rounded-xl bg-[#0b8f80] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50"><Save size={15}/>{guardandoCedula ? (es ? "Guardando..." : "Saving...") : (es ? "Guardar cédula" : "Save license")}</button>}
+                <p className="text-xs text-[#607987] dark:text-slate-400">{es ? "Los documentos se imprimirán para firma manual." : "Documents will be printed for handwritten signatures."}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {mensajeConfig && <p role="status" className="text-sm font-medium text-[#087e73] dark:text-[#8be9d7]">{mensajeConfig}</p>}
+      </section>
+
       {/* LOGOTIPO PARA DOCUMENTOS */}
 
       <section
@@ -510,8 +725,8 @@ export default function DocumentosClinicos() {
 
             <p className="mt-1 text-xs text-[#5e7885] dark:text-slate-400">
               {es
-                ? "Vista previa local del logotipo (PNG, JPG o WebP; máximo 2 MB)."
-                : "Local logo preview (PNG, JPG or WebP; maximum 2 MB)."}
+                ? "Logotipo institucional (PNG, JPG o WebP; máximo 2 MB)."
+                : "Clinic logo (PNG, JPG or WebP; maximum 2 MB)."}
             </p>
 
           </div>
@@ -560,9 +775,9 @@ export default function DocumentosClinicos() {
             "
           >
 
-            {logoPreview ? (
+            {logoPreview || logoGuardadoUrl ? (
               <img
-                src={logoPreview}
+                src={logoPreview || logoGuardadoUrl || ""}
                 alt={
                   es
                     ? "Vista previa del logotipo"
@@ -624,6 +839,7 @@ export default function DocumentosClinicos() {
                   type="file"
                   accept="image/png,image/jpeg,image/webp"
                   onChange={handleLogoUpload}
+                  disabled={!esAdmin || guardandoLogo}
                   className="sr-only"
                 />
 
@@ -635,6 +851,7 @@ export default function DocumentosClinicos() {
                   onClick={() => {
                     setLogoPreview(null);
                     setLogoName("");
+                    setLogoFile(null);
                     setLogoError("");
                   }}
                   className="
@@ -669,6 +886,12 @@ export default function DocumentosClinicos() {
 
             </div>
 
+            {esAdmin && logoFile && (
+              <button type="button" onClick={() => void guardarLogo()} disabled={guardandoLogo}
+                className="inline-flex items-center gap-2 rounded-xl bg-[#102f4f] px-4 py-2.5 text-xs font-bold text-white disabled:opacity-50">
+                <Save size={15} />{guardandoLogo ? (es ? "Guardando..." : "Saving...") : (es ? "Guardar logotipo" : "Save logo")}
+              </button>
+            )}
             {logoName && (
               <p className="break-all text-xs font-medium text-[#52777a] dark:text-slate-300">
                 {logoName}
@@ -701,8 +924,8 @@ export default function DocumentosClinicos() {
 
               <p className="max-w-xl text-xs leading-relaxed text-[#587477] dark:text-slate-400">
                 {es
-                  ? "Esta selección es solo una vista previa: todavía no se guarda ni se incorpora a documentos. La integración definitiva utilizará los datos de Configuración → Clínica."
-                  : "This is a preview only: the image is not yet saved or inserted into documents. Final integration will use Settings → Clinic data."}
+                  ? "El logotipo se guarda en un almacenamiento privado. Su incorporación a recetas y justificantes se realizará al integrar la hoja membretada."
+                  : "The logo is saved in private storage. It will appear on prescriptions and certificates once the shared letterhead is integrated."}
               </p>
 
             </div>
