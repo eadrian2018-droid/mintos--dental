@@ -1,75 +1,116 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   ArrowLeft,
   CalendarDays,
   ClipboardCheck,
-  FileCheck2,
   FileText,
   Printer,
   RotateCcw,
   Stethoscope,
 } from "lucide-react";
 
+import { supabase } from "../../../lib/supabase";
 import { useLanguage } from "../../../context/LanguageContext";
 
 type JustificantesMedicosProps = {
   onBack: () => void;
 };
 
-type TipoDocumento =
-  | "asistencia"
-  | "reposo"
-  | "tratamiento";
-
-type Formulario = {
-  clinica: string;
-  direccion: string;
-  telefono: string;
-  paciente: string;
-  odontologo: string;
-  cedula: string;
-  fechaAtencion: string;
-  horaEntrada: string;
-  horaSalida: string;
-  diasReposo: string;
-  fechaInicioReposo: string;
-  descripcion: string;
-  observaciones: string;
+type Clinica = {
+  nombre: string | null;
+  responsable: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  estado: string | null;
+  pais: string | null;
+  telefono: string | null;
+  whatsapp: string | null;
+  email: string | null;
+  sitio_web: string | null;
 };
 
-const fechaLocal = () => {
+type Doctor = {
+  id: number;
+  nombre: string;
+  especialidad: string | null;
+  activo: boolean;
+  tipo_doctor: string | null;
+};
+
+type Profesional = {
+  doctor_id: number;
+  cedula_profesional: string;
+  cedula_especialidad: string | null;
+};
+
+type ConfiguracionDocumentos = {
+  logo_path: string | null;
+  nombre_membrete: string | null;
+  subtitulo_membrete: string | null;
+};
+
+type PacienteOpcion = {
+  id: number;
+  nombre: string;
+};
+
+type TratamientoOpcion = {
+  id: number;
+  nombre: string;
+  nombre_en: string | null;
+  activo: boolean;
+};
+
+type Formulario = {
+  tratamientoId: string;
+  tratamientoManual: string;
+  diasActividad: string;
+  paciente: string;
+  doctorId: string;
+  fechaAtencion: string;
+  diasReposo: string;
+};
+
+const BUCKET = "documentos_clinicos";
+
+const fechaLocal = (): string => {
   const ahora = new Date();
 
   const year = ahora.getFullYear();
-  const month = String(ahora.getMonth() + 1).padStart(2, "0");
-  const day = String(ahora.getDate()).padStart(2, "0");
+
+  const month = String(
+    ahora.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    ahora.getDate(),
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
 const formularioInicial = (): Formulario => ({
-  clinica: "",
-  direccion: "",
-  telefono: "",
   paciente: "",
-  odontologo: "",
-  cedula: "",
+  tratamientoId: "",
+  tratamientoManual: "",
+  diasActividad: "0",
+  doctorId: "",
   fechaAtencion: fechaLocal(),
-  horaEntrada: "",
-  horaSalida: "",
-  diasReposo: "1",
-  fechaInicioReposo: fechaLocal(),
-  descripcion: "",
-  observaciones: "",
+  diasReposo: "0",
 });
 
-const formatoFecha = (valor: string, es: boolean) => {
+const formatoFecha = (
+  valor: string,
+  es: boolean,
+): string => {
   if (!valor) return "—";
 
   const fecha = new Date(`${valor}T12:00:00`);
 
-  if (Number.isNaN(fecha.getTime())) return valor;
+  if (Number.isNaN(fecha.getTime())) {
+    return valor;
+  }
 
   return new Intl.DateTimeFormat(
     es ? "es-MX" : "en-US",
@@ -81,50 +122,672 @@ const formatoFecha = (valor: string, es: boolean) => {
   ).format(fecha);
 };
 
-const sumarDias = (fecha: string, dias: number) => {
-  if (!fecha || !Number.isFinite(dias) || dias < 1) {
+const sumarDias = (
+  fecha: string,
+  dias: number,
+): string => {
+  if (
+    !fecha ||
+    !Number.isInteger(dias) ||
+    dias < 1
+  ) {
     return "";
   }
 
   const resultado = new Date(`${fecha}T12:00:00`);
 
-  if (Number.isNaN(resultado.getTime())) return "";
+  if (Number.isNaN(resultado.getTime())) {
+    return "";
+  }
 
-  resultado.setDate(resultado.getDate() + dias - 1);
+  resultado.setDate(
+    resultado.getDate() + dias - 1,
+  );
 
   const year = resultado.getFullYear();
-  const month = String(resultado.getMonth() + 1).padStart(2, "0");
-  const day = String(resultado.getDate()).padStart(2, "0");
+
+  const month = String(
+    resultado.getMonth() + 1,
+  ).padStart(2, "0");
+
+  const day = String(
+    resultado.getDate(),
+  ).padStart(2, "0");
 
   return `${year}-${month}-${day}`;
 };
 
-const escaparHtml = (valor: string) =>
-  valor
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+const construirDireccion = (
+  clinica: Clinica,
+): string =>
+  [
+    clinica.direccion,
+    clinica.ciudad,
+    clinica.estado,
+    clinica.pais,
+  ]
+    .map((valor) => valor?.trim())
+    .filter(Boolean)
+    .join(", ");
+
+type DocumentoJustificanteProps = {
+  clinica: Clinica;
+  nombreMembrete: string;
+  subtituloMembrete: string;
+  logoUrl: string | null;
+  formulario: Formulario;
+  doctor: Doctor;
+  profesional: Profesional;
+  es: boolean;
+  fechaFinReposo: string;
+  nombreTratamiento: string;
+};
+
+function DocumentoJustificante({
+  clinica,
+  nombreMembrete,
+  subtituloMembrete,
+  logoUrl,
+  formulario,
+  doctor,
+  profesional,
+  es,
+  fechaFinReposo,
+  nombreTratamiento,
+}: DocumentoJustificanteProps) {
+  const titular =
+    nombreMembrete.trim() ||
+    clinica.responsable?.trim() ||
+    clinica.nombre?.trim() ||
+    "";
+
+  const subtitulo =
+    subtituloMembrete.trim() ||
+    clinica.nombre?.trim() ||
+    "";
+
+  const direccion = construirDireccion(clinica);
+
+  const diasReposo = Number(
+    formulario.diasReposo,
+  );
+
+  const diasActividad = Number(
+    formulario.diasActividad,
+  );
+
+  const tieneActividad =
+    Number.isInteger(diasActividad) &&
+    diasActividad > 0;
+
+  const tieneReposo =
+    Number.isInteger(diasReposo) &&
+    diasReposo > 0 &&
+    Boolean(formulario.fechaAtencion);
+
+  const [anio = "", mes = "", dia = ""] =
+    formulario.fechaAtencion.split("-");
+
+  const fechaOrdenada = es
+    ? [
+        [dia, "Día"],
+        [mes, "Mes"],
+        [anio, "Año"],
+      ]
+    : [
+        [mes, "Month"],
+        [dia, "Day"],
+        [anio, "Year"],
+      ];
+
+  return (
+    <article
+      aria-label={
+        es
+          ? "Justificante médico"
+          : "Medical certificate"
+      }
+      className="mintos-justificante-sheet relative mx-auto h-[279.4mm] w-[215.9mm] shrink-0 overflow-hidden bg-white px-[15mm] pt-[13mm] font-sans text-[#152b32] shadow-[0_12px_36px_rgba(0,0,0,0.12)]"
+    >
+      {/* ENCABEZADO INSTITUCIONAL */}
+
+      <header className="relative z-10">
+        <div className="flex items-start gap-[7mm]">
+          <div className="flex h-[34mm] w-[35mm] shrink-0 items-center justify-center">
+            {logoUrl && (
+              <img
+                src={logoUrl}
+                alt=""
+                className="h-full w-full object-contain"
+              />
+            )}
+          </div>
+
+          <div className="min-w-0 flex-1 pt-[1mm]">
+            <h1 className="break-words font-serif text-[33px] italic font-normal leading-[1.1] tracking-[-0.04em] text-[#142f37]">
+              {titular}
+            </h1>
+
+            <p className="mt-[2mm] break-words text-[10px] font-bold uppercase leading-snug tracking-[0.11em] text-[#273c43]">
+              {subtitulo}
+            </p>
+
+            {direccion && (
+              <p className="mt-[2mm] break-words text-[10px] leading-[1.45] text-[#34484f]">
+                {direccion}
+              </p>
+            )}
+
+            <div className="mt-[1mm] flex flex-wrap gap-x-[4mm] text-[10px] font-semibold leading-[1.45] text-[#263c43]">
+              {clinica.telefono && (
+                <span>
+                  {es ? "Tel." : "Phone"}{" "}
+                  {clinica.telefono}
+                </span>
+              )}
+
+              {clinica.whatsapp && (
+                <span>
+                  WhatsApp {clinica.whatsapp}
+                </span>
+              )}
+            </div>
+
+            {clinica.email && (
+              <p className="mt-[1mm] break-all text-[10px] text-[#34484f]">
+                {clinica.email}
+              </p>
+            )}
+
+            {clinica.sitio_web && (
+              <p className="break-all text-[10px] text-[#34484f]">
+                {clinica.sitio_web}
+              </p>
+            )}
+          </div>
+
+          {/* FECHA */}
+
+          <div className="w-[44mm] shrink-0 pt-[2mm]">
+            <div className="overflow-hidden rounded-[4px] border border-[#294c55]">
+              <div className="bg-[#173e49] py-[2mm] text-center text-[11px] font-bold uppercase tracking-[0.12em] text-white">
+                {es ? "Fecha" : "Date"}
+              </div>
+
+              <div className="flex bg-white px-[1mm] py-[3mm]">
+                {fechaOrdenada.map(
+                  ([valor, etiqueta], index) => (
+                    <div
+                      key={`${etiqueta}-${index}`}
+                      className="flex min-w-0 flex-1 flex-col items-center justify-center"
+                    >
+                      <span className="text-[11px] font-semibold text-[#173e49]">
+                        {valor || "—"}
+                      </span>
+
+                      <span className="mt-[1mm] text-[7px] text-[#60727a]">
+                        {etiqueta}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* DOBLE LÍNEA */}
+
+        <div className="mt-[6mm] space-y-[1mm]">
+          <div className="h-[1.2mm] w-full bg-[#173e49]" />
+          <div className="h-[0.45mm] w-full bg-[#173e49]" />
+        </div>
+      </header>
+
+      {/* TÍTULO — SIN FECHA DUPLICADA */}
+
+      <div className="relative z-10 mt-[9mm]">
+        <h2 className="text-center text-[20px] font-extrabold uppercase tracking-[0.15em] text-[#102f4f]">
+          {es
+            ? "Justificante médico"
+            : "Medical certificate"}
+        </h2>
+      </div>
+
+      {/* MARCA DE AGUA */}
+
+      {logoUrl && (
+        <img
+          src={logoUrl}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-[43%] h-[90mm] w-[90mm] -translate-x-1/2 -translate-y-1/2 select-none object-contain opacity-[0.055]"
+        />
+      )}
+
+      {/* CONTENIDO DEL JUSTIFICANTE */}
+
+      <main className="relative z-10 mt-[12mm] text-[13px] leading-[2] text-[#20343d]">
+        <p className="font-semibold uppercase tracking-[0.04em] text-[#102f4f]">
+          {es
+            ? "A quien corresponda:"
+            : "To whom it may concern:"}
+        </p>
+
+        <p className="mt-[9mm]">
+          {es ? (
+            <>
+              Por medio de la presente se certifica que el/la paciente{" "}
+              <span className="font-semibold">
+                {formulario.paciente.trim()}
+              </span>{" "}
+              acudió a nuestra clínica el día{" "}
+              {formatoFecha(formulario.fechaAtencion, es)}
+              {nombreTratamiento
+                ? ` para atención relacionada con ${nombreTratamiento}`
+                : " para recibir atención odontológica"}.
+            </>
+          ) : (
+            <>
+              This is to certify that patient{" "}
+              <span className="font-semibold">
+                {formulario.paciente.trim()}
+              </span>{" "}
+              visited our clinic on{" "}
+              {formatoFecha(formulario.fechaAtencion, es)}
+              {nombreTratamiento
+                ? ` for care related to ${nombreTratamiento}`
+                : " for dental care"}.
+            </>
+          )}
+        </p>
+
+        {/* ORACIÓN ADICIONAL */}
+
+        <p className="mt-[5mm]">
+          {es
+            ? "Se expide el presente documento como constancia de su atención odontológica, para los fines que considere pertinentes."
+            : "This document is issued as confirmation of the patient's dental visit for any appropriate purpose."}
+        </p>
+
+        {(tieneReposo || tieneActividad) && (
+          <p className="mt-[7mm]">
+            {es ? (
+              <>
+                Por indicación del odontólogo tratante, se recomienda
+                {tieneReposo
+                  ? ` guardar reposo absoluto durante ${diasReposo} ${
+                      diasReposo === 1 ? "día" : "días"
+                    }`
+                  : ""}
+                {tieneReposo && tieneActividad ? " y" : ""}
+                {tieneActividad
+                  ? ` evitar esfuerzos o actividades físicas durante ${diasActividad} ${
+                      diasActividad === 1 ? "día" : "días"
+                    }`
+                  : ""}.
+                {tieneReposo
+                  ? ` El reposo comprende del ${formatoFecha(
+                      formulario.fechaAtencion,
+                      es,
+                    )} al ${formatoFecha(fechaFinReposo, es)}.`
+                  : ""}
+              </>
+            ) : (
+              <>
+                As recommended by the treating dentist, the patient should
+                {tieneReposo
+                  ? ` rest completely for ${diasReposo} ${
+                      diasReposo === 1 ? "day" : "days"
+                    }`
+                  : ""}
+                {tieneReposo && tieneActividad ? " and" : ""}
+                {tieneActividad
+                  ? ` avoid physical exertion or activity for ${diasActividad} ${
+                      diasActividad === 1 ? "day" : "days"
+                    }`
+                  : ""}.
+                {tieneReposo
+                  ? ` The rest period runs from ${formatoFecha(
+                      formulario.fechaAtencion,
+                      es,
+                    )} through ${formatoFecha(fechaFinReposo, es)}.`
+                  : ""}
+              </>
+            )}
+          </p>
+        )}
+
+        {(tieneReposo || tieneActividad) && (
+          <p className="mt-[7mm]">
+            {es
+              ? "No seguir estas recomendaciones podría ocasionar sangrado u otras complicaciones durante su recuperación, según la naturaleza del procedimiento."
+              : "Failure to follow these recommendations may result in bleeding or other complications during recovery, depending on the procedure."}
+          </p>
+        )}
+
+                <p className="mt-[7mm]">
+          {es
+            ? "Sin más por el momento, quedo a sus órdenes."
+            : "Please do not hesitate to contact our office if further information is required."}
+        </p>
+
+        <p className="mt-[8mm]">
+          {es ? "Atentamente," : "Sincerely,"}
+        </p>
+      </main>
+
+      {/* FIRMA DEL ODONTÓLOGO */}
+
+      <section className="relative z-10 mt-[12mm] flex justify-end">
+        <div className="w-[76mm] text-center">
+          <div className="h-[10mm]" />
+
+          <div className="border-t border-[#173e49] pt-[2mm]">
+            <p className="text-[11px] font-semibold text-[#173e49]">
+              {doctor.nombre}
+            </p>
+
+            {doctor.especialidad?.trim() && (
+              <p className="mt-[1mm] text-[9px] text-[#405960]">
+                {doctor.especialidad}
+              </p>
+            )}
+
+            <p className="mt-[1mm] text-[9px] text-[#405960]">
+              {es
+                ? "Cédula profesional"
+                : "Professional license"}
+              : {profesional.cedula_profesional}
+            </p>
+
+            {profesional.cedula_especialidad?.trim() && (
+              <p className="text-[9px] text-[#405960]">
+                {es
+                  ? "Cédula de especialidad"
+                  : "Specialty license"}
+                : {profesional.cedula_especialidad}
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* FRANJA INSTITUCIONAL */}
+
+      <footer className="relative z-10 mt-[4mm]">
+        <div className="h-[1mm] w-full bg-[#173e49]" />
+
+        <div className="mt-[3mm] flex items-start justify-between gap-[5mm]">
+          <div className="min-w-0 flex-1">
+            <p className="font-serif text-[16px] italic leading-tight text-[#173e49]">
+              {titular}
+            </p>
+
+            <p className="mt-[1mm] text-[8px] uppercase tracking-[0.1em] text-[#536970]">
+              {subtitulo}
+            </p>
+          </div>
+
+          <div className="max-w-[90mm] text-right text-[9px] leading-[1.5] text-[#173e49]">
+            {clinica.email && (
+              <p className="break-all font-semibold">
+                {clinica.email}
+              </p>
+            )}
+
+            {clinica.sitio_web && (
+              <p className="break-all">
+                {clinica.sitio_web}
+              </p>
+            )}
+
+            {clinica.whatsapp && (
+              <p>
+                WhatsApp: {clinica.whatsapp}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-[3mm] h-[0.4mm] w-full bg-[#173e49]" />
+      </footer>
+    </article>
+  );
+}
 
 export default function JustificantesMedicos({
   onBack,
 }: JustificantesMedicosProps) {
   const { language } = useLanguage();
+
   const es = language === "es";
 
-  const [tipo, setTipo] =
-    useState<TipoDocumento>("asistencia");
+  const [clinica, setClinica] =
+    useState<Clinica | null>(null);
+
+  const [pacientes, setPacientes] =
+    useState<PacienteOpcion[]>([]);
+
+  const [catalogo, setCatalogo] =
+    useState<TratamientoOpcion[]>([]);
+
+  const [errorListas, setErrorListas] =
+    useState("");
+
+  const [doctores, setDoctores] =
+    useState<Doctor[]>([]);
+
+  const [profesionales, setProfesionales] =
+    useState<Profesional[]>([]);
+
+  const [nombreMembrete, setNombreMembrete] =
+    useState("");
+
+  const [subtituloMembrete, setSubtituloMembrete] =
+    useState("");
+
+  const [logoUrl, setLogoUrl] =
+    useState<string | null>(null);
 
   const [formulario, setFormulario] =
     useState<Formulario>(formularioInicial);
 
-  const [mostrarVistaPrevia, setMostrarVistaPrevia] =
-    useState(false);
+  const [cargando, setCargando] =
+    useState(true);
 
-  const actualizar = (
-    campo: keyof Formulario,
-    valor: string,
+  const [error, setError] =
+    useState("");
+
+  const [
+    mostrarVistaPrevia,
+    setMostrarVistaPrevia,
+  ] = useState(false);
+
+  useEffect(() => {
+    let activo = true;
+
+    const cargarDatos = async () => {
+      setCargando(true);
+      setError("");
+
+      try {
+        const [
+          respuestaClinica,
+          respuestaDoctores,
+          respuestaProfesionales,
+          respuestaConfiguracion,
+          respuestaPacientes,
+          respuestaCatalogo,
+        ] = await Promise.all([
+          supabase
+            .from("configuracion_clinica")
+            .select(
+              "nombre,responsable,direccion,ciudad,estado,pais,telefono,whatsapp,email,sitio_web",
+            )
+            .limit(1)
+            .maybeSingle(),
+
+          supabase
+            .from("doctores")
+            .select(
+              "id,nombre,especialidad,activo,tipo_doctor",
+            )
+            .eq("activo", true)
+            .order("nombre"),
+
+          supabase
+            .from("mintos_documentos_profesionales")
+            .select(
+              "doctor_id,cedula_profesional,cedula_especialidad",
+            ),
+
+          supabase
+            .from("mintos_documentos_configuracion")
+            .select(
+              "logo_path,nombre_membrete,subtitulo_membrete",
+            )
+            .eq("id", 1)
+            .maybeSingle(),
+
+          supabase
+            .from("pacientes")
+            .select("id,nombre")
+            .order("nombre"),
+
+          supabase
+            .from("catalogo_tratamientos")
+            .select("id,nombre,nombre_en,activo")
+            .eq("activo", true)
+            .order("nombre"),
+        ]);
+
+        if (respuestaClinica.error) {
+          throw respuestaClinica.error;
+        }
+
+        if (respuestaDoctores.error) {
+          throw respuestaDoctores.error;
+        }
+
+        if (respuestaProfesionales.error) {
+          throw respuestaProfesionales.error;
+        }
+
+        if (respuestaConfiguracion.error) {
+          throw respuestaConfiguracion.error;
+        }
+
+        if (
+          respuestaPacientes.error ||
+          respuestaCatalogo.error
+        ) {
+          setErrorListas(
+            es
+              ? "No se pudieron cargar pacientes o tratamientos. Puedes escribirlos manualmente."
+              : "Patients or treatments could not be loaded. You can enter them manually.",
+          );
+        } else {
+          setErrorListas("");
+        }
+
+        const clinicaObtenida =
+          respuestaClinica.data as Clinica | null;
+
+        const doctoresObtenidos = (
+          (respuestaDoctores.data ?? []) as Doctor[]
+        ).filter(
+          (doctor) =>
+            doctor.tipo_doctor === "doctor" ||
+            doctor.tipo_doctor === "ambos",
+        );
+
+        const profesionalesObtenidos =
+          (respuestaProfesionales.data ??
+            []) as Profesional[];
+
+        const configuracion =
+          respuestaConfiguracion.data as
+            | ConfiguracionDocumentos
+            | null;
+
+        let urlLogotipo: string | null = null;
+
+        if (configuracion?.logo_path) {
+          const {
+            data,
+            error: errorLogo,
+          } = await supabase.storage
+            .from(BUCKET)
+            .createSignedUrl(
+              configuracion.logo_path,
+              3600,
+            );
+
+          if (errorLogo) {
+            throw errorLogo;
+          }
+
+          urlLogotipo =
+            data?.signedUrl ?? null;
+        }
+
+        if (!activo) return;
+
+        setPacientes(
+          (respuestaPacientes.data ?? []) as PacienteOpcion[],
+        );
+
+        setCatalogo(
+          (respuestaCatalogo.data ?? []) as TratamientoOpcion[],
+        );
+
+        setClinica(clinicaObtenida);
+        setDoctores(doctoresObtenidos);
+        setProfesionales(profesionalesObtenidos);
+
+        setNombreMembrete(
+          configuracion?.nombre_membrete ??
+            clinicaObtenida?.responsable ??
+            "",
+        );
+
+        setSubtituloMembrete(
+          configuracion?.subtitulo_membrete ??
+            clinicaObtenida?.nombre ??
+            "",
+        );
+
+        setLogoUrl(urlLogotipo);
+      } catch (err) {
+        if (!activo) return;
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : es
+              ? "No fue posible cargar la configuración."
+              : "Unable to load document settings.",
+        );
+      } finally {
+        if (activo) {
+          setCargando(false);
+        }
+      }
+    };
+
+    void cargarDatos();
+
+    return () => {
+      activo = false;
+    };
+  }, []);
+
+  const actualizarCampo = <
+    K extends keyof Formulario
+  >(
+    campo: K,
+    valor: Formulario[K],
   ) => {
     setFormulario((actual) => ({
       ...actual,
@@ -132,260 +795,205 @@ export default function JustificantesMedicos({
     }));
   };
 
-  const tipos = [
-    {
-      id: "asistencia" as const,
-      icon: CalendarDays,
-      titulo: es
-        ? "Constancia de asistencia"
-        : "Attendance Certificate",
-      descripcion: es
-        ? "Acredita la asistencia del paciente al consultorio."
-        : "Confirms the patient's attendance at the dental office.",
-    },
-    {
-      id: "reposo" as const,
-      icon: ClipboardCheck,
-      titulo: es
-        ? "Justificante de reposo"
-        : "Rest Recommendation",
-      descripcion: es
-        ? "Documenta un periodo de reposo recomendado."
-        : "Documents a recommended rest period.",
-    },
-    {
-      id: "tratamiento" as const,
-      icon: FileCheck2,
-      titulo: es
-        ? "Constancia de tratamiento"
-        : "Treatment Certificate",
-      descripcion: es
-        ? "Confirma que el paciente recibió atención odontológica."
-        : "Confirms that the patient received dental care.",
-    },
-  ];
-
-  const tipoActivo = tipos.find(
-    (item) => item.id === tipo,
-  );
-
-  const diasReposo = Number(formulario.diasReposo);
-
-  const fechaFinReposo = useMemo(
+  const doctorSeleccionado = useMemo(
     () =>
-      sumarDias(
-        formulario.fechaInicioReposo,
-        diasReposo,
-      ),
-    [formulario.fechaInicioReposo, diasReposo],
+      doctores.find(
+        (doctor) =>
+          String(doctor.id) === formulario.doctorId,
+      ) ?? null,
+    [doctores, formulario.doctorId],
   );
 
-  const documentoValido =
-    formulario.paciente.trim().length > 0 &&
-    formulario.odontologo.trim().length > 0 &&
-    formulario.clinica.trim().length > 0 &&
-    formulario.fechaAtencion.length > 0 &&
-    (tipo !== "reposo" ||
-      (Number.isInteger(diasReposo) &&
-        diasReposo >= 1 &&
-        diasReposo <= 365 &&
-        formulario.fechaInicioReposo.length > 0));
+  const profesionalSeleccionado = useMemo(
+    () =>
+      profesionales.find(
+        (profesional) =>
+          profesional.doctor_id ===
+          doctorSeleccionado?.id,
+      ) ?? null,
+    [profesionales, doctorSeleccionado],
+  );
 
-  const tituloDocumento = tipoActivo?.titulo ?? "";
+  const tratamientoSeleccionado = catalogo.find(
+    (item) =>
+      String(item.id) === formulario.tratamientoId,
+  );
 
-  const contenidoDocumento = () => {
-    const paciente = formulario.paciente.trim();
+  const nombreTratamiento =
+    formulario.tratamientoId === "manual"
+      ? formulario.tratamientoManual.trim()
+      : tratamientoSeleccionado
+        ? (
+            es
+              ? tratamientoSeleccionado.nombre
+              : tratamientoSeleccionado.nombre_en ||
+                tratamientoSeleccionado.nombre
+          )
+        : "";
 
-    if (tipo === "asistencia") {
-      return es
-        ? `Por medio de la presente se hace constar que ${paciente} acudió a consulta odontológica el día ${formatoFecha(formulario.fechaAtencion, es)}${formulario.horaEntrada ? `, con hora de ingreso a las ${formulario.horaEntrada}` : ""}${formulario.horaSalida ? ` y hora de salida a las ${formulario.horaSalida}` : ""}.\n\nSe extiende la presente constancia a solicitud de la persona interesada para los fines que estime convenientes.`
-        : `This is to certify that ${paciente} attended a dental appointment on ${formatoFecha(formulario.fechaAtencion, es)}${formulario.horaEntrada ? `, arriving at ${formulario.horaEntrada}` : ""}${formulario.horaSalida ? ` and departing at ${formulario.horaSalida}` : ""}.\n\nThis certificate is issued at the patient's request for appropriate purposes.`;
+  const diasActividad = Number(
+    formulario.diasActividad,
+  );
+
+  const diasActividadValidos =
+    formulario.diasActividad.trim() !== "" &&
+    Number.isInteger(diasActividad) &&
+    diasActividad >= 0 &&
+    diasActividad <= 365;
+
+  const diasReposo = Number(
+    formulario.diasReposo,
+  );
+
+  const diasReposoValidos =
+    formulario.diasReposo.trim() !== "" &&
+    Number.isInteger(diasReposo) &&
+    diasReposo >= 0 &&
+    diasReposo <= 365;
+
+  const fechaFinReposo = useMemo(() => {
+    if (
+      !diasReposoValidos ||
+      diasReposo === 0
+    ) {
+      return "";
     }
 
-    if (tipo === "reposo") {
-      return es
-        ? `Por medio de la presente se hace constar que ${paciente} recibió atención odontológica el día ${formatoFecha(formulario.fechaAtencion, es)}.\n\nCon base en la valoración clínica realizada, se recomienda un periodo de reposo de ${diasReposo} ${diasReposo === 1 ? "día" : "días"}, comprendido del ${formatoFecha(formulario.fechaInicioReposo, es)} al ${formatoFecha(fechaFinReposo, es)}.\n\nEsta recomendación se emite bajo criterio del profesional tratante y no constituye por sí misma una incapacidad laboral oficial.`
-        : `This is to certify that ${paciente} received dental care on ${formatoFecha(formulario.fechaAtencion, es)}.\n\nBased on the clinical evaluation, a rest period of ${diasReposo} ${diasReposo === 1 ? "day" : "days"} is recommended, from ${formatoFecha(formulario.fechaInicioReposo, es)} through ${formatoFecha(fechaFinReposo, es)}.\n\nThis recommendation is issued at the treating professional's discretion and does not, by itself, constitute an official work disability certificate.`;
-    }
+    return sumarDias(
+      formulario.fechaAtencion,
+      diasReposo,
+    );
+  }, [
+    formulario.fechaAtencion,
+    diasReposo,
+    diasReposoValidos,
+  ]);
 
-    return es
-      ? `Por medio de la presente se hace constar que ${paciente} recibió atención odontológica el día ${formatoFecha(formulario.fechaAtencion, es)} en ${formulario.clinica.trim()}.\n\n${formulario.descripcion.trim() ? `Atención realizada: ${formulario.descripcion.trim()}.\n\n` : ""}Se expide la presente constancia a solicitud de la persona interesada.`
-      : `This is to certify that ${paciente} received dental care on ${formatoFecha(formulario.fechaAtencion, es)} at ${formulario.clinica.trim()}.\n\n${formulario.descripcion.trim() ? `Care provided: ${formulario.descripcion.trim()}.\n\n` : ""}This certificate is issued at the patient's request.`;
-  };
-
-  const imprimirDocumento = () => {
-    if (!documentoValido) return;
-
-    const ventana = window.open(
-      "",
-      "_blank",
-      "width=900,height=1000",
+  const puedeImprimir =
+    !cargando &&
+    !error &&
+    Boolean(clinica?.nombre?.trim()) &&
+    Boolean(doctorSeleccionado) &&
+    Boolean(
+      profesionalSeleccionado
+        ?.cedula_profesional
+        ?.trim(),
+    ) &&
+    Boolean(formulario.paciente.trim()) &&
+    Boolean(formulario.fechaAtencion) &&
+    diasReposoValidos &&
+    diasActividadValidos &&
+    (
+      diasReposo === 0 ||
+      Boolean(fechaFinReposo)
     );
 
-    if (!ventana) {
-      window.alert(
-        es
-          ? "No se pudo abrir la ventana de impresión. Revisa el bloqueo de ventanas emergentes."
-          : "Unable to open the print window. Check your pop-up blocker.",
-      );
-      return;
-    }
-
-    const contenido = escaparHtml(
-      contenidoDocumento(),
-    ).replace(/\n/g, "<br />");
-
-    const observaciones = formulario.observaciones.trim();
-
-    const html = `<!DOCTYPE html>
-<html lang="${es ? "es" : "en"}">
-<head>
-  <meta charset="UTF-8" />
-  <title>${escaparHtml(tituloDocumento)}</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      color: #17364b;
-      margin: 0;
-      padding: 45px;
-      font-size: 14px;
-      line-height: 1.7;
-    }
-    .header {
-      border-bottom: 3px solid #0b8f80;
-      padding-bottom: 18px;
-      margin-bottom: 38px;
-    }
-    .clinic {
-      font-size: 23px;
-      font-weight: 800;
-      color: #102f4f;
-    }
-    .meta {
-      font-size: 12px;
-      color: #5c7582;
-      margin-top: 5px;
-    }
-    h1 {
-      text-align: center;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      font-size: 18px;
-      margin: 35px 0;
-    }
-    .date {
-      text-align: right;
-      color: #5c7582;
-      margin-bottom: 35px;
-    }
-    .body {
-      min-height: 240px;
-      text-align: justify;
-    }
-    .notes {
-      margin-top: 28px;
-      padding: 14px;
-      background: #f3f8f7;
-      border-left: 3px solid #0b8f80;
-      white-space: pre-wrap;
-    }
-    .signature {
-      margin: 95px auto 0;
-      width: 290px;
-      text-align: center;
-      border-top: 1px solid #17364b;
-      padding-top: 10px;
-      line-height: 1.5;
-    }
-    .footer {
-      margin-top: 60px;
-      border-top: 1px solid #d9e7e8;
-      padding-top: 15px;
-      font-size: 11px;
-      text-align: center;
-      color: #68818a;
-    }
-    @media print {
-      body { padding: 12mm; }
-      @page { size: letter; margin: 12mm; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header">
-    <div class="clinic">${escaparHtml(formulario.clinica)}</div>
-    ${formulario.direccion ? `<div class="meta">${escaparHtml(formulario.direccion)}</div>` : ""}
-    ${formulario.telefono ? `<div class="meta">${escaparHtml(formulario.telefono)}</div>` : ""}
-  </div>
-
-  <div class="date">${formatoFecha(formulario.fechaAtencion, es)}</div>
-
-  <h1>${escaparHtml(tituloDocumento)}</h1>
-
-  <div class="body">${contenido}</div>
-
-  ${
-    observaciones
-      ? `<div class="notes"><strong>${es ? "Observaciones:" : "Notes:"}</strong><br />${escaparHtml(observaciones)}</div>`
-      : ""
-  }
-
-  <div class="signature">
-    <strong>${escaparHtml(formulario.odontologo)}</strong><br />
-    ${formulario.cedula ? `${es ? "Cédula profesional" : "Professional license"}: ${escaparHtml(formulario.cedula)}<br />` : ""}
-    ${es ? "Odontólogo tratante" : "Treating dentist"}
-  </div>
-
-  <div class="footer">
-    ${escaparHtml(formulario.clinica)}
-  </div>
-</body>
-</html>`;
-
-    ventana.document.open();
-    ventana.document.write(html);
-    ventana.document.close();
-    ventana.focus();
+  const limpiarFormulario = () => {
+    setFormulario(formularioInicial());
+    setMostrarVistaPrevia(false);
   };
 
-  const campo = (
-    etiqueta: string,
-    nombre: keyof Formulario,
-    opciones?: {
-      type?: string;
-      placeholder?: string;
-      required?: boolean;
-      min?: string;
-      max?: string;
-    },
-  ) => (
-    <label className="block min-w-0">
-      <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
-        {etiqueta}
-        {opciones?.required && (
-          <span className="ml-1 text-rose-500">*</span>
-        )}
-      </span>
+  const imprimirJustificante = () => {
+    if (!puedeImprimir) return;
 
-      <input
-        type={opciones?.type ?? "text"}
-        value={formulario[nombre]}
-        onChange={(event) =>
-          actualizar(nombre, event.target.value)
+    window.print();
+  };
+
+  const inputClass =
+    "w-full rounded-[12px] border border-[#dce6e8] " +
+    "bg-white px-4 py-3 text-sm text-[#102f4f] " +
+    "outline-none transition " +
+    "focus:border-[#0b9a88] focus:ring-2 " +
+    "focus:ring-[#0b9a88]/15 " +
+    "dark:border-white/15 dark:bg-[#0a2130] " +
+    "dark:text-white";
+
+  const documentoDisponible =
+    puedeImprimir &&
+    clinica !== null &&
+    doctorSeleccionado !== null &&
+    profesionalSeleccionado !== null;
+
+  const documento = documentoDisponible ? (
+    <DocumentoJustificante
+      clinica={clinica}
+      nombreMembrete={nombreMembrete}
+      subtituloMembrete={subtituloMembrete}
+      logoUrl={logoUrl}
+      formulario={formulario}
+      doctor={doctorSeleccionado}
+      profesional={profesionalSeleccionado}
+      es={es}
+      fechaFinReposo={fechaFinReposo}
+      nombreTratamiento={nombreTratamiento}
+    />
+  ) : null;
+
+    return (
+    <div className="mintos-justificantes-page w-full min-w-0 space-y-6 text-[#102f4f] dark:text-slate-100">
+      {/* IMPRESIÓN TAMAÑO CARTA */}
+
+      <style>{`
+        @page {
+          size: letter;
+          margin: 0;
         }
-        placeholder={opciones?.placeholder}
-        required={opciones?.required}
-        min={opciones?.min}
-        max={opciones?.max}
-        className="w-full min-w-0 rounded-[12px] border border-[#dce6e8] bg-white px-3.5 py-3 text-sm text-[#102f4f] outline-none transition placeholder:text-[#8299a2] focus:border-[#0b9a88] focus:ring-2 focus:ring-[#0b9a88]/15 dark:border-white/15 dark:bg-[#0a2130] dark:text-white"
-      />
-    </label>
-  );
 
-  return (
-    <div className="w-full min-w-0 space-y-6 text-[#102f4f] dark:text-slate-100">
-      {/* ENCABEZADO */}
+        @media print {
+          html,
+          body,
+          #root {
+            width: 215.9mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          .mintos-justificantes-print,
+          .mintos-justificantes-print * {
+            visibility: visible !important;
+          }
+
+          .mintos-justificantes-print {
+            display: block !important;
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 215.9mm !important;
+            height: 279.4mm !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            z-index: 2147483647 !important;
+          }
+
+          .mintos-justificante-sheet {
+            width: 215.9mm !important;
+            height: 279.4mm !important;
+            min-height: 279.4mm !important;
+            max-width: none !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+        }
+      `}</style>
+
+      {/* DOCUMENTO PARA IMPRESIÓN */}
+
+      {documentoDisponible && (
+        <div
+          className="mintos-justificantes-print hidden"
+          aria-hidden="true"
+        >
+          {documento}
+        </div>
+      )}
+
+      {/* ENCABEZADO DEL MÓDULO */}
 
       <header className="rounded-[24px] border border-[#d7e9e5] bg-gradient-to-br from-[#102f4f] via-[#123e55] to-[#0a716b] p-6 text-white shadow-[0_18px_40px_rgba(16,47,79,0.13)] dark:border-white/10 sm:p-8">
         <button
@@ -394,6 +1002,7 @@ export default function JustificantesMedicos({
           className="mb-5 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-xs font-semibold text-white transition hover:bg-white/20"
         >
           <ArrowLeft size={15} />
+
           {es
             ? "Volver a Documentos Clínicos"
             : "Back to Clinical Documents"}
@@ -414,80 +1023,18 @@ export default function JustificantesMedicos({
 
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-200">
               {es
-                ? "Genera constancias de atención odontológica y recomendaciones de reposo."
-                : "Create dental attendance certificates and rest recommendations."}
+                ? "Genera justificantes profesionales de forma rápida y sencilla."
+                : "Generate professional medical certificates quickly and easily."}
             </p>
           </div>
 
           <span className="rounded-full border border-[#7de5d0]/30 bg-[#7de5d0]/10 px-3 py-1.5 text-xs font-semibold text-[#a6f4e4]">
             {es
-              ? "Generador de documentos"
-              : "Document generator"}
+              ? "Formato tamaño carta"
+              : "US Letter format"}
           </span>
         </div>
       </header>
-
-      {/* TIPOS DE DOCUMENTO */}
-
-      <section className="rounded-[24px] border border-[#e0e9eb] bg-[#f5f9f8] p-5 dark:border-white/10 dark:bg-[#102635] sm:p-6">
-        <div className="mb-5 flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#123b50] text-[#8ee8d7]">
-            <FileText size={21} />
-          </div>
-
-          <div>
-            <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">
-              {es
-                ? "Tipo de justificante"
-                : "Certificate type"}
-            </h2>
-
-            <p className="mt-1 text-xs text-[#5e7885] dark:text-slate-400">
-              {es
-                ? "Selecciona el documento que deseas preparar."
-                : "Select the document you want to prepare."}
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          {tipos.map((item) => {
-            const Icon = item.icon;
-            const activo = tipo === item.id;
-
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setTipo(item.id);
-                  setMostrarVistaPrevia(false);
-                }}
-                aria-pressed={activo}
-                className={`relative flex min-h-40 flex-col items-start overflow-hidden rounded-[19px] border p-5 text-left transition hover:-translate-y-0.5 ${
-                  activo
-                    ? "border-[#74bdb1] bg-[#edf8f5] dark:border-[#45b5a5] dark:bg-[#16443f]"
-                    : "border-[#e0e8ed] bg-[#fcfdfd] hover:border-[#9ccfc5] dark:border-white/10 dark:bg-[#142f40]"
-                }`}
-              >
-                <span className="absolute inset-x-0 top-0 h-[3px] bg-[#0b9a88]" />
-
-                <span className="mb-4 flex h-11 w-11 items-center justify-center rounded-[13px] border border-[#d2e9e4] bg-[#eaf6f2] text-[#087e73] dark:border-[#62dfc8]/15 dark:bg-[#0b8f80]/20 dark:text-[#8be9d7]">
-                  <Icon size={21} />
-                </span>
-
-                <span className="text-sm font-bold text-[#123b50] dark:text-white">
-                  {item.titulo}
-                </span>
-
-                <span className="mt-2 text-xs leading-relaxed text-[#607987] dark:text-slate-400">
-                  {item.descripcion}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
 
       {/* FORMULARIO */}
 
@@ -500,240 +1047,337 @@ export default function JustificantesMedicos({
           <div>
             <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">
               {es
-                ? "Datos del documento"
-                : "Document details"}
+                ? "Datos del justificante"
+                : "Certificate details"}
             </h2>
 
             <p className="mt-1 text-xs text-[#5e7885] dark:text-slate-400">
               {es
-                ? "Completa la información que aparecerá en el justificante."
-                : "Enter the information that will appear on the certificate."}
+                ? "Selecciona los datos clínicos y las recomendaciones."
+                : "Select clinical details and recommendations."}
             </p>
           </div>
         </div>
 
-        <div className="space-y-6">
-          {/* CONSULTORIO */}
+        {cargando && (
+          <p className="mb-5 text-sm text-[#607987] dark:text-slate-300">
+            {es
+              ? "Cargando configuración..."
+              : "Loading settings..."}
+          </p>
+        )}
 
-          <div className="rounded-[19px] border border-[#e0e8ed] bg-[#fcfdfd] p-5 dark:border-white/10 dark:bg-[#142f40]">
-            <h3 className="mb-4 text-sm font-bold text-[#123b50] dark:text-white">
-              {es
-                ? "Información del consultorio"
-                : "Dental office information"}
-            </h3>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {campo(
-                es ? "Nombre del consultorio" : "Dental office name",
-                "clinica",
-                { required: true },
-              )}
-
-              {campo(
-                es ? "Teléfono" : "Phone number",
-                "telefono",
-                { type: "tel" },
-              )}
-
-              <div className="md:col-span-2">
-                {campo(
-                  es ? "Dirección" : "Address",
-                  "direccion",
-                )}
-              </div>
-            </div>
+        {error && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+          >
+            {error}
           </div>
+        )}
+
+        {errorListas && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+          >
+            {errorListas}
+          </div>
+        )}
+
+        {!cargando && !error && !clinica && (
+          <div
+            role="alert"
+            className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"
+          >
+            {es
+              ? "Primero configura los datos del consultorio en Configuración → Clínica."
+              : "Configure the clinic information in Settings → Clinic first."}
+          </div>
+        )}
+
+        <div className="grid gap-5 md:grid-cols-2">
+          {/* ODONTÓLOGO */}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+              {es ? "Odontólogo" : "Dentist"}
+              <span className="ml-1 text-rose-500">*</span>
+            </span>
+
+            <select
+              value={formulario.doctorId}
+              disabled={cargando || Boolean(error)}
+              onChange={(event) =>
+                actualizarCampo(
+                  "doctorId",
+                  event.target.value,
+                )
+              }
+              className={inputClass}
+            >
+              <option value="">
+                {es
+                  ? "Seleccionar odontólogo"
+                  : "Select dentist"}
+              </option>
+
+              {doctores.map((doctor) => (
+                <option
+                  key={doctor.id}
+                  value={doctor.id}
+                >
+                  {doctor.nombre}
+                </option>
+              ))}
+            </select>
+
+            {doctorSeleccionado &&
+              !profesionalSeleccionado
+                ?.cedula_profesional
+                ?.trim() && (
+                <p className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                  {es
+                    ? "Este odontólogo no tiene cédula profesional registrada."
+                    : "This dentist does not have a registered professional license."}
+                </p>
+              )}
+          </label>
 
           {/* PACIENTE */}
 
-          <div className="rounded-[19px] border border-[#e0e8ed] bg-[#fcfdfd] p-5 dark:border-white/10 dark:bg-[#142f40]">
-            <h3 className="mb-4 text-sm font-bold text-[#123b50] dark:text-white">
-              {es
-                ? "Paciente y odontólogo"
-                : "Patient and dentist"}
-            </h3>
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+              {es ? "Paciente" : "Patient"}
+              <span className="ml-1 text-rose-500">*</span>
+            </span>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              {campo(
-                es ? "Nombre del paciente" : "Patient name",
-                "paciente",
-                { required: true },
-              )}
-
-              {campo(
-                es ? "Odontólogo tratante" : "Treating dentist",
-                "odontologo",
-                { required: true },
-              )}
-
-              {campo(
+            <input
+              type="text"
+              list="mintos-justificante-pacientes"
+              value={formulario.paciente}
+              maxLength={150}
+              onChange={(event) =>
+                actualizarCampo(
+                  "paciente",
+                  event.target.value,
+                )
+              }
+              placeholder={
                 es
-                  ? "Cédula profesional"
-                  : "Professional license number",
-                "cedula",
-              )}
+                  ? "Buscar o escribir nombre completo"
+                  : "Search or enter full name"
+              }
+              className={inputClass}
+            />
 
-              {campo(
-                es ? "Fecha de atención" : "Appointment date",
-                "fechaAtencion",
-                {
-                  type: "date",
-                  required: true,
-                },
-              )}
-            </div>
-          </div>
-
-          {/* DATOS ESPECÍFICOS */}
-
-          <div className="rounded-[19px] border border-[#e0e8ed] bg-[#fcfdfd] p-5 dark:border-white/10 dark:bg-[#142f40]">
-            <h3 className="mb-4 text-sm font-bold text-[#123b50] dark:text-white">
-              {es
-                ? "Información específica"
-                : "Specific information"}
-            </h3>
-
-            {tipo === "asistencia" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {campo(
-                  es ? "Hora de entrada" : "Arrival time",
-                  "horaEntrada",
-                  { type: "time" },
-                )}
-
-                {campo(
-                  es ? "Hora de salida" : "Departure time",
-                  "horaSalida",
-                  { type: "time" },
-                )}
-              </div>
-            )}
-
-            {tipo === "reposo" && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {campo(
-                  es
-                    ? "Inicio del reposo"
-                    : "Rest start date",
-                  "fechaInicioReposo",
-                  {
-                    type: "date",
-                    required: true,
-                  },
-                )}
-
-                {campo(
-                  es
-                    ? "Días de reposo recomendados"
-                    : "Recommended rest days",
-                  "diasReposo",
-                  {
-                    type: "number",
-                    min: "1",
-                    max: "365",
-                    required: true,
-                  },
-                )}
-
-                <div className="md:col-span-2 rounded-[12px] border border-[#d1e9e3] bg-[#eef8f5] px-4 py-3 text-xs text-[#315b63] dark:border-[#75dbc8]/20 dark:bg-[#2a8479]/10 dark:text-slate-200">
-                  {es
-                    ? "Último día de reposo:"
-                    : "Last day of rest:"}{" "}
-                  <strong>
-                    {formatoFecha(fechaFinReposo, es)}
-                  </strong>
-                </div>
-              </div>
-            )}
-
-            {tipo === "tratamiento" && (
-              <label className="block">
-                <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
-                  {es
-                    ? "Descripción de la atención (opcional)"
-                    : "Description of care (optional)"}
-                </span>
-
-                <textarea
-                  rows={3}
-                  value={formulario.descripcion}
-                  onChange={(event) =>
-                    actualizar(
-                      "descripcion",
-                      event.target.value,
-                    )
-                  }
-                  placeholder={
-                    es
-                      ? "Describe brevemente la atención realizada..."
-                      : "Briefly describe the care provided..."
-                  }
-                  className="w-full resize-y rounded-[12px] border border-[#dce6e8] bg-white px-3.5 py-3 text-sm text-[#102f4f] outline-none focus:border-[#0b9a88] focus:ring-2 focus:ring-[#0b9a88]/15 dark:border-white/15 dark:bg-[#0a2130] dark:text-white"
+            <datalist id="mintos-justificante-pacientes">
+              {pacientes.map((paciente) => (
+                <option
+                  key={paciente.id}
+                  value={paciente.nombre}
                 />
-              </label>
-            )}
+              ))}
+            </datalist>
+          </label>
 
-            <label className="mt-4 block">
-              <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+          {/* TRATAMIENTO */}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+              {es ? "Tratamiento" : "Treatment"}
+            </span>
+
+            <select
+              value={formulario.tratamientoId}
+              disabled={cargando || Boolean(error)}
+              onChange={(event) => {
+                actualizarCampo(
+                  "tratamientoId",
+                  event.target.value,
+                );
+
+                if (event.target.value !== "manual") {
+                  actualizarCampo(
+                    "tratamientoManual",
+                    "",
+                  );
+                }
+              }}
+              className={inputClass}
+            >
+              <option value="">
                 {es
-                  ? "Observaciones adicionales (opcional)"
-                  : "Additional notes (optional)"}
-              </span>
+                  ? "Seleccionar tratamiento"
+                  : "Select treatment"}
+              </option>
 
-              <textarea
-                rows={3}
-                value={formulario.observaciones}
+              {catalogo.map((tratamiento) => (
+                <option
+                  key={tratamiento.id}
+                  value={tratamiento.id}
+                >
+                  {es
+                    ? tratamiento.nombre
+                    : tratamiento.nombre_en ||
+                      tratamiento.nombre}
+                </option>
+              ))}
+
+              <option value="manual">
+                {es
+                  ? "Otro tratamiento..."
+                  : "Other treatment..."}
+              </option>
+            </select>
+
+            {formulario.tratamientoId === "manual" && (
+              <input
+                type="text"
+                maxLength={180}
+                value={formulario.tratamientoManual}
                 onChange={(event) =>
-                  actualizar(
-                    "observaciones",
+                  actualizarCampo(
+                    "tratamientoManual",
                     event.target.value,
                   )
                 }
                 placeholder={
                   es
-                    ? "Información adicional que deba incluirse..."
-                    : "Additional information to include..."
+                    ? "Escribir tratamiento"
+                    : "Enter treatment"
                 }
-                className="w-full resize-y rounded-[12px] border border-[#dce6e8] bg-white px-3.5 py-3 text-sm text-[#102f4f] outline-none focus:border-[#0b9a88] focus:ring-2 focus:ring-[#0b9a88]/15 dark:border-white/15 dark:bg-[#0a2130] dark:text-white"
+                className={`${inputClass} mt-3`}
               />
-            </label>
-          </div>
+            )}
+          </label>
+
+          {/* FECHA DE ATENCIÓN */}
+
+          <label className="block">
+            <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[#315b63] dark:text-slate-200">
+              <CalendarDays size={14} />
+
+              {es
+                ? "Fecha de atención"
+                : "Date of treatment"}
+
+              <span className="text-rose-500">*</span>
+            </span>
+
+            <input
+              type="date"
+              value={formulario.fechaAtencion}
+              onChange={(event) =>
+                actualizarCampo(
+                  "fechaAtencion",
+                  event.target.value,
+                )
+              }
+              className={inputClass}
+            />
+          </label>
+
+          {/* REPOSO ABSOLUTO */}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+              {es
+                ? "Días de reposo absoluto"
+                : "Days of complete rest"}
+            </span>
+
+            <input
+              type="number"
+              min={0}
+              max={365}
+              step={1}
+              value={formulario.diasReposo}
+              onChange={(event) =>
+                actualizarCampo(
+                  "diasReposo",
+                  event.target.value,
+                )
+              }
+              className={inputClass}
+            />
+
+            {diasReposoValidos &&
+              diasReposo > 0 &&
+              fechaFinReposo && (
+                <p className="mt-2 text-xs font-semibold text-[#087e73] dark:text-[#a5eddf]">
+                  {es
+                    ? "Último día de reposo:"
+                    : "Last day of rest:"}{" "}
+                  {formatoFecha(
+                    fechaFinReposo,
+                    es,
+                  )}
+                </p>
+              )}
+          </label>
+
+          {/* RESTRICCIÓN DE ACTIVIDAD FÍSICA */}
+
+          <label className="block">
+            <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+              {es
+                ? "Días sin actividad física"
+                : "Days without physical activity"}
+            </span>
+
+            <input
+              type="number"
+              min={0}
+              max={365}
+              step={1}
+              value={formulario.diasActividad}
+              onChange={(event) =>
+                actualizarCampo(
+                  "diasActividad",
+                  event.target.value,
+                )
+              }
+              className={inputClass}
+            />
+          </label>
         </div>
 
         {/* ACCIONES */}
 
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[#dce6e8] pt-6 dark:border-white/10">
           <button
             type="button"
-            onClick={() => {
-              setFormulario(formularioInicial());
-              setMostrarVistaPrevia(false);
-            }}
+            onClick={limpiarFormulario}
             className="inline-flex items-center gap-2 rounded-[12px] border border-[#dce6e8] bg-white px-4 py-3 text-xs font-bold text-[#456773] transition hover:bg-[#eef8f5] dark:border-white/15 dark:bg-[#142f40] dark:text-slate-200"
           >
             <RotateCcw size={16} />
 
-            {es ? "Limpiar formulario" : "Clear form"}
+            {es ? "Limpiar" : "Clear"}
           </button>
 
           <div className="flex flex-wrap gap-3">
             <button
               type="button"
-              disabled={!documentoValido}
+              disabled={!puedeImprimir}
               onClick={() =>
-                setMostrarVistaPrevia(true)
+                setMostrarVistaPrevia(
+                  (actual) => !actual,
+                )
               }
               className="inline-flex items-center gap-2 rounded-[12px] border border-[#0b8f80] bg-[#eef8f5] px-5 py-3 text-xs font-bold text-[#087e73] transition hover:bg-[#d9f1e9] disabled:cursor-not-allowed disabled:opacity-50 dark:bg-[#0b8f80]/15 dark:text-[#a5eddf]"
             >
               <FileText size={16} />
 
-              {es ? "Vista previa" : "Preview"}
+              {es
+                ? "Vista previa"
+                : "Preview"}
             </button>
 
             <button
               type="button"
-              disabled={!documentoValido}
-              onClick={imprimirDocumento}
+              disabled={!puedeImprimir}
+              onClick={imprimirJustificante}
               className="inline-flex items-center gap-2 rounded-[12px] bg-[#0b8f80] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#08796e] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Printer size={16} />
@@ -748,95 +1392,42 @@ export default function JustificantesMedicos({
 
       {/* VISTA PREVIA */}
 
-      {mostrarVistaPrevia && (
-        <section className="rounded-[24px] border border-[#e0e9eb] bg-[#f5f9f8] p-5 dark:border-white/10 dark:bg-[#102635] sm:p-6">
-          <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">
-              {es
-                ? "Vista previa del documento"
-                : "Document preview"}
-            </h2>
+      {mostrarVistaPrevia &&
+        documentoDisponible && (
+          <section className="rounded-[24px] border border-[#e0e9eb] bg-[#f5f9f8] p-5 dark:border-white/10 dark:bg-[#102635] sm:p-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">
+                  {es
+                    ? "Vista previa del justificante"
+                    : "Certificate preview"}
+                </h2>
 
-            <button
-              type="button"
-              onClick={() =>
-                setMostrarVistaPrevia(false)
-              }
-              className="rounded-lg border border-[#dce6e8] px-3 py-2 text-xs font-semibold text-[#456773] dark:border-white/15 dark:text-slate-200"
-            >
-              {es ? "Cerrar vista previa" : "Close preview"}
-            </button>
-          </div>
-
-          <div className="mx-auto max-w-3xl rounded-[18px] border border-[#dce6e8] bg-white p-6 text-[#17364b] shadow-sm sm:p-10">
-            <div className="border-b-[3px] border-[#0b8f80] pb-5">
-              <h3 className="text-xl font-extrabold text-[#102f4f]">
-                {formulario.clinica}
-              </h3>
-
-              {formulario.direccion && (
-                <p className="mt-1 text-xs text-[#607987]">
-                  {formulario.direccion}
-                </p>
-              )}
-
-              {formulario.telefono && (
-                <p className="mt-1 text-xs text-[#607987]">
-                  {formulario.telefono}
-                </p>
-              )}
-            </div>
-
-            <p className="mt-8 text-right text-xs text-[#607987]">
-              {formatoFecha(
-                formulario.fechaAtencion,
-                es,
-              )}
-            </p>
-
-            <h3 className="my-9 text-center text-lg font-extrabold uppercase tracking-wide text-[#102f4f]">
-              {tituloDocumento}
-            </h3>
-
-            <p className="min-h-48 whitespace-pre-line text-sm leading-8 text-[#315b63]">
-              {contenidoDocumento()}
-            </p>
-
-            {formulario.observaciones.trim() && (
-              <div className="mt-8 rounded-xl border-l-[3px] border-[#0b8f80] bg-[#f3f8f7] p-4">
-                <p className="text-xs font-bold">
-                  {es ? "Observaciones" : "Notes"}
-                </p>
-
-                <p className="mt-2 whitespace-pre-line text-xs leading-relaxed">
-                  {formulario.observaciones}
+                <p className="mt-1 text-xs text-[#607987] dark:text-slate-400">
+                  {es
+                    ? "Documento listo para impresión en tamaño carta."
+                    : "Document ready for US Letter printing."}
                 </p>
               </div>
-            )}
 
-            <div className="mx-auto mt-24 max-w-72 border-t border-[#17364b] pt-3 text-center">
-              <p className="text-sm font-bold">
-                {formulario.odontologo}
-              </p>
-
-              {formulario.cedula && (
-                <p className="mt-1 text-xs">
-                  {es
-                    ? "Cédula profesional"
-                    : "Professional license"}
-                  : {formulario.cedula}
-                </p>
-              )}
-
-              <p className="mt-1 text-xs text-[#607987]">
+              <button
+                type="button"
+                onClick={() =>
+                  setMostrarVistaPrevia(false)
+                }
+                className="rounded-lg border border-[#dce6e8] px-3 py-2 text-xs font-semibold text-[#456773] dark:border-white/15 dark:text-slate-200"
+              >
                 {es
-                  ? "Odontólogo tratante"
-                  : "Treating dentist"}
-              </p>
+                  ? "Cerrar vista previa"
+                  : "Close preview"}
+              </button>
             </div>
-          </div>
-        </section>
-      )}
+
+            <div className="overflow-x-auto rounded-[18px] bg-[#e8f0ef] p-3 sm:p-6">
+              {documento}
+            </div>
+          </section>
+        )}
     </div>
   );
 }

@@ -170,6 +170,80 @@ const SECCIONES_DOCUMENTO = [
   },
 ];
 
+type SeccionConsentimiento = {
+  tituloEs: string;
+  tituloEn: string;
+  textoEs: string;
+  textoEn: string;
+};
+
+const CONTENIDO_GENERAL: SeccionConsentimiento[] = [
+  {
+    tituloEs: "Información general",
+    tituloEn: "General information",
+    textoEs:
+      "Declaro que he recibido información clara y comprensible sobre mi salud bucodental, los hallazgos de la valoración clínica y los tratamientos propuestos. Comprendo que el diagnóstico y el plan de tratamiento pueden requerir estudios complementarios o modificaciones según los hallazgos clínicos.",
+    textoEn:
+      "I acknowledge receiving clear, understandable information about my oral health, clinical findings, and proposed treatments. I understand that diagnosis and the treatment plan may require additional tests or changes based on clinical findings.",
+  },
+  {
+    tituloEs: "Procedimientos autorizados",
+    tituloEn: "Authorized procedures",
+    textoEs:
+      "Autorizo únicamente los procedimientos descritos en este documento, previamente explicados por el profesional tratante. Este consentimiento general no sustituye los consentimientos específicos requeridos para cirugía, implantes, endodoncia u otros procedimientos que necesiten información adicional.",
+    textoEn:
+      "I authorize only the procedures described in this document and previously explained by the treating professional. This general consent does not replace specific consent forms required for surgery, implants, root canal therapy, or other procedures requiring additional information.",
+  },
+  {
+    tituloEs: "Beneficios esperados",
+    tituloEn: "Expected benefits",
+    textoEs:
+      "Los tratamientos propuestos buscan mantener o mejorar mi salud bucodental, prevenir complicaciones y, cuando corresponda, recuperar la función y estética dental. Comprendo que los resultados varían según la condición clínica y no se garantiza un resultado específico.",
+    textoEn:
+      "The proposed treatments aim to maintain or improve my oral health, prevent complications, and, when applicable, restore dental function and appearance. I understand that results vary according to clinical circumstances and no specific outcome is guaranteed.",
+  },
+  {
+    tituloEs: "Riesgos y posibles complicaciones",
+    tituloEn: "Risks and possible complications",
+    textoEs:
+      "Según el procedimiento, pueden presentarse molestias, sensibilidad, dolor, inflamación, sangrado, reacciones adversas a materiales o medicamentos y necesidad de tratamientos adicionales. El odontólogo debe explicar los riesgos particulares de mi caso antes de obtener mi autorización.",
+    textoEn:
+      "Depending on the procedure, discomfort, sensitivity, pain, swelling, bleeding, adverse reactions to materials or medications, and additional treatment may occur. The dentist must explain risks specific to my case before obtaining my authorization.",
+  },
+  {
+    tituloEs: "Alternativas de tratamiento",
+    tituloEn: "Treatment alternatives",
+    textoEs:
+      "He tenido la oportunidad de conocer las alternativas razonables disponibles, sus beneficios, limitaciones y riesgos, y de solicitar información adicional antes de decidir.",
+    textoEn:
+      "I have had the opportunity to learn about reasonable alternatives, their benefits, limitations, and risks, and to request further information before deciding.",
+  },
+  {
+    tituloEs: "Consecuencias de no realizar el tratamiento",
+    tituloEn: "Consequences of declining treatment",
+    textoEs:
+      "Entiendo que rechazar o posponer el tratamiento recomendado podría favorecer el avance de enfermedades bucodentales, dolor, infecciones, deterioro dental o la necesidad de procedimientos más complejos. Las consecuencias específicas dependen de mi diagnóstico.",
+    textoEn:
+      "I understand that declining or delaying recommended treatment may lead to progression of oral disease, pain, infection, dental deterioration, or the need for more complex procedures. Specific consequences depend on my diagnosis.",
+  },
+  {
+    tituloEs: "Responsabilidades del paciente",
+    tituloEn: "Patient responsibilities",
+    textoEs:
+      "Me comprometo a proporcionar información veraz sobre antecedentes médicos, alergias, medicamentos y condiciones relevantes, así como a seguir las indicaciones profesionales, mantener una higiene bucal adecuada y acudir a las citas de seguimiento recomendadas.",
+    textoEn:
+      "I agree to provide accurate information about my medical history, allergies, medications, and relevant conditions; follow professional instructions; maintain proper oral hygiene; and attend recommended follow-up appointments.",
+  },
+  {
+    tituloEs: "Declaración de consentimiento",
+    tituloEn: "Consent declaration",
+    textoEs:
+      "Declaro que recibí explicaciones suficientes sobre el procedimiento propuesto, sus beneficios, riesgos y alternativas; que pude formular preguntas y obtener respuestas comprensibles; y que autorizo voluntariamente el tratamiento descrito. Comprendo que puedo retirar mi consentimiento antes o durante la atención, sin perjuicio de las medidas necesarias para proteger mi salud.",
+    textoEn:
+      "I confirm that the proposed procedure, its benefits, risks, and alternatives have been adequately explained; that I had the opportunity to ask questions and receive understandable answers; and that I voluntarily authorize the treatment described. I understand I may withdraw consent before or during care, subject to measures necessary to protect my health.",
+  },
+];
+
 export default function BibliotecaConsentimientos() {
   const { language } = useLanguage();
   const es = language === "es";
@@ -219,24 +293,22 @@ export default function BibliotecaConsentimientos() {
       {/* ENCABEZADO */}
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#123b50] text-[#8ee8d7]">
-            <BookOpen size={21} />
-          </div>
+        <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-[#123b50] text-[#8ee8d7]">
+          <BookOpen size={21} />
+        </div>
 
-          <div>
-            <h2 className="text-base font-extrabold tracking-tight text-[#102f4f] dark:text-white">
-              {es
-                ? "Biblioteca de consentimientos"
-                : "Consent Template Library"}
-            </h2>
+        <div className="flex-1">
+          <h2 className="text-base font-extrabold tracking-tight text-[#102f4f] dark:text-white">
+            {es
+              ? "Biblioteca de consentimientos"
+              : "Consent Template Library"}
+          </h2>
 
-            <p className="mt-1 text-xs text-[#5e7885] dark:text-slate-400">
-              {es
-                ? "Explora las plantillas disponibles por procedimiento."
-                : "Browse available templates by procedure."}
-            </p>
-          </div>
+          <p className="mt-1 text-xs text-[#5e7885] dark:text-slate-400">
+            {es
+              ? "Explora las plantillas disponibles por procedimiento."
+              : "Browse available templates by procedure."}
+          </p>
         </div>
 
         <span className="inline-flex items-center gap-2 rounded-full border border-[#d1e9e3] bg-[#eef8f5] px-3 py-1.5 text-xs font-semibold text-[#087e73] dark:border-[#75dbc8]/20 dark:bg-[#2a8479]/20 dark:text-[#a5eddf]">
@@ -440,53 +512,191 @@ export default function BibliotecaConsentimientos() {
             </div>
 
             <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5 sm:p-6">
-              <div className="rounded-[15px] border border-[#d1e9e3] bg-[#eef8f5] p-4 dark:border-[#75dbc8]/20 dark:bg-[#2a8479]/10">
-                <p className="text-xs leading-relaxed text-[#315b63] dark:text-slate-200">
-                  {es
-                    ? "Esta vista muestra la estructura prevista del consentimiento. Todavía no contiene el texto clínico definitivo ni constituye un documento listo para firmar."
-                    : "This preview shows the planned consent structure. It does not yet contain final clinical wording and is not ready for signing."}
-                </p>
-              </div>
+              {plantillaSeleccionada.id === "consentimiento-general" ? (
+                <>
+                  {/* CONSENTIMIENTO GENERAL */}
 
-              <div className="rounded-[19px] border border-[#e0e8ed] bg-white p-5 dark:border-white/10 dark:bg-[#142f40]">
-                <div className="mb-5 flex items-center gap-2">
-                  <BookOpen
-                    size={18}
-                    className="text-[#0b8f80]"
-                  />
+                  <div className="rounded-[15px] border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/20 dark:bg-amber-500/10">
+                    <p className="text-xs leading-relaxed text-amber-900 dark:text-amber-200">
+                      {es
+                        ? "Borrador clínico para revisión y aprobación profesional. Esta vista no genera, firma ni almacena consentimientos de pacientes."
+                        : "Clinical draft pending professional review and approval. This preview does not generate, sign, or store patient consent forms."}
+                    </p>
+                  </div>
 
-                  <h3 className="text-sm font-bold text-[#123b50] dark:text-white">
-                    {es
-                      ? "Secciones del documento"
-                      : "Document sections"}
-                  </h3>
-                </div>
+                  <div className="space-y-5 rounded-[19px] border border-[#e0e8ed] bg-white p-5 dark:border-white/10 dark:bg-[#142f40]">
+                    <h3 className="text-center text-base font-extrabold uppercase tracking-wide text-[#123b50] dark:text-white">
+                      {es
+                        ? "Consentimiento informado general odontológico"
+                        : "General dental informed consent"}
+                    </h3>
 
-                <div className="space-y-3">
-                  {SECCIONES_DOCUMENTO.map(
-                    (seccion, index) => (
-                      <div
-                        key={seccion.en}
-                        className="flex items-center gap-3 rounded-[12px] border border-[#e4ebee] bg-[#f9fbfb] px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]"
+                    <div className="grid gap-3 text-xs text-[#315b63] dark:text-slate-200 sm:grid-cols-2">
+                      <p>
+                        {es ? "Paciente:" : "Patient:"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es ? "Fecha:" : "Date:"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es
+                          ? "Odontólogo tratante:"
+                          : "Treating dentist:"}{" "}
+                        __________________________
+                      </p>
+                    </div>
+
+                    {CONTENIDO_GENERAL.map((seccion, index) => (
+                      <section
+                        key={seccion.tituloEn}
+                        className="space-y-2 border-t border-[#e4ebee] pt-4 dark:border-white/10"
                       >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#eaf6f2] text-xs font-bold text-[#087e73] dark:bg-[#0b8f80]/20 dark:text-[#8be9d7]">
-                          {index + 1}
-                        </span>
+                        <h4 className="text-sm font-bold text-[#123b50] dark:text-white">
+                          {index + 1}.{" "}
+                          {es
+                            ? seccion.tituloEs
+                            : seccion.tituloEn}
+                        </h4>
 
-                        <span className="flex-1 text-xs font-medium text-[#315b63] dark:text-slate-200">
-                          {es ? seccion.es : seccion.en}
-                        </span>
+                        <p className="text-xs leading-6 text-[#315b63] dark:text-slate-200">
+                          {es
+                            ? seccion.textoEs
+                            : seccion.textoEn}
+                        </p>
 
-                        <CheckCircle2
-                          size={16}
-                          className="shrink-0 text-[#0b8f80]"
-                        />
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
+                        {index === 1 && (
+                          <div className="space-y-2 rounded-xl bg-[#f9fbfb] p-3 text-xs text-[#315b63] dark:bg-white/[0.04] dark:text-slate-200">
+                            <p>
+                              {es
+                                ? "Tratamiento o procedimiento:"
+                                : "Treatment or procedure:"}{" "}
+                              __________________________
+                            </p>
+
+                            <p>
+                              {es
+                                ? "Piezas dentales o zona:"
+                                : "Teeth or treatment area:"}{" "}
+                              __________________________
+                            </p>
+
+                            <p>
+                              {es
+                                ? "Observaciones:"
+                                : "Notes:"}{" "}
+                              __________________________
+                            </p>
+                          </div>
+                        )}
+                      </section>
+                    ))}
+
+                    <section className="space-y-3 border-t border-[#e4ebee] pt-4 text-xs text-[#315b63] dark:border-white/10 dark:text-slate-200">
+                      <h4 className="text-sm font-bold text-[#123b50] dark:text-white">
+                        9. {es ? "Firmas" : "Signatures"}
+                      </h4>
+
+                      <p>
+                        {es
+                          ? "Paciente o representante legal (nombre):"
+                          : "Patient or legal representative (name):"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es ? "Firma:" : "Signature:"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es
+                          ? "Odontólogo tratante (nombre):"
+                          : "Treating dentist (name):"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es
+                          ? "Cédula profesional:"
+                          : "Professional license:"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es
+                          ? "Firma del odontólogo:"
+                          : "Dentist signature:"}{" "}
+                        __________________________
+                      </p>
+
+                      <p>
+                        {es ? "Fecha:" : "Date:"}{" "}
+                        __________________________
+                      </p>
+                    </section>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* OTRAS CINCO PLANTILLAS */}
+
+                  <div className="rounded-[15px] border border-[#d1e9e3] bg-[#eef8f5] p-4 dark:border-[#75dbc8]/20 dark:bg-[#2a8479]/10">
+                    <p className="text-xs leading-relaxed text-[#315b63] dark:text-slate-200">
+                      {es
+                        ? "Esta vista muestra la estructura prevista del consentimiento. Todavía no contiene el texto clínico definitivo ni constituye un documento listo para firmar."
+                        : "This preview shows the planned consent structure. It does not yet contain final clinical wording and is not ready for signing."}
+                    </p>
+                  </div>
+
+                  <div className="rounded-[19px] border border-[#e0e8ed] bg-white p-5 dark:border-white/10 dark:bg-[#142f40]">
+                    <div className="mb-5 flex items-center gap-2">
+                      <BookOpen
+                        size={18}
+                        className="text-[#0b8f80]"
+                      />
+
+                      <h3 className="text-sm font-bold text-[#123b50] dark:text-white">
+                        {es
+                          ? "Secciones del documento"
+                          : "Document sections"}
+                      </h3>
+                    </div>
+
+                    <div className="space-y-3">
+                      {SECCIONES_DOCUMENTO.map(
+                        (seccion, index) => (
+                          <div
+                            key={seccion.en}
+                            className="flex items-center gap-3 rounded-[12px] border border-[#e4ebee] bg-[#f9fbfb] px-4 py-3 dark:border-white/10 dark:bg-white/[0.04]"
+                          >
+                            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#eaf6f2] text-xs font-bold text-[#087e73] dark:bg-[#0b8f80]/20 dark:text-[#8be9d7]">
+                              {index + 1}
+                            </span>
+
+                            <span className="flex-1 text-xs font-medium text-[#315b63] dark:text-slate-200">
+                              {es
+                                ? seccion.es
+                                : seccion.en}
+                            </span>
+
+                            <CheckCircle2
+                              size={16}
+                              className="shrink-0 text-[#0b8f80]"
+                            />
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
+            {/* PIE DEL MODAL */}
 
             <div className="flex justify-end border-t border-[#e0e8ed] bg-white p-4 dark:border-white/10 dark:bg-[#142f40] sm:px-6">
               <button
@@ -496,7 +706,9 @@ export default function BibliotecaConsentimientos() {
                 }
                 className="rounded-[12px] bg-[#123b50] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#0c2d3e]"
               >
-                {es ? "Cerrar vista previa" : "Close preview"}
+                {es
+                  ? "Cerrar vista previa"
+                  : "Close preview"}
               </button>
             </div>
           </div>

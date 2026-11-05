@@ -1,10 +1,8 @@
-import Consentimientos from "./consentimientos/Consentimientos";
 import GarantiasCuidados from "./garantias/GarantiasCuidados";
 import RecetasMedicas from "./recetas/RecetasMedicas";
 import JustificantesMedicos from "./justificantes/JustificantesMedicos";
 
 export type ModuloDocumento =
-  | "consent"
   | "warranty"
   | "prescription"
   | "certificate";
@@ -19,9 +17,6 @@ export default function DocumentosRouter({
   onBack,
 }: DocumentosRouterProps) {
   switch (modulo) {
-    case "consent":
-      return <Consentimientos onBack={onBack} />;
-
     case "warranty":
       return <GarantiasCuidados onBack={onBack} />;
 

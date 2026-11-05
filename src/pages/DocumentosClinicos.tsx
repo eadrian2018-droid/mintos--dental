@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  ClipboardCheck,
   FileBadge,
   FileHeart,
   FileText,
@@ -61,16 +60,6 @@ type Category = {
 };
 
 const CATEGORIES: Category[] = [
-  {
-    id: "consent",
-    titleEs: "Consentimientos informados",
-    titleEn: "Informed consents",
-    descriptionEs:
-      "Autorizaciones y explicaciones de procedimientos odontológicos.",
-    descriptionEn:
-      "Patient authorizations and explanations of dental procedures.",
-    icon: ClipboardCheck,
-  },
   {
     id: "warranty",
     titleEs: "Garantías y cuidados",
@@ -473,7 +462,7 @@ export default function DocumentosClinicos() {
 
         </div>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
 
           {filteredCategories.map((category) => {
             const Icon = category.icon;
@@ -582,6 +571,7 @@ export default function DocumentosClinicos() {
 
                 {/* ESTADO */}
 
+                {category.id === "warranty" && (
                 <div className="mt-5 border-t border-[#e4ebee] pt-4 dark:border-white/10">
 
                   <span
@@ -614,6 +604,7 @@ export default function DocumentosClinicos() {
                   </span>
 
                 </div>
+                )}
 
               </article>
             );

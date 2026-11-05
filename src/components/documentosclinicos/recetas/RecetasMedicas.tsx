@@ -7,6 +7,8 @@ import {
   Printer,
   RotateCcw,
   Stethoscope,
+  Save,
+  ImagePlus,
 } from "lucide-react";
 
 import { supabase } from "../../../lib/supabase";
@@ -51,6 +53,8 @@ type Profesional = {
 
 type ConfiguracionDocumentos = {
   logo_path: string | null;
+  nombre_membrete: string | null;
+  subtitulo_membrete: string | null;
 };
 
 const BUCKET = "documentos_clinicos";
@@ -97,6 +101,14 @@ export default function RecetasMedicas({
     null,
   );
 
+  const [esAdmin, setEsAdmin] = useState(false);
+  const [nombreMembrete, setNombreMembrete] = useState("");
+  const [subtituloMembrete, setSubtituloMembrete] = useState("");
+  const [logoPath, setLogoPath] = useState<string | null>(null);
+  const [archivoLogo, setArchivoLogo] = useState<File | null>(null);
+  const [guardandoMembrete, setGuardandoMembrete] = useState(false);
+  const [mensajeMembrete, setMensajeMembrete] = useState("");
+  const [errorMembrete, setErrorMembrete] = useState("");
   const [doctorId, setDoctorId] = useState("");
 
   const [paciente, setPaciente] = useState("");
@@ -123,6 +135,7 @@ export default function RecetasMedicas({
           respuestaDoctores,
           respuestaProfesionales,
           respuestaConfiguracion,
+          respuestaAdmin,
         ] = await Promise.all([
           supabase
             .from("configuracion_clinica")
@@ -148,9 +161,11 @@ export default function RecetasMedicas({
 
           supabase
             .from("mintos_documentos_configuracion")
-            .select("logo_path")
+            .select("logo_path,nombre_membrete,subtitulo_membrete")
             .eq("id", 1)
             .maybeSingle(),
+
+          supabase.rpc("es_admin"),
         ]);
 
         if (respuestaClinica.error) {
@@ -212,6 +227,10 @@ export default function RecetasMedicas({
         setDoctores(doctoresObtenidos);
         setProfesionales(profesionalesObtenidos);
         setLogoUrl(urlLogotipo);
+        setLogoPath(configuracion?.logo_path ?? null);
+        setNombreMembrete(configuracion?.nombre_membrete ?? clinicaObtenida?.responsable ?? "");
+        setSubtituloMembrete(configuracion?.subtitulo_membrete ?? clinicaObtenida?.nombre ?? "");
+        setEsAdmin(!respuestaAdmin.error && respuestaAdmin.data === true);
       } catch (err) {
         if (!activo) return;
 
@@ -262,7 +281,8 @@ export default function RecetasMedicas({
 
     return {
       clinica: clinica.nombre ?? "",
-      titular: clinica.responsable ?? "",
+      titular: nombreMembrete.trim() || clinica.responsable || "",
+      subtituloMembrete: subtituloMembrete.trim() || clinica.nombre || "",
       direccion: construirDireccion(clinica),
       telefono: clinica.telefono ?? "",
       whatsapp: clinica.whatsapp ?? "",
@@ -289,6 +309,8 @@ export default function RecetasMedicas({
     paciente,
     fecha,
     logoUrl,
+    nombreMembrete,
+    subtituloMembrete,
   ]);
 
   const puedeImprimir =
@@ -300,6 +322,57 @@ export default function RecetasMedicas({
       profesionalSeleccionado?.cedula_profesional?.trim(),
     ) &&
     Boolean(fecha);
+
+  const guardarMembrete = async () => {
+    if (!esAdmin || guardandoMembrete || !clinica) return;
+    const nombre = nombreMembrete.trim();
+    const subtitulo = subtituloMembrete.trim();
+    setErrorMembrete("");
+    setMensajeMembrete("");
+    if (!nombre || !subtitulo) {
+      setErrorMembrete(es ? "Completa el nombre y el subtítulo." : "Enter the main name and subtitle.");
+      return;
+    }
+    setGuardandoMembrete(true);
+    let nuevoPath: string | null = null;
+    try {
+      if (archivoLogo) {
+        if (!archivoLogo.type.startsWith("image/") || archivoLogo.size > 2 * 1024 * 1024) {
+          throw new Error(es ? "El logotipo debe ser una imagen de máximo 2 MB." : "Logo must be an image under 2 MB.");
+        }
+        const extension = archivoLogo.type === "image/png" ? "png" : archivoLogo.type === "image/webp" ? "webp" : archivoLogo.type === "image/jpeg" ? "jpg" : "";
+        if (!extension) throw new Error(es ? "Usa PNG, JPG o WebP." : "Use PNG, JPG, or WebP.");
+        nuevoPath = `logos/recetario-${crypto.randomUUID()}.${extension}`;
+        const { error: errorSubida } = await supabase.storage.from(BUCKET).upload(nuevoPath, archivoLogo, { contentType: archivoLogo.type, upsert: false });
+        if (errorSubida) throw errorSubida;
+      }
+      const { data: actualizado, error: errorGuardar } = await supabase
+        .from("mintos_documentos_configuracion")
+        .update({ nombre_membrete: nombre, subtitulo_membrete: subtitulo, ...(nuevoPath ? { logo_path: nuevoPath } : {}) })
+        .eq("id", 1)
+        .select("id")
+        .single();
+      if (errorGuardar) throw errorGuardar;
+      if (!actualizado) throw new Error(es ? "No se encontró la configuración del membrete." : "Letterhead configuration not found.");
+      if (nuevoPath) {
+        const { data, error: errorUrl } = await supabase.storage.from(BUCKET).createSignedUrl(nuevoPath, 3600);
+        if (errorUrl) throw errorUrl;
+        setLogoUrl(data?.signedUrl ?? null);
+        setLogoPath(nuevoPath);
+        setArchivoLogo(null);
+      }
+      setMensajeMembrete(es ? "Membrete guardado correctamente." : "Letterhead saved successfully.");
+    } catch (err) {
+      // Un archivo recién subido no debe quedar huérfano si falla el guardado.
+      if (nuevoPath) {
+        const { data: actual } = await supabase.from("mintos_documentos_configuracion").select("logo_path").eq("id", 1).maybeSingle();
+        if (actual?.logo_path !== nuevoPath) await supabase.storage.from(BUCKET).remove([nuevoPath]);
+      }
+      setErrorMembrete(err instanceof Error ? err.message : es ? "No se pudo guardar el membrete." : "Unable to save letterhead.");
+    } finally {
+      setGuardandoMembrete(false);
+    }
+  };
 
   const limpiarFormulario = () => {
     setDoctorId("");
@@ -325,7 +398,8 @@ export default function RecetasMedicas({
 
   return (
     <div className="mintos-recetas-page w-full min-w-0 space-y-6 text-[#102f4f] dark:text-slate-100">
-      <style>{`
+
+            <style>{`
         @page { size: letter; margin: 0; }
         @media print {
           html, body, #root { width: 215.9mm !important; margin: 0 !important; padding: 0 !important; }
@@ -354,11 +428,17 @@ export default function RecetasMedicas({
           }
         }
       `}</style>
+
       {datosHoja && (
         <div className="mintos-recetas-print hidden" aria-hidden="true">
-          <HojaMembretada tipo="receta" datos={datosHoja} language={es ? "es" : "en"} />
+          <HojaMembretada
+            tipo="receta"
+            datos={datosHoja}
+            language={es ? "es" : "en"}
+          />
         </div>
       )}
+
       {/* ENCABEZADO */}
 
       <header className="rounded-[24px] border border-[#d7e9e5] bg-gradient-to-br from-[#102f4f] via-[#123e55] to-[#0a716b] p-6 text-white shadow-[0_18px_40px_rgba(16,47,79,0.13)] dark:border-white/10 sm:p-8">
@@ -402,7 +482,153 @@ export default function RecetasMedicas({
         </div>
       </header>
 
-      {/* CONFIGURACIÓN */}
+      {/* PERSONALIZACIÓN DEL MEMBRETE: SOLO ADMINISTRADORES */}
+
+      {esAdmin && !cargando && !error && (
+        <section className="rounded-[24px] border border-[#d1e9e3] bg-white p-5 shadow-sm dark:border-white/10 dark:bg-[#102635] sm:p-6">
+          <div className="mb-5 flex items-center gap-3">
+            <ImagePlus size={22} className="text-[#0b8f80]" />
+
+            <div>
+              <h2 className="text-base font-extrabold text-[#102f4f] dark:text-white">
+                {es
+                  ? "Personalizar membrete"
+                  : "Customize letterhead"}
+              </h2>
+
+              <p className="text-xs text-[#607987] dark:text-slate-400">
+                {es
+                  ? "Identidad del consultorio en todas las recetas; no cambia al seleccionar al odontólogo."
+                  : "Clinic identity on every prescription; independent of the signing dentist."}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+                {es ? "Nombre principal" : "Main name"}
+              </span>
+
+              <input
+                className={inputClass}
+                value={nombreMembrete}
+                maxLength={120}
+                onChange={(event) =>
+                  setNombreMembrete(event.target.value)
+                }
+                placeholder={
+                  es
+                    ? "Dra. Marlene Verdugo"
+                    : "Clinic owner or name"
+                }
+              />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+                {es ? "Subtítulo" : "Subtitle"}
+              </span>
+
+              <input
+                className={inputClass}
+                value={subtituloMembrete}
+                maxLength={140}
+                onChange={(event) =>
+                  setSubtituloMembrete(event.target.value)
+                }
+                placeholder={
+                  es
+                    ? "Nombre del consultorio"
+                    : "Clinic name"
+                }
+              />
+            </label>
+
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
+                {es
+                  ? "Logotipo (PNG, JPG o WebP; máximo 2 MB)"
+                  : "Logo (PNG, JPG, or WebP; max 2 MB)"}
+              </span>
+
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                className={inputClass}
+                onChange={(event) =>
+                  setArchivoLogo(event.target.files?.[0] ?? null)
+                }
+              />
+
+              {logoUrl && (
+                <img
+                  src={logoUrl}
+                  alt={es ? "Logotipo actual" : "Current logo"}
+                  className="mt-3 h-20 w-28 rounded-lg border border-[#dce6e8] bg-white object-contain p-2"
+                />
+              )}
+
+              {logoPath && (
+                <p className="mt-1 text-xs text-[#607987]">
+                  {es
+                    ? "Logotipo actual guardado."
+                    : "Current logo saved."}
+                </p>
+              )}
+
+              {archivoLogo && (
+                <p className="mt-1 text-xs text-[#607987]">
+                  {archivoLogo.name}
+                </p>
+              )}
+            </label>
+          </div>
+
+          {errorMembrete && (
+            <p
+              role="alert"
+              className="mt-4 text-sm text-rose-700"
+            >
+              {errorMembrete}
+            </p>
+          )}
+
+          {mensajeMembrete && (
+            <p
+              role="status"
+              className="mt-4 text-sm text-emerald-700"
+            >
+              {mensajeMembrete}
+            </p>
+          )}
+
+          <div className="mt-5 flex justify-end">
+            <button
+              type="button"
+              disabled={
+                guardandoMembrete ||
+                !nombreMembrete.trim() ||
+                !subtituloMembrete.trim()
+              }
+              onClick={() => void guardarMembrete()}
+              className="inline-flex items-center gap-2 rounded-xl bg-[#0b8f80] px-5 py-3 text-sm font-bold text-white hover:bg-[#08796e] disabled:opacity-50"
+            >
+              <Save size={16} />
+
+              {guardandoMembrete
+                ? es
+                  ? "Guardando..."
+                  : "Saving..."
+                : es
+                  ? "Guardar membrete"
+                  : "Save letterhead"}
+            </button>
+          </div>
+        </section>
+      )}
+
+      {/* CONFIGURACIÓN DE LA RECETA */}
 
       <section className="rounded-[24px] border border-[#e0e9eb] bg-[#f5f9f8] p-5 dark:border-white/10 dark:bg-[#102635] sm:p-6">
         <div className="mb-6 flex items-center gap-3">
@@ -458,9 +684,7 @@ export default function RecetasMedicas({
 
           <label className="block">
             <span className="mb-2 block text-xs font-bold text-[#315b63] dark:text-slate-200">
-              {es
-                ? "Odontólogo"
-                : "Dentist"}
+              {es ? "Odontólogo" : "Dentist"}
 
               <span className="ml-1 text-rose-500">*</span>
             </span>
@@ -571,9 +795,7 @@ export default function RecetasMedicas({
           >
             <RotateCcw size={16} />
 
-            {es
-              ? "Limpiar"
-              : "Clear"}
+            {es ? "Limpiar" : "Clear"}
           </button>
 
           <div className="flex flex-wrap gap-3">
@@ -587,9 +809,7 @@ export default function RecetasMedicas({
             >
               <FileText size={16} />
 
-              {es
-                ? "Vista previa"
-                : "Preview"}
+              {es ? "Vista previa" : "Preview"}
             </button>
 
             <button
