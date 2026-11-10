@@ -1,38 +1,22 @@
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { createPortal } from "react-dom";
 
-import type {
-  Dispatch,
-  SetStateAction,
-} from "react";
+import type { Dispatch, SetStateAction } from "react";
 
-import type {
-  Doctor,
-} from "../../types/Doctor";
+import type { Doctor } from "../../types/Doctor";
 
-import type {
-  Tratamiento,
-} from "../../types/Tratamiento";
+import type { Tratamiento } from "../../types/Tratamiento";
 
-import { supabase }
-  from "../../lib/supabase";
+import { supabase } from "../../lib/supabase";
 
-import { useAuth }
-  from "../../context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
-import { useLanguage }
-  from "../../context/LanguageContext";
+import { useLanguage } from "../../context/LanguageContext";
 
 import { calcularComisionNeta } from "../../lib/comisionNeta";
 
-import { registrarBitacora }
-  from "../../lib/registrarBitacora";
+import { registrarBitacora } from "../../lib/registrarBitacora";
 
 type PagoComision = {
   id?: number;
@@ -56,32 +40,16 @@ type ComisionesProps = {
   tratamientos: Tratamiento[];
   pagos?: PagoComision[];
 
-  setDoctorDetalle:
-    Dispatch<
-      SetStateAction<
-        Doctor | null
-      >
-    >;
+  setDoctorDetalle: Dispatch<SetStateAction<Doctor | null>>;
 
-  setMostrarDetalleDoctor:
-    Dispatch<
-      SetStateAction<boolean>
-    >;
+  setMostrarDetalleDoctor: Dispatch<SetStateAction<boolean>>;
 };
 
-type Vista =
-  | "doctores"
-  | "especialistas";
+type Vista = "doctores" | "especialistas";
 
-type FormaPagoEspecialista =
-  | "MXN"
-  | "USD"
-  | "Transferencia";
+type FormaPagoEspecialista = "MXN" | "USD" | "Transferencia";
 
-type FormaPagoDoctor =
-  | "MXN"
-  | "USD"
-  | "Transferencia";
+type FormaPagoDoctor = "MXN" | "USD" | "Transferencia";
 
 export default function Comisiones({
   doctores,
@@ -101,6 +69,7 @@ export default function Comisiones({
   // Conservar la misma solicitud al reintentar una liquidación incierta.
   const liquidacionPendienteRef = useRef<{ payload: string; id: string } | null>(null);
   const liquidacionEnCursoRef = useRef(false);
+  const pagoEspecialistaEnCursoRef = useRef(false);
 
   const { language } = useLanguage();
   const es = language === "es";
@@ -556,7 +525,7 @@ export default function Comisiones({
 
                 const moneda =
                   tratamiento.moneda_especialista ===
-                  "USD"
+                    "USD"
                     ? "USD"
                     : "MXN";
 
@@ -725,18 +694,25 @@ export default function Comisiones({
   }
 
   async function registrarPagoEspecialista() {
+    if (!esAdmin || !tratamientoPago?.id || guardando || pagoEspecialistaEnCursoRef.current) return;
 
-    if (!tratamientoPago?.id) return;
+    if (tratamientoPago.especialista_pagado === true || tratamientoPago.estado !== "Finalizado") {
+      alert(tr(
+        "El tratamiento ya fue pagado o todavía no está finalizado. Actualiza la vista antes de continuar.",
+        "The treatment has already been paid or is not completed. Refresh the view before continuing."
+      ));
+      return;
+    }
 
     const monto = Number(montoPagoEspecialista);
-
     if (!Number.isFinite(monto) || monto <= 0) {
       alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
       return;
     }
 
     const monedaPago =
-      formaPagoEspecialista === "USD" || (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
+      formaPagoEspecialista === "USD" ||
+      (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
         ? "USD"
         : "MXN";
 
@@ -745,48 +721,70 @@ export default function Comisiones({
         ? "Transferencia"
         : "Efectivo";
 
+    const tratamiento = tratamientoPago;
+    pagoEspecialistaEnCursoRef.current = true;
     setGuardando(true);
 
-    const { error } =
-      await supabase
+    try {
+      const { data, error } = await supabase
         .from("tratamientos")
         .update({
           especialista_pagado: true,
-          especialista_fecha_pago:
-            new Date().toISOString(),
-          especialista_metodo_pago:
-            metodoPago,
-          especialista_pago_moneda:
-            monedaPago,
-          especialista_pago_monto:
-            monto,
+          especialista_fecha_pago: new Date().toISOString(),
+          especialista_metodo_pago: metodoPago,
+          especialista_pago_moneda: monedaPago,
+          especialista_pago_monto: monto,
         })
-        .eq("id", tratamientoPago.id);
+        .eq("id", tratamiento.id)
+        .eq("estado", "Finalizado")
+        .or("especialista_pagado.is.false,especialista_pagado.is.null")
+        .select("id")
+        .maybeSingle();
 
-    setGuardando(false);
+      if (error) throw error;
 
-    if (error) {
+      if (!data) {
+        throw new Error(tr(
+          "No se confirmó ningún pago. Es posible que otro usuario ya lo registrara o que no tengas permisos. Actualiza la vista y verifica el estado antes de reintentar.",
+          "No payment was confirmed. Another user may have recorded it, or you may lack permission. Refresh and verify the status before retrying."
+        ));
+      }
+
+      try {
+        await registrarBitacora({
+          accion: "Pagar especialista",
+          modulo: "Comisiones",
+          detalle:
+            `Tratamiento ID: ${tratamiento.id} | Especialista ID: ${tratamiento.especialista_id || "-"} | Especialista: ${tratamiento.especialista_nombre || "-"} | Tratamiento: ${tratamiento.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago}`,
+        });
+      } catch (errorBitacora) {
+        console.error(
+          "Pago confirmado; no se pudo registrar la bitácora:",
+          errorBitacora
+        );
+      }
+
+      setTratamientoPago(null);
+      setMontoPagoEspecialista("");
+      window.location.reload();
+
+    } catch (error) {
       console.error(
-        "Error registrando pago a especialista:",
+        "No se pudo confirmar el pago al especialista:",
         error
       );
+
       alert(
-        tr("No se pudo registrar el pago al especialista.", "The specialist payment could not be recorded.")
+        tr(
+          "No se pudo confirmar el pago al especialista. Verifica su estado antes de reintentar. ",
+          "Could not confirm the specialist payment. Verify its status before retrying. "
+        ) + (error instanceof Error ? error.message : String(error))
       );
-      return;
+
+    } finally {
+      pagoEspecialistaEnCursoRef.current = false;
+      setGuardando(false);
     }
-
-    await registrarBitacora({
-      accion: "Pagar especialista",
-      modulo: "Comisiones",
-      detalle:
-        `Tratamiento ID: ${tratamientoPago.id} | Especialista ID: ${tratamientoPago.especialista_id || "-"} | Especialista: ${tratamientoPago.especialista_nombre || "-"} | Tratamiento: ${tratamientoPago.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago}`,
-    });
-
-    setTratamientoPago(null);
-    setMontoPagoEspecialista("");
-    window.location.reload();
-
   }
 
   return (
@@ -893,8 +891,8 @@ export default function Comisiones({
                       `
 
                     : `
-                        !text-white/80 hover:!text-white
-                      `
+                      !text-white/80 hover:!text-white
+                    `
                 }
               `}
             >
@@ -1001,7 +999,7 @@ export default function Comisiones({
 
               </div>
 
-              <div
+                            <div
                 className="
                   mint-card
                   overflow-hidden
@@ -1655,567 +1653,505 @@ export default function Comisiones({
           )
       }
 
-      {esAdmin && doctorRevisionId !== null && createPortal(
+            {esAdmin && doctorRevisionId !== null && createPortal(
         <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#071827]/70 backdrop-blur-[4px] p-3 sm:p-6"
-          role="presentation"
+          className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#071b2c]/75 p-3 sm:p-6"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !guardando) setDoctorRevisionId(null);
+            if (event.target === event.currentTarget && !guardando) {
+              setDoctorRevisionId(null);
+            }
           }}
         >
-          {resumenDoctores.filter(item => Number(item.doctor.id) === doctorRevisionId).map(item => (
-            <section
-              key={item.doctor.id}
-              role="dialog"
-              aria-modal="true"
-              aria-labelledby="mintos-autorizaciones-titulo"
-              className="flex w-full max-w-4xl max-h-[min(90vh,900px)] flex-col overflow-hidden rounded-2xl border border-[#2a6473] bg-[var(--mint-surface)] shadow-[0_30px_90px_rgba(4,24,39,0.4)]"
-            >
-              <header className="shrink-0 bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] px-5 py-5 sm:px-7">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#86e1ce]">
-                      {tr("Control administrativo", "Administrative controls")}
-                    </p>
-                    <h2 id="mintos-autorizaciones-titulo" className="mt-1 text-xl font-bold text-white sm:text-2xl">
-                      {tr("Validación y autorización", "Validation and approval")}
-                    </h2>
-                    <p className="mt-1 text-sm text-white/85">{item.doctor.nombre}</p>
-                  </div>
-                  <button
-                    type="button"
-                    aria-label={tr("Cerrar modal", "Close dialog")}
-                    disabled={guardando}
-                    onClick={() => setDoctorRevisionId(null)}
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/10 text-xl text-white transition hover:bg-white/20 disabled:opacity-50"
-                  >
-                    ×
-                  </button>
+          <div className="mint-card flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden border border-[var(--mint-border)] shadow-2xl">
+            <div className="shrink-0 bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] px-5 py-5 sm:px-7">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#63c8b2]">
+                    {tr("Control financiero", "Financial control")}
+                  </p>
+                  <h3 className="mt-1 text-xl font-bold text-white sm:text-2xl">
+                    {tr("Revisión y autorización de comisiones", "Commission review and approval")}
+                  </h3>
+                  <p className="mt-1 text-sm text-white/80">
+                    {resumenDoctores.find(item => Number(item.doctor.id) === doctorRevisionId)?.doctor.nombre || ""}
+                  </p>
                 </div>
-              </header>
-              <div className="h-1 shrink-0 bg-[linear-gradient(90deg,#249884_0%,#63c8b2_58%,#d8bd72_100%)]" />
-              <div className="min-h-0 flex-1 space-y-4 overflow-y-auto bg-[var(--mint-bg-card)] p-4 sm:p-6">
-                <p className="text-sm mint-text-muted">
-                  {tr("Revisa cada tratamiento antes de liquidar las comisiones.",
-                    "Review each treatment before settling commissions.")}
-                </p>
-                  {item.tratamientosPorRevisar.map((tratamiento: any) => {
-                    const validado = costosValidados(tratamiento);
-                    const autorizado = comisionAutorizada(tratamiento);
-                    return (
-                      <div key={tratamiento.id} className="rounded-xl border border-[var(--mint-border)] p-4 space-y-3 bg-[var(--mint-bg-soft)]">
-                        <div className="flex flex-wrap justify-between gap-2">
-                          <div>
-                            <p className="font-semibold mint-text-primary">#{tratamiento.id} · {tratamiento.tratamiento}</p>
-                            <p className="text-xs mint-text-muted">{tratamiento.fecha || "—"}</p>
-                          </div>
-                          <span className={`text-xs font-bold rounded-full px-3 py-1 ${autorizado
-                            ? "bg-emerald-100 text-emerald-800"
-                            : validado ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>
-                            {autorizado ? tr("Autorizada", "Approved")
-                              : validado ? tr("Pendiente de autorización", "Awaiting approval")
-                                : tr("Costos sin validar", "Costs not validated")}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {(["laboratorio", "especialista"] as const).map(tipo => (
-                            <label key={tipo} className="text-xs font-semibold mint-text-secondary">
-                              {tipo === "laboratorio" ? tr("Laboratorio", "Laboratory") : tr("Especialista", "Specialist")}
-                              <span className="block mt-1 text-xs mint-text-muted">
-                                ${formatoMonto(Number(tratamiento[tipo] || 0))} {tratamiento[`moneda_${tipo}`] === "USD" ? "USD" : "MXN"}
-                              </span>
-                              <select className="mt-1 w-full rounded-lg border border-[var(--mint-border)] bg-[var(--mint-bg-card)] p-2"
-                                disabled={guardando || validado}
-                                value={estadoCosto(tratamiento, tipo)}
-                                onChange={event => setEstadosCostos(prev => ({
-                                  ...prev,
-                                  [Number(tratamiento.id)]: {
-                                    laboratorio: tipo === "laboratorio" ? event.target.value : estadoCosto(tratamiento, "laboratorio"),
-                                    especialista: tipo === "especialista" ? event.target.value : estadoCosto(tratamiento, "especialista"),
-                                  },
-                                }))}
-                              >
-                                <option value="aplica">{tr("Aplica", "Applies")}</option>
-                                <option value="no_aplica">{tr("No aplica", "Does not apply")}</option>
-                              </select>
-                            </label>
-                          ))}
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {!validado && (
-                            <button type="button" disabled={guardando} className="mint-btn mint-btn-primary mint-btn-sm"
-                              onClick={() => void ejecutarAutorizacion("validar", tratamiento)}>
-                              {tr("Validar costos", "Validate costs")}
-                            </button>
-                          )}
-                          {validado && !autorizado && (
-                            <button type="button" disabled={guardando} className="mint-btn mint-btn-primary mint-btn-sm"
-                              onClick={() => void ejecutarAutorizacion("autorizar", tratamiento)}>
-                              {tr("Autorizar comisión", "Approve commission")}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-              </div>
-              <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-[var(--mint-border)] bg-[var(--mint-surface)] px-5 py-4 sm:px-7">
-                <span className="text-xs font-medium mint-text-muted">
-                  {item.tratamientosPorRevisar.length} {tr("tratamientos", "treatments")}
-                </span>
                 <button
                   type="button"
                   disabled={guardando}
                   onClick={() => setDoctorRevisionId(null)}
-                  className="mint-btn mint-btn-secondary"
+                  className="rounded-lg border border-white/25 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
                 >
-                  {tr("Cerrar", "Close")}
+                  {tr("Cerrar", "Close")} ×
                 </button>
-              </footer>
-            </section>
-          ))}
+              </div>
+            </div>
+            <div className="h-1 shrink-0 bg-[linear-gradient(90deg,#249884_0%,#63c8b2_58%,#d8bd72_100%)]" />
+
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
+              <p className="mb-4 text-sm mint-text-secondary">
+                {tr(
+                  "Valida los costos de laboratorio y especialista antes de autorizar la comisión. La autorización queda protegida por las reglas financieras del servidor.",
+                  "Validate laboratory and specialist costs before approving the commission. Approval is protected by server-side financial rules."
+                )}
+              </p>
+
+              {(() => {
+                const revision = resumenDoctores.find(item => Number(item.doctor.id) === doctorRevisionId);
+                const pendientes = revision?.tratamientosPorRevisar ?? [];
+                if (pendientes.length === 0) {
+                  return (
+                    <div className="rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-8 text-center text-sm mint-text-secondary">
+                      {tr("No hay tratamientos pendientes de revisión.", "There are no treatments pending review.")}
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-4">
+                    {pendientes.map(tratamiento => {
+                      const validado = costosValidados(tratamiento);
+                      const autorizado = comisionAutorizada(tratamiento);
+                      const laboratorioEstado = estadoCosto(tratamiento, "laboratorio");
+                      const especialistaEstado = estadoCosto(tratamiento, "especialista");
+
+                      return (
+                        <div
+                          key={tratamiento.id}
+                          className="overflow-hidden rounded-2xl border border-[var(--mint-border)] bg-white shadow-[0_6px_20px_rgba(15,42,65,0.04)]"
+                        >
+                          <div className="flex flex-col justify-between gap-3 border-b border-[var(--mint-border)] bg-[var(--mint-bg-soft)] px-4 py-4 sm:flex-row sm:items-center sm:px-5">
+                            <div>
+                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
+                                {tr("Tratamiento", "Treatment")} #{tratamiento.id}
+                              </p>
+                              <p className="mt-1 font-bold mint-text-primary">
+                                {tratamiento.tratamiento || "—"}
+                              </p>
+                              <p className="mt-1 text-xs mint-text-secondary">
+                                {tr("Estado", "Status")}: {tratamiento.estado || "—"}
+                              </p>
+                            </div>
+                            <span className={`inline-flex self-start rounded-full border px-3 py-1 text-xs font-bold ${
+                              autorizado
+                                ? "border-[var(--mint-success-border)] bg-[var(--mint-success-bg)] text-[var(--mint-success)]"
+                                : validado
+                                  ? "border-[var(--mint-warning-border)] bg-[var(--mint-warning-bg)] text-[var(--mint-warning)]"
+                                  : "border-[var(--mint-border)] bg-white mint-text-secondary"
+                            }`}>
+                              {autorizado
+                                ? tr("Comisión autorizada", "Commission approved")
+                                : validado
+                                  ? tr("Costos validados", "Costs validated")
+                                  : tr("Pendiente de validación", "Pending validation")}
+                            </span>
+                          </div>
+
+                          <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
+                            <div className="rounded-xl border border-[var(--mint-border)] p-4">
+                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
+                                {tr("Laboratorio", "Laboratory")}
+                              </p>
+                              <p className="mt-1 text-lg font-bold mint-text-primary">
+                                ${formatoMonto(Number(tratamiento.laboratorio || 0))}
+                                <span className="ml-2 text-xs font-medium mint-text-muted">
+                                  {tratamiento.moneda_laboratorio === "USD" ? "USD" : "MXN"}
+                                </span>
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {(["aplica", "no_aplica"] as const).map(opcion => (
+                                  <button
+                                    key={opcion}
+                                    type="button"
+                                    disabled={guardando || validado}
+                                    onClick={() => setEstadosCostos(prev => ({
+                                      ...prev,
+                                      [Number(tratamiento.id)]: {
+                                        laboratorio: opcion,
+                                        especialista: estadoCosto(tratamiento, "especialista"),
+                                      },
+                                    }))}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                      laboratorioEstado === opcion
+                                        ? "border-[#0b8f80] bg-[#e8f7f3] text-[#08796c]"
+                                        : "border-[var(--mint-border)] bg-white mint-text-secondary hover:border-[#0b8f80]"
+                                    }`}
+                                  >
+                                    {opcion === "aplica"
+                                      ? tr("Aplica", "Applies")
+                                      : tr("No aplica", "Does not apply")}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="rounded-xl border border-[var(--mint-border)] p-4">
+                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
+                                {tr("Especialista", "Specialist")}
+                              </p>
+                              <p className="mt-1 text-lg font-bold mint-text-primary">
+                                ${formatoMonto(Number(tratamiento.especialista || 0))}
+                                <span className="ml-2 text-xs font-medium mint-text-muted">
+                                  {tratamiento.moneda_especialista === "USD" ? "USD" : "MXN"}
+                                </span>
+                              </p>
+                              <div className="mt-3 flex flex-wrap gap-2">
+                                {(["aplica", "no_aplica"] as const).map(opcion => (
+                                  <button
+                                    key={opcion}
+                                    type="button"
+                                    disabled={guardando || validado}
+                                    onClick={() => setEstadosCostos(prev => ({
+                                      ...prev,
+                                      [Number(tratamiento.id)]: {
+                                        laboratorio: estadoCosto(tratamiento, "laboratorio"),
+                                        especialista: opcion,
+                                      },
+                                    }))}
+                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+                                      especialistaEstado === opcion
+                                        ? "border-[#0b8f80] bg-[#e8f7f3] text-[#08796c]"
+                                        : "border-[var(--mint-border)] bg-white mint-text-secondary hover:border-[#0b8f80]"
+                                    }`}
+                                  >
+                                    {opcion === "aplica"
+                                      ? tr("Aplica", "Applies")
+                                      : tr("No aplica", "Does not apply")}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--mint-border)] bg-[var(--mint-bg-soft)] px-4 py-4 sm:px-5">
+                            {!validado && (
+                              <button
+                                type="button"
+                                disabled={guardando}
+                                onClick={() => void ejecutarAutorizacion("validar", tratamiento)}
+                                className="mint-btn mint-btn-secondary mint-btn-sm disabled:opacity-50"
+                              >
+                                {tr("Validar costos", "Validate costs")}
+                              </button>
+                            )}
+                            {validado && !autorizado && (
+                              <button
+                                type="button"
+                                disabled={guardando}
+                                onClick={() => void ejecutarAutorizacion("autorizar", tratamiento)}
+                                className="mint-btn mint-btn-primary mint-btn-sm disabled:opacity-50"
+                              >
+                                {tr("Autorizar comisión", "Approve commission")}
+                              </button>
+                            )}
+                            {autorizado && (
+                              <span className="inline-flex items-center rounded-lg border border-[var(--mint-success-border)] bg-[var(--mint-success-bg)] px-3 py-2 text-xs font-bold text-[var(--mint-success)]">
+                                ✓ {tr("Autorizada", "Approved")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
         </div>,
         document.body
       )}
 
       {
-        doctorPago
-
-        &&
-
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            bg-slate-950/35
-            backdrop-blur-[2px]
-            flex
-            items-center
-            justify-center
-            p-4
-          "
-        >
+        doctorPago &&
+        (
 
           <div
             className="
-              mint-card
-              w-full
-              max-w-md
-              overflow-hidden
-              border
-              border-[var(--mint-border-teal)]
-              bg-[var(--mint-surface)]
-              p-6
-              shadow-[0_24px_70px_rgba(15,42,65,0.22)]
+              fixed
+              inset-0
+              z-[1000]
+              flex
+              items-center
+              justify-center
+              bg-black/60
+              p-4
             "
           >
 
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
-              {tr("Pago de comisión", "Commission payment")}
-            </p>
+            <div
+              className="
+                mint-card
+                w-full
+                max-w-lg
+                p-6
+                shadow-2xl
+              "
+            >
 
-            <h3 className="text-xl font-bold mint-text-primary mt-1">
-              {
-                doctorPago.doctor?.nombre ||
-                "Doctor"
-              }
-            </h3>
+              <h3 className="text-xl font-bold mint-text-primary">
+                {tr("Pagar comisión a doctor", "Pay doctor commission")}
+              </h3>
 
-            <div className="mt-5 p-4 rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)]">
-
-              <p className="text-xs font-bold uppercase mint-text-muted">
-                {tr("Comisión pendiente", "Outstanding commission")}
+              <p className="text-sm mint-text-secondary mt-2">
+                {
+                  doctorPago.doctor.nombre
+                }
               </p>
 
-              <div className={`grid ${mostrarMXN && mostrarUSD ? "grid-cols-2" : "grid-cols-1"} gap-3 mt-3`}>
+              <div className="mt-6">
 
-                {mostrarMXN && (<div>
-                  <p className="text-xs mint-text-muted">
-                    MXN
-                  </p>
+                <label className="mint-label">
+                  {tr("Forma de pago", "Payment method")}
+                </label>
 
-                  <p className="text-xl font-bold mint-text-primary">
-                    $
-                    {
-                      formatoMonto(
-                        doctorPago.pendienteMXN
-                      )
-                    }
-                  </p>
-                </div>)}
+                <select
+                  value={
+                    formaPagoDoctor
+                  }
+                  onChange={(
+                    e
+                  ) => {
 
-                {mostrarUSD && (<div>
-                  <p className="text-xs mint-text-muted">
-                    USD
-                  </p>
+                    const forma = e.target.value as FormaPagoDoctor;
+                    setFormaPagoDoctor(forma);
+                    const moneda = forma === "USD" || (forma === "Transferencia" && !mostrarMXN)
+                      ? "USD" : "MXN";
+                    setMontoPagoDoctor(String(moneda === "USD" ? doctorPago.pendienteUSD : doctorPago.pendienteMXN));
 
-                  <p className="text-xl font-bold mint-text-accent">
-                    $
-                    {
-                      formatoMonto(
-                        doctorPago.pendienteUSD
-                      )
-                    }
-                  </p>
-                </div>)}
+                  }}
+                  className="mint-input"
+                >
+                  {monedasActivas.map(moneda => (
+                    <option key={moneda} value={moneda}>
+                      {tr("Efectivo", "Cash")} {moneda}
+                    </option>
+                  ))}
 
-              </div>
+                  <option value="Transferencia">
+                    {tr("Transferencia", "Transfer")}
+                  </option>
+                </select>
 
-            </div>
-
-            <div className="mt-5">
-
-              <label className="text-sm font-semibold mint-text-primary">
-                {tr("Forma de pago", "Payment method")}
-              </label>
-
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {(
-                  [
-                    ...monedasActivas,
-                    "Transferencia",
-                  ] as FormaPagoDoctor[]
-                ).map((forma) => (
-                  <button
-                    key={forma}
-                    type="button"
-                    disabled={
-                      forma === "MXN"
-                        ? doctorPago.pendienteMXN <= 0 || !doctorPago.listoMXN
-                        : (forma === "USD" || (forma === "Transferencia" && !mostrarMXN))
-                          ? doctorPago.pendienteUSD <= 0 || !doctorPago.listoUSD
-                          : (mostrarMXN ? doctorPago.pendienteMXN <= 0 || !doctorPago.listoMXN : doctorPago.pendienteUSD <= 0 || !doctorPago.listoUSD)
-                    }
-                    onClick={() => {
-
-                      setFormaPagoDoctor(
-                        forma
-                      );
-
-                      setMontoPagoDoctor(
-                        String(
-                          (forma === "USD" || (forma === "Transferencia" && !mostrarMXN))
-                            ? doctorPago.pendienteUSD
-                            : doctorPago.pendienteMXN
-                        )
-                      );
-
-                    }}
-                    className={`
-                      px-3 py-2.5 rounded-xl text-sm
-                      font-semibold border transition
-                      disabled:opacity-40
-                      disabled:cursor-not-allowed
-                      ${
-                        formaPagoDoctor === forma
-                          ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
-                          : "bg-[var(--mint-bg-card)] mint-text-secondary border-[var(--mint-border)]"
-                      }
-                    `}
-                  >
-                    {forma}
-                  </button>
-                ))}
               </div>
 
               <div className="mt-4">
 
-                <label className="text-sm font-semibold mint-text-primary">
-                  {tr("Cantidad", "Amount")}
+                <label className="mint-label">
+                  {tr("Monto", "Amount")}
                 </label>
 
-                <div className="relative mt-2">
-
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 mint-text-muted font-semibold">
-                    $
-                  </span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={
-                      montoPagoDoctor
-                    }
-                    onChange={(event) =>
-                      setMontoPagoDoctor(
-                        event.target.value
-                      )
-                    }
-                    className="
-                      w-full rounded-xl border
-                      border-[var(--mint-border)]
-                      bg-[var(--mint-bg-card)] pl-8 pr-16 py-2.5
-                      text-sm font-semibold
-                      mint-text-primary outline-none
-                      focus:border-[var(--mint-primary)]
-                    "
-                    placeholder="0.00"
-                  />
-
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
-                    {
-                      formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
-                        ? "USD"
-                        : "MXN"
-                    }
-                  </span>
-
-                </div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={
+                    montoPagoDoctor
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setMontoPagoDoctor(
+                      e.target.value
+                    )
+                  }
+                  className="mint-input"
+                />
 
               </div>
 
-            </div>
+              <div className="flex justify-end gap-3 mt-6">
 
-            <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  disabled={guardando}
+                  onClick={() => {
 
-              <button
-                type="button"
-                disabled={
-                  guardando
-                }
-                onClick={() =>
-                  setDoctorPago(
-                    null
-                  )
-                }
-                className="
-                  mint-btn
-                  mint-btn-secondary
-                "
-              >
-                {tr("Cancelar", "Cancel")}
-              </button>
+                    setDoctorPago(
+                      null
+                    );
 
-              <button
-                type="button"
-                disabled={
-                  guardando
-                }
-                onClick={
-                  registrarPagoDoctor
-                }
-                className="
-                  mint-btn
-                  mint-btn-primary
-                "
-              >
-                {
-                  guardando
-                    ? tr("Guardando...", "Saving...")
-                    : tr("Confirmar pago", "Confirm payment")
-                }
-              </button>
+                    setMontoPagoDoctor(
+                      ""
+                    );
+
+                  }}
+                  className="mint-btn mint-btn-secondary"
+                >
+                  {tr("Cancelar", "Cancel")}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={guardando}
+                  onClick={
+                    registrarPagoDoctor
+                  }
+                  className="mint-btn mint-btn-primary"
+                >
+                  {
+                    guardando
+                      ? tr("Guardando...", "Saving...")
+                      : tr("Confirmar pago", "Confirm payment")
+                  }
+                </button>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        )
       }
 
       {
-        tratamientoPago
-
-        &&
-
-        <div
-          className="
-            fixed
-            inset-0
-            z-50
-            bg-slate-950/35
-            backdrop-blur-[2px]
-            flex
-            items-center
-            justify-center
-            p-4
-          "
-        >
+        tratamientoPago &&
+        (
 
           <div
             className="
-              mint-card
-              w-full
-              max-w-md
-              overflow-hidden
-              border
-              border-[var(--mint-border-teal)]
-              bg-[var(--mint-surface)]
-              p-6
-              shadow-[0_24px_70px_rgba(15,42,65,0.22)]
+              fixed
+              inset-0
+              z-[1000]
+              flex
+              items-center
+              justify-center
+              bg-black/60
+              p-4
             "
           >
 
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] mint-text-brand">
-              {tr("Pago a especialista", "Specialist payment")}
-            </p>
+            <div
+              className="
+                mint-card
+                w-full
+                max-w-lg
+                p-6
+                shadow-2xl
+              "
+            >
 
-            <h3 className="text-xl font-bold mint-text-primary mt-1">
-              {
-                tratamientoPago.especialista_nombre ||
-                tr("Especialista", "Specialist")
-              }
-            </h3>
+              <h3 className="text-xl font-bold mint-text-primary">
+                {tr("Pagar especialista", "Pay specialist")}
+              </h3>
 
-            <div className="mt-5 p-4 rounded-xl bg-[var(--mint-bg-soft)] border border-[var(--mint-border)]">
-
-              <p className="text-sm font-semibold mint-text-primary">
+              <p className="text-sm mint-text-secondary mt-2">
                 {
-                  tratamientoPago.tratamiento
+                  tratamientoPago.especialista_nombre ||
+                  tr("Especialista", "Specialist")
                 }
               </p>
 
-              <p className="text-2xl font-bold mint-text-primary mt-2">
-                $
+              <p className="text-xs mint-text-muted mt-1">
                 {
-                  formatoMonto(
-                    Number(
-                      tratamientoPago.especialista ||
-                      0
-                    )
-                  )
+                  tratamientoPago.tratamiento ||
+                  tr("Tratamiento", "Treatment")
                 }
+              </p>
 
-                <span className="text-sm ml-2 mint-text-muted">
-                  {
-                    tratamientoPago.moneda_especialista ===
-                    "USD"
-                      ? "USD"
-                      : "MXN"
+              <div className="mt-6">
+
+                <label className="mint-label">
+                  {tr("Forma de pago", "Payment method")}
+                </label>
+
+                <select
+                  value={
+                    formaPagoEspecialista
                   }
-                </span>
-              </p>
+                  onChange={(
+                    e
+                  ) => {
 
-            </div>
+                    setFormaPagoEspecialista(
+                      e.target.value as FormaPagoEspecialista
+                    );
 
-            <div className="mt-5">
+                  }}
+                  className="mint-input"
+                >
+                  {monedasActivas.map(moneda => (
+                    <option key={moneda} value={moneda}>
+                      {tr("Efectivo", "Cash")} {moneda}
+                    </option>
+                  ))}
 
-              <label className="text-sm font-semibold mint-text-primary">
-                {tr("Forma de pago", "Payment method")}
-              </label>
+                  <option value="Transferencia">
+                    {tr("Transferencia", "Transfer")}
+                  </option>
+                </select>
 
-              <div className="grid grid-cols-3 gap-2 mt-2">
-                {(
-                  [
-                    ...monedasActivas,
-                    "Transferencia",
-                  ] as FormaPagoEspecialista[]
-                ).map((forma) => (
-                  <button
-                    key={forma}
-                    type="button"
-                    onClick={() =>
-                      setFormaPagoEspecialista(forma)
-                    }
-                    className={`
-                      px-3 py-2.5 rounded-xl text-sm
-                      font-semibold border transition
-                      ${
-                        formaPagoEspecialista === forma
-                          ? "bg-[var(--mint-primary)] text-white border-[var(--mint-primary)]"
-                          : "bg-[var(--mint-bg-card)] mint-text-secondary border-[var(--mint-border)]"
-                      }
-                    `}
-                  >
-                    {forma}
-                  </button>
-                ))}
               </div>
 
               <div className="mt-4">
 
-                <label className="text-sm font-semibold mint-text-primary">
-                  {tr("Cantidad", "Amount")}
+                <label className="mint-label">
+                  {tr("Monto", "Amount")}
                 </label>
 
-                <div className="relative mt-2">
-
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 mint-text-muted font-semibold">
-                    $
-                  </span>
-
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={montoPagoEspecialista}
-                    onChange={(event) =>
-                      setMontoPagoEspecialista(
-                        event.target.value
-                      )
-                    }
-                    className="
-                      w-full rounded-xl border
-                      border-[var(--mint-border)]
-                      bg-[var(--mint-bg-card)] pl-8 pr-16 py-2.5
-                      text-sm font-semibold
-                      mint-text-primary outline-none
-                      focus:border-[var(--mint-primary)]
-                    "
-                    placeholder="0.00"
-                  />
-
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold mint-text-muted">
-                    {
-                      formaPagoEspecialista === "USD" || (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
-                        ? "USD"
-                        : "MXN"
-                    }
-                  </span>
-
-                </div>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={
+                    montoPagoEspecialista
+                  }
+                  onChange={(
+                    e
+                  ) =>
+                    setMontoPagoEspecialista(
+                      e.target.value
+                    )
+                  }
+                  className="mint-input"
+                />
 
               </div>
 
-            </div>
+              <div className="flex justify-end gap-3 mt-6">
 
-            <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  disabled={guardando}
+                  onClick={() => {
 
-              <button
-                type="button"
-                disabled={
-                  guardando
-                }
-                onClick={() =>
-                  setTratamientoPago(
-                    null
-                  )
-                }
-                className="
-                  mint-btn
-                  mint-btn-secondary
-                "
-              >
-                {tr("Cancelar", "Cancel")}
-              </button>
+                    setTratamientoPago(
+                      null
+                    );
 
-              <button
-                type="button"
-                disabled={
-                  guardando
-                }
-                onClick={
-                  registrarPagoEspecialista
-                }
-                className="
-                  mint-btn
-                  mint-btn-primary
-                "
-              >
-                {
-                  guardando
-                    ? tr("Guardando...", "Saving...")
-                    : tr("Confirmar pago", "Confirm payment")
-                }
-              </button>
+                    setMontoPagoEspecialista(
+                      ""
+                    );
+
+                  }}
+                  className="mint-btn mint-btn-secondary"
+                >
+                  {tr("Cancelar", "Cancel")}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={guardando}
+                  onClick={
+                    registrarPagoEspecialista
+                  }
+                  className="mint-btn mint-btn-primary"
+                >
+                  {
+                    guardando
+                      ? tr("Guardando...", "Saving...")
+                      : tr("Confirmar pago", "Confirm payment")
+                  }
+                </button>
+
+              </div>
 
             </div>
 
           </div>
 
-        </div>
+        )
       }
 
     </div>
