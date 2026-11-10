@@ -354,6 +354,8 @@ export default function ConsentimientosPaciente({
       };
     }
 
+    const seleccionadoId = seleccionado.id;
+
     async function consultarFirma() {
       setCargandoFirmaConsultada(true);
 
@@ -376,7 +378,7 @@ export default function ConsentimientosPaciente({
               Authorization: `Bearer ${sesion.session.access_token}`,
             },
             body: {
-              consentimiento_id: seleccionado.id,
+              consentimiento_id: seleccionadoId,
             },
           }
         );
@@ -398,7 +400,7 @@ export default function ConsentimientosPaciente({
         if (!activo) return;
 
         setFirmaConsultada({
-          consentimientoId: seleccionado.id,
+          consentimientoId: seleccionadoId,
           url: data.url,
         });
 
