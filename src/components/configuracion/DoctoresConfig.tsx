@@ -196,6 +196,9 @@ const [
     setGuardandoPrecio,
   ] = useState(false);
 
+  const [tratamientoPersonalizado, setTratamientoPersonalizado] = useState(false);
+  const [precioPersonalizadoEditandoId, setPrecioPersonalizadoEditandoId] = useState<number | null>(null);
+
   const doctoresClinica =
     doctores.filter(
       (doctor) =>
@@ -859,6 +862,8 @@ async function cargarPreciosEspecialista(
 
   function abrirNuevoPrecioEspecialista() {
 
+    setTratamientoPersonalizado(false);
+    setPrecioPersonalizadoEditandoId(null);
     setPrecioEditandoId(
       null
     );
@@ -877,6 +882,8 @@ async function cargarPreciosEspecialista(
     tratamiento: TratamientoCatalogo
   ) {
 
+    setTratamientoPersonalizado(false);
+    setPrecioPersonalizadoEditandoId(null);
     setPrecioEditandoId(
       tratamiento.id
     );
@@ -905,8 +912,51 @@ async function cargarPreciosEspecialista(
 
   }
 
+  function editarPrecioPersonalizado(precio: PrecioEspecialista) {
+    setTratamientoPersonalizado(true);
+    setPrecioPersonalizadoEditandoId(precio.id);
+    setPrecioEditandoId(null);
+    const mismoNombre = preciosEspecialista.filter((item) =>
+      item.tratamiento_id === null &&
+      item.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()
+    );
+    setFormPrecio({
+      tratamiento_id: "",
+      nombre_tratamiento: precio.nombre_tratamiento,
+      costo_mxn: String(mismoNombre.find((item) => item.moneda === "MXN")?.costo ?? ""),
+      costo_usd: String(mismoNombre.find((item) => item.moneda === "USD")?.costo ?? ""),
+    });
+    setMostrarFormularioPrecio(true);
+  }
+
+  async function cambiarEstadoPrecioPersonalizado(precio: PrecioEspecialista) {
+    if (doctorPreciosId === null) return;
+    const relacionados = preciosEspecialista.filter((item) =>
+      item.tratamiento_id === null &&
+      item.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()
+    );
+    const nuevoEstado = !relacionados.some((item) => item.activo);
+    const { error } = await supabase.from("especialista_tratamientos")
+      .update({ activo: nuevoEstado, updated_at: new Date().toISOString() })
+      .in("id", relacionados.map((item) => item.id))
+      .eq("doctor_id", doctorPreciosId);
+    if (error) {
+      console.error("Error cambiando estado de tratamiento personalizado:", error);
+      alert(es ? "No se pudo cambiar el estado." : "Could not change status.");
+      return;
+    }
+    await registrarBitacora({
+      accion: "Cambiar estado de tratamiento personalizado",
+      modulo: "Doctores",
+      detalle: `Especialista ID: ${doctorPreciosId} | Tratamiento: ${precio.nombre_tratamiento} | Activo: ${nuevoEstado}`,
+    });
+    await cargarPreciosEspecialista(doctorPreciosId);
+  }
+
   function cancelarFormularioPrecio() {
 
+    setTratamientoPersonalizado(false);
+    setPrecioPersonalizadoEditandoId(null);
     setPrecioEditandoId(
       null
     );
@@ -923,9 +973,74 @@ async function cargarPreciosEspecialista(
 
 async function guardarPrecioEspecialista() {
 
-  if (
-    doctorPreciosId === null
-  ) {
+  if (doctorPreciosId === null || guardandoPrecio) return;
+
+  if (tratamientoPersonalizado) {
+    const nombre = formPrecio.nombre_tratamiento.trim();
+    const mxnTexto = formPrecio.costo_mxn.trim();
+    const usdTexto = formPrecio.costo_usd.trim();
+    const mxn = mxnTexto ? Number(mxnTexto) : 0;
+    const usd = usdTexto ? Number(usdTexto) : 0;
+    if (!nombre || !Number.isFinite(mxn) || !Number.isFinite(usd) ||
+        mxn < 0 || usd < 0 || (mxn === 0 && usd === 0)) {
+      alert(es ? "Escribe un nombre y al menos un costo válido." : "Enter a name and at least one valid cost.");
+      return;
+    }
+    const originales = precioPersonalizadoEditandoId === null ? [] :
+      preciosEspecialista.filter((item) => {
+        const original = preciosEspecialista.find((p) => p.id === precioPersonalizadoEditandoId);
+        return original && item.tratamiento_id === null &&
+          item.nombre_tratamiento.trim().toLocaleLowerCase() === original.nombre_tratamiento.trim().toLocaleLowerCase();
+      });
+    const otroDuplicado = preciosEspecialista.some((item) =>
+      item.tratamiento_id === null &&
+      !originales.some((original) => original.id === item.id) &&
+      item.nombre_tratamiento.trim().toLocaleLowerCase() === nombre.toLocaleLowerCase()
+    );
+    if (otroDuplicado) {
+      alert(es ? "Este tratamiento personalizado ya existe para el especialista." : "This custom treatment already exists for this specialist.");
+      return;
+    }
+    setGuardandoPrecio(true);
+    try {
+      // Guardar ambas monedas de forma independiente, sin tocar el catálogo clínico.
+      for (const [moneda, costo] of [["MXN", mxn], ["USD", usd]] as const) {
+        const existente = originales.find((item) => item.moneda === moneda);
+        if (costo > 0) {
+          const datos = {
+            doctor_id: doctorPreciosId,
+            tratamiento_id: null,
+            nombre_tratamiento: nombre,
+            moneda,
+            costo,
+            activo: existente?.activo ?? true,
+            updated_at: new Date().toISOString(),
+          };
+          const { error } = existente
+            ? await supabase.from("especialista_tratamientos").update(datos).eq("id", existente.id).eq("doctor_id", doctorPreciosId)
+            : await supabase.from("especialista_tratamientos").insert([datos]);
+          if (error) throw error;
+        } else if (existente) {
+          // Desactivar la moneda retirada; conservar su registro histórico.
+          const { error } = await supabase.from("especialista_tratamientos")
+            .update({ activo: false, updated_at: new Date().toISOString() })
+            .eq("id", existente.id).eq("doctor_id", doctorPreciosId);
+          if (error) throw error;
+        }
+      }
+      await registrarBitacora({
+        accion: precioPersonalizadoEditandoId === null ? "Agregar tratamiento personalizado de especialista" : "Editar tratamiento personalizado de especialista",
+        modulo: "Doctores",
+        detalle: `Especialista ID: ${doctorPreciosId} | Tratamiento: ${nombre} | Costo MXN: ${mxn} | Costo USD: ${usd}`,
+      });
+      await cargarPreciosEspecialista(doctorPreciosId);
+      cancelarFormularioPrecio();
+    } catch (error) {
+      console.error("Error guardando tratamiento personalizado:", error);
+      alert(es ? "No se pudo guardar el tratamiento personalizado." : "Could not save custom treatment.");
+    } finally {
+      setGuardandoPrecio(false);
+    }
     return;
   }
 
@@ -2769,7 +2884,7 @@ async function guardarPrecioEspecialista() {
                                               {es ? "Tratamiento" : "Treatment"}
                                             </label>
 
-                                            <select
+                                            {!tratamientoPersonalizado ? <select
                                               value={
                                                 formPrecio.tratamiento_id
                                               }
@@ -2863,7 +2978,28 @@ async function guardarPrecioEspecialista() {
                                                   )
                                               }
 
-                                            </select>
+                                            </select> : <input
+                                              type="text"
+                                              className="mint-input w-full px-3 py-2.5"
+                                              value={formPrecio.nombre_tratamiento}
+                                              disabled={precioPersonalizadoEditandoId !== null}
+                                              onChange={(e) => setFormPrecio({ ...formPrecio, nombre_tratamiento: e.target.value })}
+                                              placeholder={es ? "Nombre del tratamiento" : "Treatment name"}
+                                              maxLength={150}
+                                            />}
+                                            <label className="mt-3 flex items-center gap-2 text-sm font-semibold mint-text-secondary">
+                                              <input
+                                                type="checkbox"
+                                                checked={tratamientoPersonalizado}
+                                                disabled={precioEditandoId !== null || precioPersonalizadoEditandoId !== null}
+                                                onChange={(e) => {
+                                                  setTratamientoPersonalizado(e.target.checked);
+                                                  setFormPrecio(formularioPrecioInicial);
+                                                }}
+                                                className="h-4 w-4 accent-[var(--mint-primary)]"
+                                              />
+                                              {es ? "Tratamiento personalizado" : "Custom treatment"}
+                                            </label>
 
                                           </div>
 
@@ -3321,6 +3457,47 @@ async function guardarPrecioEspecialista() {
                                     }
 
                                   </div>
+
+                                  {preciosEspecialista.some((precio) => precio.tratamiento_id === null) && (
+                                    <div className="border-t border-[var(--mint-border-teal)] px-5 pb-5">
+                                      <h4 className="py-4 text-sm font-bold mint-text-primary">
+                                        {es ? "Tratamientos personalizados" : "Custom treatments"}
+                                      </h4>
+                                      <div className="overflow-x-auto">
+                                        <table className="w-full text-sm">
+                                          <thead><tr className="mint-text-secondary">
+                                            <th className="py-3 text-left">{es ? "Tratamiento" : "Treatment"}</th>
+                                            <th className="px-4 py-3 text-right">MXN</th>
+                                            <th className="px-4 py-3 text-right">USD</th>
+                                            <th className="px-4 py-3 text-center">{es ? "Estado" : "Status"}</th>
+                                            <th className="py-3 text-right">{es ? "Acción" : "Action"}</th>
+                                          </tr></thead>
+                                          <tbody>
+                                            {preciosEspecialista.filter((precio, indice, todos) =>
+                                              precio.tratamiento_id === null &&
+                                              todos.findIndex((otro) => otro.tratamiento_id === null &&
+                                                otro.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()) === indice
+                                            ).map((precio) => {
+                                              const relacionados = preciosEspecialista.filter((item) =>
+                                                item.tratamiento_id === null &&
+                                                item.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()
+                                              );
+                                              const mxn = relacionados.find((item) => item.moneda === "MXN" && item.activo);
+                                              const usd = relacionados.find((item) => item.moneda === "USD" && item.activo);
+                                              const activo = relacionados.some((item) => item.activo);
+                                              return <tr key={precio.id} className="border-t border-[var(--mint-border)]">
+                                                <td className="py-4 pr-4 font-semibold mint-text-primary">{precio.nombre_tratamiento}</td>
+                                                <td className="px-4 py-4 text-right font-bold mint-text-primary">{mxn ? `$${Number(mxn.costo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</td>
+                                                <td className="px-4 py-4 text-right font-bold mint-text-primary">{usd ? `$${Number(usd.costo).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</td>
+                                                <td className="px-4 py-4 text-center"><button type="button" onClick={() => cambiarEstadoPrecioPersonalizado(precio)} className={`mint-badge cursor-pointer ${activo ? "mint-badge-success" : "mint-badge-muted"}`}>{activo ? (es ? "Activo" : "Active") : (es ? "Inactivo" : "Inactive")}</button></td>
+                                                <td className="py-4 text-right"><button type="button" onClick={() => editarPrecioPersonalizado(precio)} className="mint-btn mint-btn-action-soft inline-flex items-center gap-2 px-3 py-2 text-sm"><Pencil size={15}/>{es ? "Editar" : "Edit"}</button></td>
+                                              </tr>;
+                                            })}
+                                          </tbody>
+                                        </table>
+                                      </div>
+                                    </div>
+                                  )}
 
                                 </div>
 
