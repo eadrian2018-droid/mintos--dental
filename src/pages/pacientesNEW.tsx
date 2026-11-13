@@ -346,6 +346,8 @@ const [nuevoTratamiento,
 
   especialista_id: "",
 
+  especialista_tratamiento_id: null as number | null,
+
   especialista_nombre: "",
 
   moneda_especialista: "MXN" as "MXN" | "USD",
@@ -516,10 +518,7 @@ useEffect(() => {
         "activo",
         true
       )
-      .order(
-        "nombre_tratamiento",
-        { ascending: true }
-      );
+      .order("id", { ascending: true });
 
     if (!activo) {
       return;
@@ -2240,12 +2239,9 @@ async function guardarTratamiento() {
 
   }
 
-const tratamientoCatalogoSeleccionado =
-  catalogoTratamientos.find(
-    (tratamiento: any) =>
-      tratamiento.nombre ===
-      nuevoTratamiento.tratamiento
-  );
+const tratamientoCatalogoSeleccionado = catalogoTratamientos.find(
+  (tratamiento: any) => tratamiento.nombre === nuevoTratamiento.tratamiento
+);
 
 const monedaPrecioTratamiento =
   nuevoTratamiento.moneda_precio ||
@@ -2285,6 +2281,34 @@ if (
     ? "Este tratamiento ya tiene movimientos financieros. No cambies su tratamiento o moneda desde Editar; conserva los cobros y descuentos existentes."
     : "This treatment already has financial transactions. Do not change its treatment or currency here; preserve existing payments and discounts.");
   return;
+}
+
+// FIN-02: nunca permitir que una edición con actividad financiera
+// cambie la tarifa, costo o especialista asociados.
+if (tieneActividadFinanciera && (
+  Number(nuevoTratamiento.especialista_tratamiento_id || 0) !==
+    Number(tratamientoExistenteEdicion?.especialista_tratamiento_id || 0) ||
+  Number(nuevoTratamiento.especialista || 0) !== Number(tratamientoExistenteEdicion?.especialista || 0) ||
+  String(nuevoTratamiento.especialista_id || "") !== String(tratamientoExistenteEdicion?.especialista_id || "") ||
+  String(nuevoTratamiento.moneda_especialista || "MXN") !== String(tratamientoExistenteEdicion?.moneda_especialista || "MXN") ||
+  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion?.laboratorio || 0)
+)) {
+  alert(es ? "No se pueden cambiar los costos ni la tarifa después de registrar movimientos financieros."
+           : "Costs and specialist fees cannot be changed after financial transactions are recorded.");
+  return;
+}
+
+// El tarifario anterior deja de intervenir en los nuevos tratamientos.
+// Los honorarios son un importe propio del tratamiento del paciente.
+if (!tratamientoCatalogoSeleccionado && editandoIndex === null) {
+  alert(es ? "Selecciona un tratamiento del catálogo." : "Select a catalog treatment.");
+  return;
+}
+if (doctorSeleccionado?.tipo_doctor === "especialista") {
+  if (!Number.isFinite(Number(nuevoTratamiento.especialista)) || Number(nuevoTratamiento.especialista) < 0) {
+    alert(es ? "Ingresa honorarios válidos." : "Enter a valid specialist fee.");
+    return;
+  }
 }
 
 const totalOriginalTratamiento =
@@ -2472,6 +2496,8 @@ especialista: Number(nuevo.especialista || 0),
 
 especialista_id: nuevo.especialista_id ? Number(nuevo.especialista_id) : null,
 
+especialista_tratamiento_id: nuevo.especialista_tratamiento_id ?? null,
+
 especialista_nombre: nuevo.especialista_nombre || null,
 
 moneda_especialista: nuevo.moneda_especialista || "MXN",
@@ -2572,6 +2598,8 @@ especialista:
   ),
 
 especialista_id: nuevo.especialista_id ? Number(nuevo.especialista_id) : null,
+
+especialista_tratamiento_id: nuevo.especialista_tratamiento_id ?? null,
 
 especialista_nombre: nuevo.especialista_nombre || null,
 
@@ -2691,6 +2719,11 @@ notas:
       data.especialista ||
       0,
 
+    especialista_id: data.especialista_id ?? null,
+    especialista_tratamiento_id: data.especialista_tratamiento_id ?? null,
+    especialista_nombre: data.especialista_nombre ?? null,
+    moneda_especialista: data.moneda_especialista || "MXN",
+
     comision_banco:
       data.comision_banco ||
       0,
@@ -2798,6 +2831,8 @@ setNuevoTratamiento({
   especialista: "",
 
   especialista_id: "",
+
+  especialista_tratamiento_id: null as number | null,
 
   especialista_nombre: "",
 

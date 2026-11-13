@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
 type NuevoCobro = {
   metodo_pago: string;
@@ -66,6 +66,63 @@ export default function ModalCobroPaciente({
   registrarCobro,
   saldoMonetarioMXN,
 }: Props) {
+  // Mantener el monto que el usuario ingresó (o el saldo inicial) como referencia.
+  // Las conversiones siempre parten de este valor, nunca del monto ya redondeado.
+  const montoReferenciaCobroRef = useRef<{ moneda: "MXN" | "USD"; monto: string } | null>(null);
+
+  useEffect(() => {
+    if (!mostrarModalCobro) {
+      montoReferenciaCobroRef.current = null;
+    }
+  }, [mostrarModalCobro]);
+
+  function cambiarMonedaCobro(nuevaMoneda: string) {
+    if (nuevaMoneda === nuevoCobro.moneda) return;
+    if (nuevaMoneda !== "MXN" && nuevaMoneda !== "USD") return;
+    if (nuevoCobro.moneda !== "MXN" && nuevoCobro.moneda !== "USD") return;
+
+    if (!Number.isFinite(tipoCambioCobro) || tipoCambioCobro <= 0) {
+      window.alert(
+        es
+          ? "Configura un tipo de cambio válido antes de cambiar la moneda."
+          : "Set a valid exchange rate before changing currency."
+      );
+      return;
+    }
+
+    const referencia = montoReferenciaCobroRef.current ?? {
+      moneda: nuevoCobro.moneda,
+      monto: nuevoCobro.monto,
+    };
+    const montoReferencia = Number(referencia.monto);
+
+    if (
+      referencia.monto.trim() !== "" &&
+      (!Number.isFinite(montoReferencia) || montoReferencia < 0)
+    ) {
+      window.alert(
+        es ? "Ingresa un monto válido." : "Enter a valid amount."
+      );
+      return;
+    }
+
+    const montoConvertido = referencia.monto.trim() === ""
+      ? ""
+      : referencia.moneda === nuevaMoneda
+        ? referencia.monto
+        : (referencia.moneda === "MXN"
+            ? montoReferencia / tipoCambioCobro
+            : montoReferencia * tipoCambioCobro
+          ).toFixed(2);
+
+    montoReferenciaCobroRef.current = referencia;
+    setNuevoCobro((actual) => ({
+      ...actual,
+      moneda: nuevaMoneda,
+      monto: montoConvertido,
+    }));
+  }
+
   return (
     <>
 {
@@ -202,30 +259,7 @@ export default function ModalCobroPaciente({
               value={
                 nuevoCobro.moneda
               }
-              onChange={(e) => {
-
-  const nuevaMoneda =
-    e.target.value;
-
-  // Convertir el monto actualmente ingresado, no restablecerlo al saldo total.
-  const montoActual = Number(nuevoCobro.monto || 0);
-  const montoConvertido = nuevaMoneda === nuevoCobro.moneda
-    ? montoActual
-    : nuevaMoneda === "USD"
-      ? (tipoCambioCobro > 0 ? montoActual / tipoCambioCobro : 0)
-      : montoActual * tipoCambioCobro;
-
-  setNuevoCobro({
-    ...nuevoCobro,
-
-    moneda:
-      nuevaMoneda,
-
-    monto:
-      montoConvertido.toFixed(2),
-  });
-
-}}
+              onChange={(e) => cambiarMonedaCobro(e.target.value)}
               className="
                 mint-input
                 w-full
@@ -320,13 +354,21 @@ export default function ModalCobroPaciente({
               value={
                 nuevoCobro.monto
               }
-              onChange={(e) =>
-                setNuevoCobro({
-                  ...nuevoCobro,
-                  monto:
-                    e.target.value,
-                })
-              }
+              onChange={(e) => {
+                // Si el usuario edita el monto, esa cantidad pasa a ser
+                // la nueva referencia para conversiones posteriores.
+                const montoIngresado = e.target.value;
+                if (nuevoCobro.moneda === "MXN" || nuevoCobro.moneda === "USD") {
+                  montoReferenciaCobroRef.current = {
+                    moneda: nuevoCobro.moneda,
+                    monto: montoIngresado,
+                  };
+                }
+                setNuevoCobro((actual) => ({
+                  ...actual,
+                  monto: montoIngresado,
+                }));
+              }}
               className="
                 mint-input
                 w-full

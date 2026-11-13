@@ -47,7 +47,12 @@ type ComisionesProps = {
 
 type Vista = "doctores" | "especialistas";
 
-type FormaPagoEspecialista = "MXN" | "USD" | "Transferencia";
+type FormaPagoEspecialista = "Efectivo" | "Transferencia";
+type MonedaPagoEspecialista = "MXN" | "USD";
+
+// Los honorarios se liquidan completos y se redondean a centavos.
+const redondearImporte = (importe: number) =>
+  Math.round((importe + Number.EPSILON) * 100) / 100;
 
 type FormaPagoDoctor = "MXN" | "USD" | "Transferencia";
 
@@ -124,14 +129,50 @@ export default function Comisiones({
   const [
     formaPagoEspecialista,
     setFormaPagoEspecialista,
-  ] = useState<FormaPagoEspecialista>(
-    "MXN"
-  );
+  ] = useState<FormaPagoEspecialista>("Efectivo");
 
-  const [
-    montoPagoEspecialista,
-    setMontoPagoEspecialista,
-  ] = useState("");
+  const [monedaPagoEspecialista, setMonedaPagoEspecialista] =
+    useState<MonedaPagoEspecialista>("MXN");
+  const [tipoCambioEspecialista, setTipoCambioEspecialista] = useState<number | null>(null);
+  const [cargandoTipoCambioEspecialista, setCargandoTipoCambioEspecialista] = useState(false);
+
+  // Leer el tipo de cambio vigente al abrir el pago; nunca tomar el tipo de
+  // cambio de un tratamiento antiguo como si fuera la tasa actual.
+  useEffect(() => {
+    if (!tratamientoPago) return;
+    let activo = true;
+    setTipoCambioEspecialista(null);
+    setCargandoTipoCambioEspecialista(true);
+    void (async () => {
+      const { data, error } = await supabase
+        .from("configuracion_finanzas")
+        .select("valor")
+        .eq("clave", "tipo_cambio")
+        .maybeSingle();
+      if (!activo) return;
+      const tasa = Number(data?.valor);
+      setTipoCambioEspecialista(!error && data && Number.isFinite(tasa) && tasa > 0 ? tasa : null);
+      setCargandoTipoCambioEspecialista(false);
+    })();
+    return () => { activo = false; };
+  }, [tratamientoPago]);
+
+  const monedaHonorariosEspecialista: MonedaPagoEspecialista =
+    tratamientoPago?.moneda_especialista === "USD" ? "USD" : "MXN";
+  const requiereConversionEspecialista =
+    monedaPagoEspecialista !== monedaHonorariosEspecialista;
+
+  const importePagoEspecialista = useMemo(() => {
+    if (!tratamientoPago) return null;
+    const honorarios = Number(tratamientoPago.especialista);
+    if (!Number.isFinite(honorarios) || honorarios <= 0) return null;
+    if (!requiereConversionEspecialista) return redondearImporte(honorarios);
+    if (!tipoCambioEspecialista || !Number.isFinite(tipoCambioEspecialista)) return null;
+    const convertido = monedaHonorariosEspecialista === "MXN"
+      ? honorarios / tipoCambioEspecialista
+      : honorarios * tipoCambioEspecialista;
+    return Number.isFinite(convertido) ? redondearImporte(convertido) : null;
+  }, [tratamientoPago, requiereConversionEspecialista, tipoCambioEspecialista, monedaHonorariosEspecialista]);
 
   const [
     doctorPago,
@@ -244,9 +285,7 @@ export default function Comisiones({
   useEffect(() => {
     if (formaPagoDoctor === "MXN" && !mostrarMXN) setFormaPagoDoctor("USD");
     if (formaPagoDoctor === "USD" && !mostrarUSD) setFormaPagoDoctor("MXN");
-    if (formaPagoEspecialista === "MXN" && !mostrarMXN) setFormaPagoEspecialista("USD");
-    if (formaPagoEspecialista === "USD" && !mostrarUSD) setFormaPagoEspecialista("MXN");
-  }, [mostrarMXN, mostrarUSD, formaPagoDoctor, formaPagoEspecialista]);
+  }, [mostrarMXN, mostrarUSD, formaPagoDoctor]);
 
 
   const formatoMonto =
@@ -534,19 +573,23 @@ export default function Comisiones({
                   true
                 ) {
 
-                  if (moneda === "USD") {
-                    pagadoUSD += costo;
-                  }
-                  else {
-                    pagadoMXN += costo;
+                  // Los pagos se contabilizan en la moneda e importe
+                  // realmente entregados, no en la moneda del costo original.
+                  const montoPagado = Number(tratamiento.especialista_pago_monto || 0);
+                  if (tratamiento.especialista_pago_moneda === "USD") {
+                    pagadoUSD += montoPagado;
+                  } else if (tratamiento.especialista_pago_moneda === "MXN") {
+                    pagadoMXN += montoPagado;
                   }
 
                   return;
                 }
 
                 if (
-                  tratamiento.estado !==
-                  "Finalizado"
+                  tratamiento.estado !== "Finalizado" ||
+                  tratamiento.resta_original == null ||
+                  Number(tratamiento.resta_original) !== 0 ||
+                  tratamiento.pendiente !== false
                 ) {
                   return;
                 }
@@ -696,36 +739,55 @@ export default function Comisiones({
   async function registrarPagoEspecialista() {
     if (!esAdmin || !tratamientoPago?.id || guardando || pagoEspecialistaEnCursoRef.current) return;
 
-    if (tratamientoPago.especialista_pagado === true || tratamientoPago.estado !== "Finalizado") {
+    if (
+      tratamientoPago.especialista_pagado === true ||
+      tratamientoPago.estado !== "Finalizado" ||
+      tratamientoPago.resta_original == null ||
+      Number(tratamientoPago.resta_original) !== 0 ||
+      tratamientoPago.pendiente !== false
+    ) {
       alert(tr(
-        "El tratamiento ya fue pagado o todavía no está finalizado. Actualiza la vista antes de continuar.",
-        "The treatment has already been paid or is not completed. Refresh the view before continuing."
+        "El tratamiento debe estar finalizado y completamente liquidado. Actualiza la vista antes de continuar.",
+        "The treatment must be completed and fully paid. Refresh the view before continuing."
       ));
       return;
     }
 
-    const monto = Number(montoPagoEspecialista);
-    if (!Number.isFinite(monto) || monto <= 0) {
-      alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
+    const monto = importePagoEspecialista;
+    if (monto === null || !Number.isFinite(monto) || monto <= 0) {
+      alert(tr("No se pudo calcular un importe válido.", "Could not calculate a valid amount."));
       return;
     }
 
-    const monedaPago =
-      formaPagoEspecialista === "USD" ||
-      (formaPagoEspecialista === "Transferencia" && !mostrarMXN)
-        ? "USD"
-        : "MXN";
-
-    const metodoPago =
-      formaPagoEspecialista === "Transferencia"
-        ? "Transferencia"
-        : "Efectivo";
-
+    const monedaPago = monedaPagoEspecialista;
+    const metodoPago = formaPagoEspecialista;
     const tratamiento = tratamientoPago;
     pagoEspecialistaEnCursoRef.current = true;
     setGuardando(true);
 
     try {
+      // Evitar liquidar con una cotización que haya cambiado desde que
+      // se abrió el modal. El trigger FIN-02G vuelve a verificarla.
+      if (requiereConversionEspecialista) {
+        const { data: configuracion, error: errorCambio } = await supabase
+          .from("configuracion_finanzas")
+          .select("valor")
+          .eq("clave", "tipo_cambio")
+          .single();
+        if (errorCambio) throw errorCambio;
+        const cambioVigente = Number(configuracion?.valor);
+        if (!Number.isFinite(cambioVigente) || cambioVigente <= 0) {
+          throw new Error(tr("Tipo de cambio no disponible.", "Exchange rate unavailable."));
+        }
+        if (cambioVigente !== tipoCambioEspecialista) {
+          setTipoCambioEspecialista(cambioVigente);
+          throw new Error(tr(
+            "El tipo de cambio cambió. Revisa el nuevo importe y confirma nuevamente.",
+            "The exchange rate changed. Review the updated amount and confirm again."
+          ));
+        }
+      }
+
       const { data, error } = await supabase
         .from("tratamientos")
         .update({
@@ -734,9 +796,12 @@ export default function Comisiones({
           especialista_metodo_pago: metodoPago,
           especialista_pago_moneda: monedaPago,
           especialista_pago_monto: monto,
+          especialista_pago_tipo_cambio: requiereConversionEspecialista ? tipoCambioEspecialista : null,
         })
         .eq("id", tratamiento.id)
         .eq("estado", "Finalizado")
+        .eq("resta_original", 0)
+        .eq("pendiente", false)
         .or("especialista_pagado.is.false,especialista_pagado.is.null")
         .select("id")
         .maybeSingle();
@@ -745,8 +810,8 @@ export default function Comisiones({
 
       if (!data) {
         throw new Error(tr(
-          "No se confirmó ningún pago. Es posible que otro usuario ya lo registrara o que no tengas permisos. Actualiza la vista y verifica el estado antes de reintentar.",
-          "No payment was confirmed. Another user may have recorded it, or you may lack permission. Refresh and verify the status before retrying."
+          "No se confirmó ningún pago. Otro usuario pudo haberlo registrado o el tratamiento cambió. Actualiza la vista antes de reintentar.",
+          "No payment was confirmed. Another user may have recorded it or the treatment changed. Refresh before retrying."
         ));
       }
 
@@ -755,32 +820,20 @@ export default function Comisiones({
           accion: "Pagar especialista",
           modulo: "Comisiones",
           detalle:
-            `Tratamiento ID: ${tratamiento.id} | Especialista ID: ${tratamiento.especialista_id || "-"} | Especialista: ${tratamiento.especialista_nombre || "-"} | Tratamiento: ${tratamiento.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago}`,
+            `Tratamiento ID: ${tratamiento.id} | Especialista ID: ${tratamiento.especialista_id || "-"} | Especialista: ${tratamiento.especialista_nombre || "-"} | Tratamiento: ${tratamiento.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago} | Tipo de cambio: ${requiereConversionEspecialista ? tipoCambioEspecialista : "No aplica"}`,
         });
       } catch (errorBitacora) {
-        console.error(
-          "Pago confirmado; no se pudo registrar la bitácora:",
-          errorBitacora
-        );
+        console.error("Pago confirmado; no se pudo registrar la bitácora:", errorBitacora);
       }
 
       setTratamientoPago(null);
-      setMontoPagoEspecialista("");
       window.location.reload();
-
     } catch (error) {
-      console.error(
-        "No se pudo confirmar el pago al especialista:",
-        error
-      );
-
-      alert(
-        tr(
-          "No se pudo confirmar el pago al especialista. Verifica su estado antes de reintentar. ",
-          "Could not confirm the specialist payment. Verify its status before retrying. "
-        ) + (error instanceof Error ? error.message : String(error))
-      );
-
+      console.error("No se pudo confirmar el pago al especialista:", error);
+      alert(tr(
+        "No se pudo confirmar el pago al especialista. Verifica su estado antes de reintentar. ",
+        "Could not confirm the specialist payment. Verify its status before retrying. "
+      ) + (error instanceof Error ? error.message : String(error)));
     } finally {
       pagoEspecialistaEnCursoRef.current = false;
       setGuardando(false);
@@ -1438,6 +1491,10 @@ export default function Comisiones({
                                         const finalizado =
                                           tratamiento.estado ===
                                           "Finalizado";
+                                        const liquidado =
+                                          tratamiento.resta_original != null &&
+                                          Number(tratamiento.resta_original) === 0 &&
+                                          tratamiento.pendiente === false;
 
                                         return (
 
@@ -1534,11 +1591,18 @@ export default function Comisiones({
                                                         {tr("Pagado", "Paid")}
                                                       </span>
 
-                                                      <p className="text-[10px] mint-text-muted mt-1">
-                                                        {
-                                                          traducirMetodo(tratamiento.especialista_metodo_pago || "—")
-                                                        }
+                                                       <p className="text-[10px] mint-text-muted mt-1">
+                                                        {traducirMetodo(tratamiento.especialista_metodo_pago || "—")}
                                                       </p>
+                                                      <p className="text-xs font-semibold mint-text-primary mt-1">
+                                                        ${formatoMonto(Number(tratamiento.especialista_pago_monto || 0))}
+                                                        {" "}{tratamiento.especialista_pago_moneda || "—"}
+                                                      </p>
+                                                      {tratamiento.especialista_pago_tipo_cambio != null && (
+                                                        <p className="text-[10px] mint-text-muted mt-1">
+                                                          {tr("Tipo de cambio", "Exchange rate")}: {Number(tratamiento.especialista_pago_tipo_cambio).toFixed(4)}
+                                                        </p>
+                                                      )}
                                                     </div>
 
                                                   )
@@ -1567,9 +1631,7 @@ export default function Comisiones({
                                                           ? new Date(
                                                               tratamiento.especialista_fecha_pago
                                                             )
-                                                              .toLocaleDateString(
-                                                                locale
-                                                              )
+                                                              .toLocaleDateString(locale)
                                                           : tr("Registrado", "Recorded")
                                                       }
                                                     </span>
@@ -1577,6 +1639,7 @@ export default function Comisiones({
                                                   )
 
                                                   : finalizado &&
+                                                    liquidado &&
                                                     esAdmin
 
                                                     ? (
@@ -1585,25 +1648,11 @@ export default function Comisiones({
                                                         type="button"
                                                         onClick={() => {
 
-                                                          setFormaPagoEspecialista(
-                                                            tratamiento.moneda_especialista ===
-                                                            "USD"
-                                                              ? "USD"
-                                                              : "MXN"
+                                                          setFormaPagoEspecialista("Efectivo");
+                                                          setMonedaPagoEspecialista(
+                                                            tratamiento.moneda_especialista === "USD" ? "USD" : "MXN"
                                                           );
-
-                                                          setMontoPagoEspecialista(
-                                                            String(
-                                                              Number(
-                                                                tratamiento.especialista ||
-                                                                0
-                                                              )
-                                                            )
-                                                          );
-
-                                                          setTratamientoPago(
-                                                            tratamiento
-                                                          );
+                                                          setTratamientoPago(tratamiento);
 
                                                         }}
                                                         className="
@@ -1620,7 +1669,9 @@ export default function Comisiones({
                                                     : (
 
                                                       <span className="text-xs mint-text-muted">
-                                                        {tr("Al finalizar", "When completed")}
+                                                        {finalizado
+                                                          ? tr("Saldo pendiente", "Balance pending")
+                                                          : tr("Al finalizar", "When completed")}
                                                       </span>
 
                                                     )
@@ -2050,63 +2101,62 @@ export default function Comisiones({
                 }
               </p>
 
-              <div className="mt-6">
-
-                <label className="mint-label">
-                  {tr("Forma de pago", "Payment method")}
-                </label>
-
-                <select
-                  value={
-                    formaPagoEspecialista
-                  }
-                  onChange={(
-                    e
-                  ) => {
-
-                    setFormaPagoEspecialista(
-                      e.target.value as FormaPagoEspecialista
-                    );
-
-                  }}
-                  className="mint-input"
-                >
-                  {monedasActivas.map(moneda => (
-                    <option key={moneda} value={moneda}>
-                      {tr("Efectivo", "Cash")} {moneda}
-                    </option>
-                  ))}
-
-                  <option value="Transferencia">
-                    {tr("Transferencia", "Transfer")}
-                  </option>
-                </select>
-
+              <div className="mt-5 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-4">
+                <p className="text-xs mint-text-muted">{tr("Honorarios acordados", "Agreed specialist fee")}</p>
+                <p className="mt-1 text-lg font-bold mint-text-primary">
+                  ${formatoMonto(Number(tratamientoPago.especialista || 0))} {monedaHonorariosEspecialista}
+                </p>
               </div>
 
+              <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mint-label">{tr("Método de pago", "Payment method")}</label>
+                  <select
+                    value={formaPagoEspecialista}
+                    onChange={(event) => setFormaPagoEspecialista(event.target.value as FormaPagoEspecialista)}
+                    className="mint-input"
+                  >
+                    <option value="Efectivo">{tr("Efectivo", "Cash")}</option>
+                    <option value="Transferencia">{tr("Transferencia", "Bank transfer")}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mint-label">{tr("Moneda de pago", "Payment currency")}</label>
+                  <select
+                    value={monedaPagoEspecialista}
+                    onChange={(event) => setMonedaPagoEspecialista(event.target.value as MonedaPagoEspecialista)}
+                    className="mint-input"
+                  >
+                    <option value="MXN">MXN</option>
+                    <option value="USD">USD</option>
+                  </select>
+                </div>
+              </div>
+
+              {requiereConversionEspecialista && (
+                <div className="mt-4 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-3 text-sm mint-text-secondary">
+                  {tr("Tipo de cambio vigente", "Current exchange rate")}: {cargandoTipoCambioEspecialista
+                    ? tr("Consultando...", "Loading...")
+                    : tipoCambioEspecialista
+                      ? `1 USD = ${tipoCambioEspecialista.toFixed(4)} MXN`
+                      : tr("No disponible. Revisa Configuración → Finanzas.", "Unavailable. Check Settings → Finance.")}
+                </div>
+              )}
+
               <div className="mt-4">
-
-                <label className="mint-label">
-                  {tr("Monto", "Amount")}
-                </label>
-
+                <label className="mint-label">{tr("Importe a liquidar", "Settlement amount")}</label>
                 <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={
-                    montoPagoEspecialista
-                  }
-                  onChange={(
-                    e
-                  ) =>
-                    setMontoPagoEspecialista(
-                      e.target.value
-                    )
-                  }
-                  className="mint-input"
+                  type="text"
+                  readOnly
+                  value={importePagoEspecialista === null
+                    ? tr("No disponible", "Unavailable")
+                    : `$${formatoMonto(importePagoEspecialista)} ${monedaPagoEspecialista}`}
+                  className="mint-input font-semibold"
                 />
-
+                <p className="mt-2 text-xs mint-text-muted">
+                  {tr("Los honorarios se pagan completos, sin abonos parciales.",
+                    "Specialist fees are paid in full, without partial installments.")}
+                </p>
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
@@ -2120,9 +2170,6 @@ export default function Comisiones({
                       null
                     );
 
-                    setMontoPagoEspecialista(
-                      ""
-                    );
 
                   }}
                   className="mint-btn mint-btn-secondary"
@@ -2132,7 +2179,7 @@ export default function Comisiones({
 
                 <button
                   type="button"
-                  disabled={guardando}
+                  disabled={guardando || importePagoEspecialista === null || importePagoEspecialista <= 0}
                   onClick={
                     registrarPagoEspecialista
                   }

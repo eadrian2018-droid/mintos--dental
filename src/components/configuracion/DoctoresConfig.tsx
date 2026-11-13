@@ -888,22 +888,12 @@ async function cargarPreciosEspecialista(
       tratamiento.id
     );
 
+    const registros = preciosEspecialista.filter((precio) => Number(precio.tratamiento_id) === tratamiento.id);
     setFormPrecio({
-      tratamiento_id:
-        String(tratamiento.id),
-
-      nombre_tratamiento:
-        tratamiento.nombre || "",
-
-      costo_mxn:
-        tratamiento.costo_especialista_mxn > 0
-          ? String(tratamiento.costo_especialista_mxn)
-          : "",
-
-      costo_usd:
-        tratamiento.costo_especialista_usd > 0
-          ? String(tratamiento.costo_especialista_usd)
-          : "",
+      tratamiento_id: String(tratamiento.id),
+      nombre_tratamiento: tratamiento.nombre,
+      costo_mxn: String(registros.find((precio) => precio.moneda === "MXN" && precio.activo)?.costo ?? ""),
+      costo_usd: String(registros.find((precio) => precio.moneda === "USD" && precio.activo)?.costo ?? ""),
     });
 
     setMostrarFormularioPrecio(
@@ -975,74 +965,6 @@ async function guardarPrecioEspecialista() {
 
   if (doctorPreciosId === null || guardandoPrecio) return;
 
-  if (tratamientoPersonalizado) {
-    const nombre = formPrecio.nombre_tratamiento.trim();
-    const mxnTexto = formPrecio.costo_mxn.trim();
-    const usdTexto = formPrecio.costo_usd.trim();
-    const mxn = mxnTexto ? Number(mxnTexto) : 0;
-    const usd = usdTexto ? Number(usdTexto) : 0;
-    if (!nombre || !Number.isFinite(mxn) || !Number.isFinite(usd) ||
-        mxn < 0 || usd < 0 || (mxn === 0 && usd === 0)) {
-      alert(es ? "Escribe un nombre y al menos un costo válido." : "Enter a name and at least one valid cost.");
-      return;
-    }
-    const originales = precioPersonalizadoEditandoId === null ? [] :
-      preciosEspecialista.filter((item) => {
-        const original = preciosEspecialista.find((p) => p.id === precioPersonalizadoEditandoId);
-        return original && item.tratamiento_id === null &&
-          item.nombre_tratamiento.trim().toLocaleLowerCase() === original.nombre_tratamiento.trim().toLocaleLowerCase();
-      });
-    const otroDuplicado = preciosEspecialista.some((item) =>
-      item.tratamiento_id === null &&
-      !originales.some((original) => original.id === item.id) &&
-      item.nombre_tratamiento.trim().toLocaleLowerCase() === nombre.toLocaleLowerCase()
-    );
-    if (otroDuplicado) {
-      alert(es ? "Este tratamiento personalizado ya existe para el especialista." : "This custom treatment already exists for this specialist.");
-      return;
-    }
-    setGuardandoPrecio(true);
-    try {
-      // Guardar ambas monedas de forma independiente, sin tocar el catálogo clínico.
-      for (const [moneda, costo] of [["MXN", mxn], ["USD", usd]] as const) {
-        const existente = originales.find((item) => item.moneda === moneda);
-        if (costo > 0) {
-          const datos = {
-            doctor_id: doctorPreciosId,
-            tratamiento_id: null,
-            nombre_tratamiento: nombre,
-            moneda,
-            costo,
-            activo: existente?.activo ?? true,
-            updated_at: new Date().toISOString(),
-          };
-          const { error } = existente
-            ? await supabase.from("especialista_tratamientos").update(datos).eq("id", existente.id).eq("doctor_id", doctorPreciosId)
-            : await supabase.from("especialista_tratamientos").insert([datos]);
-          if (error) throw error;
-        } else if (existente) {
-          // Desactivar la moneda retirada; conservar su registro histórico.
-          const { error } = await supabase.from("especialista_tratamientos")
-            .update({ activo: false, updated_at: new Date().toISOString() })
-            .eq("id", existente.id).eq("doctor_id", doctorPreciosId);
-          if (error) throw error;
-        }
-      }
-      await registrarBitacora({
-        accion: precioPersonalizadoEditandoId === null ? "Agregar tratamiento personalizado de especialista" : "Editar tratamiento personalizado de especialista",
-        modulo: "Doctores",
-        detalle: `Especialista ID: ${doctorPreciosId} | Tratamiento: ${nombre} | Costo MXN: ${mxn} | Costo USD: ${usd}`,
-      });
-      await cargarPreciosEspecialista(doctorPreciosId);
-      cancelarFormularioPrecio();
-    } catch (error) {
-      console.error("Error guardando tratamiento personalizado:", error);
-      alert(es ? "No se pudo guardar el tratamiento personalizado." : "Could not save custom treatment.");
-    } finally {
-      setGuardandoPrecio(false);
-    }
-    return;
-  }
 
   const tratamientoId =
     Number(
@@ -1114,47 +1036,36 @@ async function guardarPrecioEspecialista() {
     true
   );
 
-  const {
-    error,
-  } = await supabase
-
-    .from(
-      "catalogo_tratamientos"
-    )
-
-    .update({
-      doctor_id:
-        doctorPreciosId,
-      tipo:
-        "especialista",
-      costo_especialista_mxn:
-        costoMXN,
-      costo_especialista_usd:
-        costoUSD,
-    })
-
-    .eq(
-      "id",
-      tratamientoId
-    );
-
-  if (error) {
-
-    console.error(
-      "Error actualizando precio del especialista:",
-      error
-    );
-
-    alert(
-      es
-        ? "No se pudieron actualizar los costos del especialista."
-        : "The specialist costs could not be updated."
-    );
-
-    setGuardandoPrecio(
-      false
-    );
-
+  try {
+    for (const [moneda, costo] of [["MXN", costoMXN], ["USD", costoUSD]] as const) {
+      const existente = preciosEspecialista.find((precio) =>
+        Number(precio.tratamiento_id) === tratamientoId && precio.moneda === moneda
+      );
+      if (costo > 0) {
+        const datos = {
+          doctor_id: doctorPreciosId,
+          tratamiento_id: tratamientoId,
+          nombre_tratamiento: null,
+          costo,
+          moneda,
+          activo: true,
+          updated_at: new Date().toISOString(),
+        };
+        const { error } = existente
+          ? await supabase.from("especialista_tratamientos").update(datos).eq("id", existente.id).eq("doctor_id", doctorPreciosId)
+          : await supabase.from("especialista_tratamientos").insert(datos);
+        if (error) throw error;
+      } else if (existente) {
+        const { error } = await supabase.from("especialista_tratamientos")
+          .update({ activo: false, updated_at: new Date().toISOString() })
+          .eq("id", existente.id).eq("doctor_id", doctorPreciosId);
+        if (error) throw error;
+      }
+    }
+  } catch (error) {
+    console.error("Error guardando honorarios del especialista:", error);
+    alert(es ? "No se pudieron guardar los honorarios." : "Could not save specialist fees.");
+    setGuardandoPrecio(false);
     return;
   }
 
@@ -1174,8 +1085,6 @@ async function guardarPrecioEspecialista() {
     detalle:
       `Especialista ID: ${doctorPreciosId} | Especialista: ${especialista?.nombre || "-"} | Tratamiento ID: ${tratamientoId} | Tratamiento: ${tratamientoCatalogo.nombre} | Costo MXN: ${costoMXN} | Costo USD: ${costoUSD}`,
   });
-
-  await cargarCatalogoTratamientos();
 
   await cargarPreciosEspecialista(
     doctorPreciosId
@@ -1208,7 +1117,7 @@ async function guardarPrecioEspecialista() {
 
     const activoActual =
       registros.length === 0
-        ? true
+        ? false
         : registros.some(
             (precio) => precio.activo
           );
@@ -1275,6 +1184,11 @@ async function guardarPrecioEspecialista() {
 
   }
 
+  void tratamientoPersonalizado;
+  void precioPersonalizadoEditandoId;
+  void editarPrecioPersonalizado;
+  void cambiarEstadoPrecioPersonalizado;
+  void abrirNuevoPrecioEspecialista;
   return (
 
     <div
@@ -2780,30 +2694,7 @@ async function guardarPrecioEspecialista() {
 
                                     </div>
 
-                                    <button
-                                      type="button"
-                                      onClick={
-                                        abrirNuevoPrecioEspecialista
-                                      }
-                                      className="
-                                        mint-btn
-                                        mint-btn-primary
-                                        inline-flex
-                                        items-center
-                                        gap-2
-                                        px-4
-                                        py-2
-                                        text-sm
-                                      "
-                                    >
 
-                                      <Plus
-                                        size={16}
-                                      />
-
-                                      {es ? "Agregar tratamiento" : "Add treatment"}
-
-                                    </button>
 
                                   </div>
 
@@ -2811,13 +2702,20 @@ async function guardarPrecioEspecialista() {
                                     mostrarFormularioPrecio && (
 
                                       <div
-                                        className="
-                                          p-5
-                                          border-b
-                                          border-[var(--mint-border-teal)]
-                                          bg-[#f8fbfa]
-                                        "
+                                        role="presentation"
+                                        className="fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-[rgba(15,42,65,0.65)] p-4 backdrop-blur-[3px]"
+                                        onMouseDown={(event) => {
+                                          if (event.target === event.currentTarget && !guardandoPrecio) {
+                                            cancelarFormularioPrecio();
+                                          }
+                                        }}
                                       >
+                                        <div
+                                          role="dialog"
+                                          aria-modal="true"
+                                          aria-label={precioEditandoId !== null ? (es ? "Editar honorarios" : "Edit specialist fee") : (es ? "Configurar honorarios" : "Set specialist fee")}
+                                          className="my-auto w-full max-w-3xl rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] p-6 shadow-[0_28px_80px_rgba(15,42,65,0.35)]"
+                                        >
 
                                         <div
                                           className="
@@ -2884,122 +2782,26 @@ async function guardarPrecioEspecialista() {
                                               {es ? "Tratamiento" : "Treatment"}
                                             </label>
 
-                                            {!tratamientoPersonalizado ? <select
-                                              value={
-                                                formPrecio.tratamiento_id
-                                              }
+                                            <select
+                                              value={formPrecio.tratamiento_id}
                                               onChange={(e) => {
-
-                                                const tratamientoId =
-                                                  e.target.value;
-
-                                                const tratamiento =
-                                                  catalogoTratamientos.find(
-                                                    (item) =>
-                                                      item.id ===
-                                                      Number(
-                                                        tratamientoId
-                                                      )
-                                                  );
-
+                                                const tratamiento = catalogoTratamientos.find((item) => item.id === Number(e.target.value));
+                                                const registros = preciosEspecialista.filter((precio) => Number(precio.tratamiento_id) === tratamiento?.id);
                                                 setFormPrecio({
-                                                  ...formPrecio,
-                                                  tratamiento_id:
-                                                    tratamientoId,
-                                                  nombre_tratamiento:
-                                                    tratamiento?.nombre ||
-                                                    "",
-                                                  costo_mxn:
-                                                    tratamiento &&
-                                                    tratamiento.costo_especialista_mxn > 0
-                                                      ? String(tratamiento.costo_especialista_mxn)
-                                                      : "",
-                                                  costo_usd:
-                                                    tratamiento &&
-                                                    tratamiento.costo_especialista_usd > 0
-                                                      ? String(tratamiento.costo_especialista_usd)
-                                                      : "",
+                                                  tratamiento_id: e.target.value,
+                                                  nombre_tratamiento: tratamiento?.nombre || "",
+                                                  costo_mxn: String(registros.find((precio) => precio.moneda === "MXN" && precio.activo)?.costo ?? ""),
+                                                  costo_usd: String(registros.find((precio) => precio.moneda === "USD" && precio.activo)?.costo ?? ""),
                                                 });
-
                                               }}
-                                              disabled={
-                                                precioEditandoId !== null &&
-                                                !!formPrecio.tratamiento_id
-                                              }
-                                              className="
-                                                mint-input
-                                                w-full
-                                                px-3
-                                                py-2.5
-                                                disabled:opacity-70
-                                                disabled:cursor-not-allowed
-                                              "
-                                            >
-
-                                              <option value="">
-                                                {es
-                                                  ? "Seleccionar tratamiento"
-                                                  : "Select treatment"}
-                                              </option>
-
-                                              {
-                                                catalogoTratamientos
-                                                  .filter(
-                                                    (tratamiento) =>
-                                                      tratamiento.activo &&
-                                                      (
-                                                        tratamiento.doctor_id ===
-                                                          null ||
-                                                        tratamiento.doctor_id ===
-                                                          doctorPreciosId ||
-                                                        tratamiento.id ===
-                                                          Number(
-                                                            formPrecio.tratamiento_id
-                                                          )
-                                                      )
-                                                  )
-                                                  .map(
-                                                    (tratamiento) => (
-
-                                                      <option
-                                                        key={
-                                                          tratamiento.id
-                                                        }
-                                                        value={
-                                                          tratamiento.id
-                                                        }
-                                                      >
-                                                        {
-                                                          tratamiento.nombre
-                                                        }
-                                                      </option>
-
-                                                    )
-                                                  )
-                                              }
-
-                                            </select> : <input
-                                              type="text"
+                                              disabled={precioEditandoId !== null}
                                               className="mint-input w-full px-3 py-2.5"
-                                              value={formPrecio.nombre_tratamiento}
-                                              disabled={precioPersonalizadoEditandoId !== null}
-                                              onChange={(e) => setFormPrecio({ ...formPrecio, nombre_tratamiento: e.target.value })}
-                                              placeholder={es ? "Nombre del tratamiento" : "Treatment name"}
-                                              maxLength={150}
-                                            />}
-                                            <label className="mt-3 flex items-center gap-2 text-sm font-semibold mint-text-secondary">
-                                              <input
-                                                type="checkbox"
-                                                checked={tratamientoPersonalizado}
-                                                disabled={precioEditandoId !== null || precioPersonalizadoEditandoId !== null}
-                                                onChange={(e) => {
-                                                  setTratamientoPersonalizado(e.target.checked);
-                                                  setFormPrecio(formularioPrecioInicial);
-                                                }}
-                                                className="h-4 w-4 accent-[var(--mint-primary)]"
-                                              />
-                                              {es ? "Tratamiento personalizado" : "Custom treatment"}
-                                            </label>
+                                            >
+                                              <option value="">{es ? "Seleccionar tratamiento" : "Select treatment"}</option>
+                                              {catalogoTratamientos.map((tratamiento) => (
+                                                <option key={tratamiento.id} value={tratamiento.id}>{tratamiento.nombre}</option>
+                                              ))}
+                                            </select>
 
                                           </div>
 
@@ -3141,7 +2943,7 @@ async function guardarPrecioEspecialista() {
                                           </button>
 
                                         </div>
-
+                                        </div>
                                       </div>
 
                                     )
@@ -3155,15 +2957,7 @@ async function guardarPrecioEspecialista() {
                                   >
 
                                     {
-                                      catalogoTratamientos.filter(
-                                        (tratamiento) =>
-                                          tratamiento.doctor_id ===
-                                          doctor.id &&
-                                          (
-                                            tratamiento.costo_especialista_mxn > 0 ||
-                                            tratamiento.costo_especialista_usd > 0
-                                          )
-                                      ).length === 0
+                                      catalogoTratamientos.length === 0
                                         ? (
 
                                           <div
@@ -3268,15 +3062,6 @@ async function guardarPrecioEspecialista() {
 
                                                 {
                                                   catalogoTratamientos
-                                                    .filter(
-                                                      (tratamiento) =>
-                                                        tratamiento.doctor_id ===
-                                                        doctor.id &&
-                                                        (
-                                                          tratamiento.costo_especialista_mxn > 0 ||
-                                                          tratamiento.costo_especialista_usd > 0
-                                                        )
-                                                    )
                                                     .map(
                                                       (tratamiento) => {
 
@@ -3289,7 +3074,7 @@ async function guardarPrecioEspecialista() {
 
                                                         const activo =
                                                           registros.length === 0
-                                                            ? true
+                                                            ? false
                                                             : registros.some(
                                                                 (precio) => precio.activo
                                                               );
@@ -3329,9 +3114,9 @@ async function guardarPrecioEspecialista() {
                                                               "
                                                             >
                                                               {
-                                                                tratamiento.costo_especialista_mxn > 0
+                                                                registros.some((precio) => precio.moneda === "MXN" && precio.activo)
                                                                   ? `$${Number(
-                                                                      tratamiento.costo_especialista_mxn
+                                                                      registros.find((precio) => precio.moneda === "MXN" && precio.activo)?.costo ?? 0
                                                                     ).toLocaleString(
                                                                       "es-MX",
                                                                       {
@@ -3353,9 +3138,9 @@ async function guardarPrecioEspecialista() {
                                                               "
                                                             >
                                                               {
-                                                                tratamiento.costo_especialista_usd > 0
+                                                                registros.some((precio) => precio.moneda === "USD" && precio.activo)
                                                                   ? `$${Number(
-                                                                      tratamiento.costo_especialista_usd
+                                                                      registros.find((precio) => precio.moneda === "USD" && precio.activo)?.costo ?? 0
                                                                     ).toLocaleString(
                                                                       "en-US",
                                                                       {
@@ -3458,46 +3243,7 @@ async function guardarPrecioEspecialista() {
 
                                   </div>
 
-                                  {preciosEspecialista.some((precio) => precio.tratamiento_id === null) && (
-                                    <div className="border-t border-[var(--mint-border-teal)] px-5 pb-5">
-                                      <h4 className="py-4 text-sm font-bold mint-text-primary">
-                                        {es ? "Tratamientos personalizados" : "Custom treatments"}
-                                      </h4>
-                                      <div className="overflow-x-auto">
-                                        <table className="w-full text-sm">
-                                          <thead><tr className="mint-text-secondary">
-                                            <th className="py-3 text-left">{es ? "Tratamiento" : "Treatment"}</th>
-                                            <th className="px-4 py-3 text-right">MXN</th>
-                                            <th className="px-4 py-3 text-right">USD</th>
-                                            <th className="px-4 py-3 text-center">{es ? "Estado" : "Status"}</th>
-                                            <th className="py-3 text-right">{es ? "Acción" : "Action"}</th>
-                                          </tr></thead>
-                                          <tbody>
-                                            {preciosEspecialista.filter((precio, indice, todos) =>
-                                              precio.tratamiento_id === null &&
-                                              todos.findIndex((otro) => otro.tratamiento_id === null &&
-                                                otro.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()) === indice
-                                            ).map((precio) => {
-                                              const relacionados = preciosEspecialista.filter((item) =>
-                                                item.tratamiento_id === null &&
-                                                item.nombre_tratamiento.trim().toLocaleLowerCase() === precio.nombre_tratamiento.trim().toLocaleLowerCase()
-                                              );
-                                              const mxn = relacionados.find((item) => item.moneda === "MXN" && item.activo);
-                                              const usd = relacionados.find((item) => item.moneda === "USD" && item.activo);
-                                              const activo = relacionados.some((item) => item.activo);
-                                              return <tr key={precio.id} className="border-t border-[var(--mint-border)]">
-                                                <td className="py-4 pr-4 font-semibold mint-text-primary">{precio.nombre_tratamiento}</td>
-                                                <td className="px-4 py-4 text-right font-bold mint-text-primary">{mxn ? `$${Number(mxn.costo).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</td>
-                                                <td className="px-4 py-4 text-right font-bold mint-text-primary">{usd ? `$${Number(usd.costo).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "—"}</td>
-                                                <td className="px-4 py-4 text-center"><button type="button" onClick={() => cambiarEstadoPrecioPersonalizado(precio)} className={`mint-badge cursor-pointer ${activo ? "mint-badge-success" : "mint-badge-muted"}`}>{activo ? (es ? "Activo" : "Active") : (es ? "Inactivo" : "Inactive")}</button></td>
-                                                <td className="py-4 text-right"><button type="button" onClick={() => editarPrecioPersonalizado(precio)} className="mint-btn mint-btn-action-soft inline-flex items-center gap-2 px-3 py-2 text-sm"><Pencil size={15}/>{es ? "Editar" : "Edit"}</button></td>
-                                              </tr>;
-                                            })}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  )}
+
 
                                 </div>
 

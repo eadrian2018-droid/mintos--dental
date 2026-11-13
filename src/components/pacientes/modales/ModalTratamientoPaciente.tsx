@@ -1,3 +1,5 @@
+import { useEffect, useRef } from "react";
+
 import type {
   Dispatch,
   SetStateAction,
@@ -14,6 +16,7 @@ type NuevoTratamiento = {
   laboratorio: string;
   especialista: string;
   especialista_id: string;
+  especialista_tratamiento_id: number | null;
   especialista_nombre: string;
   moneda_especialista: "MXN" | "USD";
   comision_banco: string;
@@ -62,7 +65,37 @@ export default function ModalTratamientoPaciente({
   setMostrarModalTratamiento,
   setEditandoIndex,
   guardarTratamiento,
-}: Props) {
+ }: Props) {
+  const tarifaRequestRef = useRef(0);
+  const doctorId = doctorSeleccionado?.id;
+  const tratamientoId = catalogoTratamientos.find((item: any) => item.nombre === nuevoTratamiento.tratamiento)?.id;
+  useEffect(() => {
+    if (!mostrarModalTratamiento || editandoIndex !== null) return;
+    const solicitud = ++tarifaRequestRef.current;
+    const doctor = doctores.find((item: any) => String(item.id) === String(doctorId));
+    const esEspecialista = doctor?.tipo_doctor === "especialista" || doctor?.tipo_doctor === "ambos";
+    const tarifas = especialistasDisponibles.filter((tarifa: any) =>
+      String(tarifa.doctor_id) === String(doctorId) &&
+      String(tarifa.tratamiento_id) === String(tratamientoId) && tarifa.activo
+    );
+    // Las tarifas se cargan en el padre; una vez disponibles se aplica una sola vez
+    // por selección. Un cambio manual posterior no se sobreescribe.
+    if (!esEspecialista || !tratamientoId) return;
+    const tarifa = tarifas.find((item: any) => item.moneda === "MXN") || tarifas.find((item: any) => item.moneda === "USD");
+    if (!tarifa) return;
+    if (solicitud !== tarifaRequestRef.current) return;
+    setNuevoTratamiento((prev) => {
+      if (prev.especialista !== "") return prev;
+      return {
+        ...prev,
+        especialista: String(tarifa.costo),
+        moneda_especialista: tarifa.moneda as "MXN" | "USD",
+        especialista_id: String(doctorId),
+        especialista_nombre: String(doctor.nombre),
+        especialista_tratamiento_id: Number(tarifa.id),
+      };
+    });
+  }, [mostrarModalTratamiento, editandoIndex, doctorId, tratamientoId, doctores, especialistasDisponibles, setNuevoTratamiento]);
   return (
     <>
       {mostrarModalTratamiento && (
@@ -160,181 +193,67 @@ export default function ModalTratamientoPaciente({
                 />
               </div>
 
-              {/* DOCTOR */}
-
+              {/* DOCTOR: un único responsable por tratamiento. */}
               <div>
-                <label
-                  className="
-                    block
-                    text-sm
-                    font-semibold
-                    mint-text-primary
-                    mb-2
-                  "
-                >
+                <label className="mb-2 block text-sm font-semibold mint-text-primary">
                   {es ? "Doctor" : "Doctor"}
                 </label>
-
                 <select
-                  value={
-                    doctorSeleccionado?.id
-                      ? String(
-                          doctorSeleccionado.id
-                        )
-                      : ""
-                  }
+                  className="mint-input w-full p-3"
+                  value={doctorSeleccionado?.id != null ? String(doctorSeleccionado.id) : ""}
                   onChange={(e) => {
-                    const doctor =
-                      doctores.find(
-                        (d: any) =>
-                          String(d.id) ===
-                          e.target.value
-                      );
-
-                    setDoctorSeleccionado(
-                      doctor || null
-                    );
-
-                    setNuevoTratamiento({
-                      ...nuevoTratamiento,
-                      doctor:
-                        doctor?.nombre || "",
-                    });
+                    const doctor = doctores.find((item: any) => String(item.id) === e.target.value);
+                    const esEspecialista = doctor?.tipo_doctor === "especialista" || doctor?.tipo_doctor === "ambos";
+                    setDoctorSeleccionado(doctor || null);
+                    setNuevoTratamiento((prev) => ({
+                      ...prev,
+                      doctor: doctor?.nombre || "",
+                      especialista_id: esEspecialista ? String(doctor.id) : "",
+                      especialista_nombre: esEspecialista ? String(doctor.nombre) : "",
+                      especialista: "",
+                      especialista_tratamiento_id: null,
+                      moneda_especialista: "MXN",
+                    }));
                   }}
-                  className="
-                    mint-input
-                    p-3
-                    w-full
-                  "
                 >
-                  <option value="">
-                    {es
-                      ? "Seleccionar Doctor"
-                      : "Select Doctor"}
-                  </option>
-
-                  {doctores.map(
-                    (doctor: any) => (
-                      <option
-                        key={doctor.id}
-                        value={doctor.id}
-                      >
-                        {doctor.nombre}
-                      </option>
-                    )
-                  )}
+                  <option value="">{es ? "Seleccionar doctor" : "Select doctor"}</option>
+                  {doctores.map((doctor: any) => (
+                    <option key={doctor.id} value={doctor.id}>{doctor.nombre}</option>
+                  ))}
                 </select>
               </div>
 
-              {/* TRATAMIENTO */}
-
+              {/* TRATAMIENTO: exclusivamente del catálogo general. */}
               <div>
-                <label
-                  className="
-                    block
-                    text-sm
-                    font-semibold
-                    mint-text-primary
-                    mb-2
-                  "
-                >
-                  {es
-                    ? "Tratamiento"
-                    : "Treatment"}
+                <label className="mb-2 block text-sm font-semibold mint-text-primary">
+                  {es ? "Tratamiento" : "Treatment"}
                 </label>
-
                 <select
-                  value={
-                    nuevoTratamiento.tratamiento ||
-                    ""
-                  }
+                  className="mint-input w-full p-3"
+                  value={nuevoTratamiento.tratamiento}
                   onChange={(e) => {
-                    const nombreTratamiento =
-                      e.target.value;
-
-                    const tratamientoSeleccionado =
-                      catalogoTratamientos.find(
-                        (tratamiento: any) =>
-                          tratamiento.nombre ===
-                          nombreTratamiento
-                      );
-
-                    if (
-                      !tratamientoSeleccionado
-                    ) {
-                      return;
-                    }
-
-                    setNuevoTratamiento({
-                      ...nuevoTratamiento,
-
-                      tratamiento:
-                        tratamientoSeleccionado.nombre,
-
+                    const tratamiento = catalogoTratamientos.find((item: any) => item.nombre === e.target.value);
+                    if (!tratamiento) return;
+                    setNuevoTratamiento((prev) => ({
+                      ...prev,
+                      tratamiento: tratamiento.nombre,
+                      total: String(Number(tratamiento.precio_mxn || 0)),
                       moneda: "MXN",
-
                       moneda_precio: "MXN",
-
-                      total: String(
-                        Number(
-                          tratamientoSeleccionado
-                            .precio_mxn || 0
-                        )
-                      ),
-
                       pagado: "0",
-
-                      laboratorio: "",
-
                       especialista: "",
-
-                      especialista_id: "",
-
-                      especialista_nombre: "",
-
-                      moneda_especialista:
-                        "MXN",
-
-                      comision_banco: "0",
-                    });
+                      especialista_tratamiento_id: null,
+                    }));
                   }}
-                  className="
-                    mint-input
-                    p-3
-                    w-full
-                  "
-                  disabled={
-                    !doctorSeleccionado
-                  }
+                  disabled={!doctorSeleccionado}
                 >
-                  <option value="">
-                    {doctorSeleccionado
-                      ? es
-                        ? "Seleccionar Tratamiento"
-                        : "Select Treatment"
-                      : es
-                        ? "Selecciona primero un doctor"
-                        : "Select a doctor first"}
-                  </option>
-
-                  {doctorSeleccionado
-                    ? catalogoTratamientos.map(
-                        (tratamiento: any) => (
-                          <option
-                            key={
-                              tratamiento.id
-                            }
-                            value={
-                              tratamiento.nombre
-                            }
-                          >
-                            {
-                              tratamiento.nombre
-                            }
-                          </option>
-                        )
-                      )
-                    : null}
+                  <option value="">{es ? "Seleccionar tratamiento" : "Select treatment"}</option>
+                  {nuevoTratamiento.tratamiento && !catalogoTratamientos.some((item: any) => item.nombre === nuevoTratamiento.tratamiento) && (
+                    <option value={nuevoTratamiento.tratamiento}>{nuevoTratamiento.tratamiento}</option>
+                  )}
+                  {catalogoTratamientos.map((item: any) => (
+                    <option key={item.id} value={item.nombre}>{item.nombre}</option>
+                  ))}
                 </select>
               </div>
 
@@ -385,177 +304,53 @@ export default function ModalTratamientoPaciente({
                 />
               </div>
 
-              {/* ESPECIALISTA */}
-
-              <div>
-                <label
-                  className="
-                    block
-                    text-sm
-                    font-semibold
-                    mint-text-primary
-                    mb-2
-                  "
-                >
-                  {es
-                    ? "Tarifa de especialista (opcional)"
-                    : "Specialist fee (optional)"}
-                </label>
-
-                <select
-                  className="
-                    mint-input
-                    p-3
-                    w-full
-                  "
-                  value={
-                    especialistasDisponibles.find(
-                      (tarifa: any) =>
-                        String(
-                          tarifa.doctor_id
-                        ) ===
-                          String(
-                            nuevoTratamiento.especialista_id
-                          ) &&
-                        tarifa.nombre_tratamiento ===
-                          nuevoTratamiento.tratamiento &&
-                        Number(
-                          tarifa.costo
-                        ) ===
-                          Number(
-                            nuevoTratamiento.especialista
-                          )
-                    )?.id ?? ""
-                  }
-                  onChange={(e) => {
-                    const tarifa =
-                      especialistasDisponibles.find(
-                        (item: any) =>
-                          String(
-                            item.id
-                          ) ===
-                          e.target.value
-                      );
-
-                    const especialistaDoctor =
-                      doctores.find(
-                        (d: any) =>
-                          String(d.id) ===
-                          String(
-                            tarifa?.doctor_id
-                          )
-                      );
-
-                    setNuevoTratamiento({
-                      ...nuevoTratamiento,
-
-                      especialista_id:
-                        tarifa
-                          ? String(
-                              tarifa.doctor_id
-                            )
-                          : "",
-
-                      especialista_nombre:
-                        tarifa
-                          ? String(
-                              especialistaDoctor?.nombre ||
-                                ""
-                            )
-                          : "",
-
-                      especialista:
-                        tarifa
-                          ? String(
-                              Number(
-                                tarifa.costo || 0
-                              )
-                            )
-                          : "0",
-
-                      moneda_especialista:
-                        tarifa?.moneda ===
-                        "USD"
-                          ? "USD"
-                          : "MXN",
-                    });
-                  }}
-                >
-                  <option value="">
-                    {es
-                      ? "Sin especialista"
-                      : "No specialist"}
-                  </option>
-
-                  {especialistasDisponibles
-                    .filter(
-                      (tarifa: any) =>
-                        tarifa.nombre_tratamiento ===
-                        nuevoTratamiento.tratamiento
-                    )
-                    .map((tarifa: any) => {
-                      const especialistaDoctor =
-                        doctores.find(
-                          (d: any) =>
-                            String(d.id) ===
-                            String(
-                              tarifa.doctor_id
-                            )
-                        );
-
-                      return (
-                        <option
-                          key={tarifa.id}
-                          value={tarifa.id}
-                        >
-                          {especialistaDoctor?.nombre ||
-                            (es
-                              ? "Especialista"
-                              : "Specialist")}
-                          {` — ${tarifa.nombre_tratamiento} — ${tarifa.costo} ${tarifa.moneda || "MXN"}`}
-                        </option>
-                      );
-                    })}
-                </select>
-
-                {nuevoTratamiento.especialista_id && (
-                  <p
-                    className="
-                      text-xs
-                      mint-text-secondary
-                      mt-2
-                    "
-                  >
-                    {es
-                      ? "Costo asociado"
-                      : "Associated cost"}
-                    :{" "}
-                    {nuevoTratamiento.especialista ||
-                      0}{" "}
-                    {nuevoTratamiento.moneda_especialista ||
-                      "MXN"}
-                  </p>
-                )}
-
-                {nuevoTratamiento.tratamiento &&
-                  !especialistasDisponibles.some(
-                    (tarifa: any) =>
-                      tarifa.nombre_tratamiento ===
-                      nuevoTratamiento.tratamiento
-                  ) && (
-                    <p
-                      className="
-                        text-xs
-                        mint-text-secondary
-                        mt-2
-                      "
+              {/* Honorarios manuales, solo para doctores clasificados como especialistas. */}
+              {(doctorSeleccionado?.tipo_doctor === "especialista" ||
+                (doctorSeleccionado?.tipo_doctor === "ambos" &&
+                  String(nuevoTratamiento.especialista_id) === String(doctorSeleccionado?.id))) && (
+                <div>
+                  <label className="mb-2 block text-sm font-semibold mint-text-primary">
+                    {es ? "Honorarios del especialista" : "Specialist fee"}
+                  </label>
+                  <div className="grid grid-cols-[1fr_auto] gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="mint-input w-full p-3"
+                      value={nuevoTratamiento.especialista === "0" ? "" : nuevoTratamiento.especialista}
+                      disabled={editandoIndex !== null && (
+                        tratamientos[editandoIndex]?.estado === "Finalizado" ||
+                        Number(tratamientos[editandoIndex]?.pagado ?? tratamientos[editandoIndex]?.pago ?? 0) > 0 ||
+                        Number(tratamientos[editandoIndex]?.descuento ?? 0) > 0
+                      )}
+                      onChange={(e) => setNuevoTratamiento((prev) => ({
+                        ...prev,
+                        especialista: e.target.value,
+                        especialista_id: String(doctorSeleccionado.id),
+                        especialista_nombre: String(doctorSeleccionado.nombre),
+                        especialista_tratamiento_id: null,
+                      }))}
+                    />
+                    <select
+                      className="mint-input p-3"
+                      value={nuevoTratamiento.moneda_especialista}
+                      disabled={editandoIndex !== null && (
+                        tratamientos[editandoIndex]?.estado === "Finalizado" ||
+                        Number(tratamientos[editandoIndex]?.pagado ?? tratamientos[editandoIndex]?.pago ?? 0) > 0 ||
+                        Number(tratamientos[editandoIndex]?.descuento ?? 0) > 0
+                      )}
+                      onChange={(e) => setNuevoTratamiento((prev) => ({
+                        ...prev,
+                        moneda_especialista: e.target.value as "MXN" | "USD",
+                      }))}
                     >
-                      {es
-                        ? "No hay tarifas de especialistas vinculadas a este tratamiento."
-                        : "No specialist fees are linked to this treatment."}
-                    </p>
-                  )}
-              </div>
+                      <option value="MXN">MXN</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+              )}
 
               {/* ESTADO */}
 

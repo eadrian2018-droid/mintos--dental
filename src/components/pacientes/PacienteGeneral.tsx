@@ -968,9 +968,15 @@ export default function PacienteGeneral({
                                     type="button"
                                     onClick={() => {
 
-                                      setNuevoTratamiento(
-                                        tratamiento
-                                      );
+                                      setNuevoTratamiento({
+  ...tratamiento,
+  especialista_tratamiento_id: tratamiento.especialista_tratamiento_id ?? null,
+  especialista_id: tratamiento.especialista_id == null ? "" : String(tratamiento.especialista_id),
+  especialista: String(tratamiento.especialista ?? "0"),
+  total: String(tratamiento.moneda_precio === "USD"
+    ? tratamiento.total_original ?? tratamiento.total ?? 0
+    : tratamiento.total ?? 0),
+});
 
                                       setDoctorSeleccionado(
                                         doctores.find((d: any) =>
