@@ -10,7 +10,6 @@ import { useLanguage } from "../context/LanguageContext";
 
 import { registrarBitacora } from "../lib/registrarBitacora";
 
-import QRCodePaciente from "../components/QRCodePaciente";
 import PacientesLanding from "../components/pacientes/PacientesLanding";
 import PacienteGeneral from "../components/pacientes/PacienteGeneral";
 import PacienteExpedienteClinico from "../components/pacientes/PacienteExpedienteClinico";
@@ -199,10 +198,11 @@ export default function Pacientes() {
     new Set()
   );
 
-    const [
-  mostrarQR,
-  setMostrarQR,
-] = useState(false);
+const [mostrarModalNuevoPaciente, setMostrarModalNuevoPaciente] = useState(false);
+const [nombreNuevoPaciente, setNombreNuevoPaciente] = useState("");
+const [telefonoNuevoPaciente, setTelefonoNuevoPaciente] = useState("");
+const [correoNuevoPaciente, setCorreoNuevoPaciente] = useState("");
+const [guardandoNuevoPaciente, setGuardandoNuevoPaciente] = useState(false);
 
   const [
     pacientesNuevosMes,
@@ -604,6 +604,64 @@ async function cargarTipoCambio() {
 
     }
 
+  }
+
+  async function guardarNuevoPaciente() {
+    const nombre = nombreNuevoPaciente.trim();
+
+    if (!nombre) {
+      alert(es ? "El nombre del paciente es obligatorio." : "Patient name is required.");
+      return;
+    }
+
+    if (guardandoNuevoPaciente) return;
+    setGuardandoNuevoPaciente(true);
+
+    try {
+      const { data, error } = await supabase
+        .from("pacientes")
+        .insert({
+          nombre,
+          telefono: telefonoNuevoPaciente.trim(),
+          correo: correoNuevoPaciente.trim(),
+          edad: "",
+          sexo: "",
+          direccion: "",
+        })
+        .select("*")
+        .single();
+
+      if (error || !data) {
+        console.error("Error registrando paciente:", error);
+        alert(
+          error?.code === "42501"
+            ? (es ? "Tu usuario no tiene permiso para registrar pacientes. Solicita al administrador que revise los permisos." : "Your account does not have permission to register patients. Ask the administrator to review permissions.")
+            : (es ? "No se pudo registrar el paciente. Verifica los datos y los permisos de acceso." : "The patient could not be registered. Check the information and access permissions.")
+        );
+        return;
+      }
+
+      setPacientes((actuales) => [data as Paciente, ...actuales]);
+      setBusqueda("");
+      setBusquedaTelefono("");
+      setFiltroRapido("todos");
+      setMostrarModalNuevoPaciente(false);
+      setNombreNuevoPaciente("");
+      setTelefonoNuevoPaciente("");
+      setCorreoNuevoPaciente("");
+
+      await cargarResumenPacientes();
+      await registrarBitacora({
+        accion: "Registrar paciente",
+        modulo: "Pacientes",
+        detalle: `Paciente ID: ${data.id} | Paciente: ${data.nombre}`,
+      });
+    } catch (error) {
+      console.error("Error inesperado registrando paciente:", error);
+      alert(es ? "Ocurrió un error al registrar el paciente." : "An error occurred while registering the patient.");
+    } finally {
+      setGuardandoNuevoPaciente(false);
+    }
   }
 
   async function cargarResumenPacientes() {
@@ -3633,21 +3691,6 @@ if (abriendoPacienteDesdeUrl) {
         {es ? "← Todos los pacientes" : "← All patients"}
       </button>
 
-      <button
-        type="button"
-        onClick={() =>
-          setMostrarQR(true)
-        }
-        className="
-          mint-btn
-          mint-btn-primary
-          px-4
-          py-2
-          text-sm
-        "
-      >
-        + QR
-      </button>
 
     </div>
 
@@ -4222,7 +4265,7 @@ if (abriendoPacienteDesdeUrl) {
               setBusquedaTelefono={setBusquedaTelefono}
               filtroRapido={filtroRapido}
               setFiltroRapido={setFiltroRapido}
-              setMostrarQR={setMostrarQR}
+              setMostrarModalNuevoPaciente={setMostrarModalNuevoPaciente}
               abrirPaciente={abrirPaciente}
             />
 
@@ -4230,6 +4273,51 @@ if (abriendoPacienteDesdeUrl) {
         }
 
       </div>
+
+      {mostrarModalNuevoPaciente && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-[rgba(15,42,65,0.68)] p-4 backdrop-blur-sm"
+          onMouseDown={(e) => { if (e.target === e.currentTarget && !guardandoNuevoPaciente) setMostrarModalNuevoPaciente(false); }}
+        >
+          <form
+            onSubmit={(e) => { e.preventDefault(); void guardarNuevoPaciente(); }}
+            className="w-full max-w-xl overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[0_28px_80px_rgba(15,42,65,0.35)]"
+          >
+            <div className="relative overflow-hidden px-6 py-5 text-white" style={{ background: "var(--mint-gradient-brand)" }}>
+              <div className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-white/[0.06]" />
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/65">{es ? "DIRECTORIO CLÍNICO" : "CLINICAL DIRECTORY"}</p>
+                  <h2 className="mt-1 text-xl font-bold">{es ? "Agregar paciente" : "Add patient"}</h2>
+                  <p className="mt-1 text-sm text-white/70">{es ? "Registra un paciente directamente." : "Register a patient directly."}</p>
+                </div>
+                <button type="button" disabled={guardandoNuevoPaciente} onClick={() => setMostrarModalNuevoPaciente(false)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/20 bg-white/10 text-xl text-white transition hover:bg-white/20" aria-label={es ? "Cerrar" : "Close"}>×</button>
+              </div>
+            </div>
+            <div className="space-y-4 p-6">
+              <label className="block">
+                <span className="mb-2 block text-xs font-semibold text-[var(--mint-text-secondary)]">{es ? "Nombre completo *" : "Full name *"}</span>
+                <input autoFocus required value={nombreNuevoPaciente} onChange={(e) => setNombreNuevoPaciente(e.target.value)} maxLength={160} placeholder={es ? "Nombre del paciente" : "Patient name"} className="w-full rounded-xl border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-4 py-3 text-sm text-[var(--mint-text-primary)] outline-none transition focus:border-[var(--mint-teal)] focus:ring-4 focus:ring-[var(--mint-teal-pale)]" />
+              </label>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-xs font-semibold text-[var(--mint-text-secondary)]">{es ? "Teléfono (opcional)" : "Phone (optional)"}</span>
+                  <input type="tel" value={telefonoNuevoPaciente} onChange={(e) => setTelefonoNuevoPaciente(e.target.value)} maxLength={40} placeholder={es ? "Número de teléfono" : "Phone number"} className="w-full rounded-xl border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-4 py-3 text-sm text-[var(--mint-text-primary)] outline-none transition focus:border-[var(--mint-teal)] focus:ring-4 focus:ring-[var(--mint-teal-pale)]" />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-xs font-semibold text-[var(--mint-text-secondary)]">{es ? "Correo (opcional)" : "Email (optional)"}</span>
+                  <input type="email" value={correoNuevoPaciente} onChange={(e) => setCorreoNuevoPaciente(e.target.value)} maxLength={160} placeholder={es ? "correo@ejemplo.com" : "email@example.com"} className="w-full rounded-xl border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-4 py-3 text-sm text-[var(--mint-text-primary)] outline-none transition focus:border-[var(--mint-teal)] focus:ring-4 focus:ring-[var(--mint-teal-pale)]" />
+                </label>
+              </div>
+              <p className="text-[11px] text-[var(--mint-text-muted)]">{es ? "Solo el nombre es obligatorio. Puedes completar los demás datos después." : "Only the name is required. You can complete the remaining information later."}</p>
+            </div>
+            <div className="flex flex-col-reverse gap-3 border-t border-[var(--mint-border-soft)] bg-[var(--mint-surface-soft)] px-6 py-4 sm:flex-row sm:justify-end">
+              <button type="button" disabled={guardandoNuevoPaciente} onClick={() => setMostrarModalNuevoPaciente(false)} className="mint-btn mint-btn-secondary px-5 py-2.5 text-sm">{es ? "Cancelar" : "Cancel"}</button>
+              <button type="submit" disabled={guardandoNuevoPaciente || !nombreNuevoPaciente.trim()} className="mint-btn mint-btn-primary px-5 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-60">{guardandoNuevoPaciente ? (es ? "Guardando..." : "Saving...") : (es ? "+ Guardar paciente" : "+ Save patient")}</button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {mostrarEditarPaciente && pacienteAbierto && (
         <ModalEditarPaciente
@@ -4242,127 +4330,6 @@ if (abriendoPacienteDesdeUrl) {
         />
       )}
 
-      {
-        mostrarQR && (
-
-          <div
-            className="
-              fixed
-              inset-0
-              z-50
-              flex
-              items-center
-              justify-center
-              bg-[rgba(15,42,65,0.62)]
-              backdrop-blur-[3px]
-              p-4
-            "
-            onClick={() =>
-              setMostrarQR(false)
-            }
-          >
-
-            <div
-              className="
-                w-full
-                max-w-md
-                overflow-hidden
-                rounded-[24px]
-                border
-                border-white/20
-                bg-[var(--mint-surface)]
-                shadow-[0_28px_80px_rgba(15,42,65,0.30)]
-                relative
-              "
-              onClick={(e) =>
-                e.stopPropagation()
-              }
-            >
-
-              <button
-                type="button"
-                onClick={() =>
-                  setMostrarQR(false)
-                }
-                className="
-                  absolute
-                  top-4
-                  right-4
-                  z-10
-                  w-9
-                  h-9
-                  rounded-xl
-                  border
-                  border-white/20
-                  bg-white/10
-                  text-white
-                  text-xl
-                  leading-none
-                  hover:bg-white/20
-                  transition-colors
-                "
-              >
-                ×
-              </button>
-
-              <div
-                className="
-                  text-center
-                "
-              >
-
-                <p
-                  className="
-                    text-[10px]
-                    font-bold
-                    uppercase
-                    tracking-[0.16em]
-                    text-[var(--mint-teal-soft)]
-                  "
-                >
-                  {es ? "Registro de pacientes" : "Patient registration"}
-                </p>
-
-                <h2
-                  className="
-                    text-xl
-                    font-bold
-                    text-white
-                    mt-1
-                  "
-                >
-                  {es ? "Código QR" : "QR Code"}
-                </h2>
-
-                <p
-                  className="
-                    text-sm
-                    text-white/65
-                    mt-1
-                  "
-                >
-                  {es ? "Escanea este código desde un teléfono" : "Scan this code from a phone"}
-                  {es ? "para abrir el formulario de registro." : "to open the registration form."}
-                </p>
-
-                <div
-                  className="
-                    max-w-[260px]
-                    mx-auto
-                    my-6
-                  "
-                >
-                  <QRCodePaciente />
-                </div>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )
-      }
 
     </div>
 

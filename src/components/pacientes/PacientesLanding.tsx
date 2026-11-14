@@ -21,7 +21,7 @@ type PacientesLandingProps = {
   setBusquedaTelefono: (valor: string) => void;
   filtroRapido: FiltroRapido;
   setFiltroRapido: (valor: FiltroRapido) => void;
-  setMostrarQR: (mostrar: boolean) => void;
+  setMostrarModalNuevoPaciente: (mostrar: boolean) => void;
   abrirPaciente: (paciente: PacienteLandingItem) => void | Promise<void>;
 };
 
@@ -29,7 +29,7 @@ export default function PacientesLanding({
   es, pacientes, pacientesFiltrados, pacientesNuevosMes,
   pacientesConSaldo, tratamientosPendientesGlobal,
   busqueda, setBusqueda, busquedaTelefono, setBusquedaTelefono,
-  filtroRapido, setFiltroRapido, setMostrarQR, abrirPaciente,
+  filtroRapido, setFiltroRapido, setMostrarModalNuevoPaciente, abrirPaciente,
 }: PacientesLandingProps) {
   return (
             <div className="h-full flex flex-col gap-5">
@@ -65,18 +65,16 @@ export default function PacientesLanding({
                     </p>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setMostrarQR(true)}
-                    className="group shrink-0 rounded-2xl border border-white/20 bg-white/[0.11] px-5 py-3 text-left text-white shadow-sm backdrop-blur-sm transition hover:bg-white/[0.18]"
-                  >
-                    <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-white/60">
-                      {es ? "NUEVO INGRESO" : "NEW INTAKE"}
-                    </span>
-                    <span className="mt-1 block text-sm font-bold">
-                      {es ? "Registro por QR  →" : "QR Registration  →"}
-                    </span>
-                  </button>
+                  <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => setMostrarModalNuevoPaciente(true)}
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/25 bg-[var(--mint-teal)] px-5 py-3 text-sm font-bold text-white shadow-lg transition hover:brightness-110 focus:outline-none focus:ring-4 focus:ring-white/20"
+                    >
+                      <span className="text-lg leading-none">+</span>
+                      {es ? "Agregar paciente" : "Add patient"}
+                    </button>
+                  </div>
                 </div>
               </section>
 
