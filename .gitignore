@@ -25,3 +25,8 @@ dist-ssr
 
 # MintOS database backups - NEVER commit patient data
 backups/
+
+# MintOS environment variables
+.env
+.env.*
+!.env.example
