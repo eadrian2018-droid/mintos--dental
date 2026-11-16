@@ -67,7 +67,14 @@ type Doctor = {
   nombre: string;
   telefono: string | null;
   activo: boolean;
+  color_agenda: string | null;
 };
+
+// Diez colores predefinidos, seleccionables desde un menú compacto.
+const COLORES_DOCTORES = [
+  "#0B8F80", "#2563EB", "#7C3AED", "#DB2777", "#DC2626",
+  "#EA580C", "#A16207", "#65A30D", "#15803D", "#0369A1",
+] as const;
 
 Modal.setAppElement("#root");
 
@@ -119,11 +126,17 @@ export default function AgendaCalendar() {
     noDoctorPhone: es ? "Este doctor no tiene un número de WhatsApp registrado." : "This doctor does not have a WhatsApp number registered.",
     notifyDoctor: es ? "Notificar por WhatsApp" : "Notify via WhatsApp",
     notifyCreated: es ? "Cita creada. ¿Quieres notificar al doctor por WhatsApp?" : "Appointment created. Do you want to notify the doctor via WhatsApp?",
+    doctorColors: es ? "Colores de doctores" : "Doctor colors",
+    doctorColorsHint: es ? "Asigna un color a cada doctor para identificar sus citas." : "Assign a color to each doctor to identify appointments.",
+    colorSaveError: es ? "No se pudo guardar el color." : "Could not save the color.",
+    noDoctors: es ? "No hay doctores activos." : "No active doctors.",
   };
 
   const {
-    permisos,
+    permisos, perfil,
   } = useAuth();
+
+  const puedeConfigurarColores = perfil?.rol === "admin";
 
   const puedeEditarCitas =
     permisos?.editar_citas === true;
@@ -132,6 +145,11 @@ export default function AgendaCalendar() {
     eventos,
     setEventos,
   ] = useState<Evento[]>([]);
+
+  const [mostrarColores, setMostrarColores] = useState(false);
+  const [selectorColorAbierto, setSelectorColorAbierto] = useState<number | null>(null);
+  const [guardandoColorId, setGuardandoColorId] = useState<number | null>(null);
+  const [errorColor, setErrorColor] = useState("");
 
   const [
     pacientes,
@@ -272,7 +290,7 @@ export default function AgendaCalendar() {
     } = await supabase
       .from("doctores")
       .select(
-        "id, nombre, telefono, activo"
+        "id, nombre, telefono, activo, color_agenda"
       )
       .eq(
         "activo",
@@ -311,6 +329,46 @@ export default function AgendaCalendar() {
     );
 
   }
+
+  async function guardarColorDoctor(doctorId: number, nuevoColor: string) {
+    if (!puedeConfigurarColores || guardandoColorId !== null) return;
+    if (!/^#[0-9a-fA-F]{6}$/.test(nuevoColor)) return;
+    const anterior = doctores.find((item) => item.id === doctorId);
+    if (!anterior || anterior.color_agenda === nuevoColor) return;
+    setGuardandoColorId(doctorId);
+    setErrorColor("");
+    const { data, error } = await supabase
+      .from("doctores")
+      .update({ color_agenda: nuevoColor })
+      .eq("id", doctorId)
+      .select("id, color_agenda")
+      .single();
+    if (error || !data) {
+      console.error("Error guardando color del doctor:", error);
+      setErrorColor(t.colorSaveError);
+      setGuardandoColorId(null);
+      return;
+    }
+    setDoctores((actuales) => actuales.map((item) =>
+      item.id === doctorId ? { ...item, color_agenda: data.color_agenda } : item
+    ));
+    setGuardandoColorId(null);
+    try {
+      await registrarBitacora({
+        accion: "Cambiar color de doctor en agenda",
+        modulo: "Agenda",
+        detalle: `Doctor ID: ${doctorId} | Color anterior: ${anterior.color_agenda || "sin asignar"} | Nuevo color: ${nuevoColor}`,
+      });
+    } catch (errorBitacora) {
+      console.error("No se pudo registrar el cambio de color en bitácora:", errorBitacora);
+    }
+  }
+
+  const eventosConColores = eventos.map((evento) => {
+    const doctorEvento = doctores.find((item) => item.nombre === evento.extendedProps?.doctor);
+    const color = doctorEvento?.color_agenda || evento.backgroundColor;
+    return { ...evento, backgroundColor: color, borderColor: color };
+  });
 
   function obtenerDoctor(
     nombreDoctor: string
@@ -1118,6 +1176,14 @@ export default function AgendaCalendar() {
       className="agenda-page"
     >
 
+      {puedeConfigurarColores && (
+        <div className="agenda-colors-toolbar">
+          <button type="button" className="agenda-colors-trigger" onClick={() => setMostrarColores(true)}>
+            <span aria-hidden="true">🎨</span> {t.doctorColors}
+          </button>
+        </div>
+      )}
+
       <div
         className="agenda-calendar-card"
       >
@@ -1177,8 +1243,23 @@ export default function AgendaCalendar() {
           nowIndicator
 
           events={
-            eventos
+            eventosConColores
           }
+
+          eventContent={(info) => {
+            const estadoCita = info.event.extendedProps.estado || "pendiente";
+            const etiqueta = estadoCita === "confirmada" ? t.confirmed :
+              estadoCita === "cancelada" ? t.cancelled :
+              estadoCita === "tratamiento" ? t.treatment : t.pending;
+            return (
+              <div className="agenda-event-content">
+                <span className="agenda-event-title">{info.event.title}</span>
+                <span className={`agenda-event-status agenda-event-status-${estadoCita}`}>
+                  {etiqueta}
+                </span>
+              </div>
+            );
+          }}
 
           select={
             puedeEditarCitas
@@ -1281,6 +1362,71 @@ export default function AgendaCalendar() {
         />
 
       </div>
+
+      <Modal
+        isOpen={mostrarColores}
+        onRequestClose={() => { if (guardandoColorId === null) setMostrarColores(false); }}
+        className="agenda-modal agenda-colors-modal"
+        overlayClassName="agenda-modal-overlay"
+        contentLabel={t.doctorColors}
+      >
+        <div className="agenda-modal-header">
+          <div>
+            <span className="agenda-modal-eyebrow">MINTOS · AGENDA</span>
+            <h2>{t.doctorColors}</h2>
+          </div>
+          <button type="button" className="agenda-modal-close" aria-label={t.close}
+            disabled={guardandoColorId !== null} onClick={() => setMostrarColores(false)}>×</button>
+        </div>
+        <div className="agenda-modal-body">
+          <p className="agenda-colors-description">{t.doctorColorsHint}</p>
+          {doctores.length === 0 && <p>{t.noDoctors}</p>}
+          {doctores.map((item) => (
+            <div className="agenda-color-row" key={item.id}>
+              <span className="agenda-color-name">{item.nombre}</span>
+              <div className="agenda-color-selector">
+                <button
+                  type="button"
+                  className="agenda-color-current"
+                  aria-label={`${t.doctorColors}: ${item.nombre}`}
+                  aria-expanded={selectorColorAbierto === item.id}
+                  aria-controls={`agenda-colors-${item.id}`}
+                  disabled={guardandoColorId !== null}
+                  onClick={() => setSelectorColorAbierto((actual) => actual === item.id ? null : item.id)}
+                >
+                  <span className="agenda-color-current-sample" style={{ backgroundColor: item.color_agenda || "#0B8F80" }} />
+                  <span className="agenda-color-current-chevron" aria-hidden="true">▾</span>
+                </button>
+                {selectorColorAbierto === item.id && (
+                  <div className="agenda-color-dropdown" id={`agenda-colors-${item.id}`} role="group" aria-label={`${t.doctorColors}: ${item.nombre}`}>
+                    {COLORES_DOCTORES.map((color, indice) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className={`agenda-color-swatch${item.color_agenda?.toLowerCase() === color.toLowerCase() ? " agenda-color-swatch-selected" : ""}`}
+                        style={{ backgroundColor: color }}
+                        aria-label={`${item.nombre}: color ${indice + 1} (${color})`}
+                        aria-pressed={item.color_agenda?.toLowerCase() === color.toLowerCase()}
+                        title={`${item.nombre} · ${color}`}
+                        disabled={guardandoColorId !== null}
+                        onClick={() => {
+                          setSelectorColorAbierto(null);
+                          void guardarColorDoctor(item.id, color);
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          {errorColor && <p role="alert" className="agenda-colors-error">{errorColor}</p>}
+        </div>
+        <div className="agenda-modal-footer">
+          <button type="button" className="agenda-btn agenda-btn-neutral"
+            disabled={guardandoColorId !== null} onClick={() => setMostrarColores(false)}>{t.close}</button>
+        </div>
+      </Modal>
 
       <Modal
 
