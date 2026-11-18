@@ -23,7 +23,7 @@ export default function PacienteExpedienteClinico({
   imagenPreview,
 }: PacienteExpedienteClinicoProps) {
   return (
-    <div className="space-y-6 rounded-[22px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] p-4">
+    <div className="space-y-4 rounded-[22px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] p-4">
 
       <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[linear-gradient(120deg,#1b4f68_0%,#23677a_52%,#249884_100%)] shadow-[var(--mint-shadow-brand)]">
         <div className="px-6 py-6">
@@ -51,7 +51,7 @@ export default function PacienteExpedienteClinico({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--mint-teal-pale)] text-xl font-bold text-[var(--mint-teal)]">
             +
           </div>
-          <h3 className="mt-4 text-lg font-bold mint-text-primary">
+          <h3 className="mt-4 text-xl font-bold mint-text-primary">
             {es ? "Sin plan clínico inicial" : "No initial clinical plan"}
           </h3>
           <p className="mx-auto mt-2 max-w-xl text-sm mint-text-secondary">
@@ -87,12 +87,12 @@ export default function PacienteExpedienteClinico({
           return (
             <>
               <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
-                <div className="flex flex-col gap-3 border-b border-[var(--mint-border)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 border-b border-[var(--mint-border)] px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <h3 className="text-lg font-bold mint-text-primary">
+                    <h3 className="text-xl font-bold mint-text-primary">
                       {es ? "Odontograma clínico inicial" : "Initial clinical odontogram"}
                     </h3>
-                    <p className="mt-1 text-sm mint-text-secondary">
+                    <p className="mt-1 text-[15px] font-medium mint-text-primary">
                       {es
                         ? "Los dientes resaltados corresponden al plan de tratamiento inicial del paciente."
                         : "Highlighted teeth correspond to the patient's initial treatment plan."}
@@ -109,9 +109,9 @@ export default function PacienteExpedienteClinico({
                   )}
                 </div>
 
-                <div className="px-4 py-5 sm:px-6 sm:py-6">
-                  <div className="rounded-[22px] border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-3 py-5 sm:px-5">
-                    <div className="mx-auto w-full max-w-[1120px]">
+                <div className="px-3 py-3 sm:px-5 sm:py-4">
+                  <div className="overflow-x-auto rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-3 py-3 sm:px-4">
+                    <div className="mx-auto w-full min-w-[880px] max-w-[1060px]">
                       {(() => {
                         const renderDienteClinico = (numero: number, superior: boolean) => {
                           const marcado = dientesMarcados.has(numero);
@@ -145,20 +145,20 @@ export default function PacienteExpedienteClinico({
                           return (
                             <div
                               key={numero}
-                              className={`min-w-0 rounded-xl px-0.5 py-1.5 text-center transition ${
+                              className={`min-w-0 rounded-md px-0.5 py-1 text-center transition ${
                                 marcado
                                   ? "bg-[var(--mint-teal-pale)] ring-1 ring-inset ring-[var(--mint-border-teal)]"
                                   : ""
                               }`}
                             >
-                              <div className="pointer-events-none mx-auto flex h-[94px] w-full max-w-[54px] items-center justify-center overflow-hidden [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+                              <div className="pointer-events-none mx-auto flex h-[76px] w-full max-w-[49px] items-center justify-center overflow-hidden [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
                                 {dienteVisual}
                               </div>
                               <span
-                                className={`mt-1 block text-[10px] font-bold leading-none ${
+                                className={`mt-1 block text-[13px] font-extrabold leading-none ${
                                   marcado
                                     ? "text-[var(--mint-teal)]"
-                                    : "mint-text-muted"
+                                    : "mint-text-primary"
                                 }`}
                               >
                                 {numero}
@@ -168,10 +168,10 @@ export default function PacienteExpedienteClinico({
                         };
 
                         return (
-                          <div className="space-y-5">
+                          <div className="space-y-2">
                             <div>
-                              <div className="mb-2 flex items-center gap-3">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] mint-text-muted">
+                              <div className="mb-1 flex items-center gap-3">
+                                <span className="text-[13px] font-extrabold uppercase tracking-[0.08em] mint-text-primary">
                                   {es ? "Maxilar superior" : "Upper arch"}
                                 </span>
                                 <div className="h-px flex-1 bg-[var(--mint-border)]" />
@@ -188,7 +188,7 @@ export default function PacienteExpedienteClinico({
 
                             <div className="flex items-center gap-3 px-1">
                               <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
-                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-[0.16em] text-[var(--mint-teal)]">
+                              <span className="shrink-0 text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--mint-teal)]">
                                 {es ? "Línea oclusal" : "Occlusal line"}
                               </span>
                               <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
@@ -203,8 +203,8 @@ export default function PacienteExpedienteClinico({
                                   renderDienteClinico(numero, false)
                                 )}
                               </div>
-                              <div className="mt-2 flex items-center gap-3">
-                                <span className="text-[10px] font-bold uppercase tracking-[0.14em] mint-text-muted">
+                              <div className="mt-1 flex items-center gap-3">
+                                <span className="text-[13px] font-extrabold uppercase tracking-[0.08em] mint-text-primary">
                                   {es ? "Maxilar inferior" : "Lower arch"}
                                 </span>
                                 <div className="h-px flex-1 bg-[var(--mint-border)]" />
@@ -216,7 +216,7 @@ export default function PacienteExpedienteClinico({
                     </div>
                   </div>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-4 text-xs mint-text-secondary">
+                  <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold mint-text-primary">
                     <span className="inline-flex items-center gap-2">
                       <span className="h-3 w-3 rounded border border-[var(--mint-teal)] bg-[var(--mint-teal-soft)]" />
                       {es ? "Incluido en plan inicial" : "Included in initial plan"}
@@ -230,53 +230,85 @@ export default function PacienteExpedienteClinico({
               </section>
 
               <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
-                <div className="border-b border-[var(--mint-border)] px-6 py-5">
+                <div className="border-b border-[var(--mint-border)] px-5 py-3">
                   <h3 className="text-lg font-bold mint-text-primary">
-                    {es ? "Hallazgos y tratamiento recomendado" : "Findings and recommended treatment"}
+                    {es ? "Plan de tratamiento y estimado" : "Treatment plan and estimate"}
                   </h3>
-                  <p className="mt-1 text-sm mint-text-secondary">
+                  <p className="mt-1 text-[15px] font-medium mint-text-primary">
                     {es
-                      ? "Información clínica tomada del plan inicial del paciente."
-                      : "Clinical information taken from the patient's initial plan."}
+                      ? "Tratamientos e importes registrados en el presupuesto inicial del paciente."
+                      : "Treatments and amounts recorded in the patient's initial estimate."}
                   </p>
                 </div>
 
-                <div className="divide-y divide-[var(--mint-border)]">
-                  {(expedienteClinicoBase.items || []).map((item: any, index: number) => {
-                    const etiquetaDiente = item.arcada === "superior"
-                      ? (es ? "Arcada superior" : "Upper arch")
-                      : item.arcada === "inferior"
-                        ? (es ? "Arcada inferior" : "Lower arch")
-                        : Array.isArray(item.dientes) && item.dientes.length > 0
-                          ? item.dientes.join(", ")
-                          : item.diente || "—";
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[880px] border-collapse text-left">
+                    <thead className="bg-[var(--mint-surface-soft)]">
+                      <tr className="border-b border-[var(--mint-border)]">
+                        <th scope="col" className="w-[25%] px-5 py-3 text-sm font-extrabold uppercase tracking-wide mint-text-primary">
+                          {es ? "Diente / Arcada" : "Tooth / Arch"}
+                        </th>
+                        <th scope="col" className="px-5 py-3 text-sm font-extrabold uppercase tracking-wide mint-text-primary">
+                          {es ? "Tratamiento / Procedimiento" : "Treatment / Procedure"}
+                        </th>
+                        <th scope="col" className="w-[100px] px-5 py-3 text-right text-sm font-extrabold uppercase tracking-wide mint-text-primary">
+                          {es ? "Cant." : "Qty."}
+                        </th>
+                        <th scope="col" className="w-[145px] px-4 py-3 text-right text-sm font-extrabold uppercase tracking-wide mint-text-primary">
+                          {es ? "Costo unitario" : "Unit price"}
+                        </th>
+                        <th scope="col" className="w-[150px] px-5 py-3 text-right text-sm font-extrabold uppercase tracking-wide mint-text-primary">
+                          {es ? "Total" : "Total"}
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--mint-border)]">
+                      {(expedienteClinicoBase.items || []).map((item: any, index: number) => {
+                        const etiquetaDiente = item.arcada === "superior"
+                          ? (es ? "Arcada superior" : "Upper arch")
+                          : item.arcada === "inferior"
+                            ? (es ? "Arcada inferior" : "Lower arch")
+                            : Array.isArray(item.dientes) && item.dientes.length > 0
+                              ? item.dientes.join(", ")
+                              : item.diente || "—";
 
-                    return (
-                      <div key={item.id || index} className="grid gap-3 px-6 py-4 md:grid-cols-[150px_1fr] md:items-center">
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mint-text-muted">
-                            {es ? "Diente / Arcada" : "Tooth / Arch"}
-                          </p>
-                          <p className="mt-1 font-bold text-[var(--mint-teal)]">
-                            {etiquetaDiente}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-bold uppercase tracking-[0.12em] mint-text-muted">
-                            {es ? "Tratamiento recomendado" : "Recommended treatment"}
-                          </p>
-                          <p className="mt-1 font-semibold mint-text-primary">
-                            {item.tratamiento || "—"}
-                          </p>
-                        </div>
-                      </div>
-                    );
-                  })}
+                        return (
+                          <tr key={item.id || index} className="align-top">
+                            <td className="px-5 py-3 text-[15px] font-bold text-[var(--mint-teal)]">
+                              {etiquetaDiente}
+                            </td>
+                            <td className="px-5 py-3 text-[15px] font-semibold mint-text-primary">
+                              {item.tratamiento || "—"}
+                            </td>
+                            <td className="px-5 py-3 text-right text-[15px] font-bold mint-text-primary">
+                              {item.cantidad ?? "—"}
+                            </td>
+                            <td className="px-4 py-3 text-right text-[15px] font-semibold mint-text-primary">
+                              {item.precio_unitario == null ? "—" : new Intl.NumberFormat(es ? "es-MX" : "en-US", { style: "currency", currency: expedienteClinicoBase.moneda === "USD" ? "USD" : "MXN" }).format(Number(item.precio_unitario))}
+                            </td>
+                            <td className="px-5 py-3 text-right text-[15px] font-bold mint-text-primary">
+                              {item.total == null ? "—" : new Intl.NumberFormat(es ? "es-MX" : "en-US", { style: "currency", currency: expedienteClinicoBase.moneda === "USD" ? "USD" : "MXN" }).format(Number(item.total))}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot className="border-t-2 border-[var(--mint-border-teal)] bg-[var(--mint-surface-soft)]">
+                      <tr>
+                        <td colSpan={4} className="px-5 py-3 text-right text-sm font-extrabold uppercase mint-text-primary">
+                          {es ? "Costo total estimado" : "Total estimated cost"}
+                        </td>
+                        <td className="px-5 py-3 text-right text-base font-extrabold text-[var(--mint-teal)]">
+                          {new Intl.NumberFormat(es ? "es-MX" : "en-US", { style: "currency", currency: expedienteClinicoBase.moneda === "USD" ? "USD" : "MXN" }).format(Number(expedienteClinicoBase.total ?? 0))}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
 
                 {expedienteClinicoBase.notas && (
                   <div className="border-t border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-6 py-4">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.12em] mint-text-muted">
+                    <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] mint-text-secondary">
                       {es ? "Observaciones iniciales" : "Initial notes"}
                     </p>
                     <p className="mt-1 text-sm mint-text-primary">
@@ -296,7 +328,7 @@ export default function PacienteExpedienteClinico({
             <h3 className="text-lg font-bold mint-text-primary">
               {es ? "Evolución clínica" : "Clinical progression"}
             </h3>
-            <p className="mt-1 text-sm mint-text-secondary">
+            <p className="mt-1 text-sm font-medium mint-text-primary">
               {es
                 ? "Tratamientos realizados o registrados después del plan clínico inicial."
                 : "Treatments performed or recorded after the initial clinical plan."}
@@ -314,7 +346,7 @@ export default function PacienteExpedienteClinico({
         ) : (
           <div className="divide-y divide-[var(--mint-border)]">
             {tratamientos.map((tratamiento: any) => (
-              <div key={tratamiento.id} className="grid gap-3 px-6 py-4 md:grid-cols-[130px_1fr_180px_130px] md:items-center">
+              <div key={tratamiento.id} className="grid gap-2 px-5 py-3 md:grid-cols-[130px_1fr_180px_130px] md:items-center">
                 <div className="text-sm mint-text-secondary">
                   {tratamiento.fecha
                     ? new Date(`${tratamiento.fecha}T12:00:00`).toLocaleDateString(es ? "es-MX" : "en-US", {
@@ -341,11 +373,11 @@ export default function PacienteExpedienteClinico({
       </section>
 
       <section className="overflow-hidden rounded-[24px] border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] shadow-[var(--mint-shadow-card)]">
-        <div className="border-b border-[var(--mint-border)] px-6 py-5">
+        <div className="border-b border-[var(--mint-border)] px-5 py-3">
           <h3 className="text-lg font-bold mint-text-primary">
             {es ? "Radiografías / Fotos clínicas" : "X-rays / Clinical photos"}
           </h3>
-          <p className="mt-1 text-sm mint-text-secondary">
+          <p className="mt-1 text-sm font-medium mint-text-primary">
             {es
               ? "Material clínico asociado al expediente del paciente."
               : "Clinical material associated with the patient record."}

@@ -21,6 +21,8 @@ type NuevoTratamiento = {
   moneda_especialista: "MXN" | "USD";
   comision_banco: string;
   total: string;
+  cantidad: number;
+  precio_unitario: string;
   pagado: string;
   notas: string;
 };
@@ -234,12 +236,18 @@ export default function ModalTratamientoPaciente({
                   onChange={(e) => {
                     const tratamiento = catalogoTratamientos.find((item: any) => item.nombre === e.target.value);
                     if (!tratamiento) return;
+                    const precioMXN = Number(tratamiento.precio_mxn ?? 0);
+                    const precioUSD = Number(tratamiento.precio_usd ?? 0);
+                    const soloUSD = precioUSD > 0 && !(precioMXN > 0);
+                    const monedaPrecio = soloUSD ? "USD" : "MXN";
+                    const precioUnitario = soloUSD ? precioUSD : precioMXN;
                     setNuevoTratamiento((prev) => ({
                       ...prev,
                       tratamiento: tratamiento.nombre,
-                      total: String(Number(tratamiento.precio_mxn || 0)),
-                      moneda: "MXN",
-                      moneda_precio: "MXN",
+                      total: String(Math.round(Number(prev.cantidad || 1) * precioUnitario * 100) / 100),
+                      precio_unitario: String(precioUnitario),
+                      moneda: monedaPrecio,
+                      moneda_precio: monedaPrecio,
                       pagado: "0",
                       especialista: "",
                       especialista_tratamiento_id: null,
@@ -256,6 +264,50 @@ export default function ModalTratamientoPaciente({
                   ))}
                 </select>
               </div>
+
+              {/* CANTIDAD Y PRECIO UNITARIO */}
+              {(() => {
+                const existente = editandoIndex !== null ? tratamientos[editandoIndex] : null;
+                const bloqueado = Boolean(existente && (
+                  existente.estado === "Finalizado" ||
+                  Number(existente.pagado ?? existente.pago ?? 0) !== 0 ||
+                  Number(existente.descuento ?? 0) !== 0 ||
+                  Number(existente.descuento_original ?? 0) !== 0 ||
+                  existente.comision_autorizada_at != null ||
+                  existente.comision_autorizada_por != null
+                ));
+                const catalogo = catalogoTratamientos.find((item: any) => item.nombre === nuevoTratamiento.tratamiento);
+                const precio = editandoIndex !== null
+                  ? Number(nuevoTratamiento.precio_unitario || 0)
+                  : Number(nuevoTratamiento.moneda_precio === "USD" ? catalogo?.precio_usd ?? 0 : catalogo?.precio_mxn ?? 0);
+                const cantidad = Number(nuevoTratamiento.cantidad);
+                const moneda = nuevoTratamiento.moneda_precio === "USD" ? "USD" : "MXN";
+                const formato = (valor: number) => Number.isFinite(valor)
+                  ? valor.toLocaleString(es ? "es-MX" : "en-US", { style: "currency", currency: moneda })
+                  : "—";
+                return (
+                  <div className="rounded-2xl border border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] p-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold mint-text-primary">{es ? "Cantidad" : "Quantity"}</label>
+                        <input type="number" min="1" step="1" required className="mint-input w-full p-3"
+                          disabled={bloqueado}
+                          value={nuevoTratamiento.cantidad}
+                          onChange={(e) => setNuevoTratamiento((prev) => ({ ...prev, cantidad: Number(e.target.value) }))} />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-sm font-semibold mint-text-primary">{es ? "Precio unitario" : "Unit price"} ({moneda})</label>
+                        <div className="mint-input w-full p-3" aria-label={es ? "Precio unitario" : "Unit price"}>{formato(precio)}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-[var(--mint-border-teal)] pt-3 text-sm font-semibold mint-text-primary">
+                      <span>{es ? "Total del tratamiento" : "Treatment total"}</span>
+                      <span>{formato(Math.round(cantidad * precio * 100) / 100)}</span>
+                    </div>
+                    {bloqueado && <p className="mt-2 text-xs mint-text-muted">{es ? "Cantidad y precio bloqueados por actividad financiera o autorización." : "Quantity and price are locked due to financial activity or authorization."}</p>}
+                  </div>
+                );
+              })()}
 
               {/* LABORATORIO */}
 

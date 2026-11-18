@@ -448,7 +448,7 @@ export default function PacienteGeneral({
 
           <table className="
             w-full
-            min-w-[900px]
+            min-w-[1050px]
           ">
 
             <thead>
@@ -631,6 +631,13 @@ export default function PacienteGeneral({
                                 tratamiento.tratamiento ||
                                 "-"
                               }
+                            </p>
+                            <p className="mt-1 text-xs mint-text-secondary">
+                              {es ? "Cantidad" : "Quantity"}: {Number(tratamiento.cantidad ?? 1)}
+                              {" · "}
+                              {es ? "Precio unitario" : "Unit price"}: {tratamiento.precio_unitario == null
+                                ? (es ? "Histórico" : "Legacy")
+                                : `${Number(tratamiento.precio_unitario).toLocaleString(es ? "es-MX" : "en-US", { style: "currency", currency: tratamiento.moneda_precio === "USD" ? "USD" : "MXN" })}`}
                             </p>
 
                             {
@@ -973,6 +980,9 @@ export default function PacienteGeneral({
   especialista_tratamiento_id: tratamiento.especialista_tratamiento_id ?? null,
   especialista_id: tratamiento.especialista_id == null ? "" : String(tratamiento.especialista_id),
   especialista: String(tratamiento.especialista ?? "0"),
+  cantidad: Number(tratamiento.cantidad ?? 1),
+  precio_unitario: String(tratamiento.precio_unitario ??
+    (Number(tratamiento.total_original ?? tratamiento.total ?? 0) / Number(tratamiento.cantidad ?? 1))),
   total: String(tratamiento.moneda_precio === "USD"
     ? tratamiento.total_original ?? tratamiento.total ?? 0
     : tratamiento.total ?? 0),

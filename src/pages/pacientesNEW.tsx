@@ -356,6 +356,10 @@ const [nuevoTratamiento,
 
   total: "",
 
+  cantidad: 1,
+
+  precio_unitario: "",
+
   pagado: "",
 
   notas: "",
@@ -2369,18 +2373,38 @@ if (doctorSeleccionado?.tipo_doctor === "especialista") {
   }
 }
 
-const totalOriginalTratamiento =
-  tratamientoCatalogoSeleccionado
-    ? Number(
-        monedaPrecioTratamiento === "USD"
-          ? tratamientoCatalogoSeleccionado
-              .precio_usd || 0
-          : tratamientoCatalogoSeleccionado
-              .precio_mxn || 0
-      )
-    : Number(
-        nuevoTratamiento.total || 0
-      );
+const cantidadTratamiento = Number(nuevoTratamiento.cantidad);
+if (!Number.isSafeInteger(cantidadTratamiento) || cantidadTratamiento < 1) {
+  alert(es ? "Ingresa una cantidad entera mayor o igual a 1." : "Enter a whole-number quantity of at least 1.");
+  return;
+}
+
+// Mantener el precio histórico al editar; nunca recalcularlo desde
+// un catálogo que pudo cambiar después de registrar el tratamiento.
+const precioUnitarioCatalogo = Number(
+  monedaPrecioTratamiento === "USD"
+    ? tratamientoCatalogoSeleccionado?.precio_usd ?? 0
+    : tratamientoCatalogoSeleccionado?.precio_mxn ?? 0
+);
+const precioUnitarioTratamiento = editandoIndex !== null
+  ? Number(nuevoTratamiento.precio_unitario)
+  : precioUnitarioCatalogo;
+if (!Number.isFinite(precioUnitarioTratamiento) || precioUnitarioTratamiento < 0) {
+  alert(es ? "El precio unitario no es válido." : "Invalid unit price.");
+  return;
+}
+const totalOriginalTratamiento = Math.round(cantidadTratamiento * precioUnitarioTratamiento * 100) / 100;
+
+// FIN02H: aun si no se cambian los importes, nunca modificar
+// cantidad/precio cuando existan movimientos financieros.
+if (tieneActividadFinanciera && (
+  cantidadTratamiento !== Number(tratamientoExistenteEdicion?.cantidad ?? 1) ||
+  (tratamientoExistenteEdicion?.precio_unitario != null &&
+   precioUnitarioTratamiento !== Number(tratamientoExistenteEdicion.precio_unitario))
+)) {
+  alert(es ? "La cantidad y el precio unitario están protegidos por movimientos financieros." : "Quantity and unit price are locked after financial activity.");
+  return;
+}
 
 if (
   monedaPrecioTratamiento === "USD" &&
@@ -2392,11 +2416,9 @@ if (
   return;
 }
 
-const totalTratamiento =
-  monedaPrecioTratamiento === "USD"
-    ? totalOriginalTratamiento *
-      tipoCambioCobro
-    : totalOriginalTratamiento;
+const totalTratamiento = Math.round((monedaPrecioTratamiento === "USD"
+    ? totalOriginalTratamiento * tipoCambioCobro
+    : totalOriginalTratamiento) * 100) / 100;
 
 const tratamientoExistente =
   editandoIndex !== null
@@ -2443,6 +2465,10 @@ const nuevo = {
 
   moneda_precio:
     monedaPrecioTratamiento,
+
+  cantidad: cantidadTratamiento,
+
+  precio_unitario: precioUnitarioTratamiento,
 
   total_original:
     totalOriginalTratamiento,
@@ -2535,6 +2561,8 @@ moneda_precio:
 // Si hubo cobros/descuentos, NO sobrescribir los importes
 // persistidos por la RPC al cambiar doctor/fecha/notas/estado.
 ...(tieneActividadFinanciera ? {} : {
+  cantidad: nuevo.cantidad,
+  precio_unitario: nuevo.precio_unitario,
   total_original: Number(nuevo.total_original || 0),
   pagado_original: Number(tratamientoEditar.pagado_original || 0),
   resta_original: Math.max(
@@ -2629,6 +2657,9 @@ moneda:
 
 moneda_precio:
   nuevo.moneda_precio,
+
+cantidad: nuevo.cantidad,
+precio_unitario: nuevo.precio_unitario,
 
 total_original:
   Number(
@@ -2757,6 +2788,10 @@ notas:
     descuento_original:
       data.descuento_original || 0,
 
+    cantidad: data.cantidad ?? 1,
+
+    precio_unitario: data.precio_unitario ?? null,
+
     total_original:
       data.total_original ||
       0,
@@ -2837,6 +2872,8 @@ notas:
       // Conservar en pantalla los valores financieros originales;
       // solo el servidor modifica saldos y descuentos existentes.
       ...(tieneActividadFinanciera ? {
+        cantidad: copia[editandoIndex].cantidad ?? 1,
+        precio_unitario: copia[editandoIndex].precio_unitario ?? null,
         total: copia[editandoIndex].total,
         total_original: copia[editandoIndex].total_original,
         pagado: copia[editandoIndex].pagado,
@@ -2899,6 +2936,10 @@ setNuevoTratamiento({
   comision_banco: "",
 
   total: "",
+
+  cantidad: 1,
+
+  precio_unitario: "",
 
   pagado: "",
 
