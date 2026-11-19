@@ -18,6 +18,7 @@ import PacienteCitas from "../components/pacientes/PacienteCitas";
 import ConsentimientosPaciente from "../components/pacientes/consentimientos/ConsentimientosPaciente";
 import ModalTratamientoPaciente from "../components/pacientes/modales/ModalTratamientoPaciente";
 import ModalCobroPaciente from "../components/pacientes/modales/ModalCobroPaciente";
+import ModalLiquidacionGlobalPaciente from "../components/pacientes/modales/ModalLiquidacionGlobalPaciente";
 import ModalEditarPaciente from "../components/pacientes/modales/ModalEditarPaciente";
 import ModalCitaPaciente from "../components/pacientes/modales/ModalCitaPaciente";
 
@@ -342,6 +343,8 @@ const [nuevoTratamiento,
 
   laboratorio: "",
 
+  moneda_laboratorio: "MXN" as "MXN" | "USD",
+
   especialista: "",
 
   especialista_id: "",
@@ -441,6 +444,8 @@ const [
   mostrarModalCobro,
   setMostrarModalCobro,
 ] = useState(false);
+
+const [mostrarLiquidacionGlobal, setMostrarLiquidacionGlobal] = useState(false);
 
 const [
   tratamientoCobro,
@@ -1556,6 +1561,24 @@ else {
 
   }
 
+async function recargarTratamientosTrasLiquidacion() {
+  if (!pacienteAbierto?.id) return;
+  const { data, error } = await supabase.from("tratamientos")
+    .select("*").eq("paciente_id", pacienteAbierto.id)
+    .order("created_at", { ascending: false });
+  if (error || !data) throw error ?? new Error("No se pudieron recargar los tratamientos");
+  setTratamientos(data.map((t: any) => ({
+    ...t,
+    pagado: t.pago,
+    pendiente: t.resta,
+    moneda_precio: t.moneda_precio || "MXN",
+    total_original: t.total_original ?? t.total ?? 0,
+    pagado_original: t.pagado_original ?? t.pago ?? 0,
+    resta_original: t.resta_original ?? t.resta ?? 0,
+  })));
+  await cargarResumenPacientes();
+}
+
 async function abrirModalCobro(
 
   tratamiento: any
@@ -2353,7 +2376,9 @@ if (tieneActividadFinanciera && (
   Number(nuevoTratamiento.especialista || 0) !== Number(tratamientoExistenteEdicion?.especialista || 0) ||
   String(nuevoTratamiento.especialista_id || "") !== String(tratamientoExistenteEdicion?.especialista_id || "") ||
   String(nuevoTratamiento.moneda_especialista || "MXN") !== String(tratamientoExistenteEdicion?.moneda_especialista || "MXN") ||
-  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion?.laboratorio || 0)
+  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion?.laboratorio || 0) ||
+  String(nuevoTratamiento.moneda_laboratorio || "MXN") !== String(tratamientoExistenteEdicion?.moneda_laboratorio || "MXN") ||
+  String(nuevoTratamiento.especialista_nombre || "") !== String(tratamientoExistenteEdicion?.especialista_nombre || "")
 )) {
   alert(es ? "No se pueden cambiar los costos ni la tarifa después de registrar movimientos financieros."
            : "Costs and specialist fees cannot be changed after financial transactions are recorded.");
@@ -2366,11 +2391,28 @@ if (!tratamientoCatalogoSeleccionado && editandoIndex === null) {
   alert(es ? "Selecciona un tratamiento del catálogo." : "Select a catalog treatment.");
   return;
 }
-if (doctorSeleccionado?.tipo_doctor === "especialista") {
-  if (!Number.isFinite(Number(nuevoTratamiento.especialista)) || Number(nuevoTratamiento.especialista) < 0) {
-    alert(es ? "Ingresa honorarios válidos." : "Enter a valid specialist fee.");
-    return;
-  }
+// Los honorarios pertenecen al especialista externo, no al doctor comisionista.
+const importeLaboratorio = Number(nuevoTratamiento.laboratorio || 0);
+const importeEspecialista = Number(nuevoTratamiento.especialista || 0);
+if (!Number.isFinite(importeLaboratorio) || importeLaboratorio < 0 ||
+    !Number.isFinite(importeEspecialista) || importeEspecialista < 0 ||
+    Math.abs(importeLaboratorio - Math.round(importeLaboratorio * 100) / 100) > 0.0000001 ||
+    Math.abs(importeEspecialista - Math.round(importeEspecialista * 100) / 100) > 0.0000001) {
+  alert(es ? "Los costos deben ser importes válidos con máximo dos decimales." : "Costs must be valid amounts with at most two decimal places.");
+  return;
+}
+if (!(["MXN", "USD"].includes(nuevoTratamiento.moneda_laboratorio)) ||
+    !(["MXN", "USD"].includes(nuevoTratamiento.moneda_especialista))) {
+  alert(es ? "Selecciona monedas válidas para los costos." : "Select valid cost currencies.");
+  return;
+}
+if (nuevoTratamiento.especialista_id && importeEspecialista <= 0) {
+  alert(es ? "Ingresa los honorarios del especialista externo." : "Enter the external specialist's fee.");
+  return;
+}
+if (!nuevoTratamiento.especialista_id && importeEspecialista > 0) {
+  alert(es ? "Selecciona un especialista externo para asignar honorarios." : "Select an external specialist to assign a fee.");
+  return;
 }
 
 const cantidadTratamiento = Number(nuevoTratamiento.cantidad);
@@ -2578,6 +2620,8 @@ laboratorio: tratamientoEditar.estado === "Finalizado"
   ? Number(tratamientoEditar.laboratorio || 0)
   : Number(nuevo.laboratorio || 0),
 
+moneda_laboratorio: nuevo.moneda_laboratorio || "MXN",
+
 especialista: Number(nuevo.especialista || 0),
 
 especialista_id: nuevo.especialista_id ? Number(nuevo.especialista_id) : null,
@@ -2680,6 +2724,8 @@ laboratorio:
   Number(
     nuevo.laboratorio || 0
   ),
+
+moneda_laboratorio: nuevo.moneda_laboratorio || "MXN",
 
 especialista:
   Number(
@@ -2808,6 +2854,8 @@ notas:
       data.laboratorio ||
       0,
 
+    moneda_laboratorio: data.moneda_laboratorio || "MXN",
+
     especialista:
       data.especialista ||
       0,
@@ -2922,6 +2970,8 @@ setNuevoTratamiento({
   moneda_precio: "MXN",
 
   laboratorio: "",
+
+  moneda_laboratorio: "MXN",
 
   especialista: "",
 
@@ -3369,6 +3419,13 @@ moneda:
 moneda_precio:
   t.moneda_precio || "MXN",
 
+// FIN02H: conservar cantidad y precio unitario al reabrir un tratamiento.
+cantidad:
+  t.cantidad ?? 1,
+
+precio_unitario:
+  t.precio_unitario ?? null,
+
 total_antes_descuento:
   t.total_antes_descuento,
 
@@ -3393,11 +3450,17 @@ resta_original:
   laboratorio:
   t.laboratorio,
 
+moneda_laboratorio:
+  t.moneda_laboratorio || "MXN",
+
 especialista:
   t.especialista,
 
 especialista_id:
   t.especialista_id,
+
+especialista_tratamiento_id:
+  t.especialista_tratamiento_id ?? null,
 
 especialista_nombre:
   t.especialista_nombre || "",
@@ -4166,6 +4229,7 @@ if (abriendoPacienteDesdeUrl) {
   actualizarEstadoTratamiento={actualizarEstadoTratamiento}
   puedeRegistrarCobros={puedeRegistrarCobros}
   abrirModalCobro={abrirModalCobro}
+  abrirLiquidacionGlobal={() => setMostrarLiquidacionGlobal(true)}
   setNuevoTratamiento={setNuevoTratamiento}
   setDoctorSeleccionado={setDoctorSeleccionado}
   doctores={doctores}
@@ -4203,6 +4267,15 @@ if (abriendoPacienteDesdeUrl) {
   setMostrarModalTratamiento={setMostrarModalTratamiento}
   setEditandoIndex={setEditandoIndex}
   guardarTratamiento={guardarTratamiento}
+/>
+
+<ModalLiquidacionGlobalPaciente
+  abierto={mostrarLiquidacionGlobal}
+  pacienteId={pacienteAbierto?.id ?? null}
+  pacienteNombre={pacienteAbierto?.nombre ?? ""}
+  es={es}
+  onCerrar={() => setMostrarLiquidacionGlobal(false)}
+  onLiquidacionConfirmada={recargarTratamientosTrasLiquidacion}
 />
 
 <ModalCobroPaciente

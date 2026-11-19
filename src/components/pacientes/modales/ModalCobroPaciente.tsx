@@ -137,20 +137,26 @@ export default function ModalCobroPaciente({
         justify-center
         bg-[rgba(15,42,65,0.62)]
         backdrop-blur-[3px]
-        p-4
+        p-2
+        sm:p-4
       "
     >
       <div
         className="
+          flex
           w-full
-          max-w-xl
+          max-w-5xl
+          max-h-[calc(100vh-1rem)]
+          max-h-[calc(100dvh-1rem)]
+          flex-col
           overflow-hidden
           rounded-[24px]
           border
           border-white/20
           bg-[var(--mint-surface)]
           shadow-[0_28px_80px_rgba(15,42,65,0.30)]
-          [&>*:not(h2)]:mx-6
+          sm:max-h-[calc(100vh-2rem)]
+          sm:max-h-[calc(100dvh-2rem)]
         "
       >
         <h2
@@ -158,8 +164,9 @@ export default function ModalCobroPaciente({
             text-xl
             font-bold
             text-white
+            shrink-0
             px-6
-            py-5
+            py-4
             mb-0
            bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)]
             border-b-[3px]
@@ -169,11 +176,13 @@ export default function ModalCobroPaciente({
           {es ? "Registrar cobro" : "Record payment"}
         </h2>
 
+        {/* El área de contenido se desplaza sin ocultar los botones. */}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
         <p
           className="
             text-sm
             mint-text-secondary
-            mb-5
+            mb-4
           "
         >
           {
@@ -182,12 +191,12 @@ export default function ModalCobroPaciente({
           }
         </p>
 
-        <div
-          className="
-            grid
-            gap-4
-          "
-        >
+        <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5">
+          <section aria-labelledby="mintos-cobro-datos" className="min-w-0 rounded-2xl border border-[var(--mint-border)] bg-[var(--mint-surface)] p-4">
+            <h3 id="mintos-cobro-datos" className="mb-4 text-base font-bold mint-text-primary">
+              {es ? "Datos del cobro" : "Payment details"}
+            </h3>
+            <div className="grid gap-4">
 
           <div>
             <label
@@ -569,11 +578,19 @@ export default function ModalCobroPaciente({
             )
           }
 
+            </div>
+          </section>
+
+          <section aria-labelledby="mintos-cobro-resumen" className="min-w-0 rounded-2xl border border-[var(--mint-border)] bg-[var(--mint-surface)] p-4">
+            <h3 id="mintos-cobro-resumen" className="mb-4 text-base font-bold mint-text-primary">
+              {es ? "Costos y resumen financiero" : "Costs and financial summary"}
+            </h3>
+            <div className="grid gap-4">
           <div
             className="
               grid
               grid-cols-1
-              md:grid-cols-3
+              sm:grid-cols-2
               gap-3
             "
           >
@@ -639,7 +656,7 @@ export default function ModalCobroPaciente({
               />
             </div>
 
-          <div>
+          <div className="sm:col-span-2">
 
   <label
     className="
@@ -953,17 +970,13 @@ export default function ModalCobroPaciente({
          })()}
        </div>
           </div>
-
+            </div>
+          </section>
+        </div>
         </div>
 
-        <div
-          className="
-            flex
-            justify-end
-            gap-3
-            mt-6
-          "
-        >
+        {/* Pie del modal: siempre visible, independientemente del scroll. */}
+        <div className="flex shrink-0 flex-wrap justify-end gap-3 border-t border-[var(--mint-border)] bg-[var(--mint-surface)] px-4 py-4 sm:px-6">
 
           <button
             type="button"

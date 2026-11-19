@@ -19,6 +19,7 @@ export type PacienteGeneralProps = {
   actualizarEstadoTratamiento: any;
   puedeRegistrarCobros: any;
   abrirModalCobro: any;
+  abrirLiquidacionGlobal: () => void;
   setNuevoTratamiento: Dispatch<SetStateAction<any>>;
   setDoctorSeleccionado: Dispatch<SetStateAction<any>>;
   doctores: any;
@@ -57,6 +58,7 @@ export default function PacienteGeneral({
   actualizarEstadoTratamiento,
   puedeRegistrarCobros,
   abrirModalCobro,
+  abrirLiquidacionGlobal,
   setNuevoTratamiento,
   setDoctorSeleccionado,
   doctores,
@@ -415,6 +417,15 @@ export default function PacienteGeneral({
 
           </h3>
 
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {puedeRegistrarCobros && tratamientos.some((t) =>
+              Number(t.resta_original ?? t.resta ?? saldoMonetarioMXN(t)) > 0.005
+            ) && (
+              <button type="button" onClick={abrirLiquidacionGlobal}
+                className="mint-btn border border-[var(--mint-border-teal)] px-4 py-2 text-sm font-semibold">
+                {es ? "Liquidar todo" : "Settle all"}
+              </button>
+            )}
           {
             puedeCrearTratamientos && (
 
@@ -439,6 +450,7 @@ export default function PacienteGeneral({
 
             )
           }
+          </div>
 
         </div>
 
