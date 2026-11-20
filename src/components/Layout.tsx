@@ -379,7 +379,9 @@ export default function Layout() {
     esAdmin;
 
   const puedeConfigurarFinanzas =
-    esAdmin;
+    esAdmin ||
+    permisos?.configurar_precios_costos === true ||
+    permisos?.configurar_tipo_cambio === true;
 
   const puedeVerSeguridadConfig =
     esAdmin;
