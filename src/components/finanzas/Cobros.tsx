@@ -11,6 +11,7 @@ import {
 import {
   useLanguage,
 } from "../../context/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 
 type Cobro = {
   id: number;
@@ -57,6 +58,13 @@ export default function Cobros() {
   const {
     language,
   } = useLanguage();
+
+  const { perfil } = useAuth();
+  const esAdmin = perfil?.rol === "admin";
+  const [anulandoPagoId, setAnulandoPagoId] = useState<number | null>(null);
+  const [cobroParaAnular, setCobroParaAnular] = useState<Cobro | null>(null);
+  const [motivoAnulacion, setMotivoAnulacion] = useState("");
+  const [errorAnulacion, setErrorAnulacion] = useState("");
 
   const es =
     language === "es";
@@ -146,7 +154,7 @@ export default function Cobros() {
     ] = await Promise.all([
 
       supabase
-        .from("pagos")
+        .from("mintos_pagos_vigentes")
         .select("*")
         .order(
           "fecha",
@@ -259,6 +267,33 @@ export default function Cobros() {
 
     setCargando(false);
 
+  }
+
+  async function anularCobro() {
+    const cobro = cobroParaAnular;
+    if (!esAdmin || !cobro || anulandoPagoId !== null) return;
+    const motivo = motivoAnulacion.trim();
+    if (motivo.length < 10) {
+      setErrorAnulacion(es ? "El motivo debe tener al menos 10 caracteres." : "The reason must contain at least 10 characters.");
+      return;
+    }
+    setErrorAnulacion("");
+    setAnulandoPagoId(cobro.id);
+    try {
+      const { error } = await supabase.rpc("mintos_anular_cobro_v1", {
+        p_pago_id: cobro.id,
+        p_motivo: motivo,
+      });
+      if (error) throw error;
+      await cargarDatos();
+      setCobroParaAnular(null);
+      setMotivoAnulacion("");
+    } catch (error) {
+      console.error("FIN03: error anulando cobro", error);
+      setErrorAnulacion(error instanceof Error ? error.message : (es ? "No se pudo anular el cobro." : "Could not void payment."));
+    } finally {
+      setAnulandoPagoId(null);
+    }
   }
 
   function obtenerInicioDia(
@@ -1818,6 +1853,7 @@ export default function Cobros() {
                   <th className="px-5 py-3 text-right text-xs font-semibold mint-text-secondary">
                     {es ? "Neto" : "Net"}
                   </th>
+                  {esAdmin && <th className="px-5 py-3 text-center text-xs font-semibold mint-text-secondary">{es ? "Acciones" : "Actions"}</th>}
 
                 </tr>
 
@@ -1833,7 +1869,7 @@ export default function Cobros() {
                       <tr>
 
                         <td
-                          colSpan={10}
+                          colSpan={esAdmin ? 11 : 10}
                           className="
                             text-center
                             p-12
@@ -1855,7 +1891,7 @@ export default function Cobros() {
                         <tr>
 
                           <td
-                            colSpan={10}
+                            colSpan={esAdmin ? 11 : 10}
                             className="
                               text-center
                               p-12
@@ -2114,6 +2150,21 @@ export default function Cobros() {
 
                               </td>
 
+                              {esAdmin && (
+                                <td className="px-5 py-4 text-center">
+                                  <button
+                                    type="button"
+                                    disabled={anulandoPagoId !== null}
+                                    onClick={() => { setCobroParaAnular(cobro); setMotivoAnulacion(""); setErrorAnulacion(""); }}
+                                    className="mint-btn mint-btn-secondary px-3 py-2 text-xs disabled:opacity-50"
+                                    aria-label={es ? `Anular cobro ${cobro.id}` : `Void payment ${cobro.id}`}
+                                  >
+                                    {anulandoPagoId === cobro.id
+                                      ? (es ? "Anulando..." : "Voiding...")
+                                      : (es ? "Anular cobro" : "Void payment")}
+                                  </button>
+                                </td>
+                              )}
                             </tr>
 
                           )
@@ -2172,6 +2223,21 @@ export default function Cobros() {
 
       </section>
 
+      {cobroParaAnular && esAdmin && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && anulandoPagoId === null) setCobroParaAnular(null); }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="fin03-titulo" className="w-full max-w-lg rounded-2xl border border-[var(--mint-border)] bg-white p-6 shadow-2xl">
+            <h2 id="fin03-titulo" className="text-xl font-bold text-slate-900">{es ? "Anular cobro" : "Void payment"} #{cobroParaAnular.id}</h2>
+            <p className="mt-3 text-sm text-slate-600">{es ? "Esta operación quedará registrada en auditoría. El pago original se conservará." : "This action will be logged. The original payment will be preserved."}</p>
+            <label htmlFor="fin03-motivo" className="mt-5 block text-sm font-semibold text-slate-800">{es ? "Motivo de anulación (mínimo 10 caracteres)" : "Reason for voiding (at least 10 characters)"}</label>
+            <textarea id="fin03-motivo" autoFocus rows={4} maxLength={1000} value={motivoAnulacion} onChange={(event) => { setMotivoAnulacion(event.target.value); setErrorAnulacion(""); }} disabled={anulandoPagoId !== null} className="mt-2 w-full rounded-lg border border-slate-300 p-3 text-slate-900" />
+            {errorAnulacion && <p role="alert" className="mt-2 text-sm text-red-700">{errorAnulacion}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" disabled={anulandoPagoId !== null} onClick={() => setCobroParaAnular(null)} className="rounded-lg border border-slate-300 px-4 py-2 text-slate-800 disabled:opacity-50">{es ? "Cancelar" : "Cancel"}</button>
+              <button type="button" disabled={anulandoPagoId !== null || motivoAnulacion.trim().length < 10} onClick={() => void anularCobro()} className="rounded-lg bg-red-700 px-4 py-2 font-semibold text-white disabled:opacity-50">{anulandoPagoId !== null ? (es ? "Anulando..." : "Voiding...") : (es ? "Confirmar anulación" : "Confirm void")}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
 
   );

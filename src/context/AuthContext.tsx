@@ -49,6 +49,7 @@ export type PermisosUsuario = {
   ver_comisiones: boolean;
 
   configurar_precios_costos: boolean;
+  configurar_tipo_cambio: boolean;
   configurar_comisiones: boolean;
 
   administrar_usuarios: boolean;
@@ -211,6 +212,7 @@ export function AuthProvider({
           ver_utilidades,
           ver_comisiones,
           configurar_precios_costos,
+          configurar_tipo_cambio,
           configurar_comisiones,
           administrar_usuarios,
           ver_bitacora

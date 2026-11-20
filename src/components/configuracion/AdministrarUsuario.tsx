@@ -53,6 +53,7 @@ type Permisos = {
   ver_comisiones: boolean;
 
   configurar_precios_costos: boolean;
+  configurar_tipo_cambio: boolean;
   configurar_comisiones: boolean;
 
   administrar_usuarios: boolean;
@@ -93,6 +94,7 @@ const permisosVacios: Permisos = {
   ver_comisiones: false,
 
   configurar_precios_costos: false,
+  configurar_tipo_cambio: false,
   configurar_comisiones: false,
 
   administrar_usuarios: false,
@@ -162,8 +164,9 @@ const gruposPermisos = [
     permisos: [
       [
         "configurar_precios_costos",
-        "Configurar precios y costos",
+        "Editar tratamientos",
       ],
+      ["configurar_tipo_cambio", "Tipo de cambio"],
       [
         "configurar_comisiones",
         "Configurar comisiones",
@@ -202,7 +205,7 @@ const traducciones: Record<string, string> = {
   "Ver utilidades": "View profits",
   "Ver comisiones": "View commissions",
   "Configuración": "Settings",
-  "Configurar precios y costos": "Configure prices and costs",
+  "Editar tratamientos": "Edit treatments",
   "Configurar comisiones": "Configure commissions",
   "Administrar usuarios": "Manage users",
   "Ver bitácora": "View audit log",
@@ -347,6 +350,7 @@ export default function AdministrarUsuario({
         ver_utilidades,
         ver_comisiones,
         configurar_precios_costos,
+        configurar_tipo_cambio,
         configurar_comisiones,
         administrar_usuarios,
         ver_bitacora

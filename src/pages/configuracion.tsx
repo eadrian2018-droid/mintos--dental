@@ -77,7 +77,7 @@ export default function Configuracion() {
     esAdmin;
 
   const puedeVerFinanzas =
-    esAdmin;
+    esAdmin || permisos?.configurar_precios_costos === true || permisos?.configurar_tipo_cambio === true;
 
   const puedeVerSeguridad =
     esAdmin;

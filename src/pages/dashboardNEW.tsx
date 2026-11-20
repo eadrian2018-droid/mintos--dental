@@ -201,7 +201,7 @@ export default function Dashboard() {
           ),
 
         supabase
-          .from("pagos")
+          .from("mintos_pagos_vigentes")
           .select(
             "monto_mxn, created_at"
           )

@@ -100,7 +100,7 @@ export const finanzasService = {
       data,
       error,
     } = await supabase
-      .from("pagos")
+      .from("mintos_pagos_vigentes")
       .select("*")
       .order(
         "fecha",

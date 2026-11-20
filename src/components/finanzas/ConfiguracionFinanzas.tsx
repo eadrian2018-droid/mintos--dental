@@ -119,6 +119,7 @@ export default function ConfiguracionFinanzas({
 
   const {
     perfil,
+    permisos,
   } = useAuth();
 
   const { language } = useLanguage();
@@ -128,12 +129,25 @@ export default function ConfiguracionFinanzas({
   const esAdmin =
     perfil?.rol === "admin";
 
+  const puedeEditarTratamientos = esAdmin || permisos?.configurar_precios_costos === true;
+  const puedeConfigurarMoneda = esAdmin || permisos?.configurar_tipo_cambio === true;
+
   const [
     seccion,
     setSeccion,
   ] = useState<SeccionConfiguracion>(
     "tratamientos"
   );
+
+  useEffect(() => {
+    if (seccion === "tratamientos" && !puedeEditarTratamientos) {
+      setSeccion(puedeConfigurarMoneda ? "moneda" : "tratamientos");
+    } else if (seccion === "moneda" && !puedeConfigurarMoneda) {
+      setSeccion("tratamientos");
+    } else if ((seccion === "comisiones" || seccion === "pagos") && !esAdmin) {
+      setSeccion(puedeEditarTratamientos ? "tratamientos" : "moneda");
+    }
+  }, [seccion, puedeEditarTratamientos, puedeConfigurarMoneda, esAdmin]);
 
   const [
     monedaPrincipal,
@@ -338,6 +352,7 @@ export default function ConfiguracionFinanzas({
   }
 
   async function guardarConfiguracionMoneda() {
+    if (!puedeConfigurarMoneda) return;
 
     if (
       monedaSecundariaActiva &&
@@ -567,7 +582,7 @@ export default function ConfiguracionFinanzas({
           "
         >
 
-          <button
+          {puedeEditarTratamientos && <button
             onClick={() =>
               setSeccion(
                 "tratamientos"
@@ -596,7 +611,9 @@ export default function ConfiguracionFinanzas({
 
           </button>
 
-          <button
+          }
+
+          {esAdmin && <button
             onClick={() =>
               setSeccion(
                 "comisiones"
@@ -624,6 +641,8 @@ export default function ConfiguracionFinanzas({
             }
 
           </button>
+
+          }
 
           {
             esAdmin
@@ -661,7 +680,7 @@ export default function ConfiguracionFinanzas({
           }
 
           {
-            esAdmin
+            puedeConfigurarMoneda
 
             &&
 
@@ -703,7 +722,7 @@ export default function ConfiguracionFinanzas({
         seccion ===
         "tratamientos"
 
-        &&
+        && puedeEditarTratamientos &&
 
         <CatalogoTratamientos
 
@@ -735,7 +754,7 @@ export default function ConfiguracionFinanzas({
       }
 
       {
-        seccion ===
+        esAdmin && seccion ===
         "comisiones"
 
         &&
@@ -782,7 +801,7 @@ export default function ConfiguracionFinanzas({
       }
 
       {
-        esAdmin &&
+        puedeConfigurarMoneda &&
         seccion ===
         "moneda"
 
