@@ -54,7 +54,10 @@ export default function ModalLiquidacionGlobalPaciente({
   const [revisionNecesaria, setRevisionNecesaria] = useState(false);
   const intentoRef = useRef<{ id: string; payload: string } | null>(null);
   const enCursoRef = useRef(false);
-  const secuenciaRef = useRef(0);
+  // La carga de configuración y las cotizaciones son operaciones independientes.
+  // No deben invalidarse entre sí al cambiar el tipo de cambio.
+  const secuenciaConfigRef = useRef(0);
+  const secuenciaCotizacionRef = useRef(0);
 
   // Reiniciar únicamente al cambiar de paciente o al abrir una operación nueva.
   useEffect(() => {
@@ -67,13 +70,13 @@ export default function ModalLiquidacionGlobalPaciente({
     setResultado(null);
     setRevisionNecesaria(false);
     intentoRef.current = null;
-    const secuencia = ++secuenciaRef.current;
+    const secuencia = ++secuenciaConfigRef.current;
     void (async () => {
       const [config, cambio] = await Promise.all([
         supabase.from("configuracion_pagos").select("metodo").eq("activo", true),
         supabase.from("configuracion_finanzas").select("valor").eq("clave", "tipo_cambio").maybeSingle(),
       ]);
-      if (secuencia !== secuenciaRef.current) return;
+      if (secuencia !== secuenciaConfigRef.current) return;
       if (config.error || cambio.error) {
         setError(es ? "No fue posible cargar la configuración financiera." : "Unable to load payment settings.");
         return;
@@ -84,7 +87,7 @@ export default function ModalLiquidacionGlobalPaciente({
       setTipoCambio(Number(cambio.data?.valor ?? 0));
       setConfigLista(true);
     })();
-    return () => { ++secuenciaRef.current; };
+    return () => { ++secuenciaConfigRef.current; };
   }, [abierto, pacienteId, es]);
 
   const cotizacionVigente = !!cotizacion && cotizacion.moneda_cobro === moneda &&
@@ -94,7 +97,7 @@ export default function ModalLiquidacionGlobalPaciente({
   // El identificador de secuencia descarta respuestas obsoletas de solicitudes anteriores.
   useEffect(() => {
     if (!abierto || !configLista || !pacienteId || revisionNecesaria || intentoRef.current || enCursoRef.current) return;
-    const secuencia = ++secuenciaRef.current;
+    const secuencia = ++secuenciaCotizacionRef.current;
     const monedaActual = moneda;
     const cambioActual = tipoCambio > 0 ? tipoCambio : null;
     setCotizacion(null);
@@ -108,7 +111,7 @@ export default function ModalLiquidacionGlobalPaciente({
             p_moneda: monedaActual,
             p_tipo_cambio_confirmado: cambioActual,
           });
-          if (secuencia !== secuenciaRef.current) return;
+          if (secuencia !== secuenciaCotizacionRef.current) return;
           if (errorRpc) throw errorRpc;
           const cot = data as Cotizacion;
           if (!cot || !Array.isArray(cot.detalle) || !Number.isFinite(Number(cot.total_cobro)) ||
@@ -118,15 +121,15 @@ export default function ModalLiquidacionGlobalPaciente({
           }
           setCotizacion(cot);
         } catch (e) {
-          if (secuencia === secuenciaRef.current) setError(e instanceof Error ? e.message : String(e));
+          if (secuencia === secuenciaCotizacionRef.current) setError(e instanceof Error ? e.message : String(e));
         } finally {
-          if (secuencia === secuenciaRef.current) setCargando(false);
+          if (secuencia === secuenciaCotizacionRef.current) setCargando(false);
         }
       })();
     }, 250);
     return () => {
       window.clearTimeout(temporizador);
-      ++secuenciaRef.current;
+      ++secuenciaCotizacionRef.current;
     };
   }, [abierto, configLista, pacienteId, moneda, tipoCambio, es, revisionNecesaria]);
 
@@ -184,7 +187,9 @@ export default function ModalLiquidacionGlobalPaciente({
 
   if (!abierto) return null;
   const ocupado = cargando || cobrando;
-  const bloquearEdicion = ocupado || revisionNecesaria || !!intentoRef.current;
+  // La cotización en curso no debe bloquear cambios: el efecto invalida respuestas obsoletas.
+  // Bloquear únicamente durante el cobro o cuando existe un intento pendiente de conciliación.
+  const bloquearEdicion = cobrando || revisionNecesaria || !!intentoRef.current;
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/75 p-3 sm:p-6" role="dialog" aria-modal="true" aria-label={es ? "Liquidar todo" : "Settle all balances"}>
       <div className="flex max-h-[min(90dvh,780px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white text-slate-900 shadow-2xl">

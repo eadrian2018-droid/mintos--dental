@@ -477,19 +477,19 @@ export default function ConfiguracionFinanzas({
       },
     ];
 
-    const {
-      error,
-    } = await supabase
-      .from(
-        "configuracion_finanzas"
-      )
-      .upsert(
-        filas,
-        {
-          onConflict:
-            "clave",
-        }
-      );
+    // Un usuario con permiso de tipo de cambio solo puede actualizar
+    // la fila existente tipo_cambio. El upsert de las cuatro filas
+    // requiere permisos de administrador y falla bajo RLS.
+    const { error } = esAdmin
+      ? await supabase
+          .from("configuracion_finanzas")
+          .upsert(filas, { onConflict: "clave" })
+      : await supabase
+          .from("configuracion_finanzas")
+          .update({ valor: cambioGuardado, updated_at: ahora })
+          .eq("clave", "tipo_cambio")
+          .select("id")
+          .single();
 
     if (error) {
 
