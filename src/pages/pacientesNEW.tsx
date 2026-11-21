@@ -2368,21 +2368,50 @@ if (
   return;
 }
 
-// FIN-02: nunca permitir que una edición con actividad financiera
-// cambie la tarifa, costo o especialista asociados.
+// FIN-02: mantener protegidos los honorarios del especialista con actividad financiera.
+// FIN02A controla por separado los cambios de laboratorio y su moneda.
 if (tieneActividadFinanciera && (
   Number(nuevoTratamiento.especialista_tratamiento_id || 0) !==
     Number(tratamientoExistenteEdicion?.especialista_tratamiento_id || 0) ||
   Number(nuevoTratamiento.especialista || 0) !== Number(tratamientoExistenteEdicion?.especialista || 0) ||
   String(nuevoTratamiento.especialista_id || "") !== String(tratamientoExistenteEdicion?.especialista_id || "") ||
   String(nuevoTratamiento.moneda_especialista || "MXN") !== String(tratamientoExistenteEdicion?.moneda_especialista || "MXN") ||
-  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion?.laboratorio || 0) ||
-  String(nuevoTratamiento.moneda_laboratorio || "MXN") !== String(tratamientoExistenteEdicion?.moneda_laboratorio || "MXN") ||
   String(nuevoTratamiento.especialista_nombre || "") !== String(tratamientoExistenteEdicion?.especialista_nombre || "")
 )) {
   alert(es ? "No se pueden cambiar los costos ni la tarifa después de registrar movimientos financieros."
            : "Costs and specialist fees cannot be changed after financial transactions are recorded.");
   return;
+}
+
+// FIN02A: permitir editar únicamente laboratorio/moneda con abonos, nunca
+// con comisiones autorizadas o liquidadas. La protección definitiva sigue en PostgreSQL.
+if (tratamientoExistenteEdicion && (
+  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion.laboratorio || 0) ||
+  String(nuevoTratamiento.moneda_laboratorio || "MXN") !== String(tratamientoExistenteEdicion.moneda_laboratorio || "MXN")
+)) {
+  if (tratamientoExistenteEdicion.comision_autorizada_at != null ||
+      tratamientoExistenteEdicion.comision_autorizada_por != null) {
+    alert(es ? "No se puede modificar el laboratorio: la comisión está autorizada."
+             : "The laboratory cost cannot be changed: the commission is authorized.");
+    return;
+  }
+  const { data: pagosLiquidados, error: errorConsultaComisiones } = await supabase
+    .from("pagos")
+    .select("id")
+    .eq("tratamiento_id", tratamientoExistenteEdicion.id)
+    .eq("comision_doctor_pagada", true)
+    .limit(1);
+  if (errorConsultaComisiones) {
+    console.error("Error verificando comisiones liquidadas:", errorConsultaComisiones);
+    alert(es ? "No fue posible verificar las comisiones. No se guardaron los cambios."
+             : "Unable to verify settled commissions. Changes were not saved.");
+    return;
+  }
+  if (pagosLiquidados?.length) {
+    alert(es ? "No se puede modificar el laboratorio: existen comisiones liquidadas."
+             : "The laboratory cost cannot be changed: commissions have been settled.");
+    return;
+  }
 }
 
 // El tarifario anterior deja de intervenir en los nuevos tratamientos.
@@ -3452,6 +3481,9 @@ resta_original:
 
 moneda_laboratorio:
   t.moneda_laboratorio || "MXN",
+
+comision_autorizada_at: t.comision_autorizada_at ?? null,
+comision_autorizada_por: t.comision_autorizada_por ?? null,
 
 especialista:
   t.especialista,

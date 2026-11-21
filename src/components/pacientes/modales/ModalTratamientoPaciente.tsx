@@ -81,6 +81,16 @@ export default function ModalTratamientoPaciente({
     ? "nuevo"
     : `editar:${tratamientos[editandoIndex]?.id ?? editandoIndex}`;
   const calculoAutomaticoActivo = contextoCalculoAutomatico === contextoActual;
+  // El laboratorio puede editarse con abonos; FIN02A impide cambios
+  // si hay autorización o liquidación de comisiones (verificación en guardar).
+  const laboratorioBloqueado = Boolean(editandoIndex !== null && (() => {
+    const existente = tratamientos[editandoIndex];
+    return existente && (
+      existente.estado === "Finalizado" ||
+      existente.comision_autorizada_at != null ||
+      existente.comision_autorizada_por != null
+    );
+  })());
   useEffect(() => {
     if (!mostrarModalTratamiento) {
       setContextoCalculoAutomatico(null);
@@ -429,10 +439,10 @@ export default function ModalTratamientoPaciente({
                       </label>
                       <div className="grid grid-cols-[1fr_auto] gap-2">
                         <input type="number" min="0" step="0.01" className="mint-input w-full p-3"
-                          value={nuevoTratamiento.laboratorio} disabled={costosBloqueados}
+                          value={nuevoTratamiento.laboratorio} disabled={laboratorioBloqueado}
                           onChange={(e) => setNuevoTratamiento((prev) => ({ ...prev, laboratorio: e.target.value }))} />
                         <select className="mint-input p-3" value={nuevoTratamiento.moneda_laboratorio}
-                          disabled={costosBloqueados}
+                          disabled={laboratorioBloqueado}
                           onChange={(e) => setNuevoTratamiento((prev) => ({ ...prev, moneda_laboratorio: e.target.value as "MXN" | "USD" }))}>
                           <option value="MXN">MXN</option><option value="USD">USD</option>
                         </select>
