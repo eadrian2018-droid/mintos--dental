@@ -38,10 +38,27 @@ type Props = {
 const dinero = (valor: number, moneda: Moneda) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: moneda }).format(valor);
 
+// Los errores de Supabase/PostgREST son objetos planos, no instancias de Error.
+// String(error) los convierte en "[object Object]" y oculta la causa real.
+const mensajeError = (error: unknown): string => {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object") {
+    const e = error as Record<string, unknown>;
+    const campos = ["message", "details", "hint", "code"]
+      .map((clave) => e[clave])
+      .filter((valor): valor is string => typeof valor === "string" && valor.trim().length > 0);
+    if (campos.length) return [...new Set(campos)].join(" · ");
+  }
+  return "Error desconocido. Revisa la consola del navegador.";
+};
+
 export default function ModalLiquidacionGlobalPaciente({
   abierto, pacienteId, pacienteNombre, es, onCerrar, onLiquidacionConfirmada,
 }: Props) {
   const [moneda, setMoneda] = useState<Moneda>("MXN");
+  const [modo, setModo] = useState<"liquidar" | "abonar">("liquidar");
+  const [abonos, setAbonos] = useState<Record<number, string>>({});
+  const [pagosParciales, setPagosParciales] = useState<Array<{ tratamiento: string; monto: number }>>([]);
   const [metodo, setMetodo] = useState("");
   const [metodos, setMetodos] = useState<string[]>([]);
   const [tipoCambio, setTipoCambio] = useState(0);
@@ -64,6 +81,9 @@ export default function ModalLiquidacionGlobalPaciente({
     if (!abierto) return;
     setConfigLista(false);
     setMoneda("MXN");
+    setModo("liquidar");
+    setAbonos({});
+    setPagosParciales([]);
     setMetodo("");
     setCotizacion(null);
     setError("");
@@ -101,6 +121,7 @@ export default function ModalLiquidacionGlobalPaciente({
     const monedaActual = moneda;
     const cambioActual = tipoCambio > 0 ? tipoCambio : null;
     setCotizacion(null);
+    setAbonos({});
     setError("");
     setCargando(true);
     const temporizador = window.setTimeout(() => {
@@ -121,7 +142,7 @@ export default function ModalLiquidacionGlobalPaciente({
           }
           setCotizacion(cot);
         } catch (e) {
-          if (secuencia === secuenciaCotizacionRef.current) setError(e instanceof Error ? e.message : String(e));
+          if (secuencia === secuenciaCotizacionRef.current) setError(mensajeError(e));
         } finally {
           if (secuencia === secuenciaCotizacionRef.current) setCargando(false);
         }
@@ -132,6 +153,82 @@ export default function ModalLiquidacionGlobalPaciente({
       ++secuenciaCotizacionRef.current;
     };
   }, [abierto, configLista, pacienteId, moneda, tipoCambio, es, revisionNecesaria]);
+
+  const abonosElegidos = (cotizacion?.detalle ?? []).flatMap((item) => {
+    const raw = abonos[item.tratamiento_id]?.trim() ?? "";
+    if (!raw) return [];
+    const monto = Number(raw);
+    return [{ item, monto }];
+  });
+  const totalAbonos = Math.round(abonosElegidos.reduce((sum, x) => sum + (Number.isFinite(x.monto) ? x.monto : 0), 0) * 100) / 100;
+  const abonosValidos = abonosElegidos.length > 0 && abonosElegidos.every(({ item, monto }) =>
+    Number.isFinite(monto) && monto > 0 && monto <= Number(item.monto_cobro) + 0.00001 &&
+    Math.abs(Math.round(monto * 100) - monto * 100) < 0.000001
+  );
+
+  async function registrarAbonos() {
+    if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo ||
+      !abonosValidos || cobrando || enCursoRef.current || revisionNecesaria) return;
+    enCursoRef.current = true;
+    setCobrando(true);
+    setError("");
+    const confirmados: Array<{ tratamiento: string; monto: number }> = [];
+    try {
+      // Cada cobro usa la RPC FIN01/FIN02 existente. No se hacen escrituras directas.
+      // Los pagos son individuales: si falla uno, los anteriores pueden estar confirmados.
+      for (const { item, monto } of abonosElegidos) {
+        const solicitudId = crypto.randomUUID();
+        const { data, error: errorRpc } = await supabase.rpc("mintos_registrar_cobro_v2", {
+          p_solicitud_id: solicitudId,
+          p_tratamiento_id: item.tratamiento_id,
+          p_paciente_id: pacienteId,
+          p_modo: "cobro",
+          p_monto: monto,
+          p_moneda: moneda,
+          p_metodo_pago: metodo,
+          p_tipo_descuento: "monto",
+          p_valor_descuento: 0,
+          p_laboratorio: null,
+          p_especialista: null,
+          p_tipo_cambio_confirmado: moneda === "USD" || item.moneda_precio === "USD"
+            ? cotizacion.tipo_cambio_confirmado : null,
+        });
+        if (errorRpc) throw errorRpc;
+        const r = data as { solicitud_id?: string; pago_id?: number; tratamiento_id?: number; monto_recibido?: number };
+        if (r?.solicitud_id !== solicitudId || !r.pago_id ||
+          Number(r.tratamiento_id) !== item.tratamiento_id ||
+          Math.abs(Number(r.monto_recibido) - monto) > 0.005) {
+          throw new Error(es
+            ? "La confirmación del cobro requiere revisión. No repitas la operación."
+            : "Payment confirmation requires review. Do not repeat the transaction.");
+        }
+        confirmados.push({ tratamiento: item.tratamiento || `#${item.tratamiento_id}`, monto });
+        setPagosParciales([...confirmados]);
+      }
+      setRevisionNecesaria(true);
+      try {
+        await onLiquidacionConfirmada();
+      } catch (e) {
+        console.error("Abonos confirmados; error al actualizar la vista:", e);
+        setError(es ? "Abonos confirmados. Recarga el expediente para actualizar la vista." :
+          "Payments confirmed. Reload the patient record to refresh the view.");
+      }
+    } catch (e) {
+      // Fallo ambiguo: no repetir automáticamente, ya que el servidor pudo hacer COMMIT.
+      setRevisionNecesaria(true);
+      setError((es ? "Detén los cobros y revisa el historial antes de reintentar. " :
+        "Stop and review payment history before retrying. ") +
+        (mensajeError(e)));
+      if (confirmados.length) {
+        try { await onLiquidacionConfirmada(); } catch (refreshError) {
+          console.error("Error al actualizar abonos parciales:", refreshError);
+        }
+      }
+    } finally {
+      enCursoRef.current = false;
+      setCobrando(false);
+    }
+  }
 
   async function liquidar() {
     if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo || cobrando || enCursoRef.current || revisionNecesaria) return;
@@ -178,7 +275,7 @@ export default function ModalLiquidacionGlobalPaciente({
       }
     } catch (e) {
       // Conservar el UUID para reintentos idénticos: una pérdida de conexión puede ocurrir después del COMMIT.
-      setError(e instanceof Error ? e.message : String(e));
+      setError(mensajeError(e));
     } finally {
       enCursoRef.current = false;
       setCobrando(false);
@@ -199,9 +296,19 @@ export default function ModalLiquidacionGlobalPaciente({
           <button type="button" className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-slate-600 hover:bg-slate-100 disabled:opacity-50" onClick={onCerrar} disabled={ocupado} aria-label={es ? "Cerrar" : "Close"}>✕</button>
         </header>
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto bg-white px-5 py-6 sm:px-7">
-          <p className="text-sm text-slate-500">{es
-            ? "Se cobrarán todos los tratamientos con saldo pendiente. No se permiten pagos parciales en esta operación."
-            : "Every outstanding treatment will be paid in full. Partial payments are not available in this operation."}</p>
+          <div className="flex gap-2 rounded-xl bg-slate-100 p-1">
+            {(["liquidar", "abonar"] as const).map((opcion) => (
+              <button key={opcion} type="button" disabled={bloquearEdicion}
+                onClick={() => { setModo(opcion); setAbonos({}); setError(""); }}
+                className={`flex-1 rounded-lg px-4 py-2 text-sm font-semibold ${modo === opcion ? "bg-white text-teal-800 shadow" : "text-slate-600"} disabled:opacity-50`}>
+                {opcion === "liquidar" ? (es ? "Liquidar todo" : "Settle all") : (es ? "Abonar por tratamiento" : "Pay by treatment")}
+              </button>
+            ))}
+          </div>
+          <p className="text-sm text-slate-500">{modo === "liquidar"
+            ? (es ? "Se cobrarán todos los saldos pendientes." : "All outstanding balances will be paid.")
+            : (es ? "Escribe el abono de cada tratamiento. Solo se cobrarán los importes capturados. Los cobros se registran individualmente."
+              : "Enter an amount per treatment. Only entered amounts will be charged. Payments are recorded individually.")}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-sm font-medium text-slate-900">{es ? "Moneda" : "Currency"}
               <select className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-slate-900 p-2" value={moneda} disabled={bloquearEdicion} onChange={(e) => { setMoneda(e.target.value as Moneda); setCotizacion(null); }}>
@@ -227,15 +334,34 @@ export default function ModalLiquidacionGlobalPaciente({
                   <div key={item.tratamiento_id} className="flex items-start justify-between gap-3 border-b border-slate-200 p-3 text-sm last:border-b-0">
                     <div className="min-w-0"><p className="font-medium text-slate-900">{item.tratamiento || `#${item.tratamiento_id}`}</p>
                       <p className="text-xs text-slate-500">#{item.tratamiento_id} · {es ? "Saldo" : "Balance"}: {dinero(Number(item.saldo_original), item.moneda_precio)}</p></div>
-                    <span className="shrink-0 font-semibold text-slate-900">{dinero(Number(item.monto_cobro), moneda)}</span>
+                    {modo === "liquidar" ? (
+                      <span className="shrink-0 font-semibold text-slate-900">{dinero(Number(item.monto_cobro), moneda)}</span>
+                    ) : (
+                      <label className="shrink-0 text-right text-xs text-slate-600">
+                        {es ? "Máximo" : "Maximum"}: {dinero(Number(item.monto_cobro), moneda)}
+                        <input type="number" min="0" max={Number(item.monto_cobro)} step="0.01"
+                          inputMode="decimal" placeholder="0.00"
+                          className="mt-1 block w-36 rounded-lg border border-slate-300 bg-white p-2 text-right text-sm text-slate-900"
+                          disabled={bloquearEdicion}
+                          value={abonos[item.tratamiento_id] ?? ""}
+                          onChange={(e) => setAbonos((prev) => ({ ...prev, [item.tratamiento_id]: e.target.value }))} />
+                      </label>
+                    )}
                   </div>
                 ))}
               </div>
               <div className="flex justify-between gap-3 bg-slate-50 p-4 font-bold text-slate-900">
-                <span>{es ? "Total a cobrar" : "Total due"}</span><span>{dinero(Number(cotizacion.total_cobro), moneda)}</span>
+                <span>{es ? "Total a cobrar" : "Total due"}</span><span>{dinero(modo === "liquidar" ? Number(cotizacion.total_cobro) : totalAbonos, moneda)}</span>
               </div>
             </div>
           )}
+          {pagosParciales.length > 0 && <p role="status" className="rounded-lg border border-emerald-300 bg-emerald-50 p-3 text-sm text-emerald-800">
+            {es ? "Abonos confirmados:" : "Confirmed payments:"} {pagosParciales.map((p) => `${p.tratamiento}: ${dinero(p.monto, moneda)}`).join(" · ")}
+          </p>}
+          {modo === "abonar" && abonosElegidos.length > 0 && !abonosValidos &&
+            <p role="alert" className="text-sm text-red-600">{es
+              ? "Revisa los importes: deben ser positivos, tener máximo dos decimales y no exceder el saldo."
+              : "Check amounts: they must be positive, have at most two decimals, and not exceed the balance."}</p>}
           {error && <p role="alert" className="rounded-lg border border-red-400/50 bg-red-500/10 p-3 text-sm text-red-600">{error}</p>}
           {resultado && <p role="status" className="rounded-lg border border-emerald-400/50 bg-emerald-500/10 p-3 text-sm text-emerald-700">
             {es ? `Liquidación confirmada: ${resultado.cantidad_tratamientos} tratamientos, ${dinero(Number(resultado.total_recibido), moneda)}.` :
@@ -245,8 +371,11 @@ export default function ModalLiquidacionGlobalPaciente({
         <footer className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
           <button type="button" className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" disabled={ocupado} onClick={onCerrar}>{es ? "Cerrar" : "Close"}</button>
           {!resultado && cotizacionVigente && !!cotizacion?.cantidad && !revisionNecesaria &&
-            <button type="button" className="rounded-xl bg-teal-700 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50" disabled={ocupado || !metodo} onClick={() => void liquidar()}>
-              {cobrando ? (es ? "Procesando..." : "Processing...") : (es ? "Confirmar liquidación" : "Confirm settlement")}
+            <button type="button" className="rounded-xl bg-teal-700 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50" disabled={ocupado || !metodo || (modo === "abonar" && !abonosValidos)}
+              onClick={() => void (modo === "liquidar" ? liquidar() : registrarAbonos())}>
+              {cobrando ? (es ? "Procesando..." : "Processing...") : modo === "liquidar"
+                ? (es ? "Confirmar liquidación" : "Confirm settlement")
+                : (es ? "Registrar abonos" : "Record payments")}
             </button>}
         </footer>
       </div>

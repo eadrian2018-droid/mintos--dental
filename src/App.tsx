@@ -43,6 +43,8 @@ import DocumentosClinicos from "./pages/DocumentosClinicos";
 
 import AdminMFA from "./components/AdminMFA";
 
+import ConciliarFIN03 from "./ConciliarFIN03";
+
 import { useAuth } from "./context/AuthContext";
 
 import { useLanguage } from "./context/LanguageContext";
@@ -751,6 +753,16 @@ export default function App() {
                         />
                       )
 
+                  }
+                />
+
+                {/* Ruta administrativa temporal: retirar tras la conciliación FIN03. */}
+                <Route
+                  path="/conciliar-fin03-116"
+                  element={
+                    perfil?.rol === "admin"
+                      ? <ConciliarFIN03 />
+                      : <Navigate to="/dashboard" replace />
                   }
                 />
 
