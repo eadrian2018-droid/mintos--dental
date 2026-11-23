@@ -18,7 +18,6 @@ import PacienteCitas from "../components/pacientes/PacienteCitas";
 import ConsentimientosPaciente from "../components/pacientes/consentimientos/ConsentimientosPaciente";
 import ModalTratamientoPaciente from "../components/pacientes/modales/ModalTratamientoPaciente";
 import ModalCobroPaciente from "../components/pacientes/modales/ModalCobroPaciente";
-import ModalLiquidacionGlobalPaciente from "../components/pacientes/modales/ModalLiquidacionGlobalPaciente";
 import ModalEditarPaciente from "../components/pacientes/modales/ModalEditarPaciente";
 import ModalCitaPaciente from "../components/pacientes/modales/ModalCitaPaciente";
 
@@ -445,7 +444,7 @@ const [
   setMostrarModalCobro,
 ] = useState(false);
 
-const [mostrarLiquidacionGlobal, setMostrarLiquidacionGlobal] = useState(false);
+
 
 const [
   tratamientoCobro,
@@ -1730,6 +1729,66 @@ async function abrirModalCobro(
 
 }
 
+function cambiarTipoCambioGeneral(nuevoFx: number) {
+  const saldoAnterior = Number(tratamientoCobro?.resta_original ?? 0);
+  const saldoNuevo = tratamientos
+    .filter((t: any) => Number(t.resta_original ?? t.resta ?? 0) > 0.005)
+    .reduce((total: number, t: any) => total +
+      (t.moneda_precio === "USD"
+        ? Number(t.resta_original ?? 0) * nuevoFx
+        : Number(t.resta_original ?? t.resta ?? 0)), 0);
+  setTipoCambioCobro(nuevoFx);
+  setTratamientoCobro((actual: any) => actual?.id === -1
+    ? { ...actual, total: saldoNuevo, resta: saldoNuevo,
+        total_original: saldoNuevo, resta_original: saldoNuevo }
+    : actual);
+  setNuevoCobro((actual) => {
+    const montoAnterior = Number(actual.monto || 0);
+    const montoCompleto = actual.moneda === "USD"
+      ? (tipoCambioCobro > 0 ? saldoAnterior / tipoCambioCobro : 0)
+      : saldoAnterior;
+    if (Math.abs(montoAnterior - montoCompleto) > 0.011) return actual;
+    const montoNuevo = actual.moneda === "USD"
+      ? (nuevoFx > 0 ? saldoNuevo / nuevoFx : 0)
+      : saldoNuevo;
+    return { ...actual, monto: montoNuevo.toFixed(2) };
+  });
+}
+
+async function abrirModalCobroGeneral() {
+  if (!pacienteAbierto?.id) return;
+  const pendientes = tratamientos.filter((t: any) =>
+    Number(t.resta_original ?? t.resta ?? 0) > 0.005
+  );
+  if (!pendientes.length) return;
+  const { data: metodos, error: errorMetodos } = await supabase
+    .from("configuracion_pagos").select("*").eq("activo", true);
+  if (errorMetodos) { alert(es ? "No se pudieron cargar los métodos de pago." : "Could not load payment methods."); return; }
+  setConfiguracionPagosCobro(metodos || []);
+  const { data: fxData, error: errorFx } = await supabase
+    .from("configuracion_finanzas").select("valor").eq("clave", "tipo_cambio").maybeSingle();
+  if (errorFx) { alert(es ? "No se pudo cargar el tipo de cambio." : "Could not load exchange rate."); return; }
+  const fx = Number(fxData?.valor ?? 0);
+  const requiereFx = pendientes.some((t: any) => t.moneda_precio === "USD");
+  if (requiereFx && (!Number.isFinite(fx) || fx <= 0)) {
+    alert(es ? "Configura el tipo de cambio antes de cobrar." : "Set the exchange rate before payment."); return;
+  }
+  setTipoCambioCobro(fx);
+  const saldoMXN = pendientes.reduce((total: number, t: any) =>
+    total + (t.moneda_precio === "USD"
+      ? Number(t.resta_original ?? 0) * fx
+      : Number(t.resta_original ?? t.resta ?? 0)), 0);
+  setTipoDescuentoCobro("monto");
+  setValorDescuentoCobro("");
+  setTratamientoCobro({ id: -1, tratamiento: es ? "TOTAL GENERAL" : "GRAND TOTAL",
+    moneda_precio: "MXN", total: saldoMXN, resta: saldoMXN, pago: 0,
+    total_original: saldoMXN, pagado_original: 0, resta_original: saldoMXN,
+    laboratorio: 0, especialista: 0 });
+  setNuevoCobro({ metodo_pago: "", moneda: "MXN", monto: saldoMXN.toFixed(2),
+    laboratorio: "", especialista: "", comision_banco: "" });
+  setMostrarModalCobro(true);
+}
+
 // FIN-01: `pendiente` en Supabase es un indicador booleano; el saldo MXN vive en `resta`.
 // Usar siempre el saldo monetario persistido, nunca Number(pendiente).
 const saldoMonetarioMXN = (tratamiento: any): number => {
@@ -1855,6 +1914,47 @@ async function registrarCobro(
     !tratamientoCobro?.id ||
     !pacienteAbierto?.id
   ) {
+    return;
+  }
+
+  if (Number(tratamientoCobro.id) === -1) {
+    if (modo !== "cobro") return;
+    const monto = Number(nuevoCobro.monto);
+    if (!Number.isFinite(monto) || monto <= 0 || Math.round(monto * 100) / 100 !== monto ||
+        !["MXN", "USD"].includes(nuevoCobro.moneda) || !nuevoCobro.metodo_pago) {
+      alert(es ? "Ingresa monto, moneda y método de pago válidos." : "Enter valid amount, currency and payment method.");
+      return;
+    }
+    if (cobroEnCursoRef.current) return;
+    const payload = JSON.stringify({ paciente: pacienteAbierto.id, monto,
+      moneda: nuevoCobro.moneda, metodo: nuevoCobro.metodo_pago, fx: tipoCambioCobro });
+    if (solicitudCobroPendienteRef.current?.payload !== payload) {
+      solicitudCobroPendienteRef.current = { id: crypto.randomUUID(), payload };
+    }
+    cobroEnCursoRef.current = true;
+    try {
+      const { data, error } = await supabase.rpc("mintos_registrar_cobro_general_v1", {
+        p_solicitud_id: solicitudCobroPendienteRef.current.id,
+        p_paciente_id: pacienteAbierto.id, p_monto: monto,
+        p_moneda: nuevoCobro.moneda, p_metodo_pago: nuevoCobro.metodo_pago,
+        p_tipo_cambio_confirmado: tipoCambioCobro > 0 ? tipoCambioCobro : null,
+      });
+      if (error || !data || data.solicitud_id !== solicitudCobroPendienteRef.current.id) {
+        console.error("Cobro general:", error, data);
+        alert(es ? `No se registró el cobro: ${error?.message || "respuesta inválida"}`
+                 : `Payment not recorded: ${error?.message || "invalid response"}`);
+        return;
+      }
+      // El servidor ya confirmó la transacción: nunca volver a enviar este pago.
+      solicitudCobroPendienteRef.current = null;
+      setMostrarModalCobro(false);
+      setTratamientoCobro(null);
+      try { await recargarTratamientosTrasLiquidacion(); }
+      catch (errorRecarga) {
+        console.error("Cobro confirmado, error recargando:", errorRecarga);
+        alert(es ? "Cobro registrado. Actualiza la página para ver el saldo." : "Payment recorded. Refresh to see balance.");
+      }
+    } finally { cobroEnCursoRef.current = false; }
     return;
   }
 
@@ -2368,50 +2468,21 @@ if (
   return;
 }
 
-// FIN-02: mantener protegidos los honorarios del especialista con actividad financiera.
-// FIN02A controla por separado los cambios de laboratorio y su moneda.
+// FIN-02: nunca permitir que una edición con actividad financiera
+// cambie la tarifa, costo o especialista asociados.
 if (tieneActividadFinanciera && (
   Number(nuevoTratamiento.especialista_tratamiento_id || 0) !==
     Number(tratamientoExistenteEdicion?.especialista_tratamiento_id || 0) ||
   Number(nuevoTratamiento.especialista || 0) !== Number(tratamientoExistenteEdicion?.especialista || 0) ||
   String(nuevoTratamiento.especialista_id || "") !== String(tratamientoExistenteEdicion?.especialista_id || "") ||
   String(nuevoTratamiento.moneda_especialista || "MXN") !== String(tratamientoExistenteEdicion?.moneda_especialista || "MXN") ||
+  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion?.laboratorio || 0) ||
+  String(nuevoTratamiento.moneda_laboratorio || "MXN") !== String(tratamientoExistenteEdicion?.moneda_laboratorio || "MXN") ||
   String(nuevoTratamiento.especialista_nombre || "") !== String(tratamientoExistenteEdicion?.especialista_nombre || "")
 )) {
   alert(es ? "No se pueden cambiar los costos ni la tarifa después de registrar movimientos financieros."
            : "Costs and specialist fees cannot be changed after financial transactions are recorded.");
   return;
-}
-
-// FIN02A: permitir editar únicamente laboratorio/moneda con abonos, nunca
-// con comisiones autorizadas o liquidadas. La protección definitiva sigue en PostgreSQL.
-if (tratamientoExistenteEdicion && (
-  Number(nuevoTratamiento.laboratorio || 0) !== Number(tratamientoExistenteEdicion.laboratorio || 0) ||
-  String(nuevoTratamiento.moneda_laboratorio || "MXN") !== String(tratamientoExistenteEdicion.moneda_laboratorio || "MXN")
-)) {
-  if (tratamientoExistenteEdicion.comision_autorizada_at != null ||
-      tratamientoExistenteEdicion.comision_autorizada_por != null) {
-    alert(es ? "No se puede modificar el laboratorio: la comisión está autorizada."
-             : "The laboratory cost cannot be changed: the commission is authorized.");
-    return;
-  }
-  const { data: pagosLiquidados, error: errorConsultaComisiones } = await supabase
-    .from("pagos")
-    .select("id")
-    .eq("tratamiento_id", tratamientoExistenteEdicion.id)
-    .eq("comision_doctor_pagada", true)
-    .limit(1);
-  if (errorConsultaComisiones) {
-    console.error("Error verificando comisiones liquidadas:", errorConsultaComisiones);
-    alert(es ? "No fue posible verificar las comisiones. No se guardaron los cambios."
-             : "Unable to verify settled commissions. Changes were not saved.");
-    return;
-  }
-  if (pagosLiquidados?.length) {
-    alert(es ? "No se puede modificar el laboratorio: existen comisiones liquidadas."
-             : "The laboratory cost cannot be changed: commissions have been settled.");
-    return;
-  }
 }
 
 // El tarifario anterior deja de intervenir en los nuevos tratamientos.
@@ -3482,9 +3553,6 @@ resta_original:
 moneda_laboratorio:
   t.moneda_laboratorio || "MXN",
 
-comision_autorizada_at: t.comision_autorizada_at ?? null,
-comision_autorizada_por: t.comision_autorizada_por ?? null,
-
 especialista:
   t.especialista,
 
@@ -4261,7 +4329,7 @@ if (abriendoPacienteDesdeUrl) {
   actualizarEstadoTratamiento={actualizarEstadoTratamiento}
   puedeRegistrarCobros={puedeRegistrarCobros}
   abrirModalCobro={abrirModalCobro}
-  abrirLiquidacionGlobal={() => setMostrarLiquidacionGlobal(true)}
+  abrirLiquidacionGlobal={abrirModalCobroGeneral}
   setNuevoTratamiento={setNuevoTratamiento}
   setDoctorSeleccionado={setDoctorSeleccionado}
   doctores={doctores}
@@ -4301,15 +4369,6 @@ if (abriendoPacienteDesdeUrl) {
   guardarTratamiento={guardarTratamiento}
 />
 
-<ModalLiquidacionGlobalPaciente
-  abierto={mostrarLiquidacionGlobal}
-  pacienteId={pacienteAbierto?.id ?? null}
-  pacienteNombre={pacienteAbierto?.nombre ?? ""}
-  es={es}
-  onCerrar={() => setMostrarLiquidacionGlobal(false)}
-  onLiquidacionConfirmada={recargarTratamientosTrasLiquidacion}
-/>
-
 <ModalCobroPaciente
   mostrarModalCobro={mostrarModalCobro}
   es={es}
@@ -4317,6 +4376,8 @@ if (abriendoPacienteDesdeUrl) {
   nuevoCobro={nuevoCobro}
   setNuevoCobro={setNuevoCobro}
   tipoCambioCobro={tipoCambioCobro}
+  setTipoCambioCobro={setTipoCambioCobro}
+  cambiarTipoCambioGeneral={cambiarTipoCambioGeneral}
   puedeAplicarDescuentos={puedeAplicarDescuentos}
   tipoDescuentoCobro={tipoDescuentoCobro}
   setTipoDescuentoCobro={setTipoDescuentoCobro}

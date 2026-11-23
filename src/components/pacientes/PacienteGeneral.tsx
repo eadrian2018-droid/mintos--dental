@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from "react";
+import { useState, type Dispatch, type SetStateAction } from "react";
 import { supabase } from "../../lib/supabase";
 import { registrarBitacora } from "../../lib/registrarBitacora";
 import PresupuestoForm from "../presupuestos/PresupuestoForm";
@@ -80,6 +80,7 @@ export default function PacienteGeneral({
   setNotaCorrigiendoId,
   guardarCorreccionNotaClinica,
 }: PacienteGeneralProps) {
+  const [monedaResumen, setMonedaResumen] = useState<"MXN" | "USD">("MXN");
   return (
     <>
 
@@ -418,14 +419,6 @@ export default function PacienteGeneral({
           </h3>
 
           <div className="flex flex-wrap items-center justify-end gap-2">
-            {puedeRegistrarCobros && tratamientos.some((t) =>
-              Number(t.resta_original ?? t.resta ?? saldoMonetarioMXN(t)) > 0.005
-            ) && (
-              <button type="button" onClick={abrirLiquidacionGlobal}
-                className="mint-btn border border-[var(--mint-border-teal)] px-4 py-2 text-sm font-semibold">
-                {es ? "Liquidar todo" : "Settle all"}
-              </button>
-            )}
           {
             puedeCrearTratamientos && (
 
@@ -727,7 +720,7 @@ export default function PacienteGeneral({
                                   ? tratamiento.pagado_original ??
                                     tratamiento.pagado ??
                                     0
-                                  : tratamiento.pagado || 0
+                                  : tratamiento.pagado_original ?? tratamiento.pagado ?? tratamiento.pago ?? 0
                               ).toLocaleString()
                             }
                             {" "}
@@ -754,7 +747,7 @@ export default function PacienteGeneral({
                                   ? tratamiento.resta_original ??
                                     tratamiento.resta ??
                                     0
-                                  : saldoMonetarioMXN(tratamiento)
+                                  : tratamiento.resta_original ?? saldoMonetarioMXN(tratamiento)
                               ).toLocaleString()
                             }
                             {" "}
@@ -1166,6 +1159,81 @@ export default function PacienteGeneral({
                   )
 
               }
+
+              {tratamientos.length > 0 && (() => {
+                const fx = Number(tipoCambioCobro);
+                const fxValido = Number.isFinite(fx) && fx > 0;
+                const resumen = (moneda: "MXN" | "USD") => tratamientos
+                  .filter((t) => (t.moneda_precio === "USD" ? "USD" : "MXN") === moneda)
+                  .reduce((acc, t) => {
+                    const total = Number(moneda === "USD" ? (t.total_original ?? t.total ?? 0) : (t.total ?? 0));
+                    const pagado = Number(moneda === "USD" ? (t.pagado_original ?? t.pagado ?? 0) : (t.pagado_original ?? t.pagado ?? t.pago ?? 0));
+                    const pendiente = Number(moneda === "USD" ? (t.resta_original ?? t.resta ?? 0) : (t.resta_original ?? t.resta ?? 0));
+                    return { total: acc.total + total, pagado: acc.pagado + pagado, pendiente: acc.pendiente + pendiente };
+                  }, { total: 0, pagado: 0, pendiente: 0 });
+                const mxn = resumen("MXN");
+                const usd = resumen("USD");
+                const tieneMXN = tratamientos.some((t) => t.moneda_precio !== "USD");
+                const tieneUSD = tratamientos.some((t) => t.moneda_precio === "USD");
+                const requiereConversion = tieneMXN && tieneUSD;
+                const puedeMostrar = !requiereConversion || fxValido;
+                const convertir = (importeMXN: number, importeUSD: number) =>
+                  monedaResumen === "MXN"
+                    ? importeMXN + (fxValido ? importeUSD * fx : 0)
+                    : importeUSD + (fxValido ? importeMXN / fx : 0);
+                const formato = (importe: number, moneda: "MXN" | "USD") =>
+                  new Intl.NumberFormat(es ? "es-MX" : "en-US", { style: "currency", currency: moneda }).format(importe);
+                return (
+                  <tr className="border-t-2 border-[var(--mint-border-teal)] bg-[var(--mint-surface-teal)] font-bold">
+                    <td className="p-4 text-sm mint-text-secondary">—</td>
+                    <td className="p-4 mint-text-primary">
+                      <div>{es ? "TOTAL GENERAL" : "GRAND TOTAL"}</div>
+                      <div className="mt-1 text-xs font-normal mint-text-secondary">
+                        {tieneMXN && <span>MXN: {formato(mxn.pendiente, "MXN")}</span>}
+                        {tieneMXN && tieneUSD && <span> · </span>}
+                        {tieneUSD && <span>USD: {formato(usd.pendiente, "USD")}</span>}
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm mint-text-secondary">—</td>
+                    <td className="p-4 text-right whitespace-nowrap mint-text-primary">
+                      {puedeMostrar ? formato(convertir(mxn.total, usd.total), monedaResumen) : "—"}
+                    </td>
+                    <td className="p-4 text-right whitespace-nowrap text-[var(--mint-success)]">
+                      {puedeMostrar ? formato(convertir(mxn.pagado, usd.pagado), monedaResumen) : "—"}
+                    </td>
+                    <td className="p-4 text-right whitespace-nowrap text-[var(--mint-danger)]">
+                      {puedeMostrar ? formato(convertir(mxn.pendiente, usd.pendiente), monedaResumen) : "—"}
+                    </td>
+                    <td className="p-4 text-sm mint-text-secondary">
+                      <label className="block text-xs font-normal mb-1" htmlFor="moneda-resumen-tratamientos">
+                        {es ? "Visualizar en" : "Display in"}
+                      </label>
+                      <select id="moneda-resumen-tratamientos" value={monedaResumen}
+                        onChange={(event) => setMonedaResumen(event.target.value as "MXN" | "USD")}
+                        className="rounded-lg border border-[var(--mint-border-teal)] bg-white px-2 py-1 text-sm mint-text-primary">
+                        <option value="MXN">MXN</option>
+                        <option value="USD">USD</option>
+                      </select>
+                      {requiereConversion && !fxValido && (
+                        <div className="mt-1 text-xs font-normal text-[var(--mint-danger)]">
+                          {es ? "Configura el tipo de cambio" : "Set an exchange rate"}
+                        </div>
+                      )}
+                      {requiereConversion && fxValido && (
+                        <div className="mt-1 text-xs font-normal mint-text-secondary">1 USD = {formato(fx, "MXN")}</div>
+                      )}
+                    </td>
+                    <td className="p-4 text-right">
+                      {puedeRegistrarCobros && tratamientos.some((t) => Number(t.resta_original ?? t.resta ?? 0) > 0.005) && (
+                        <button type="button" onClick={abrirLiquidacionGlobal}
+                          className="mint-btn mint-btn-primary px-3 py-2 text-xs whitespace-nowrap">
+                          {es ? "Registrar cobro" : "Record payment"}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })()}
 
             </tbody>
 

@@ -198,6 +198,30 @@ export default function Comisiones({
     setGuardando,
   ] = useState(false);
 
+  // FIN03: la lista de anulaciones se obtiene del servidor (solo admin).
+  const [pagosAnulados, setPagosAnulados] = useState<Set<number>>(new Set());
+  const [anulacionesCargadas, setAnulacionesCargadas] = useState(false);
+  useEffect(() => {
+    if (!esAdmin) {
+      setAnulacionesCargadas(false);
+      return;
+    }
+    let activo = true;
+    setAnulacionesCargadas(false);
+    void (async () => {
+      const { data, error } = await supabase.rpc("mintos_obtener_pagos_anulados_fin03");
+      if (!activo) return;
+      if (error) {
+        console.error("FIN03: no se pudieron consultar cobros anulados:", error);
+        setAnulacionesCargadas(false);
+        return;
+      }
+      setPagosAnulados(new Set((data ?? []).map((fila: { pago_id: number }) => Number(fila.pago_id))));
+      setAnulacionesCargadas(true);
+    })();
+    return () => { activo = false; };
+  }, [esAdmin]);
+
   const [tratamientosActualizados, setTratamientosActualizados] = useState<Record<number, any>>({});
 
   const [doctorRevisionId, setDoctorRevisionId] = useState<number | null>(null);
@@ -360,7 +384,8 @@ export default function Comisiones({
                   (pago) =>
                     pago.doctor_id != null &&
                     Number(pago.doctor_id) === Number(doctor.id) &&
-                    ids.has(Number(pago.tratamiento_id))
+                    ids.has(Number(pago.tratamiento_id)) &&
+                    !pagosAnulados.has(Number(pago.id))
                 );
 
               const calcularComision = (pago: PagoComision) => {
@@ -378,14 +403,29 @@ export default function Comisiones({
                 ) ?? 0;
               };
 
+              // FIN03: la RPC omite tratamientos sin autorización;
+              // los importes pendientes deben representar solo pagos elegibles.
+              const pagosElegibles = pagosDoctor.filter(pago => {
+                if (pago.comision_doctor_pagada) return false;
+                const tratamiento = tratamientosLiquidables.find(
+                  item => Number(item.id) === Number(pago.tratamiento_id)
+                );
+                if (!tratamiento || !comisionAutorizada(tratamiento)) return false;
+                const lab = Number(tratamiento.laboratorio ?? 0);
+                const esp = Number(tratamiento.especialista ?? 0);
+                if (tratamiento.laboratorio_validacion === "aplica" ? lab <= 0 : lab !== 0) return false;
+                if (tratamiento.especialista_validacion === "aplica" ? esp <= 0 : esp !== 0) return false;
+                return calcularComisionNeta(pago, tratamiento, Number(doctor.porcentaje || 0)) !== null;
+              });
+
               const pagosMXN =
-                pagosDoctor.filter(
+                pagosElegibles.filter(
                   (pago) =>
                     pago.moneda === "MXN"
                 );
 
               const pagosUSD =
-                pagosDoctor.filter(
+                pagosElegibles.filter(
                   (pago) =>
                     pago.moneda === "USD"
                 );
@@ -438,16 +478,9 @@ export default function Comisiones({
               const tratamientosPorRevisar = tratamientosLiquidables.filter(tratamiento =>
                 pagosPendientes.some(pago => Number(pago.tratamiento_id) === Number(tratamiento.id))
               );
-              // La RPC liquida todos los pagos elegibles de la moneda seleccionada;
-              // nunca ofrecer una liquidación parcial si existe alguno sin autorizar.
-              const monedaLista = (moneda: "MXN" | "USD") =>
-                pagosPendientes.filter(pago => pago.moneda === moneda).every(pago => {
-                  const tratamiento = tratamientosLiquidables.find(t => Number(t.id) === Number(pago.tratamiento_id));
-                  return tratamiento && comisionAutorizada(tratamiento) &&
-                    calcularComisionNeta(pago, tratamiento, Number(doctor.porcentaje || 0)) !== null;
-                });
-              const listoMXN = monedaLista("MXN");
-              const listoUSD = monedaLista("USD");
+              // No bloquear una moneda por pagos pendientes sin autorización.
+              const listoMXN = anulacionesCargadas && pagosMXN.length > 0;
+              const listoUSD = anulacionesCargadas && pagosUSD.length > 0;
 
               return {
                 doctor,
@@ -479,6 +512,8 @@ export default function Comisiones({
         doctores,
         pagos,
         tratamientosAny,
+        pagosAnulados,
+        anulacionesCargadas,
       ]
     );
 
@@ -654,12 +689,17 @@ export default function Comisiones({
   // El servidor verifica permisos, costos, autorización, saldos e idempotencia.
   async function registrarPagoDoctor() {
     if (!doctorPago?.doctor?.id || guardando || liquidacionEnCursoRef.current) return;
+    if (!anulacionesCargadas) {
+      alert(tr("No se pudo verificar el estado de los cobros. Actualiza la página.",
+        "Payment status could not be verified. Refresh the page."));
+      return;
+    }
 
     const monedaElegida = formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
       ? "USD" : "MXN";
     if (monedaElegida === "USD" ? !doctorPago.listoUSD : !doctorPago.listoMXN) {
-      alert(tr("Primero valida los costos y autoriza todas las comisiones de esta moneda.",
-        "Validate costs and authorize all commissions in this currency first."));
+      alert(tr("No hay comisiones autorizadas disponibles en esta moneda.",
+        "There are no approved commissions available in this currency."));
       return;
     }
     const monto = Number(montoPagoDoctor);

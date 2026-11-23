@@ -16,6 +16,8 @@ type Props = {
   nuevoCobro: NuevoCobro;
   setNuevoCobro: Dispatch<SetStateAction<NuevoCobro>>;
   tipoCambioCobro: number;
+  setTipoCambioCobro: Dispatch<SetStateAction<number>>;
+  cambiarTipoCambioGeneral?: (nuevoFx: number) => void;
   puedeAplicarDescuentos: boolean;
   tipoDescuentoCobro: "monto" | "porcentaje";
   setTipoDescuentoCobro: Dispatch<SetStateAction<"monto" | "porcentaje">>;
@@ -45,6 +47,8 @@ export default function ModalCobroPaciente({
   nuevoCobro,
   setNuevoCobro,
   tipoCambioCobro,
+  setTipoCambioCobro,
+  cambiarTipoCambioGeneral,
   puedeAplicarDescuentos,
   tipoDescuentoCobro,
   setTipoDescuentoCobro,
@@ -66,6 +70,8 @@ export default function ModalCobroPaciente({
   registrarCobro,
   saldoMonetarioMXN,
 }: Props) {
+  const esCobroGeneral = Number(tratamientoCobro?.id) === -1;
+
   // Mantener el monto que el usuario ingresó (o el saldo inicial) como referencia.
   // Las conversiones siempre parten de este valor, nunca del monto ya redondeado.
   const montoReferenciaCobroRef = useRef<{ moneda: "MXN" | "USD"; monto: string } | null>(null);
@@ -285,6 +291,31 @@ export default function ModalCobroPaciente({
             </select>
           </div>
 
+          {esCobroGeneral && (
+            <div>
+              <label htmlFor="mintos-fx-cobro-general" className="block text-sm font-semibold mint-text-primary mb-2">
+                {es ? "Tipo de cambio de este cobro (MXN por USD)" : "Exchange rate for this payment (MXN per USD)"}
+              </label>
+              <input
+                id="mintos-fx-cobro-general"
+                type="number"
+                min="0.000001"
+                step="0.01"
+                value={tipoCambioCobro || ""}
+                onChange={(e) => {
+                  const nuevoFx = Number(e.target.value);
+                  const fxValido = Number.isFinite(nuevoFx) && nuevoFx > 0 ? nuevoFx : 0;
+                  if (cambiarTipoCambioGeneral) cambiarTipoCambioGeneral(fxValido);
+                  else setTipoCambioCobro(fxValido);
+                }}
+                className="mint-input w-full p-3"
+              />
+              <p className="mt-1 text-xs mint-text-secondary">
+                {es ? "Solo se aplica a este cobro. No modifica la configuración general." : "Only applies to this payment. Does not change global settings."}
+              </p>
+            </div>
+          )}
+
           {
   nuevoCobro.moneda === "USD" &&
   tipoCambioCobro > 0 && (
@@ -388,7 +419,7 @@ export default function ModalCobroPaciente({
           </div>
 
           {
-            puedeAplicarDescuentos && (
+            puedeAplicarDescuentos && Number(tratamientoCobro?.id) !== -1 && (
           <div
             className="
               bg-[var(--mint-primary-soft)]
@@ -586,15 +617,9 @@ export default function ModalCobroPaciente({
               {es ? "Costos y resumen financiero" : "Costs and financial summary"}
             </h3>
             <div className="grid gap-4">
-          <div
-            className="
-              grid
-              grid-cols-1
-              sm:grid-cols-2
-              gap-3
-            "
-          >
-
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {!esCobroGeneral && (
+              <>
             <div>
               <label
                 className="
@@ -655,6 +680,9 @@ export default function ModalCobroPaciente({
                 "
               />
             </div>
+
+              </>
+            )}
 
           <div className="sm:col-span-2">
 
