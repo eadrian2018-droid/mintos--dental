@@ -14,6 +14,7 @@ type Props = {
   es: boolean;
   puedeRegistrar: boolean;
   onCargoRegistrado: () => void;
+  onBloqueoCambio?: (bloqueado: boolean) => void;
 };
 
 export default function CargosAdicionalesPaciente({
@@ -22,6 +23,7 @@ export default function CargosAdicionalesPaciente({
   es,
   puedeRegistrar,
   onCargoRegistrado,
+  onBloqueoCambio,
 }: Props) {
   const [cargos, setCargos] = useState<CargoAdicional[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -120,6 +122,10 @@ export default function CargosAdicionalesPaciente({
   const [errorCobro, setErrorCobro] = useState(false);
   const [cobrando, setCobrando] = useState(false);
   const solicitudCobro = useRef<string | null>(null);
+  useEffect(() => {
+    onBloqueoCambio?.(guardando || cobrando || errorCobro);
+  }, [guardando, cobrando, errorCobro, onBloqueoCambio]);
+
   const requiereFx = monedaCobro === "USD" || cargoCobro?.moneda === "USD";
   const fx = Number(fxCobro);
   const fxValido = !requiereFx || (Number.isFinite(fx) && fx > 0 && fx <= 1000000);

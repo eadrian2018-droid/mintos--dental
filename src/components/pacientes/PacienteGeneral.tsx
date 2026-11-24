@@ -897,10 +897,18 @@ export default function PacienteGeneral({
                               }
 
                               {
-                                (String(tratamiento.moneda_precio || "MXN") === "USD"
+                                ((String(tratamiento.moneda_precio || "MXN") === "USD"
                                   ? Number(tratamiento.resta_original ??
                                       (Number(tratamiento.total_original ?? 0) - Number(tratamiento.pagado_original ?? 0))) > 0
-                                  : saldoMonetarioMXN(tratamiento) > 0) && (
+                                  : saldoMonetarioMXN(tratamiento) > 0) ||
+                                  (puedeConsultarCargos && cargosListos &&
+                                    !tratamiento.archivado &&
+                                    (tratamiento.estado === "Pendiente" || tratamiento.estado === "En proceso") &&
+                                    cargosAdicionales.some(c =>
+                                      Number(c.tratamiento_id) === Number(tratamiento.id) &&
+                                      Number(c.paciente_id) === Number(pacienteAbierto?.id) &&
+                                      (c.estado === "Pendiente" || c.estado === "Parcial") &&
+                                      c.saldo_pendiente > 0.005))) && (
 
                                   <button
                                     type="button"

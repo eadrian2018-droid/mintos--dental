@@ -1,5 +1,5 @@
 import CargosAdicionalesPaciente from "./CargosAdicionalesPaciente";
-import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
 type NuevoCobro = {
   metodo_pago: string;
@@ -78,6 +78,19 @@ export default function ModalCobroPaciente({
   saldoMonetarioMXN,
 }: Props) {
   const esCobroGeneral = Number(tratamientoCobro?.id) === -1;
+  const [vista, setVista] = useState<"tratamiento" | "cargos">("tratamiento");
+  const [cargoBloqueado, setCargoBloqueado] = useState(false);
+  const tratamientoId = Number(tratamientoCobro?.id);
+  const permiteVistaCargos = !esCobroGeneral && pacienteId !== null &&
+    Number.isSafeInteger(pacienteId) && pacienteId > 0 &&
+    Number.isSafeInteger(tratamientoId) && tratamientoId > 0;
+  const vistaCargos = permiteVistaCargos && vista === "cargos";
+
+  useEffect(() => {
+    setVista("tratamiento");
+    setCargoBloqueado(false);
+  }, [mostrarModalCobro, pacienteId, tratamientoId]);
+
 
   // Mantener el monto que el usuario ingresó (o el saldo inicial) como referencia.
   // Las conversiones siempre parten de este valor, nunca del monto ya redondeado.
@@ -186,8 +199,14 @@ export default function ModalCobroPaciente({
             border-[var(--mint-teal-soft)]
           "
         >
-          {es ? "Registrar cobro" : "Record payment"}
+          {vistaCargos ? (es ? "Cargos adicionales" : "Additional charges") : (es ? "Registrar cobro" : "Record payment")}
         </h2>
+        {permiteVistaCargos && (
+          <div role="group" aria-label={es ? "Tipo de operación" : "Operation type"} className="grid shrink-0 grid-cols-2 gap-2 border-b border-[var(--mint-border)] p-3 sm:px-6">
+            <button type="button" aria-pressed={!vistaCargos} disabled={cargoBloqueado} onClick={() => setVista("tratamiento")} className={`mint-btn ${!vistaCargos ? "mint-btn-primary" : "mint-btn-neutral"} text-sm disabled:opacity-50`}>{es ? "Cobrar tratamiento" : "Treatment payment"}</button>
+            <button type="button" aria-pressed={vistaCargos} onClick={() => setVista("cargos")} className={`mint-btn ${vistaCargos ? "mint-btn-primary" : "mint-btn-neutral"} text-sm`}>{es ? "Cargos adicionales" : "Additional charges"}</button>
+          </div>
+        )}
 
         {/* El área de contenido se desplaza sin ocultar los botones. */}
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
@@ -204,6 +223,7 @@ export default function ModalCobroPaciente({
           }
         </p>
 
+        <div hidden={vistaCargos}>
         <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5">
           <section aria-labelledby="mintos-cobro-datos" className="min-w-0 rounded-2xl border border-[var(--mint-border)] bg-[var(--mint-surface)] p-4">
             <h3 id="mintos-cobro-datos" className="mb-4 text-base font-bold mint-text-primary">
@@ -1008,18 +1028,16 @@ export default function ModalCobroPaciente({
             </div>
           </section>
         </div>
-          {!esCobroGeneral &&
-            pacienteId !== null &&
-            Number.isSafeInteger(pacienteId) &&
-            pacienteId > 0 &&
-            Number.isSafeInteger(Number(tratamientoCobro?.id)) &&
-            Number(tratamientoCobro?.id) > 0 && (
-              <div className="mt-4">
+        </div>
+          {permiteVistaCargos && pacienteId !== null && (
+              <div hidden={!vistaCargos}>
                 <CargosAdicionalesPaciente
+                  key={`${pacienteId}:${tratamientoId}`}
                   pacienteId={pacienteId}
-                  tratamientoId={Number(tratamientoCobro.id)}
+                  tratamientoId={tratamientoId}
                   puedeRegistrar={puedeRegistrarCobros && tratamientoCobro?.archivado === false && ["Pendiente", "En proceso"].includes(tratamientoCobro?.estado)}
                   onCargoRegistrado={onCargoRegistrado}
+                  onBloqueoCambio={setCargoBloqueado}
                   es={es}
                 />
               </div>
@@ -1031,6 +1049,7 @@ export default function ModalCobroPaciente({
 
           <button
             type="button"
+            disabled={cargoBloqueado}
             onClick={() => {
 
               setMostrarModalCobro(
@@ -1058,10 +1077,10 @@ export default function ModalCobroPaciente({
               text-sm
             "
           >
-            {es ? "Cancelar" : "Cancel"}
+            {vistaCargos ? (es ? "Cerrar" : "Close") : (es ? "Cancelar" : "Cancel")}
           </button>
 
-          <button
+          {!vistaCargos && <button
             type="button"
             onClick={() =>
               registrarCobro(
@@ -1077,7 +1096,7 @@ export default function ModalCobroPaciente({
             "
           >
             {es ? "Registrar cobro" : "Record payment"}
-          </button>
+          </button>}
 
         </div>
 
