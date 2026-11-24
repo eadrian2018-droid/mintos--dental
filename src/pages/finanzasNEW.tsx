@@ -59,6 +59,7 @@ type SeccionFinanzas =
 
 type PeriodoFinanzas =
   | "semana"
+  | "semana_pasada"
   | "mes"
   | "anio"
   | "historico";
@@ -288,6 +289,10 @@ export default function Finanzas() {
 
     sabadoSemana,
 
+    lunesSemanaPasada,
+
+    domingoSemanaPasada,
+
     tratamientosFiltrados,
 
     gastosFiltrados,
@@ -301,6 +306,69 @@ export default function Finanzas() {
     gastos,
 
   });
+
+  const cargosDelPeriodo = finanzas.cargosAdicionales.filter((cargo) => {
+    if (periodo === "historico") return true;
+    const fecha = new Date(cargo.creado_at);
+    if (periodo === "semana") return fecha >= lunesSemana && fecha <= sabadoSemana;
+    if (periodo === "semana_pasada") return fecha >= lunesSemanaPasada && fecha <= domingoSemanaPasada;
+    const hoy = new Date();
+    return fecha.getFullYear() === hoy.getFullYear() &&
+      (periodo === "anio" || fecha.getMonth() === hoy.getMonth());
+  });
+
+  const resumenCargos = (["MXN", "USD"] as const).map((moneda) => ({
+    moneda,
+    ...cargosDelPeriodo.filter((cargo) => cargo.moneda === moneda).reduce(
+      (total, cargo) => ({
+        produccion: total.produccion + Math.round(cargo.total_cargo * 100),
+        pagado: total.pagado + Math.round(cargo.total_pagado * 100),
+        pendiente: total.pendiente + Math.round(cargo.saldo_pendiente * 100),
+      }), { produccion: 0, pagado: 0, pendiente: 0 }
+    ),
+  }));
+
+  const mostrarResumenCargos =
+    (seccionActiva === "resumen" && puedeVerResumen) ||
+    (seccionActiva === "reportes" && puedeVerReportes);
+
+  const seccionCargosAdicionales = (
+    mostrarResumenCargos && (
+          <section className="mb-6 rounded-2xl border border-[var(--mint-border-teal)] bg-[var(--mint-surface)] p-5">
+            <h2 className="text-lg font-bold mint-text-primary">
+              {es ? "Cargos adicionales del período" : "Additional charges for the period"}
+            </h2>
+            <p className="mb-4 text-sm mint-text-muted">
+              {es ? "Por fecha de registro, con saldo actual. Importes separados de la producción original; los cobros reales ya incluyen estos pagos." : "By creation date, with current balances. Separate from original treatment production; actual collections already include these payments."}
+            </p>
+            {finanzas.estadoCargosAdicionales === "listo" ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {resumenCargos.map((item) => (
+                  <div key={item.moneda} className="rounded-xl border border-[var(--mint-border-teal)] p-4">
+                    <h3 className="mb-3 font-bold mint-text-primary">{item.moneda}</h3>
+                    {([
+                      [es ? "Producción" : "Production", item.produccion],
+                      [es ? "Pagado aplicado" : "Applied payments", item.pagado],
+                      [es ? "Pendiente" : "Outstanding", item.pendiente],
+                    ] as const).map(([label, monto]) => (
+                      <div key={label} className="flex flex-wrap justify-between gap-2 py-1 text-sm mint-text-primary">
+                        <span>{label}</span>
+                        <strong>{new Intl.NumberFormat(es ? "es-MX" : "en-US", { style: "currency", currency: item.moneda, currencyDisplay: "code" }).format(monto / 100)}</strong>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p role="status" className="text-sm mint-text-muted">
+                {finanzas.estadoCargosAdicionales === "error"
+                  ? (es ? "No se pudieron consultar los cargos adicionales. Sus saldos no están disponibles." : "Additional charges could not be loaded. Their balances are unavailable.")
+                  : (es ? "Consultando cargos adicionales…" : "Loading additional charges…")}
+              </p>
+            )}
+          </section>
+        )
+  );
 
   const pagosFiltrados =
     pagos.filter(
@@ -331,13 +399,12 @@ export default function Finanzas() {
         }
 
         if (
-          periodo ===
-          "semana"
+          (periodo === "semana" || periodo === "semana_pasada")
         ) {
 
           const inicio =
             new Date(
-              lunesSemana
+              periodo === "semana_pasada" ? lunesSemanaPasada : lunesSemana
             );
 
           inicio.setHours(
@@ -349,7 +416,7 @@ export default function Finanzas() {
 
           const fin =
             new Date(
-              sabadoSemana
+              periodo === "semana_pasada" ? domingoSemanaPasada : sabadoSemana
             );
 
           fin.setHours(
@@ -640,6 +707,18 @@ export default function Finanzas() {
 
                   <button
                     type="button"
+                    onClick={() => setPeriodo("semana_pasada")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                      periodo === "semana_pasada"
+                        ? "bg-white text-[var(--mint-navy)] shadow-sm ring-1 ring-white/40"
+                        : "text-white/75 hover:text-white hover:bg-white/10"
+                    }`}
+                  >
+                    {es ? "Semana pasada" : "Last week"}
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() =>
                       setPeriodo(
                         "mes"
@@ -836,6 +915,14 @@ export default function Finanzas() {
                       </>
                     }
 
+                    {periodo === "semana_pasada" && (
+                      <>
+                        {lunesSemanaPasada.toLocaleDateString(es ? "es-MX" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
+                        {" — "}
+                        {domingoSemanaPasada.toLocaleDateString(es ? "es-MX" : "en-US", { day: "numeric", month: "short", year: "numeric" })}
+                      </>
+                    )}
+
                     {
                       periodo ===
                       "mes"
@@ -962,6 +1049,8 @@ export default function Finanzas() {
 
           )
         }
+
+        {seccionActiva === "reportes" && seccionCargosAdicionales}
 
         {
           seccionActiva ===
@@ -1164,6 +1253,8 @@ export default function Finanzas() {
 
   <Resumen
 
+    seccionCargosAdicionales={seccionCargosAdicionales}
+
     ingresos={
       ingresos
     }
@@ -1340,11 +1431,11 @@ export default function Finanzas() {
     }
 
     lunesSemana={
-      lunesSemana
+      periodo === "semana_pasada" ? lunesSemanaPasada : lunesSemana
     }
 
     sabadoSemana={
-      sabadoSemana
+      periodo === "semana_pasada" ? domingoSemanaPasada : sabadoSemana
     }
 
   />

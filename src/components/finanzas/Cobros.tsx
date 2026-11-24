@@ -29,6 +29,8 @@ type Cobro = {
   iva_comision: number;
   comision_banco: number;
   neto_recibido: number;
+  es_cargo_adicional: boolean;
+  cargo_adicional_id: number | null;
 };
 
 type Paciente = {
@@ -280,7 +282,8 @@ export default function Cobros() {
     setErrorAnulacion("");
     setAnulandoPagoId(cobro.id);
     try {
-      const { error } = await supabase.rpc("mintos_anular_cobro_v1", {
+      const { error } = await supabase.rpc(
+        cobro.es_cargo_adicional ? "mintos_anular_cargo_adicional_v1" : "mintos_anular_cobro_v1", {
         p_pago_id: cobro.id,
         p_motivo: motivo,
       });
@@ -290,7 +293,7 @@ export default function Cobros() {
       setMotivoAnulacion("");
     } catch (error) {
       console.error("FIN03: error anulando cobro", error);
-      setErrorAnulacion(error instanceof Error ? error.message : (es ? "No se pudo anular el cobro." : "Could not void payment."));
+      setErrorAnulacion(error && typeof error === "object" && "message" in error && typeof error.message === "string" ? error.message : (es ? "No se pudo anular el cobro." : "Could not void payment."));
     } finally {
       setAnulandoPagoId(null);
     }
@@ -2000,6 +2003,11 @@ export default function Cobros() {
                                     cobro.tratamiento_id
                                   )
                                 }
+                                {cobro.es_cargo_adicional && (
+                                  <div className="mt-1 text-xs font-semibold text-teal-700">
+                                    {es ? "Cargo adicional" : "Additional charge"} #{cobro.cargo_adicional_id}
+                                  </div>
+                                )}
 
                               </td>
 

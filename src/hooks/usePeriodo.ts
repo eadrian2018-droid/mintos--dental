@@ -68,6 +68,13 @@ export default function usePeriodo({
     999
   );
 
+  // Semana calendario anterior: lunes 00:00 a domingo 23:59:59.999.
+  const lunesSemanaPasada = new Date(lunesSemana);
+  lunesSemanaPasada.setDate(lunesSemana.getDate() - 7);
+  const domingoSemanaPasada = new Date(lunesSemanaPasada);
+  domingoSemanaPasada.setDate(lunesSemanaPasada.getDate() + 6);
+  domingoSemanaPasada.setHours(23, 59, 59, 999);
+
   const inicioMes =
     new Date(
       hoy.getFullYear(),
@@ -150,6 +157,10 @@ export default function usePeriodo({
 
     }
 
+    if (periodo === "semana_pasada") {
+      return fecha >= lunesSemanaPasada && fecha <= domingoSemanaPasada;
+    }
+
     if (
       periodo === "mes"
     ) {
@@ -213,6 +224,10 @@ export default function usePeriodo({
     lunesSemana,
 
     sabadoSemana,
+
+    lunesSemanaPasada,
+
+    domingoSemanaPasada,
 
     inicioMes,
 

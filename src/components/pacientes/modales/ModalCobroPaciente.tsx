@@ -1,3 +1,4 @@
+import CargosAdicionalesPaciente from "./CargosAdicionalesPaciente";
 import { useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 
 type NuevoCobro = {
@@ -10,6 +11,9 @@ type NuevoCobro = {
 };
 
 type Props = {
+  pacienteId: number | null;
+  puedeRegistrarCobros: boolean;
+  onCargoRegistrado: () => void;
   mostrarModalCobro: boolean;
   es: boolean;
   tratamientoCobro: any;
@@ -41,6 +45,9 @@ type Props = {
 };
 
 export default function ModalCobroPaciente({
+  pacienteId,
+  puedeRegistrarCobros,
+  onCargoRegistrado,
   mostrarModalCobro,
   es,
   tratamientoCobro,
@@ -1001,6 +1008,22 @@ export default function ModalCobroPaciente({
             </div>
           </section>
         </div>
+          {!esCobroGeneral &&
+            pacienteId !== null &&
+            Number.isSafeInteger(pacienteId) &&
+            pacienteId > 0 &&
+            Number.isSafeInteger(Number(tratamientoCobro?.id)) &&
+            Number(tratamientoCobro?.id) > 0 && (
+              <div className="mt-4">
+                <CargosAdicionalesPaciente
+                  pacienteId={pacienteId}
+                  tratamientoId={Number(tratamientoCobro.id)}
+                  puedeRegistrar={puedeRegistrarCobros && tratamientoCobro?.archivado === false && ["Pendiente", "En proceso"].includes(tratamientoCobro?.estado)}
+                  onCargoRegistrado={onCargoRegistrado}
+                  es={es}
+                />
+              </div>
+            )}
         </div>
 
         {/* Pie del modal: siempre visible, independientemente del scroll. */}

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { finanzasService } from "../services/finanzas.service";
+import type { CargoAdicionalFinanzas } from "../services/finanzas.service";
+import { useAuth } from "../context/AuthContext";
 
 import { registrarBitacora } from "../lib/registrarBitacora";
 
@@ -30,6 +32,36 @@ import type {
 } from "../types/ConfiguracionPago";
 
 export default function useFinanzas() {
+
+  const { perfil, permisos } = useAuth();
+  const puedeConsultarCargos = perfil?.rol === "admin" ||
+    permisos?.ver_resumen_financiero === true ||
+    permisos?.ver_utilidades === true;
+
+  const [cargosAdicionales, setCargosAdicionales] =
+    useState<CargoAdicionalFinanzas[]>([]);
+  const [estadoCargosAdicionales, setEstadoCargosAdicionales] =
+    useState<"inactivo" | "cargando" | "listo" | "error">("inactivo");
+
+  useEffect(() => {
+    let vigente = true;
+    setCargosAdicionales([]);
+    if (!puedeConsultarCargos) {
+      setEstadoCargosAdicionales("inactivo");
+      return;
+    }
+    setEstadoCargosAdicionales("cargando");
+    void finanzasService.cargarCargosAdicionales().then((data) => {
+      if (!vigente) return;
+      setCargosAdicionales(data);
+      setEstadoCargosAdicionales("listo");
+    }).catch((error) => {
+      if (!vigente) return;
+      console.error("Error consultando cargos financieros:", error);
+      setEstadoCargosAdicionales("error");
+    });
+    return () => { vigente = false; };
+  }, [puedeConsultarCargos, perfil]);
 
   const [
     tratamientos,
@@ -528,6 +560,10 @@ export default function useFinanzas() {
   }
 
   return {
+
+    cargosAdicionales: puedeConsultarCargos ? cargosAdicionales : [],
+
+    estadoCargosAdicionales: puedeConsultarCargos ? estadoCargosAdicionales : "inactivo",
 
     tratamientos,
 

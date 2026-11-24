@@ -1,3 +1,4 @@
+import type { CargoAdicional } from "../../services/cargosAdicionales.service";
 import { useState, type Dispatch, type SetStateAction } from "react";
 import { supabase } from "../../lib/supabase";
 import { registrarBitacora } from "../../lib/registrarBitacora";
@@ -20,11 +21,16 @@ export type PacienteGeneralProps = {
   puedeRegistrarCobros: any;
   abrirModalCobro: any;
   abrirLiquidacionGlobal: () => void;
+  abrirCobroGeneral: () => void;
+  cargosAdicionales: CargoAdicional[];
+  cargosListos: boolean;
+  puedeConsultarCargos: boolean;
   setNuevoTratamiento: Dispatch<SetStateAction<any>>;
   setDoctorSeleccionado: Dispatch<SetStateAction<any>>;
   doctores: any;
   setEditandoIndex: Dispatch<SetStateAction<any>>;
   puedeAnularTratamientos: any;
+  puedeArchivarTratamientos: boolean;
   setTratamientos: Dispatch<SetStateAction<any>>;
   puedeAgregarNotasClinicas: any;
   doctorNotaId: any;
@@ -59,11 +65,15 @@ export default function PacienteGeneral({
   puedeRegistrarCobros,
   abrirModalCobro,
   abrirLiquidacionGlobal,
+  abrirCobroGeneral,
+  cargosAdicionales,
+  cargosListos,
+  puedeConsultarCargos,
   setNuevoTratamiento,
   setDoctorSeleccionado,
   doctores,
   setEditandoIndex,
-  puedeAnularTratamientos,
+  puedeArchivarTratamientos,
   setTratamientos,
   puedeAgregarNotasClinicas,
   doctorNotaId,
@@ -81,6 +91,18 @@ export default function PacienteGeneral({
   guardarCorreccionNotaClinica,
 }: PacienteGeneralProps) {
   const [monedaResumen, setMonedaResumen] = useState<"MXN" | "USD">("MXN");
+  const fxResumen = Number(tipoCambioCobro);
+  const fxValidoResumen = Number.isFinite(fxResumen) && fxResumen > 0;
+  const conceptos = [
+    ...tratamientos.map(t => ({ moneda: t.moneda_precio === "USD" ? "USD" : "MXN", total: Number(t.total_original ?? t.total ?? 0), pagado: Number(t.pagado_original ?? t.pagado ?? t.pago ?? 0), pendiente: Number(t.resta_original ?? t.resta ?? 0) })),
+    ...cargosAdicionales.map(c => ({ moneda: c.moneda, total: c.total_cargo, pagado: c.total_pagado, pendiente: c.saldo_pendiente }))
+  ];
+  const resumen = (moneda: "MXN" | "USD") => conceptos.filter(c => c.moneda === moneda).reduce((a,c) => ({ total: a.total+c.total, pagado: a.pagado+c.pagado, pendiente: a.pendiente+c.pendiente }), {total:0,pagado:0,pendiente:0});
+  const mxn = resumen("MXN");
+  const usd = resumen("USD");
+  const formato = (n: number, m: "MXN" | "USD") => `${n.toLocaleString(es ? "es-MX" : "en-US", {minimumFractionDigits:2, maximumFractionDigits:2})} ${m}`;
+  const resumenDisponible = !puedeConsultarCargos || cargosListos;
+  const haySaldo = conceptos.some(c => c.pendiente > 0.005);
   return (
     <>
 
@@ -233,20 +255,8 @@ export default function PacienteGeneral({
               text-[var(--mint-success)]
               mt-2
             ">
-              $
-              {
-                tratamientos.reduce(
-                  (
-                    total,
-                    tratamiento
-                  ) =>
-                    total +
-                    Number(
-                      tratamiento.pagado || 0
-                    ),
-                  0
-                )
-              }
+              {resumenDisponible ? formato(mxn.pagado, "MXN") : "—"}
+              {resumenDisponible && usd.pagado !== 0 && <span className="block text-base">{formato(usd.pagado, "USD")}</span>}
             </h3>
 
             <p className="
@@ -308,61 +318,10 @@ export default function PacienteGeneral({
               text-[var(--mint-danger)]
               mt-2
             ">
-              $
-              {
-                tratamientos.reduce(
-                  (
-                    total,
-                    tratamiento
-                  ) =>
-                    total +
-                    Number(
-                      saldoMonetarioMXN(tratamiento)
-                    ),
-                  0
-                )
-              }
+              {resumenDisponible ? formato(mxn.pendiente, "MXN") : "—"}
+              {resumenDisponible && usd.pendiente !== 0 && <span className="block text-base">{formato(usd.pendiente, "USD")}</span>}
             </h3>
-
-            {
-  tipoCambioCobro > 0 && (
-
-    <p
-      className="
-        text-sm
-        font-semibold
-        mint-text-secondary
-        mt-1
-      "
-    >
-      ≈ $
-      {(
-        tratamientos.reduce(
-          (
-            total,
-            tratamiento
-          ) =>
-            total +
-            Number(
-              saldoMonetarioMXN(tratamiento)
-            ),
-          0
-        ) /
-        tipoCambioCobro
-      ).toLocaleString(
-        "en-US",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        }
-      )}
-      {" "}
-      USD
-    </p>
-
-  )
-}
-
+            {resumenDisponible && fxValidoResumen && usd.pendiente !== 0 && <p className="text-sm mint-text-secondary">≈ {formato(mxn.pendiente + usd.pendiente * fxResumen, "MXN")}</p>}
             <p className="
               text-sm
               mint-text-secondary
@@ -720,7 +679,7 @@ export default function PacienteGeneral({
                                   ? tratamiento.pagado_original ??
                                     tratamiento.pagado ??
                                     0
-                                  : tratamiento.pagado_original ?? tratamiento.pagado ?? tratamiento.pago ?? 0
+                                  : tratamiento.pagado || 0
                               ).toLocaleString()
                             }
                             {" "}
@@ -747,7 +706,7 @@ export default function PacienteGeneral({
                                   ? tratamiento.resta_original ??
                                     tratamiento.resta ??
                                     0
-                                  : tratamiento.resta_original ?? saldoMonetarioMXN(tratamiento)
+                                  : saldoMonetarioMXN(tratamiento)
                               ).toLocaleString()
                             }
                             {" "}
@@ -1022,130 +981,56 @@ export default function PacienteGeneral({
                                 )
                               }
 
-                              {
-                                puedeAnularTratamientos &&
-                                tratamiento.estado !== "Finalizado" &&
-                                Number(tratamiento.pagado ?? tratamiento.pago ?? 0) === 0 &&
-                                Number(tratamiento.descuento ?? 0) === 0 &&
-                                Number(tratamiento.descuento_original ?? 0) === 0 && (
+                              {puedeArchivarTratamientos && !tratamiento.archivado && (
+                                <button
+                                  type="button"
+                                  className="mint-btn mint-btn-danger px-3 py-2 text-xs"
+                                  onClick={async (event) => {
+                                    const boton = event.currentTarget;
+                                    const tratamientoArchivar = tratamientos[index];
+                                    if (!tratamientoArchivar?.id || boton.disabled) return;
 
-                              <button
-                                type="button"
-                                onClick={async () => {
-
-                                  const tratamientoEliminar =
-                                    tratamientos[index];
-
-                                  if (
-                                    !tratamientoEliminar?.id
-                                  ) {
-
-                                    return;
-
-                                  }
-
-                                  // FIN-01: protección preventiva en interfaz.
-                                  // La protección definitiva requiere FOREIGN KEY en PostgreSQL.
-                                  const { count: cantidadPagos, error: errorPagos } =
-                                    await supabase
-                                      .from("pagos")
-                                      .select("id", { count: "exact", head: true })
-                                      .eq("tratamiento_id", tratamientoEliminar.id);
-
-                                  if (errorPagos || cantidadPagos === null) {
-                                    console.error("No se pudo verificar si existen cobros:", errorPagos);
-                                    alert(es
-                                      ? "No se pudo verificar si el tratamiento tiene cobros. No se eliminará por seguridad."
-                                      : "Could not verify whether this treatment has payments. Deletion was blocked for safety.");
-                                    return;
-                                  }
-
-                                  if (cantidadPagos > 0) {
-                                    alert(es
-                                      ? "Este tratamiento tiene cobros registrados y no puede eliminarse."
-                                      : "This treatment has recorded payments and cannot be deleted.");
-                                    return;
-                                  }
-
-                                  const confirmar =
-                                    window.confirm(
-                                      es ? "¿Seguro que deseas eliminar este tratamiento?" : "Are you sure you want to delete this treatment?"
+                                    const confirmar = window.confirm(
+                                      es
+                                        ? "¿Archivar este tratamiento? Se ocultará del expediente activo, pero se conservarán todos los registros financieros e históricos."
+                                        : "Archive this treatment? It will be hidden from the active record, but all financial and historical records will be preserved."
                                     );
+                                    if (!confirmar) return;
 
-                                  if (
-                                    !confirmar
-                                  ) {
+                                    boton.disabled = true;
+                                    try {
+                                      const { data, error } = await supabase.rpc(
+                                        "mintos_archivar_tratamiento",
+                                        { p_tratamiento_id: tratamientoArchivar.id }
+                                      );
+                                      if (error || data !== true) {
+                                        console.error("No se pudo archivar el tratamiento:", error);
+                                        alert(error?.message || (es
+                                          ? "No se pudo archivar el tratamiento."
+                                          : "The treatment could not be archived."));
+                                        return;
+                                      }
 
-                                    return;
-
-                                  }
-
-                                  const {
-                                    data,
-                                    error,
-                                  } = await supabase
-                                    .from(
-                                      "tratamientos"
-                                    )
-                                    .delete()
-                                    .eq(
-                                      "id",
-                                      tratamientoEliminar.id
-                                    )
-                                    .select("id");
-
-                                  if (
-                                    error ||
-                                    !data ||
-                                    data.length === 0
-                                  ) {
-
-                                    console.error(
-                                      "Error eliminando tratamiento:",
-                                      error
-                                    );
-
-                                    alert(
-                                      es ? "No tienes permiso para eliminar tratamientos." : "You do not have permission to delete treatments."
-                                    );
-
-                                    return;
-
-                                  }
-
-                                  await registrarBitacora({
-                                    accion: "Eliminar tratamiento",
-                                    modulo: "Tratamientos",
-                                    detalle:
-                                      `Tratamiento ID: ${tratamientoEliminar.id} | Paciente ID: ${pacienteAbierto?.id || "-"} | Paciente: ${pacienteAbierto?.nombre || "-"} | Tratamiento: ${tratamientoEliminar.tratamiento || "-"}`,
-                                  });
-
-                                  setTratamientos(
-
-                                    tratamientos.filter(
-                                      (
-                                        _,
-                                        i
-                                      ) =>
-                                        i !== index
-                                    )
-
-                                  );
-
-                                }}
-                                className="
-                                  mint-btn
-                                  mint-btn-danger
-                                  px-3
-                                  py-2
-                                  text-xs
-                                "
-                              >
-                                {es ? "Eliminar" : "Delete"}
-                              </button>
-
-                                )
-                              }
+                                      setTratamientos((actuales: any[]) =>
+                                        actuales.filter((t: any) => t.id !== tratamientoArchivar.id)
+                                      );
+                                      try {
+                                        await registrarBitacora({
+                                          accion: "Archivar tratamiento",
+                                          modulo: "Tratamientos",
+                                          detalle: `Tratamiento ID: ${tratamientoArchivar.id} | Paciente ID: ${pacienteAbierto?.id || "-"} | Paciente: ${pacienteAbierto?.nombre || "-"} | Tratamiento: ${tratamientoArchivar.tratamiento || "-"}`,
+                                        });
+                                      } catch (errorBitacora) {
+                                        console.error("Tratamiento archivado; no se pudo registrar bitácora adicional:", errorBitacora);
+                                      }
+                                    } finally {
+                                      boton.disabled = false;
+                                    }
+                                  }}
+                                >
+                                  {es ? "Archivar" : "Archive"}
+                                </button>
+                              )}
 
                             </div>
 
@@ -1160,23 +1045,26 @@ export default function PacienteGeneral({
 
               }
 
+              {cargosAdicionales.map(c => (
+                <tr key={`cargo:${c.cargo_id}`} className="border-b border-[var(--mint-border)] bg-[var(--mint-bg-soft)] text-sm">
+                  <td className="p-4">{new Date(c.creado_at).toLocaleDateString(es ? "es-MX" : "en-US")}</td>
+                  <td className="p-4"><span className="font-semibold">{c.concepto}</span><div className="text-xs mint-text-secondary">{es ? "Cargo adicional" : "Additional charge"} · #{c.tratamiento_id}</div></td>
+                  <td className="p-4">—</td>
+                  <td className="p-4 text-right">{formato(c.total_cargo,c.moneda)}</td>
+                  <td className="p-4 text-right">{formato(c.total_pagado,c.moneda)}</td>
+                  <td className="p-4 text-right">{formato(c.saldo_pendiente,c.moneda)}</td>
+                  <td className="p-4">{es ? c.estado : ({Pendiente:"Pending",Parcial:"Partial",Pagado:"Paid",Cancelado:"Cancelled"}[c.estado])}</td>
+                  <td className="p-4" />
+                </tr>
+              ))}
+              {puedeConsultarCargos && !cargosListos && <tr><td colSpan={8} className="p-3 text-sm mint-text-secondary">{es ? "Saldos adicionales no disponibles; verificando consulta." : "Additional balances unavailable; checking data."}</td></tr>}
               {tratamientos.length > 0 && (() => {
                 const fx = Number(tipoCambioCobro);
                 const fxValido = Number.isFinite(fx) && fx > 0;
-                const resumen = (moneda: "MXN" | "USD") => tratamientos
-                  .filter((t) => (t.moneda_precio === "USD" ? "USD" : "MXN") === moneda)
-                  .reduce((acc, t) => {
-                    const total = Number(moneda === "USD" ? (t.total_original ?? t.total ?? 0) : (t.total ?? 0));
-                    const pagado = Number(moneda === "USD" ? (t.pagado_original ?? t.pagado ?? 0) : (t.pagado_original ?? t.pagado ?? t.pago ?? 0));
-                    const pendiente = Number(moneda === "USD" ? (t.resta_original ?? t.resta ?? 0) : (t.resta_original ?? t.resta ?? 0));
-                    return { total: acc.total + total, pagado: acc.pagado + pagado, pendiente: acc.pendiente + pendiente };
-                  }, { total: 0, pagado: 0, pendiente: 0 });
-                const mxn = resumen("MXN");
-                const usd = resumen("USD");
-                const tieneMXN = tratamientos.some((t) => t.moneda_precio !== "USD");
-                const tieneUSD = tratamientos.some((t) => t.moneda_precio === "USD");
-                const requiereConversion = tieneMXN && tieneUSD;
-                const puedeMostrar = !requiereConversion || fxValido;
+                const tieneMXN = conceptos.some(c => c.moneda === "MXN");
+                const tieneUSD = conceptos.some(c => c.moneda === "USD");
+                const requiereConversion = monedaResumen === "MXN" ? tieneUSD : tieneMXN;
+                const puedeMostrar = resumenDisponible && (!requiereConversion || fxValido);
                 const convertir = (importeMXN: number, importeUSD: number) =>
                   monedaResumen === "MXN"
                     ? importeMXN + (fxValido ? importeUSD * fx : 0)
@@ -1189,9 +1077,9 @@ export default function PacienteGeneral({
                     <td className="p-4 mint-text-primary">
                       <div>{es ? "TOTAL GENERAL" : "GRAND TOTAL"}</div>
                       <div className="mt-1 text-xs font-normal mint-text-secondary">
-                        {tieneMXN && <span>MXN: {formato(mxn.pendiente, "MXN")}</span>}
-                        {tieneMXN && tieneUSD && <span> · </span>}
-                        {tieneUSD && <span>USD: {formato(usd.pendiente, "USD")}</span>}
+                        {resumenDisponible && tieneMXN && <span>MXN: {formato(mxn.pendiente, "MXN")}</span>}
+                        {resumenDisponible && tieneMXN && tieneUSD && <span> · </span>}
+                        {resumenDisponible && tieneUSD && <span>USD: {formato(usd.pendiente, "USD")}</span>}
                       </div>
                     </td>
                     <td className="p-4 text-sm mint-text-secondary">—</td>
@@ -1224,10 +1112,11 @@ export default function PacienteGeneral({
                       )}
                     </td>
                     <td className="p-4 text-right">
-                      {puedeRegistrarCobros && tratamientos.some((t) => Number(t.resta_original ?? t.resta ?? 0) > 0.005) && (
+                      {puedeRegistrarCobros && cargosListos && cargosAdicionales.every(c => c.saldo_pendiente <= 0.005) && tratamientos.some(t => Number(t.resta_original ?? t.resta ?? 0) > 0.005) && <button type="button" onClick={abrirCobroGeneral} className="mint-btn mint-btn-secondary px-3 py-2 text-xs whitespace-nowrap mr-2">{es ? "Cobro general" : "General payment"}</button>}
+                      {puedeRegistrarCobros && cargosListos && haySaldo && (
                         <button type="button" onClick={abrirLiquidacionGlobal}
                           className="mint-btn mint-btn-primary px-3 py-2 text-xs whitespace-nowrap">
-                          {es ? "Registrar cobro" : "Record payment"}
+                          {es ? "Liquidar todo / Abonar" : "Settle all / Pay"}
                         </button>
                       )}
                     </td>

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { supabase } from "../../lib/supabase";
 import { useLanguage } from "../../context/LanguageContext";
 import type { Paciente } from "../../types/Paciente";
 import type { Tratamiento } from "../../types/Tratamiento";
 
 type ResumenProps = {
+  seccionCargosAdicionales?: ReactNode;
   ingresos: number;
 
   cobrado: number;
@@ -40,6 +42,7 @@ type ResumenProps = {
 };
 
 export default function Resumen({
+  seccionCargosAdicionales,
   ingresos,
 
   cobrado,
@@ -1587,6 +1590,8 @@ export default function Resumen({
 
       </section>
 
+
+      {seccionCargosAdicionales}
 
             {mostrarMXN && (
         <>

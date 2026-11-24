@@ -27,6 +27,8 @@ type PagoComision = {
   monto_mxn?: number;
   tipo_cambio?: number | null;
   comision_banco?: number;
+  es_cargo_adicional?: boolean;
+  cargo_adicional_id?: number | null;
   comision_doctor_porcentaje?: number | null;
   comision_doctor_pagada?: boolean;
   comision_doctor_fecha_pago?: string | null;

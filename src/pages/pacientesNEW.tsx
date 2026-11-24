@@ -17,6 +17,8 @@ import PacienteHistorialMedico from "../components/pacientes/PacienteHistorialMe
 import PacienteCitas from "../components/pacientes/PacienteCitas";
 import ConsentimientosPaciente from "../components/pacientes/consentimientos/ConsentimientosPaciente";
 import ModalTratamientoPaciente from "../components/pacientes/modales/ModalTratamientoPaciente";
+import { consultarCargosAdicionales, type CargoAdicional } from "../services/cargosAdicionales.service";
+import ModalLiquidacionGlobalPaciente from "../components/pacientes/modales/ModalLiquidacionGlobalPaciente";
 import ModalCobroPaciente from "../components/pacientes/modales/ModalCobroPaciente";
 import ModalEditarPaciente from "../components/pacientes/modales/ModalEditarPaciente";
 import ModalCitaPaciente from "../components/pacientes/modales/ModalCitaPaciente";
@@ -446,6 +448,25 @@ const [
 
 
 
+const [mostrarLiquidacionGlobal, setMostrarLiquidacionGlobal] = useState(false);
+const [revisionCargos, setRevisionCargos] = useState(0);
+const [consultaCargos, setConsultaCargos] = useState<{ pacienteId: number; filas: CargoAdicional[]; error: boolean } | null>(null);
+const puedeConsultarCargos = puedeRegistrarCobros || permisos?.ver_resumen_financiero === true;
+const pacienteIdCargos = pacienteAbierto?.id;
+useEffect(() => {
+  setConsultaCargos(null);
+  if (!pacienteIdCargos || !puedeConsultarCargos) return;
+  let vigente = true;
+  void consultarCargosAdicionales(Number(pacienteIdCargos)).then((filas) => {
+    if (vigente) setConsultaCargos({ pacienteId: Number(pacienteIdCargos), filas, error: false });
+  }).catch(() => {
+    if (vigente) setConsultaCargos({ pacienteId: Number(pacienteIdCargos), filas: [], error: true });
+  });
+  return () => { vigente = false; };
+}, [pacienteIdCargos, puedeConsultarCargos, tratamientos, mostrarModalCobro, mostrarLiquidacionGlobal, revisionCargos]);
+const cargosListos = consultaCargos?.pacienteId === Number(pacienteIdCargos) && consultaCargos?.error === false;
+const cargosActivos = (cargosListos ? consultaCargos?.filas ?? [] : []).filter(c => c.estado !== "Cancelado" && tratamientos.some(t => Number(t.id) === c.tratamiento_id && !t.archivado));
+
 const [
   tratamientoCobro,
   setTratamientoCobro,
@@ -707,7 +728,8 @@ async function cargarTipoCambio() {
         .from("tratamientos")
         .select(
           "paciente_id, resta, pendiente"
-        ),
+        )
+        .eq("archivado", false),
 
     ]);
 
@@ -1564,6 +1586,7 @@ async function recargarTratamientosTrasLiquidacion() {
   if (!pacienteAbierto?.id) return;
   const { data, error } = await supabase.from("tratamientos")
     .select("*").eq("paciente_id", pacienteAbierto.id)
+    .eq("archivado", false)
     .order("created_at", { ascending: false });
   if (error || !data) throw error ?? new Error("No se pudieron recargar los tratamientos");
   setTratamientos(data.map((t: any) => ({
@@ -2894,6 +2917,8 @@ notas:
     id:
       data.id,
 
+    archivado: data.archivado,
+
     fecha:
       data.fecha,
 
@@ -3472,6 +3497,7 @@ setMostrarFormularioPresupuestoPaciente(false);
           "paciente_id",
           paciente.id
         )
+        .eq("archivado", false)
 
         .order(
           "created_at",
@@ -3494,6 +3520,8 @@ setMostrarFormularioPresupuestoPaciente(false);
 
               id:
     t.id,
+
+  archivado: t.archivado,
 
   fecha:
     t.fecha,
@@ -4329,12 +4357,17 @@ if (abriendoPacienteDesdeUrl) {
   actualizarEstadoTratamiento={actualizarEstadoTratamiento}
   puedeRegistrarCobros={puedeRegistrarCobros}
   abrirModalCobro={abrirModalCobro}
-  abrirLiquidacionGlobal={abrirModalCobroGeneral}
+  abrirLiquidacionGlobal={() => setMostrarLiquidacionGlobal(true)}
+  abrirCobroGeneral={abrirModalCobroGeneral}
+  cargosAdicionales={cargosActivos}
+  cargosListos={cargosListos}
+  puedeConsultarCargos={puedeConsultarCargos}
   setNuevoTratamiento={setNuevoTratamiento}
   setDoctorSeleccionado={setDoctorSeleccionado}
   doctores={doctores}
   setEditandoIndex={setEditandoIndex}
   puedeAnularTratamientos={puedeAnularTratamientos}
+  puedeArchivarTratamientos={perfil?.rol === "admin" && perfil?.activo === true}
   setTratamientos={setTratamientos}
   puedeAgregarNotasClinicas={puedeAgregarNotasClinicas}
   doctorNotaId={doctorNotaId}
@@ -4369,7 +4402,19 @@ if (abriendoPacienteDesdeUrl) {
   guardarTratamiento={guardarTratamiento}
 />
 
+<ModalLiquidacionGlobalPaciente
+  abierto={mostrarLiquidacionGlobal && puedeRegistrarCobros}
+  pacienteId={pacienteAbierto?.id == null ? null : Number(pacienteAbierto.id)}
+  pacienteNombre={pacienteAbierto?.nombre ?? ""}
+  es={es}
+  onCerrar={() => setMostrarLiquidacionGlobal(false)}
+  onLiquidacionConfirmada={recargarTratamientosTrasLiquidacion}
+/>
+
 <ModalCobroPaciente
+  puedeRegistrarCobros={puedeRegistrarCobros}
+  onCargoRegistrado={() => setRevisionCargos(actual => actual + 1)}
+  pacienteId={pacienteAbierto?.id ?? null}
   mostrarModalCobro={mostrarModalCobro}
   es={es}
   tratamientoCobro={tratamientoCobro}

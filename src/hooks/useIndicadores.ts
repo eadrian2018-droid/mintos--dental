@@ -1,3 +1,5 @@
+import { calcularComisionNeta } from "../lib/comisionNeta";
+
 import type {
   Doctor,
 } from "../types/Doctor";
@@ -29,6 +31,10 @@ type PagoIndicador = {
   monto_mxn?: number;
 
   monto_aplicado_moneda_tratamiento?: number | null;
+
+  es_cargo_adicional?: boolean | null;
+  cargo_adicional_id?: number | null;
+  tipo_cambio?: number | null;
 
   comision_banco?: number;
 
@@ -783,6 +789,8 @@ export default function useIndicadores({
     tratamiento: Tratamiento
   ) {
 
+    if (pago.es_cargo_adicional === true) return 0;
+
     const totalTratamiento =
       Number(
         tratamiento.total || 0
@@ -1018,6 +1026,15 @@ export default function useIndicadores({
             pago
           );
 
+        // Los cargos adicionales generan comisión sin repetir costos clínicos.
+        if (pago.es_cargo_adicional === true) {
+          if (!tratamiento || !["Finalizado", "En proceso"].includes(String(tratamiento.estado))) {
+            return total;
+          }
+          const comision = calcularComisionNeta(pago, tratamiento, 0);
+          return total + (comision ?? 0);
+        }
+
         if (
           !tratamiento ||
           tratamiento.estado !==
@@ -1087,6 +1104,15 @@ export default function useIndicadores({
           buscarTratamientoPago(
             pago
           );
+
+        // Los cargos adicionales generan comisión sin repetir costos clínicos.
+        if (pago.es_cargo_adicional === true) {
+          if (!tratamiento || !["Finalizado", "En proceso"].includes(String(tratamiento.estado))) {
+            return total;
+          }
+          const comision = calcularComisionNeta(pago, tratamiento, 0);
+          return total + (comision ?? 0);
+        }
 
         if (
           !tratamiento ||

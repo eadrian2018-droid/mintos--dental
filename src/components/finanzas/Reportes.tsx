@@ -102,6 +102,7 @@ type ReportesProps = {
 
   periodo:
     | "semana"
+    | "semana_pasada"
     | "mes"
     | "anio"
     | "historico";
@@ -324,7 +325,7 @@ export default function Reportes({
     ).length;
 
   const etiquetaPeriodo =
-    periodo === "semana"
+    (periodo === "semana" || periodo === "semana_pasada")
 
       ? `${lunesSemana.toLocaleDateString(
           locale,
@@ -1173,6 +1174,8 @@ export default function Reportes({
     const nombrePeriodo =
       periodo === "semana"
         ? "semana"
+        : periodo === "semana_pasada"
+          ? "semana_pasada"
         : periodo === "mes"
           ? "mes"
           : periodo === "anio"
