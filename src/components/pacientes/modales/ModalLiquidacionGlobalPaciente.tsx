@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../../../lib/supabase";
+import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../../../services/cargosAdicionales.service";
 
 type Moneda = "MXN" | "USD";
 type Detalle = {
@@ -61,6 +62,8 @@ const mensajeError = (error: unknown): string => {
 export default function ModalLiquidacionGlobalPaciente({
   abierto, pacienteId, pacienteNombre, es, onCerrar, onLiquidacionConfirmada,
 }: Props) {
+  const [fechaCobro, setFechaCobro] = useState(obtenerFechaLocalMintOS);
+  const fechaValida = validarFechaEfectivaMintOS(fechaCobro);
   const [moneda, setMoneda] = useState<Moneda>("MXN");
   const [modo, setModo] = useState<"liquidar" | "abonar">("liquidar");
   const [abonos, setAbonos] = useState<Record<string, string>>({});
@@ -86,6 +89,7 @@ export default function ModalLiquidacionGlobalPaciente({
   useEffect(() => {
     if (!abierto) return;
     setConfigLista(false);
+    setFechaCobro(obtenerFechaLocalMintOS());
     setMoneda("MXN");
     setModo("liquidar");
     setAbonos({});
@@ -176,7 +180,7 @@ export default function ModalLiquidacionGlobalPaciente({
   );
 
   async function registrarAbonos() {
-    if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo ||
+    if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo || !fechaValida ||
       !abonosValidos || cobrando || enCursoRef.current || revisionNecesaria) return;
     enCursoRef.current = true;
     setCobrando(true);
@@ -188,13 +192,15 @@ export default function ModalLiquidacionGlobalPaciente({
       for (const { item, monto } of abonosElegidos) {
         const solicitudId = crypto.randomUUID();
         const { data, error: errorRpc } = item.tipo === "cargo_adicional"
-          ? await supabase.rpc("mintos_cobrar_cargo_adicional_v1", {
+          ? await supabase.rpc("mintos_cobrar_cargo_adicional_v2", {
+              p_fecha_cobro: fechaCobro,
               p_solicitud_id: solicitudId, p_cargo_id: item.cargo_id, p_monto: monto,
               p_moneda: moneda, p_metodo_pago: metodo,
               p_tipo_cambio_confirmado: moneda === "USD" || item.moneda_precio === "USD" ? cotizacion.tipo_cambio_confirmado : null,
             })
-          : await supabase.rpc("mintos_registrar_cobro_v2", {
-          p_solicitud_id: solicitudId,
+          : await supabase.rpc("mintos_registrar_cobro_v3", {
+          p_fecha_cobro: fechaCobro,
+              p_solicitud_id: solicitudId,
           p_tratamiento_id: item.tratamiento_id,
           p_paciente_id: pacienteId,
           p_modo: "cobro",
@@ -247,9 +253,9 @@ export default function ModalLiquidacionGlobalPaciente({
   }
 
   async function liquidar() {
-    if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo || cobrando || enCursoRef.current || revisionNecesaria) return;
+    if (!pacienteId || !cotizacion || !cotizacionVigente || !metodo || !fechaValida || cobrando || enCursoRef.current || revisionNecesaria) return;
     if (cotizacion.cantidad < 1) return;
-    const payload = JSON.stringify({ pacienteId, metodo, moneda, tipoCambio: cotizacion.tipo_cambio_confirmado, detalle: cotizacion.detalle });
+    const payload = JSON.stringify({ pacienteId, metodo, moneda, fechaCobro, tipoCambio: cotizacion.tipo_cambio_confirmado, detalle: cotizacion.detalle });
     if (intentoRef.current && intentoRef.current.payload !== payload) {
       setError(es ? "Los datos cambiaron. Vuelve a preparar la cotización." : "Details changed. Prepare a new quote.");
       return;
@@ -260,8 +266,9 @@ export default function ModalLiquidacionGlobalPaciente({
     setCobrando(true);
     setError("");
     try {
-      const { data, error: errorRpc } = await supabase.rpc("mintos_liquidar_todo_v1", {
-        p_solicitud_id: solicitudId,
+      const { data, error: errorRpc } = await supabase.rpc("mintos_liquidar_todo_v2", {
+        p_fecha_cobro: fechaCobro,
+              p_solicitud_id: solicitudId,
         p_paciente_id: pacienteId,
         p_metodo_pago: metodo,
         p_moneda: moneda,
@@ -327,7 +334,10 @@ export default function ModalLiquidacionGlobalPaciente({
             ? (es ? "Se cobrarán todos los saldos pendientes." : "All outstanding balances will be paid.")
             : (es ? "Escribe el abono de cada concepto. Solo se cobrarán los importes capturados. Los cobros se registran individualmente."
               : "Enter an amount per item. Only entered amounts will be charged. Payments are recorded individually.")}</p>
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="text-sm font-medium text-slate-900">{es ? "Fecha del cobro" : "Payment date"}
+              <input className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-slate-900 p-2" type="date" required max={obtenerFechaLocalMintOS()} value={fechaCobro} disabled={bloquearEdicion} onChange={(e) => setFechaCobro(e.target.value)} />
+            </label>
             <label className="text-sm font-medium text-slate-900">{es ? "Moneda" : "Currency"}
               <select className="mt-1 w-full rounded-lg border border-slate-200 bg-white text-slate-900 p-2" value={moneda} disabled={bloquearEdicion} onChange={(e) => { setMoneda(e.target.value as Moneda); setCotizacion(null); }}>
                 <option value="MXN">MXN</option><option value="USD">USD</option>
@@ -389,7 +399,7 @@ export default function ModalLiquidacionGlobalPaciente({
         <footer className="flex flex-wrap justify-end gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
           <button type="button" className="rounded-xl border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50" disabled={ocupado} onClick={onCerrar}>{es ? "Cerrar" : "Close"}</button>
           {!resultado && cotizacionVigente && !!cotizacion?.cantidad && !revisionNecesaria &&
-            <button type="button" className="rounded-xl bg-teal-700 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50" disabled={ocupado || !metodo || (modo === "abonar" && !abonosValidos)}
+            <button type="button" className="rounded-xl bg-teal-700 px-5 py-2.5 font-semibold text-white shadow-sm hover:bg-teal-800 disabled:opacity-50" disabled={ocupado || !metodo || !fechaValida || (modo === "abonar" && !abonosValidos)}
               onClick={() => void (modo === "liquidar" ? liquidar() : registrarAbonos())}>
               {cobrando ? (es ? "Procesando..." : "Processing...") : modo === "liquidar"
                 ? (es ? "Confirmar liquidación" : "Confirm settlement")

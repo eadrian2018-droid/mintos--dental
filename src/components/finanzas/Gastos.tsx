@@ -22,8 +22,12 @@ import { useLanguage }
 import { supabase }
   from "../../lib/supabase";
 
+import usePeriodo from "../../hooks/usePeriodo";
+import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../../services/cargosAdicionales.service";
+
 type PeriodoGastos =
   | "semana"
+  | "semana_pasada"
   | "mes"
   | "anio"
   | "historico";
@@ -340,182 +344,18 @@ export default function Gastos({
     "semana"
   );
 
-  const hoy =
-    useMemo(
-      () => {
-
-        const fecha =
-          new Date();
-
-        fecha.setHours(
-          12,
-          0,
-          0,
-          0
-        );
-
-        return fecha;
-
-      },
-      []
-    );
-
-  const lunesSemana =
-    useMemo(
-      () => {
-
-        const fecha =
-          new Date(
-            hoy
-          );
-
-        const diaSemana =
-          fecha.getDay();
-
-        const diferencia =
-          diaSemana === 0
-            ? -6
-            : 1 - diaSemana;
-
-        fecha.setDate(
-          fecha.getDate() +
-          diferencia
-        );
-
-        fecha.setHours(
-          0,
-          0,
-          0,
-          0
-        );
-
-        return fecha;
-
-      },
-      [
-        hoy,
-      ]
-    );
-
-  const sabadoSemana =
-    useMemo(
-      () => {
-
-        const fecha =
-          new Date(
-            lunesSemana
-          );
-
-        fecha.setDate(
-          fecha.getDate() +
-          5
-        );
-
-        fecha.setHours(
-          23,
-          59,
-          59,
-          999
-        );
-
-        return fecha;
-
-      },
-      [
-        lunesSemana,
-      ]
-    );
-
-  const gastosPeriodo =
-    useMemo(
-      () => {
-
-        if (
-          periodoGastos ===
-          "historico"
-        ) {
-
-          return gastosFiltrados;
-
-        }
-
-        return gastosFiltrados.filter(
-          (
-            gasto
-          ) => {
-
-            if (
-              !gasto.fecha
-            ) {
-
-              return false;
-
-            }
-
-            const fechaGastoRegistro =
-              new Date(
-                `${gasto.fecha}T12:00:00`
-              );
-
-            if (
-              Number.isNaN(
-                fechaGastoRegistro
-                  .getTime()
-              )
-            ) {
-
-              return false;
-
-            }
-
-            if (
-              periodoGastos ===
-              "semana"
-            ) {
-
-              return (
-                fechaGastoRegistro >=
-                  lunesSemana &&
-                fechaGastoRegistro <=
-                  sabadoSemana
-              );
-
-            }
-
-            if (
-              periodoGastos ===
-              "mes"
-            ) {
-
-              return (
-                fechaGastoRegistro
-                  .getFullYear() ===
-                  hoy.getFullYear() &&
-                fechaGastoRegistro
-                  .getMonth() ===
-                  hoy.getMonth()
-              );
-
-            }
-
-            return (
-              fechaGastoRegistro
-                .getFullYear() ===
-              hoy.getFullYear()
-            );
-
-          }
-        );
-
-      },
-      [
-        gastosFiltrados,
-        periodoGastos,
-        lunesSemana,
-        sabadoSemana,
-        hoy,
-      ]
-    );
+  const {
+    hoy,
+    lunesSemana,
+    domingoSemana,
+    lunesSemanaPasada,
+    domingoSemanaPasada,
+    gastosFiltrados: gastosPeriodo,
+  } = usePeriodo({
+    periodo: periodoGastos,
+    tratamientos: [],
+    gastos: gastosFiltrados,
+  });
 
   const totalGastosMXN =
     useMemo(
@@ -688,13 +528,13 @@ export default function Gastos({
       () => {
 
         if (
-          periodoGastos ===
-          "semana"
+          periodoGastos === "semana" ||
+          periodoGastos === "semana_pasada"
         ) {
 
           return (
             `${
-              lunesSemana
+              (periodoGastos === "semana_pasada" ? lunesSemanaPasada : lunesSemana)
                 .toLocaleDateString(
                   locale,
                   {
@@ -709,7 +549,7 @@ export default function Gastos({
                   }
                 )
             } — ${
-              sabadoSemana
+              (periodoGastos === "semana_pasada" ? domingoSemanaPasada : domingoSemana)
                 .toLocaleDateString(
                   locale,
                   {
@@ -766,7 +606,9 @@ export default function Gastos({
       [
         periodoGastos,
         lunesSemana,
-        sabadoSemana,
+        domingoSemana,
+        lunesSemanaPasada,
+        domingoSemanaPasada,
         hoy,
         es,
         locale,
@@ -942,6 +784,7 @@ export default function Gastos({
           <div
             className="
               inline-flex
+              flex-wrap
               items-center
               self-start
               xl:self-center
@@ -993,6 +836,49 @@ export default function Gastos({
                 es
                   ? "Semana"
                   : "Week"
+              }
+
+            </button>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPeriodoGastos(
+                  "semana_pasada"
+                )
+              }
+              className={`
+                px-4
+                py-2
+                rounded-lg
+                text-sm
+                font-semibold
+                transition-all
+
+                ${
+                  periodoGastos ===
+                  "semana_pasada"
+
+                    ? `
+                        !bg-[#102f4f]
+                        !text-white
+                        shadow-sm
+                        ring-1
+                        ring-[#63c8b2]
+                      `
+
+                    : `
+                        text-white/75
+                        hover:text-white
+                      `
+                }
+              `}
+            >
+
+              {
+                es
+                  ? "Semana pasada"
+                  : "Last week"
               }
 
             </button>
@@ -1678,6 +1564,8 @@ export default function Gastos({
 
               <input
                 type="date"
+                required
+                max={obtenerFechaLocalMintOS()}
                 value={
                   fechaGasto
                 }
@@ -2312,6 +2200,7 @@ export default function Gastos({
               onClick={
                 guardarGasto
               }
+              disabled={!validarFechaEfectivaMintOS(fechaGasto)}
               className="
                 mint-btn
                 mint-btn-primary

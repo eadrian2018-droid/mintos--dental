@@ -16,6 +16,8 @@ import { useLanguage } from "../../context/LanguageContext";
 
 import { calcularComisionNeta } from "../../lib/comisionNeta";
 
+import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../../services/cargosAdicionales.service";
+
 import { registrarBitacora } from "../../lib/registrarBitacora";
 
 type PagoComision = {
@@ -82,6 +84,9 @@ export default function Comisiones({
   const es = language === "es";
   const locale = es ? "es-MX" : "en-US";
   const tr = (espanol: string, english: string) => es ? espanol : english;
+
+  const [fechaPagoDoctor, setFechaPagoDoctor] = useState(obtenerFechaLocalMintOS);
+  const [fechaPagoEspecialista, setFechaPagoEspecialista] = useState(obtenerFechaLocalMintOS);
 
   const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
   const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
@@ -697,6 +702,11 @@ export default function Comisiones({
       return;
     }
 
+    if (!validarFechaEfectivaMintOS(fechaPagoDoctor)) {
+      alert(tr("Fecha de pago inválida.", "Invalid payment date."));
+      return;
+    }
+
     const monedaElegida = formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
       ? "USD" : "MXN";
     if (monedaElegida === "USD" ? !doctorPago.listoUSD : !doctorPago.listoMXN) {
@@ -726,6 +736,7 @@ export default function Comisiones({
       moneda: monedaPago,
       monto,
       metodoPago,
+      fechaPago: fechaPagoDoctor,
     });
     if (liquidacionPendienteRef.current?.payload !== payloadLiquidacion) {
       liquidacionPendienteRef.current = {
@@ -738,13 +749,14 @@ export default function Comisiones({
     setGuardando(true);
     try {
       const { data, error } = await supabase.rpc(
-        "mintos_liquidar_comision_doctor",
+        "mintos_liquidar_comision_doctor_v2",
         {
           p_doctor_id: Number(doctorPago.doctor.id),
           p_moneda: monedaPago,
           p_monto: monto,
           p_metodo_pago: metodoPago,
           p_clave_idempotencia: claveIdempotencia,
+          p_fecha_pago: fechaPagoDoctor,
         }
       );
       if (error) throw error;
@@ -795,6 +807,11 @@ export default function Comisiones({
       return;
     }
 
+    if (!validarFechaEfectivaMintOS(fechaPagoEspecialista)) {
+      alert(tr("Fecha de pago inválida.", "Invalid payment date."));
+      return;
+    }
+
     const monto = importePagoEspecialista;
     if (monto === null || !Number.isFinite(monto) || monto <= 0) {
       alert(tr("No se pudo calcular un importe válido.", "Could not calculate a valid amount."));
@@ -834,7 +851,9 @@ export default function Comisiones({
         .from("tratamientos")
         .update({
           especialista_pagado: true,
-          especialista_fecha_pago: new Date().toISOString(),
+          especialista_fecha_pago: fechaPagoEspecialista === obtenerFechaLocalMintOS()
+            ? new Date().toISOString()
+            : new Date(`${fechaPagoEspecialista}T12:00:00-07:00`).toISOString(),
           especialista_metodo_pago: metodoPago,
           especialista_pago_moneda: monedaPago,
           especialista_pago_monto: monto,
@@ -1261,6 +1280,7 @@ export default function Comisiones({
                                           )
                                         );
 
+                                        if (!liquidacionPendienteRef.current) setFechaPagoDoctor(obtenerFechaLocalMintOS());
                                         setDoctorPago(
                                           item
                                         );
@@ -1673,7 +1693,7 @@ export default function Comisiones({
                                                           ? new Date(
                                                               tratamiento.especialista_fecha_pago
                                                             )
-                                                              .toLocaleDateString(locale)
+                                                              .toLocaleDateString(locale, { timeZone: "America/Hermosillo" })
                                                           : tr("Registrado", "Recorded")
                                                       }
                                                     </span>
@@ -1694,6 +1714,7 @@ export default function Comisiones({
                                                           setMonedaPagoEspecialista(
                                                             tratamiento.moneda_especialista === "USD" ? "USD" : "MXN"
                                                           );
+                                                          setFechaPagoEspecialista(obtenerFechaLocalMintOS());
                                                           setTratamientoPago(tratamiento);
 
                                                         }}
@@ -1992,6 +2013,14 @@ export default function Comisiones({
                 }
               </p>
 
+              <div className="mt-4">
+                <label className="mint-label" htmlFor="fechaPagoDoctor">{tr("Fecha de pago", "Payment date")}</label>
+                <input id="fechaPagoDoctor" type="date" required
+                  className="mint-input" value={fechaPagoDoctor}
+                  max={obtenerFechaLocalMintOS()} disabled={guardando || !!liquidacionPendienteRef.current}
+                  onChange={event => setFechaPagoDoctor(event.target.value)} />
+              </div>
+
               <div className="mt-6">
 
                 <label className="mint-label">
@@ -2076,7 +2105,7 @@ export default function Comisiones({
 
                 <button
                   type="button"
-                  disabled={guardando}
+                  disabled={guardando || !validarFechaEfectivaMintOS(fechaPagoDoctor)}
                   onClick={
                     registrarPagoDoctor
                   }
@@ -2150,6 +2179,14 @@ export default function Comisiones({
                 </p>
               </div>
 
+              <div className="mt-4">
+                <label className="mint-label" htmlFor="fechaPagoEspecialista">{tr("Fecha de pago", "Payment date")}</label>
+                <input id="fechaPagoEspecialista" type="date" required
+                  className="mint-input" value={fechaPagoEspecialista}
+                  max={obtenerFechaLocalMintOS()} disabled={guardando}
+                  onChange={event => setFechaPagoEspecialista(event.target.value)} />
+              </div>
+
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="mint-label">{tr("Método de pago", "Payment method")}</label>
@@ -2221,7 +2258,7 @@ export default function Comisiones({
 
                 <button
                   type="button"
-                  disabled={guardando || importePagoEspecialista === null || importePagoEspecialista <= 0}
+                  disabled={guardando || !validarFechaEfectivaMintOS(fechaPagoEspecialista) || importePagoEspecialista === null || importePagoEspecialista <= 0}
                   onClick={
                     registrarPagoEspecialista
                   }

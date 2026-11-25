@@ -287,7 +287,9 @@ export default function Finanzas() {
 
     lunesSemana,
 
-    sabadoSemana,
+    domingoSemana,
+
+    fechaDentroPeriodo,
 
     lunesSemanaPasada,
 
@@ -299,7 +301,8 @@ export default function Finanzas() {
 
   } = usePeriodo({
 
-    periodo,
+    // El cierre mensual siempre utiliza el mes actual.
+    periodo: seccionActiva === "cierre" ? "mes" : periodo,
 
     tratamientos,
 
@@ -307,15 +310,9 @@ export default function Finanzas() {
 
   });
 
-  const cargosDelPeriodo = finanzas.cargosAdicionales.filter((cargo) => {
-    if (periodo === "historico") return true;
-    const fecha = new Date(cargo.creado_at);
-    if (periodo === "semana") return fecha >= lunesSemana && fecha <= sabadoSemana;
-    if (periodo === "semana_pasada") return fecha >= lunesSemanaPasada && fecha <= domingoSemanaPasada;
-    const hoy = new Date();
-    return fecha.getFullYear() === hoy.getFullYear() &&
-      (periodo === "anio" || fecha.getMonth() === hoy.getMonth());
-  });
+  const cargosDelPeriodo = finanzas.cargosAdicionales.filter((cargo) =>
+    fechaDentroPeriodo(cargo.creado_at)
+  );
 
   const resumenCargos = (["MXN", "USD"] as const).map((moneda) => ({
     moneda,
@@ -370,103 +367,21 @@ export default function Finanzas() {
         )
   );
 
-  const pagosFiltrados =
-    pagos.filter(
-      (pago: any) => {
+  const pagosFiltrados = pagos.filter((pago) =>
+    fechaDentroPeriodo(pago.fecha)
+  );
 
-        if (
-          periodo ===
-          "historico"
-        ) {
+  const pagosComisionesDelPeriodo = pagos.filter((pago) =>
+    fechaDentroPeriodo(
+      (pago as { comision_doctor_fecha_pago?: string | null }).comision_doctor_fecha_pago
+    )
+  );
 
-          return true;
-
-        }
-
-        const fechaPago =
-          new Date(
-            pago.fecha
-          );
-
-        if (
-          Number.isNaN(
-            fechaPago.getTime()
-          )
-        ) {
-
-          return false;
-
-        }
-
-        if (
-          (periodo === "semana" || periodo === "semana_pasada")
-        ) {
-
-          const inicio =
-            new Date(
-              periodo === "semana_pasada" ? lunesSemanaPasada : lunesSemana
-            );
-
-          inicio.setHours(
-            0,
-            0,
-            0,
-            0
-          );
-
-          const fin =
-            new Date(
-              periodo === "semana_pasada" ? domingoSemanaPasada : sabadoSemana
-            );
-
-          fin.setHours(
-            23,
-            59,
-            59,
-            999
-          );
-
-          return (
-            fechaPago >= inicio &&
-            fechaPago <= fin
-          );
-
-        }
-
-        const hoy =
-          new Date();
-
-        if (
-          periodo ===
-          "mes"
-        ) {
-
-          return (
-            fechaPago.getFullYear() ===
-              hoy.getFullYear()
-            &&
-            fechaPago.getMonth() ===
-              hoy.getMonth()
-          );
-
-        }
-
-        if (
-          periodo ===
-          "anio"
-        ) {
-
-          return (
-            fechaPago.getFullYear() ===
-            hoy.getFullYear()
-          );
-
-        }
-
-        return true;
-
-      }
-    );
+  const pagosEspecialistasDelPeriodo = tratamientos.filter((tratamiento) =>
+    fechaDentroPeriodo(
+      (tratamiento as { especialista_fecha_pago?: string | null }).especialista_fecha_pago
+    )
+  );
 
   const {
 
@@ -521,6 +436,8 @@ export default function Finanzas() {
     doctores,
 
     pagosFiltrados,
+    pagosComisionesDelPeriodo,
+    pagosEspecialistasDelPeriodo,
 
   });
 
@@ -901,7 +818,7 @@ export default function Finanzas() {
                         {" — "}
 
                         {
-                          sabadoSemana
+                          domingoSemana
                             .toLocaleDateString(
                               es ? "es-MX" : "en-US",
                               {
@@ -1435,7 +1352,7 @@ export default function Finanzas() {
     }
 
     sabadoSemana={
-      periodo === "semana_pasada" ? domingoSemanaPasada : sabadoSemana
+      periodo === "semana_pasada" ? domingoSemanaPasada : domingoSemana
     }
 
   />

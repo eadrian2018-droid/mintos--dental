@@ -63,6 +63,8 @@ export type IndicadoresProps = {
   doctores: Doctor[];
 
   pagosFiltrados?: PagoIndicador[];
+  pagosComisionesDelPeriodo?: PagoIndicador[];
+  pagosEspecialistasDelPeriodo?: Tratamiento[];
 
 };
 
@@ -77,6 +79,8 @@ export default function useIndicadores({
   doctores,
 
   pagosFiltrados = [],
+  pagosComisionesDelPeriodo = pagosFiltrados,
+  pagosEspecialistasDelPeriodo = tratamientosFiltrados,
 
 }: IndicadoresProps) {
 
@@ -455,7 +459,7 @@ export default function useIndicadores({
   */
 
   const pagosEspecialistasEfectivoMXN =
-    tratamientosFiltrados
+    pagosEspecialistasDelPeriodo
       .filter(
         (tratamiento: any) =>
           tratamiento.especialista_pagado === true
@@ -494,7 +498,7 @@ export default function useIndicadores({
       );
 
   const pagosEspecialistasEfectivoUSD =
-    tratamientosFiltrados
+    pagosEspecialistasDelPeriodo
       .filter(
         (tratamiento: any) =>
           tratamiento.especialista_pagado === true
@@ -542,7 +546,7 @@ export default function useIndicadores({
   */
 
   const pagosEspecialistasTransferenciaMXN =
-    tratamientosFiltrados
+    pagosEspecialistasDelPeriodo
       .filter(
         (tratamiento: any) =>
           tratamiento.especialista_pagado === true
@@ -589,7 +593,7 @@ export default function useIndicadores({
   */
 
   const pagosComisionesDoctorEfectivoMXN =
-    pagosFiltrados
+    pagosComisionesDelPeriodo
       .filter(
         (pago) =>
           pago.comision_doctor_pagada ===
@@ -615,7 +619,7 @@ export default function useIndicadores({
       );
 
   const pagosComisionesDoctorEfectivoUSD =
-    pagosFiltrados
+    pagosComisionesDelPeriodo
       .filter(
         (pago) =>
           pago.comision_doctor_pagada ===
@@ -641,7 +645,7 @@ export default function useIndicadores({
       );
 
   const pagosComisionesDoctorTransferenciaMXN =
-    pagosFiltrados
+    pagosComisionesDelPeriodo
       .filter(
         (pago) =>
           pago.comision_doctor_pagada ===

@@ -38,6 +38,7 @@ export interface CobrarCargoAdicional {
   moneda: MonedaCargo
   metodoPago: string
   tipoCambioConfirmado?: number | null
+  fechaCobro?: string | null
 }
 
 // ======================================================
@@ -47,10 +48,71 @@ export interface CobrarCargoAdicional {
 export const RPC_CARGOS_ADICIONALES = {
   registrar: 'mintos_registrar_cargo_adicional_v2',
   consultar: 'mintos_consultar_cargos_adicionales_v1',
-  cobrar: 'mintos_cobrar_cargo_adicional_v1',
+  cobrar: 'mintos_cobrar_cargo_adicional_v2',
   anular: 'mintos_anular_cargo_adicional_v1',
   cancelar: 'mintos_cancelar_cargo_adicional_v1',
 } as const
+
+// ======================================================
+// FECHA LOCAL DE MINTOS
+// ======================================================
+
+export function obtenerFechaLocalMintOS(): string {
+  const partes = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Hermosillo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date())
+
+  const anio = partes.find(
+    (parte) => parte.type === 'year'
+  )?.value
+
+  const mes = partes.find(
+    (parte) => parte.type === 'month'
+  )?.value
+
+  const dia = partes.find(
+    (parte) => parte.type === 'day'
+  )?.value
+
+  if (!anio || !mes || !dia) {
+    throw new Error(
+      'Fecha local inválida / Invalid local date'
+    )
+  }
+
+  return `${anio}-${mes}-${dia}`
+}
+
+export function validarFechaEfectivaMintOS(
+  fecha: string
+): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
+    return false
+  }
+
+  if (fecha.startsWith('0000-')) {
+    return false
+  }
+
+  const fechaUTC = new Date(
+    `${fecha}T00:00:00.000Z`
+  )
+
+  if (!Number.isFinite(fechaUTC.getTime())) {
+    return false
+  }
+
+  if (
+    fechaUTC.toISOString().slice(0, 10) !== fecha
+  ) {
+    return false
+  }
+
+  return fecha <= obtenerFechaLocalMintOS()
+}
 
 // ======================================================
 // VALIDACIONES Y PREPARACIÓN DE PARÁMETROS
@@ -160,6 +222,17 @@ export function prepararCobroCargo(
     )
   }
 
+  const fechaCobro = cobro.fechaCobro ?? null
+
+  if (
+    fechaCobro !== null &&
+    !validarFechaEfectivaMintOS(fechaCobro)
+  ) {
+    throw new Error(
+      'Fecha de cobro inválida / Invalid payment date'
+    )
+  }
+
   return {
     p_solicitud_id: cobro.solicitudId,
     p_cargo_id: cobro.cargoId,
@@ -167,6 +240,7 @@ export function prepararCobroCargo(
     p_moneda: cobro.moneda,
     p_metodo_pago: cobro.metodoPago,
     p_tipo_cambio_confirmado: tipoCambio,
+    p_fecha_cobro: fechaCobro,
   }
 }
 

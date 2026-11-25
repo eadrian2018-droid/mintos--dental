@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../services/cargosAdicionales.service";
+
 import { finanzasService } from "../services/finanzas.service";
 import type { CargoAdicionalFinanzas } from "../services/finanzas.service";
 import { useAuth } from "../context/AuthContext";
@@ -121,7 +123,7 @@ export default function useFinanzas() {
   const [
     fechaGasto,
     setFechaGasto,
-  ] = useState("");
+  ] = useState(obtenerFechaLocalMintOS);
 
   const [
     conceptoGasto,
@@ -351,6 +353,8 @@ export default function useFinanzas() {
     const fecha =
       fechaGasto;
 
+    if (!validarFechaEfectivaMintOS(fecha)) return;
+
     const concepto =
       conceptoGasto;
 
@@ -393,7 +397,7 @@ export default function useFinanzas() {
         `Fecha: ${fecha || "-"} | Concepto: ${concepto || "-"} | Categoría: ${categoria || "-"} | Monto: ${monto} ${moneda} | Método: ${metodoPago}`,
     });
 
-    setFechaGasto("");
+    setFechaGasto(obtenerFechaLocalMintOS());
 
     setConceptoGasto("");
 

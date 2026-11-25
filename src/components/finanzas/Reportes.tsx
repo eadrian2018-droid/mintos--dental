@@ -278,6 +278,7 @@ export default function Reportes({
       ).toLocaleString(
         locale,
         {
+          timeZone: "America/Hermosillo",
           dateStyle: "medium",
           timeStyle: "short",
         }
@@ -348,6 +349,7 @@ export default function Reportes({
         ? new Date().toLocaleDateString(
             locale,
             {
+              timeZone: "America/Hermosillo",
               month: "long",
               year: "numeric",
             }
@@ -356,7 +358,10 @@ export default function Reportes({
         : periodo === "anio"
 
           ? String(
-              new Date().getFullYear()
+              new Intl.DateTimeFormat("en-US", {
+                timeZone: "America/Hermosillo",
+                year: "numeric",
+              }).format(new Date())
             )
 
           : t("Histórico completo", "Complete history");
@@ -708,6 +713,7 @@ export default function Reportes({
         .toLocaleString(
           locale,
           {
+            timeZone: "America/Hermosillo",
             dateStyle: "medium",
             timeStyle: "short",
           }

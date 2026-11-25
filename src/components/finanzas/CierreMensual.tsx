@@ -1,3 +1,4 @@
+import { obtenerFechaLocalMintOS } from "../../services/cargosAdicionales.service";
 import {
   useEffect,
   useState,
@@ -181,14 +182,9 @@ export default function CierreMensual({
     return () => { activo = false; };
   }, []);
 
-  const hoy =
-    new Date();
-
-  const mesActual =
-    hoy.getMonth() + 1;
-
-  const anioActual =
-    hoy.getFullYear();
+  const fechaLocal = obtenerFechaLocalMintOS();
+  const anioActual = Number(fechaLocal.slice(0, 4));
+  const mesActual = Number(fechaLocal.slice(5, 7));
 
   const [
     cierres,
@@ -405,6 +401,7 @@ export default function CierreMensual({
     ).toLocaleString(
       locale,
       {
+        timeZone: "America/Hermosillo",
         dateStyle:
           "medium",
 

@@ -17,7 +17,7 @@ import PacienteHistorialMedico from "../components/pacientes/PacienteHistorialMe
 import PacienteCitas from "../components/pacientes/PacienteCitas";
 import ConsentimientosPaciente from "../components/pacientes/consentimientos/ConsentimientosPaciente";
 import ModalTratamientoPaciente from "../components/pacientes/modales/ModalTratamientoPaciente";
-import { consultarCargosAdicionales, type CargoAdicional } from "../services/cargosAdicionales.service";
+import { consultarCargosAdicionales, obtenerFechaLocalMintOS, validarFechaEfectivaMintOS, type CargoAdicional } from "../services/cargosAdicionales.service";
 import ModalLiquidacionGlobalPaciente from "../components/pacientes/modales/ModalLiquidacionGlobalPaciente";
 import ModalCobroPaciente from "../components/pacientes/modales/ModalCobroPaciente";
 import ModalEditarPaciente from "../components/pacientes/modales/ModalEditarPaciente";
@@ -1930,8 +1930,14 @@ const netoCobroActual =
   montoCobroActualMXN -
   comisionBancoActual;
 async function registrarCobro(
-  modo: "cobro" | "descuento"
+  modo: "cobro" | "descuento",
+  fechaSeleccionada?: string
 ) {
+  const fechaCobro = modo === "cobro" ? (fechaSeleccionada ?? obtenerFechaLocalMintOS()) : null;
+  if (fechaCobro !== null && !validarFechaEfectivaMintOS(fechaCobro)) {
+    alert(es ? "Fecha de cobro inválida." : "Invalid payment date.");
+    return;
+  }
 
   if (
     !tratamientoCobro?.id ||
@@ -1950,17 +1956,18 @@ async function registrarCobro(
     }
     if (cobroEnCursoRef.current) return;
     const payload = JSON.stringify({ paciente: pacienteAbierto.id, monto,
-      moneda: nuevoCobro.moneda, metodo: nuevoCobro.metodo_pago, fx: tipoCambioCobro });
+      moneda: nuevoCobro.moneda, metodo: nuevoCobro.metodo_pago, fx: tipoCambioCobro, fechaCobro });
     if (solicitudCobroPendienteRef.current?.payload !== payload) {
       solicitudCobroPendienteRef.current = { id: crypto.randomUUID(), payload };
     }
     cobroEnCursoRef.current = true;
     try {
-      const { data, error } = await supabase.rpc("mintos_registrar_cobro_general_v1", {
+      const { data, error } = await supabase.rpc("mintos_registrar_cobro_general_v2", {
         p_solicitud_id: solicitudCobroPendienteRef.current.id,
         p_paciente_id: pacienteAbierto.id, p_monto: monto,
         p_moneda: nuevoCobro.moneda, p_metodo_pago: nuevoCobro.metodo_pago,
         p_tipo_cambio_confirmado: tipoCambioCobro > 0 ? tipoCambioCobro : null,
+        p_fecha_cobro: fechaCobro,
       });
       if (error || !data || data.solicitud_id !== solicitudCobroPendienteRef.current.id) {
         console.error("Cobro general:", error, data);
@@ -2244,7 +2251,7 @@ async function registrarCobro(
     tratamiento: tratamientoCobro.id, paciente: pacienteAbierto.id,
     modo, montoCobro, moneda: nuevoCobro.moneda,
     metodo: nuevoCobro.metodo_pago, tipoDescuentoCobro, valorDescuento,
-    tipoCambioCobro,
+    tipoCambioCobro, fechaCobro,
     laboratorio: modo === "cobro" && laboratorioCambio ? laboratorioNuevo : null,
   });
   if (solicitudCobroPendienteRef.current?.payload !== payloadCobro) {
@@ -2254,7 +2261,7 @@ async function registrarCobro(
   }
 
   const { data: resultadoCobro, error: errorCobroAtomico } = await supabase.rpc(
-    "mintos_registrar_cobro_v2",
+    "mintos_registrar_cobro_v3",
     {
       p_solicitud_id: solicitudCobroPendienteRef.current.id,
       p_tratamiento_id: tratamientoCobro.id,
@@ -2267,6 +2274,7 @@ async function registrarCobro(
       p_valor_descuento: modo === "descuento" ? valorDescuento : 0,
       p_laboratorio: modo === "cobro" && laboratorioCambio ? laboratorioNuevo : null,
       p_especialista: null,
+      p_fecha_cobro: fechaCobro,
       p_tipo_cambio_confirmado:
         nuevoCobro.moneda === "USD" || monedaPrecioTratamiento === "USD"
           ? tipoCambioCobro

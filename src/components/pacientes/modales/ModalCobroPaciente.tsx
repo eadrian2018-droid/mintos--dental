@@ -1,6 +1,8 @@
 import CargosAdicionalesPaciente from "./CargosAdicionalesPaciente";
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from "react";
 
+import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../../../services/cargosAdicionales.service";
+
 type NuevoCobro = {
   metodo_pago: string;
   moneda: string;
@@ -40,7 +42,7 @@ type Props = {
   netoCobroActual: number;
   setMostrarModalCobro: Dispatch<SetStateAction<boolean>>;
   setTratamientoCobro: Dispatch<SetStateAction<any>>;
-  registrarCobro: (modo: "cobro" | "descuento") => Promise<void>;
+  registrarCobro: (modo: "cobro" | "descuento", fechaCobro?: string) => Promise<void>;
   saldoMonetarioMXN: (tratamiento: any) => number;
 };
 
@@ -79,6 +81,7 @@ export default function ModalCobroPaciente({
 }: Props) {
   const esCobroGeneral = Number(tratamientoCobro?.id) === -1;
   const [vista, setVista] = useState<"tratamiento" | "cargos">("tratamiento");
+  const [fechaCobro, setFechaCobro] = useState(obtenerFechaLocalMintOS);
   const [cargoBloqueado, setCargoBloqueado] = useState(false);
   const tratamientoId = Number(tratamientoCobro?.id);
   const permiteVistaCargos = !esCobroGeneral && pacienteId !== null &&
@@ -87,6 +90,7 @@ export default function ModalCobroPaciente({
   const vistaCargos = permiteVistaCargos && vista === "cargos";
 
   useEffect(() => {
+    setFechaCobro(obtenerFechaLocalMintOS());
     setVista("tratamiento");
     setCargoBloqueado(false);
   }, [mostrarModalCobro, pacienteId, tratamientoId]);
@@ -230,6 +234,11 @@ export default function ModalCobroPaciente({
               {es ? "Datos del cobro" : "Payment details"}
             </h3>
             <div className="grid gap-4">
+              <label className="block text-sm font-semibold mint-text-primary">
+                {es ? "Fecha del cobro" : "Payment date"}
+                <input type="date" required max={obtenerFechaLocalMintOS()} value={fechaCobro}
+                  onChange={(e) => setFechaCobro(e.target.value)} className="mint-input mt-2 w-full p-3" />
+              </label>
 
           <div>
             <label
@@ -1082,9 +1091,10 @@ export default function ModalCobroPaciente({
 
           {!vistaCargos && <button
             type="button"
+            disabled={!validarFechaEfectivaMintOS(fechaCobro)}
             onClick={() =>
               registrarCobro(
-                "cobro"
+                "cobro", fechaCobro
               )
             }
             className="
