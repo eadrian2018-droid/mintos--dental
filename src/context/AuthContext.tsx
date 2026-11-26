@@ -2,6 +2,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
 
@@ -75,6 +76,18 @@ type AuthContextType = {
   recargarPermisos: () => Promise<void>;
 };
 
+function conservarReferencia<T>(
+  anterior: T | null,
+  nuevo: T | null
+): T | null {
+  if (anterior === nuevo) return anterior;
+  if (anterior === null || nuevo === null) return nuevo;
+
+  return JSON.stringify(anterior) === JSON.stringify(nuevo)
+    ? anterior
+    : nuevo;
+}
+
 const AuthContext =
   createContext<AuthContextType | null>(
     null
@@ -120,6 +133,18 @@ export function AuthProvider({
     loading,
     setLoading,
   ] = useState(true);
+
+  const usuarioActualRef =
+    useRef<string | null>(null);
+
+  const generacionAuthRef =
+    useRef(0);
+
+  const solicitudPerfilRef =
+    useRef(0);
+
+  const solicitudPermisosRef =
+    useRef(0);
 
   async function obtenerPerfil(
     usuario: User | null
@@ -254,13 +279,27 @@ export function AuthProvider({
     usuario: User | null
   ) {
 
+    const generacion =
+      generacionAuthRef.current;
+
+    const solicitud =
+      ++solicitudPerfilRef.current;
+
     const perfilNuevo =
       await obtenerPerfil(
         usuario
       );
 
+    if (
+      generacion !== generacionAuthRef.current ||
+      solicitud !== solicitudPerfilRef.current ||
+      usuarioActualRef.current !== (usuario?.id ?? null)
+    ) {
+      return;
+    }
+
     setPerfil(
-      perfilNuevo
+      anterior => conservarReferencia(anterior, perfilNuevo)
     );
   }
 
@@ -268,24 +307,36 @@ export function AuthProvider({
     usuario: User | null
   ) {
 
+    const generacion =
+      generacionAuthRef.current;
+
+    const solicitud =
+      ++solicitudPermisosRef.current;
+
     const permisosNuevos =
       await obtenerPermisos(
         usuario
       );
 
+    if (
+      generacion !== generacionAuthRef.current ||
+      solicitud !== solicitudPermisosRef.current ||
+      usuarioActualRef.current !== (usuario?.id ?? null)
+    ) {
+      return;
+    }
+
     setPermisos(
-      permisosNuevos
+      anterior => conservarReferencia(anterior, permisosNuevos)
     );
   }
 
   async function recargarPerfil() {
 
-    if (!user) {
-
-      setPerfil(
-        null
-      );
-
+    if (
+      usuarioActualRef.current !==
+      (user?.id ?? null)
+    ) {
       return;
     }
 
@@ -296,12 +347,10 @@ export function AuthProvider({
 
   async function recargarPermisos() {
 
-    if (!user) {
-
-      setPermisos(
-        null
-      );
-
+    if (
+      usuarioActualRef.current !==
+      (user?.id ?? null)
+    ) {
       return;
     }
 
@@ -315,13 +364,217 @@ export function AuthProvider({
     let montado =
       true;
 
-    async function iniciarAuth() {
+    let inicializado =
+      false;
 
-      try {
+    let cargandoAutenticacion =
+      false;
+
+    let eventoRecibido =
+      false;
+
+    let temporizador:
+      ReturnType<typeof setTimeout> | null =
+      null;
+
+    function cancelarCargaProgramada() {
+
+      if (temporizador !== null) {
+
+        clearTimeout(
+          temporizador
+        );
+
+        temporizador =
+          null;
+      }
+    }
+
+    function procesarSesion(
+      nuevaSession: Session | null,
+      permitirActualizacionSilenciosa: boolean
+    ) {
+
+      if (!montado) {
+        return;
+      }
+
+      const nuevoUsuario =
+        nuevaSession?.user ??
+        null;
+
+      const nuevoUsuarioId =
+        nuevoUsuario?.id ??
+        null;
+
+      const mismoUsuario =
+        nuevoUsuarioId !== null &&
+        usuarioActualRef.current === nuevoUsuarioId;
+
+      const actualizacionSilenciosa =
+        inicializado &&
+        mismoUsuario &&
+        permitirActualizacionSilenciosa &&
+        !cargandoAutenticacion;
+
+      cancelarCargaProgramada();
+
+      const generacion =
+        ++generacionAuthRef.current;
+
+      usuarioActualRef.current =
+        nuevoUsuarioId;
+
+      setSession(
+        nuevaSession
+      );
+
+      setUser(
+        anterior => conservarReferencia(anterior, nuevoUsuario)
+      );
+
+      /*
+       * Cierre de sesión:
+       * invalidar las solicitudes anteriores
+       * y eliminar el contexto autenticado.
+       */
+
+      if (!nuevoUsuario) {
+
+        solicitudPerfilRef.current++;
+        solicitudPermisosRef.current++;
+
+        setPerfil(
+          null
+        );
+
+        setPermisos(
+          null
+        );
+
+        inicializado =
+          true;
+
+        cargandoAutenticacion =
+          false;
+
+        setLoading(
+          false
+        );
+
+        return;
+      }
+
+      /*
+       * Una renovación de sesión del mismo
+       * usuario no debe desmontar MintOS.
+       *
+       * El perfil y los permisos se consultan
+       * nuevamente sin reiniciar la interfaz.
+       */
+
+      if (!actualizacionSilenciosa) {
+
+        cargandoAutenticacion =
+          true;
 
         setLoading(
           true
         );
+
+        setPerfil(
+          null
+        );
+
+        setPermisos(
+          null
+        );
+      }
+
+      const solicitudPerfil =
+        ++solicitudPerfilRef.current;
+
+      const solicitudPermisos =
+        ++solicitudPermisosRef.current;
+
+      temporizador =
+        setTimeout(
+          async () => {
+
+            temporizador =
+              null;
+
+            if (
+              !montado ||
+              generacion !== generacionAuthRef.current
+            ) {
+              return;
+            }
+
+            const [
+              perfilNuevo,
+              permisosNuevos,
+            ] = await Promise.all([
+              obtenerPerfil(
+                nuevoUsuario
+              ),
+              obtenerPermisos(
+                nuevoUsuario
+              ),
+            ]);
+
+            /*
+             * Impedir que una respuesta anterior
+             * restaure datos después de cerrar
+             * sesión o cambiar de usuario.
+             */
+
+            if (
+              !montado ||
+              generacion !== generacionAuthRef.current ||
+              usuarioActualRef.current !== nuevoUsuarioId
+            ) {
+              return;
+            }
+
+            if (
+              solicitudPerfil ===
+              solicitudPerfilRef.current
+            ) {
+
+              setPerfil(
+                anterior => conservarReferencia(anterior, perfilNuevo)
+              );
+            }
+
+            if (
+              solicitudPermisos ===
+              solicitudPermisosRef.current
+            ) {
+
+              setPermisos(
+                anterior => conservarReferencia(anterior, permisosNuevos)
+              );
+            }
+
+            inicializado =
+              true;
+
+            cargandoAutenticacion =
+              false;
+
+            setLoading(
+              false
+            );
+
+          },
+          0
+        );
+    }
+
+    async function iniciarAuth() {
+
+      try {
 
         const {
           data,
@@ -329,55 +582,31 @@ export function AuthProvider({
         } = await supabase.auth
           .getSession();
 
+        if (
+          !montado ||
+          eventoRecibido
+        ) {
+          return;
+        }
+
         if (error) {
 
           console.error(
             "Error cargando sesión:",
             error
           );
-        }
 
-        if (!montado) {
+          procesarSesion(
+            null,
+            false
+          );
+
           return;
         }
 
-        const sesionActual =
-          data.session;
-
-        const usuarioActual =
-          sesionActual?.user ??
-          null;
-
-        setSession(
-          sesionActual
-        );
-
-        setUser(
-          usuarioActual
-        );
-
-        const [
-          perfilActual,
-          permisosActuales,
-        ] = await Promise.all([
-          obtenerPerfil(
-            usuarioActual
-          ),
-          obtenerPermisos(
-            usuarioActual
-          ),
-        ]);
-
-        if (!montado) {
-          return;
-        }
-
-        setPerfil(
-          perfilActual
-        );
-
-        setPermisos(
-          permisosActuales
+        procesarSesion(
+          data.session,
+          false
         );
 
       } catch (error) {
@@ -387,37 +616,18 @@ export function AuthProvider({
           error
         );
 
-        if (montado) {
+        if (
+          montado &&
+          !eventoRecibido
+        ) {
 
-          setSession(
-            null
-          );
-
-          setUser(
-            null
-          );
-
-          setPerfil(
-            null
-          );
-
-          setPermisos(
-            null
-          );
-        }
-
-      } finally {
-
-        if (montado) {
-
-          setLoading(
+          procesarSesion(
+            null,
             false
           );
         }
       }
     }
-
-    iniciarAuth();
 
     const {
       data:
@@ -425,7 +635,7 @@ export function AuthProvider({
     } = supabase.auth
       .onAuthStateChange(
         (
-          _event,
+          event,
           nuevaSession
         ) => {
 
@@ -433,71 +643,32 @@ export function AuthProvider({
             return;
           }
 
-          const nuevoUsuario =
-            nuevaSession?.user ??
-            null;
+          eventoRecibido =
+            true;
 
-          setLoading(
-            true
-          );
+          const permitirActualizacionSilenciosa =
+            event === "TOKEN_REFRESHED" ||
+            event === "SIGNED_IN";
 
-          setPerfil(
-            null
-          );
-
-          setPermisos(
-            null
-          );
-
-          setSession(
-            nuevaSession
-          );
-
-          setUser(
-            nuevoUsuario
-          );
-
-          setTimeout(
-            async () => {
-
-              const [
-                perfilNuevo,
-                permisosNuevos,
-              ] = await Promise.all([
-                obtenerPerfil(
-                  nuevoUsuario
-                ),
-                obtenerPermisos(
-                  nuevoUsuario
-                ),
-              ]);
-
-              if (!montado) {
-                return;
-              }
-
-              setPerfil(
-                perfilNuevo
-              );
-
-              setPermisos(
-                permisosNuevos
-              );
-
-              setLoading(
-                false
-              );
-
-            },
-            0
+          procesarSesion(
+            nuevaSession,
+            permitirActualizacionSilenciosa
           );
         }
       );
+
+    iniciarAuth();
 
     return () => {
 
       montado =
         false;
+
+      generacionAuthRef.current++;
+      solicitudPerfilRef.current++;
+      solicitudPermisosRef.current++;
+
+      cancelarCargaProgramada();
 
       authListener
         .subscription

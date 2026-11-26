@@ -14,6 +14,9 @@ import {
 import { supabase } from "../../lib/supabase";
 import { useLanguage } from "../../context/LanguageContext";
 import SelectorDientesPresupuesto from "./SelectorDientesPresupuesto";
+import type { AgrupacionDental, MarcaDental } from "./SelectorDientesPresupuesto";
+import type { UnidadCobro } from "../../types/TratamientoCatalogo";
+import type { SuperficiesPresupuesto } from "../../types/Presupuesto";
 
 type CatalogoTratamiento = {
   id: number;
@@ -22,6 +25,7 @@ type CatalogoTratamiento = {
   precio_mxn: number | null;
   precio_usd: number | null;
   activo: boolean;
+  unidad_cobro: UnidadCobro;
 };
 
 type Paciente = {
@@ -29,7 +33,9 @@ type Paciente = {
   nombre: string;
 };
 
-type ItemFormulario = {
+type ItemFormulario = AgrupacionDental & {
+  unidad_cobro: UnidadCobro;
+  superficies: SuperficiesPresupuesto;
   id: number;
   diente: string;
   tratamiento: string;
@@ -136,6 +142,11 @@ export default function PresupuestoForm({
       catalogo_tratamiento_id: null,
       dientes: [],
       arcada: null,
+      unidad_cobro: "manual",
+      cuadrantes: [],
+      arcadas: [],
+      boca_completa: false,
+      superficies: {},
       cantidad: 1,
       precio_unitario: 0,
     },
@@ -171,7 +182,8 @@ export default function PresupuestoForm({
         nombre_en,
         precio_mxn,
         precio_usd,
-        activo
+        activo,
+        unidad_cobro
       `)
       .eq("activo", true)
       .order("nombre", {
@@ -221,8 +233,9 @@ export default function PresupuestoForm({
     setItems((actuales) =>
       actuales.map((item) =>
         item.id === itemId
-          ? {
+          ? ajustarCantidad({
               ...item,
+              unidad_cobro: tratamientoSeleccionado?.unidad_cobro ?? "manual",
               catalogo_tratamiento_id:
                 tratamientoSeleccionado?.id || null,
               tratamiento:
@@ -234,7 +247,7 @@ export default function PresupuestoForm({
                       moneda
                     )
                   : 0,
-            }
+            })
           : item
       )
     );
@@ -345,7 +358,9 @@ export default function PresupuestoForm({
               ? {
                   ...item,
                   [campo]:
-                    valor,
+                    campo === "cantidad" && cantidadAutomatica(item)
+                      ? item.cantidad
+                      : valor,
                 }
               : item
         )
@@ -358,59 +373,58 @@ export default function PresupuestoForm({
         item.id === itemDentalActivoId
     ) || items[0];
 
-  function actualizarDientesItem(
-    dientes: number[]
-  ) {
-    if (!itemDentalActivo) {
-      return;
-    }
-
-    setItems((actuales) =>
-      actuales.map((item) =>
-        item.id === itemDentalActivo.id
-          ? {
-              ...item,
-              dientes,
-              diente:
-                dientes.length === 1
-                  ? String(dientes[0])
-                  : dientes.join(", "),
-              arcada: null,
-            }
-          : item
-      )
-    );
+  function cantidadAutomatica(item: ItemFormulario): boolean {
+    return item.unidad_cobro !== "manual" || item.dientes.length > 0 ||
+      item.cuadrantes.length > 0 || item.arcadas.length > 0 || item.boca_completa;
   }
 
-  function actualizarArcadaItem(
-    arcada:
-      | "superior"
-      | "inferior"
-      | null
-  ) {
-    if (!itemDentalActivo) {
-      return;
-    }
-
-    setItems((actuales) =>
-      actuales.map((item) =>
-        item.id === itemDentalActivo.id
-          ? {
-              ...item,
-              arcada,
-              diente:
-                arcada === "superior"
-                  ? "Arcada superior"
-                  : arcada === "inferior"
-                    ? "Arcada inferior"
-                    : item.dientes.length === 1
-                      ? String(item.dientes[0])
-                      : item.dientes.join(", "),
-            }
-          : item
-      )
-    );
+  function ajustarCantidad(item: ItemFormulario): ItemFormulario {
+    const cantidad = item.unidad_cobro === "diente" ? new Set(item.dientes).size
+      : item.unidad_cobro === "cuadrante" ? item.cuadrantes.length
+      : item.unidad_cobro === "arcada" ? item.arcadas.length
+      : item.unidad_cobro === "boca_completa" ? 1
+      : item.boca_completa ? 1
+      : item.cuadrantes.length ? new Set(item.cuadrantes).size
+      : item.arcadas.length ? new Set(item.arcadas).size
+      : item.dientes.length ? new Set(item.dientes).size : item.cantidad;
+    return { ...item, cantidad };
   }
+
+  function actualizarDientesItem(dientes: number[]) {
+    setItems(actuales => actuales.map(item => item.id === itemDentalActivo?.id
+      ? ajustarCantidad({ ...item, cantidad: dientes.length ? item.cantidad : 1, dientes, diente: dientes.join(", "), arcada: null,
+          cuadrantes: [], arcadas: [], boca_completa: false, superficies: {} }) : item));
+  }
+
+  function actualizarArcadaItem(arcada: ItemFormulario["arcada"]) {
+    setItems(actuales => actuales.map(item => item.id === itemDentalActivo?.id
+      ? { ...item, arcada } : item));
+  }
+
+  function actualizarAgrupacion(agrupacion: AgrupacionDental) {
+    setItems(actuales => actuales.map(item => item.id === itemDentalActivo?.id
+      ? ajustarCantidad({ ...item, ...agrupacion,
+          diente: agrupacion.boca_completa ? "Boca completa"
+            : agrupacion.cuadrantes.length ? `Cuadrantes: ${agrupacion.cuadrantes.join(", ")}`
+            : agrupacion.arcadas.length ? agrupacion.arcadas.join(", ") : item.dientes.join(", ") }) : item));
+  }
+
+  const marcasPorDiente = useMemo(() => {
+    const marcas: Record<number, MarcaDental[]> = {};
+    for (const item of items) {
+      if (!item.tratamiento || item.boca_completa || item.cuadrantes.length || item.arcadas.length || item.unidad_cobro === "boca_completa") continue;
+      const nombre = item.tratamiento.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      const tipo: MarcaDental["tipo"] = /endodon|root canal/.test(nombre) ? "endodoncia"
+        : /corona|crown/.test(nombre) ? "corona"
+        : /implante|implant/.test(nombre) ? "implante"
+        : /extraccion|extraction/.test(nombre) ? "extraccion"
+        : /resina|composite|filling/.test(nombre) ? "resina" : "otro";
+      for (const diente of item.dientes) {
+        (marcas[diente] ??= []).push({ tratamiento: item.tratamiento, tipo });
+      }
+    }
+    return marcas;
+  }, [items]);
 
   function agregarItem() {
     const nuevoItem: ItemFormulario = {
@@ -420,6 +434,11 @@ export default function PresupuestoForm({
       catalogo_tratamiento_id: null,
       dientes: [],
       arcada: null,
+      unidad_cobro: "manual",
+      cuadrantes: [],
+      arcadas: [],
+      boca_completa: false,
+      superficies: {},
       cantidad: 1,
       precio_unitario: 0,
     };
@@ -487,6 +506,20 @@ export default function PresupuestoForm({
           : "Enter the patient name."
       );
 
+      return;
+    }
+
+    if (items.some(item => item.tratamiento.trim() && (
+      !Number.isSafeInteger(item.cantidad) || item.cantidad <= 0 ||
+      (cantidadAutomatica(item) && item.cantidad !== ajustarCantidad(item).cantidad) ||
+      !Number.isFinite(item.precio_unitario) || item.precio_unitario < 0 ||
+      (item.unidad_cobro === "cuadrante" && !item.cuadrantes.length) ||
+      (item.unidad_cobro === "arcada" && !item.arcadas.length) ||
+      (item.unidad_cobro === "diente" && !item.dientes.length) ||
+      (item.unidad_cobro === "boca_completa" && !item.boca_completa) ||
+      (item.unidad_cobro === "diente" && (item.cuadrantes.length > 0 || item.arcadas.length > 0 || item.boca_completa))
+    ))) {
+      alert(es ? "Revisa la selección dental y cantidad de cada tratamiento según su unidad de cobro." : "Check each treatment's dental selection and quantity against its billing unit.");
       return;
     }
 
@@ -601,11 +634,11 @@ export default function PresupuestoForm({
           <div className="min-w-0">
             <p
               className="
-                text-[11px]
+                text-base
                 uppercase
                 tracking-[0.14em]
                 font-bold
-                text-white/75
+                text-white
               "
             >
               {es ? "Presupuestos" : "Estimates"}
@@ -627,8 +660,8 @@ export default function PresupuestoForm({
 
             <p
               className="
-                text-sm
-                text-white/75
+                text-base
+                text-white
                 mt-1
               "
             >
@@ -672,11 +705,11 @@ export default function PresupuestoForm({
               >
                 <span
                   className="
-                    text-[10px]
+                    text-base
                     font-bold
                     uppercase
                     tracking-[0.12em]
-                    text-white/65
+                    text-white
                   "
                 >
                   {es ? "Moneda" : "Currency"}
@@ -699,7 +732,7 @@ export default function PresupuestoForm({
                       rounded-md
                       px-2.5
                       py-1
-                      text-xs
+                      text-base
                       font-bold
                       transition
 
@@ -711,7 +744,7 @@ export default function PresupuestoForm({
                               shadow-sm
                             `
                           : `
-                              text-white/70
+                              text-white
                               hover:text-white
                             `
                       }
@@ -729,7 +762,7 @@ export default function PresupuestoForm({
                       rounded-md
                       px-2.5
                       py-1
-                      text-xs
+                      text-base
                       font-bold
                       transition
 
@@ -741,7 +774,7 @@ export default function PresupuestoForm({
                               shadow-sm
                             `
                           : `
-                              text-white/70
+                              text-white
                               hover:text-white
                             `
                       }
@@ -768,11 +801,11 @@ export default function PresupuestoForm({
               >
                 <span
                   className="
-                    text-[10px]
+                    text-base
                     font-bold
                     uppercase
                     tracking-[0.12em]
-                    text-white/65
+                    text-white
                   "
                 >
                   {es ? "Idioma" : "Language"}
@@ -795,7 +828,7 @@ export default function PresupuestoForm({
                       rounded-md
                       px-2.5
                       py-1
-                      text-xs
+                      text-base
                       font-bold
                       transition
 
@@ -807,7 +840,7 @@ export default function PresupuestoForm({
                               shadow-sm
                             `
                           : `
-                              text-white/70
+                              text-white
                               hover:text-white
                             `
                       }
@@ -825,7 +858,7 @@ export default function PresupuestoForm({
                       rounded-md
                       px-2.5
                       py-1
-                      text-xs
+                      text-base
                       font-bold
                       transition
 
@@ -837,7 +870,7 @@ export default function PresupuestoForm({
                               shadow-sm
                             `
                           : `
-                              text-white/70
+                              text-white
                               hover:text-white
                             `
                       }
@@ -862,7 +895,7 @@ export default function PresupuestoForm({
                 bg-white/10
                 px-4
                 py-2
-                text-sm
+                text-base
                 font-semibold
                 text-white
                 transition
@@ -929,7 +962,7 @@ export default function PresupuestoForm({
                   justify-center
                   rounded-xl
                   bg-[var(--mint-teal-pale)]
-                  text-xs
+                  text-base
                   font-extrabold
                   text-[var(--mint-teal)]
                 "
@@ -940,7 +973,7 @@ export default function PresupuestoForm({
               <div>
                 <p
                   className="
-                    text-sm
+                    text-base
                     font-bold
                     mint-text-primary
                   "
@@ -950,8 +983,8 @@ export default function PresupuestoForm({
 
                 <p
                   className="
-                    text-xs
-                    mint-text-muted
+                    text-base
+                    mint-text-primary
                   "
                 >
                   {es
@@ -984,7 +1017,7 @@ export default function PresupuestoForm({
                   px-4
                   py-2
                   rounded-lg
-                  text-sm
+                  text-base
                   font-semibold
                   transition
 
@@ -997,7 +1030,7 @@ export default function PresupuestoForm({
                           shadow-sm
                         `
                       : `
-                          mint-text-secondary
+                          mint-text-primary
                         `
                   }
                 `}
@@ -1018,7 +1051,7 @@ export default function PresupuestoForm({
                   px-4
                   py-2
                   rounded-lg
-                  text-sm
+                  text-base
                   font-semibold
                   transition
 
@@ -1031,7 +1064,7 @@ export default function PresupuestoForm({
                           shadow-sm
                         `
                       : `
-                          mint-text-secondary
+                          mint-text-primary
                         `
                   }
                 `}
@@ -1062,7 +1095,7 @@ export default function PresupuestoForm({
                   bg-[var(--mint-surface)]
                   px-3
                   py-2.5
-                  text-sm
+                  text-base
                   mint-text-primary
                   outline-none
                   transition
@@ -1113,7 +1146,7 @@ export default function PresupuestoForm({
                     bg-[var(--mint-surface)]
                     px-3
                     py-2.5
-                    text-sm
+                    text-base
                     mint-text-primary
                     outline-none
                     transition
@@ -1126,8 +1159,8 @@ export default function PresupuestoForm({
                 <p
                   className="
                     mt-2
-                    text-xs
-                    mint-text-muted
+                    text-base
+                    mint-text-primary
                   "
                 >
                   {es
@@ -1185,7 +1218,7 @@ export default function PresupuestoForm({
                         justify-center
                         rounded-lg
                         bg-[var(--mint-teal-pale)]
-                        text-[11px]
+                        text-base
                         font-extrabold
                         text-[var(--mint-teal)]
                       "
@@ -1201,8 +1234,8 @@ export default function PresupuestoForm({
 
                 <p
                   className="
-                    text-xs
-                    mint-text-muted
+                    text-base
+                    mint-text-primary
                     mt-1
                     ml-9
                   "
@@ -1236,7 +1269,7 @@ export default function PresupuestoForm({
                 <div>
                   <p
                     className="
-                      text-sm
+                      text-base
                       font-bold
                       mint-text-primary
                     "
@@ -1248,8 +1281,8 @@ export default function PresupuestoForm({
 
                   <p
                     className="
-                      text-xs
-                      mint-text-secondary
+                      text-base
+                      mint-text-primary
                       mt-1
                     "
                   >
@@ -1262,6 +1295,13 @@ export default function PresupuestoForm({
 
               {itemDentalActivo && (
                 <SelectorDientesPresupuesto
+                  marcasPorDiente={marcasPorDiente}
+                  agrupacion={itemDentalActivo}
+                  agrupacionesRegistradas={items.filter(item =>
+                    item.id !== itemDentalActivo.id && item.tratamiento &&
+                    (item.boca_completa || item.cuadrantes.length > 0 || item.arcadas.length > 0)
+                  )}
+                  onAgrupacionChange={actualizarAgrupacion}
                   dientesSeleccionados={
                     itemDentalActivo.dientes
                   }
@@ -1288,7 +1328,7 @@ export default function PresupuestoForm({
               <table
                 className="
                   w-full
-                  text-sm
+                  text-base
                 "
               >
                 <thead
@@ -1304,11 +1344,11 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-[11px]
+                        text-base
                         uppercase
                         tracking-wide
                         font-bold
-                        mint-text-muted
+                        mint-text-primary
                       "
                     >
                       {es
@@ -1321,11 +1361,11 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-[11px]
+                        text-base
                         uppercase
                         tracking-wide
                         font-bold
-                        mint-text-muted
+                        mint-text-primary
                       "
                     >
                       {es
@@ -1338,11 +1378,11 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-[11px]
+                        text-base
                         uppercase
                         tracking-wide
                         font-bold
-                        mint-text-muted
+                        mint-text-primary
                       "
                     >
                       {es
@@ -1355,11 +1395,11 @@ export default function PresupuestoForm({
                         text-left
                         px-4
                         py-3
-                        text-[11px]
+                        text-base
                         uppercase
                         tracking-wide
                         font-bold
-                        mint-text-muted
+                        mint-text-primary
                       "
                     >
                       {es
@@ -1372,11 +1412,11 @@ export default function PresupuestoForm({
                         text-right
                         px-4
                         py-3
-                        text-[11px]
+                        text-base
                         uppercase
                         tracking-wide
                         font-bold
-                        mint-text-muted
+                        mint-text-primary
                       "
                     >
                       Total
@@ -1490,7 +1530,7 @@ export default function PresupuestoForm({
                               border
                               px-3
                               py-2
-                              text-sm
+                              text-base
                               transition
 
                               ${
@@ -1499,7 +1539,7 @@ export default function PresupuestoForm({
                                   ? `
                                       border-[var(--mint-teal)]
                                       bg-[var(--mint-teal-pale)]
-                                      text-[var(--mint-teal)]
+                                      mint-text-primary
                                       font-semibold
                                     `
                                   : `
@@ -1510,7 +1550,10 @@ export default function PresupuestoForm({
                               }
                             `}
                           >
-                            {item.arcada
+                            {item.boca_completa ? (es ? "Boca completa" : "Full mouth")
+                              : item.cuadrantes.length ? `${es ? "Cuadrantes" : "Quadrants"}: ${item.cuadrantes.join(", ")}`
+                              : item.arcadas.length === 2 ? (es ? "Ambas arcadas" : "Both arches")
+                              : item.arcada
                               ? item.arcada ===
                                 "superior"
                                 ? es
@@ -1618,6 +1661,8 @@ export default function PresupuestoForm({
                             value={
                               item.cantidad
                             }
+                            readOnly={cantidadAutomatica(item)}
+                            title={es ? "Cantidad automática según selección y unidad de cobro; editable solo sin selección en modo manual" : "Automatic quantity by selection and billing unit; editable only without selection in manual mode"}
                             onChange={(
                               e
                             ) =>
@@ -1777,7 +1822,7 @@ export default function PresupuestoForm({
                     justify-center
                     rounded-xl
                     bg-[var(--mint-teal-pale)]
-                    text-xs
+                    text-base
                     font-extrabold
                     text-[var(--mint-teal)]
                   "
@@ -1788,7 +1833,7 @@ export default function PresupuestoForm({
                 <div>
                   <p
                     className="
-                      text-sm
+                      text-base
                       font-bold
                       mint-text-primary
                     "
@@ -1800,8 +1845,8 @@ export default function PresupuestoForm({
 
                   <p
                     className="
-                      text-xs
-                      mint-text-muted
+                      text-base
+                      mint-text-primary
                     "
                   >
                     {es
@@ -1832,7 +1877,7 @@ export default function PresupuestoForm({
                   bg-[var(--mint-surface-soft)]
                   px-3
                   py-3
-                  text-sm
+                  text-base
                   mint-text-primary
                   resize-none
                   outline-none
@@ -1866,7 +1911,7 @@ export default function PresupuestoForm({
                 <div>
                   <p
                     className="
-                      text-[11px]
+                      text-base
                       uppercase
                       tracking-[0.12em]
                       font-bold
@@ -1880,7 +1925,7 @@ export default function PresupuestoForm({
 
                   <p
                     className="
-                      text-sm
+                      text-base
                       font-bold
                       mint-text-primary
                       mt-1
@@ -1900,7 +1945,7 @@ export default function PresupuestoForm({
                     bg-[var(--mint-teal-pale)]
                     px-2.5
                     py-1
-                    text-xs
+                    text-base
                     font-bold
                     text-[var(--mint-teal)]
                   "
@@ -1914,12 +1959,12 @@ export default function PresupuestoForm({
                   flex
                   justify-between
                   gap-4
-                  text-sm
+                  text-base
                 "
               >
                 <span
                   className="
-                    mint-text-secondary
+                    mint-text-primary
                   "
                 >
                   Subtotal
@@ -1961,9 +2006,9 @@ export default function PresupuestoForm({
                 >
                   <span
                     className="
-                      text-sm
+                      text-base
                       font-semibold
-                      mint-text-secondary
+                      mint-text-primary
                     "
                   >
                     {es
@@ -1992,7 +2037,7 @@ export default function PresupuestoForm({
                         px-3
                         py-1.5
                         rounded-lg
-                        text-xs
+                        text-base
                         font-bold
                         transition
 
@@ -2004,7 +2049,7 @@ export default function PresupuestoForm({
                                 text-[var(--mint-teal)]
                               `
                             : `
-                                mint-text-secondary
+                                mint-text-primary
                               `
                         }
                       `}
@@ -2023,7 +2068,7 @@ export default function PresupuestoForm({
                         px-3
                         py-1.5
                         rounded-lg
-                        text-xs
+                        text-base
                         font-bold
                         transition
 
@@ -2035,7 +2080,7 @@ export default function PresupuestoForm({
                                 text-[var(--mint-teal)]
                               `
                             : `
-                                mint-text-secondary
+                                mint-text-primary
                               `
                         }
                       `}
@@ -2078,7 +2123,7 @@ export default function PresupuestoForm({
                       bg-[var(--mint-surface)]
                       px-3
                       py-2.5
-                      text-sm
+                      text-base
                       mint-text-primary
                       outline-none
                       transition
@@ -2088,9 +2133,9 @@ export default function PresupuestoForm({
 
                   <span
                     className="
-                      text-sm
+                      text-base
                       font-bold
-                      mint-text-secondary
+                      mint-text-primary
                       whitespace-nowrap
                     "
                   >
@@ -2106,12 +2151,12 @@ export default function PresupuestoForm({
                     flex
                     justify-between
                     gap-4
-                    text-sm
+                    text-base
                   "
                 >
                   <span
                     className="
-                      mint-text-secondary
+                      mint-text-primary
                     "
                   >
                     {es
@@ -2152,11 +2197,11 @@ export default function PresupuestoForm({
                 <div>
                   <p
                     className="
-                      text-xs
+                      text-base
                       uppercase
                       tracking-wide
                       font-bold
-                      mint-text-muted
+                      mint-text-primary
                     "
                   >
                     Total
@@ -2185,7 +2230,7 @@ export default function PresupuestoForm({
 
                   <p
                     className="
-                      text-xs
+                      text-base
                       font-semibold
                       text-[var(--mint-teal)]
                       mt-1

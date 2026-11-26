@@ -26,6 +26,24 @@ export type CargoAdicionalFinanzas = {
   creado_at: string;
 };
 
+// =====================================================
+// FIN04 - LIQUIDACIONES PROPORCIONALES DE ESPECIALISTAS
+// =====================================================
+
+export type LiquidacionEspecialistaFinanzas = {
+  id: number;
+  especialista_id: number;
+  tratamiento_id: number;
+  pago_id: number;
+  honorario_original: number;
+  moneda_honorario: "MXN" | "USD";
+  monto: number;
+  moneda: "MXN" | "USD";
+  tipo_cambio: number | null;
+  metodo_pago: string;
+  fecha_pago: string;
+};
+
 export const finanzasService = {
 
   async cargarTratamientos():
@@ -91,6 +109,143 @@ export const finanzasService = {
     }
 
     return data ?? [];
+
+  },
+
+  // =====================================================
+  // FIN04 - LIQUIDACIONES DE ESPECIALISTAS
+  // =====================================================
+
+  async cargarLiquidacionesEspecialistas():
+    Promise<LiquidacionEspecialistaFinanzas[]> {
+
+    const liquidaciones: LiquidacionEspecialistaFinanzas[] = [];
+
+    const limite = 500;
+
+    let ultimoId = 0;
+
+    while (true) {
+
+      const { data, error } = await supabase
+        .from("mintos_liquidaciones_especialistas")
+        .select(`
+          id,
+          especialista_id,
+          tratamiento_id,
+          pago_id,
+          honorario_original,
+          moneda_honorario,
+          monto,
+          moneda,
+          tipo_cambio,
+          metodo_pago,
+          fecha_pago
+        `)
+        .gt("id", ultimoId)
+        .order("id", {
+          ascending: true,
+        })
+        .limit(limite);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!Array.isArray(data)) {
+        throw new Error(
+          "Respuesta inválida de liquidaciones de especialistas"
+        );
+      }
+
+      if (data.length === 0) {
+        break;
+      }
+
+      for (const item of data) {
+
+        const liquidacion: LiquidacionEspecialistaFinanzas = {
+          id: Number(item.id),
+          especialista_id: Number(item.especialista_id),
+          tratamiento_id: Number(item.tratamiento_id),
+          pago_id: Number(item.pago_id),
+          honorario_original: Number(item.honorario_original),
+          moneda_honorario: item.moneda_honorario,
+          monto: Number(item.monto),
+          moneda: item.moneda,
+          tipo_cambio:
+            item.tipo_cambio == null
+              ? null
+              : Number(item.tipo_cambio),
+          metodo_pago: String(item.metodo_pago ?? ""),
+          fecha_pago: String(item.fecha_pago ?? ""),
+        };
+
+        if (
+          !Number.isSafeInteger(liquidacion.id) ||
+          liquidacion.id <= ultimoId ||
+
+          !Number.isSafeInteger(liquidacion.especialista_id) ||
+          liquidacion.especialista_id <= 0 ||
+
+          !Number.isSafeInteger(liquidacion.tratamiento_id) ||
+          liquidacion.tratamiento_id <= 0 ||
+
+          !Number.isSafeInteger(liquidacion.pago_id) ||
+          liquidacion.pago_id <= 0 ||
+
+          (
+            liquidacion.moneda_honorario !== "MXN" &&
+            liquidacion.moneda_honorario !== "USD"
+          ) ||
+
+          (
+            liquidacion.moneda !== "MXN" &&
+            liquidacion.moneda !== "USD"
+          ) ||
+
+          item.honorario_original == null ||
+          item.monto == null ||
+
+          !Number.isFinite(liquidacion.honorario_original) ||
+          !Number.isFinite(liquidacion.monto) ||
+
+          liquidacion.honorario_original <= 0 ||
+          liquidacion.monto <= 0 ||
+
+          (
+            liquidacion.tipo_cambio !== null &&
+            (
+              !Number.isFinite(liquidacion.tipo_cambio) ||
+              liquidacion.tipo_cambio <= 0
+            )
+          ) ||
+
+          (
+            liquidacion.moneda !== liquidacion.moneda_honorario &&
+            liquidacion.tipo_cambio === null
+          ) ||
+
+          liquidacion.metodo_pago.trim() === "" ||
+
+          Number.isNaN(
+            Date.parse(liquidacion.fecha_pago)
+          )
+        ) {
+          throw new Error(
+            `Datos financieros inconsistentes en liquidación de especialista ${liquidacion.id}`
+          );
+        }
+
+        liquidaciones.push(liquidacion);
+
+        ultimoId = liquidacion.id;
+
+      }
+
+    }
+
+    return liquidaciones;
 
   },
 
@@ -378,6 +533,9 @@ export const finanzasService = {
 
           tipo:
             tratamiento.tipo,
+
+          unidad_cobro:
+            tratamiento.unidad_cobro ?? "manual",
 
           precio_mxn:
             Number(tratamiento.precio_mxn),

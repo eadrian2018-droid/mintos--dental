@@ -2,6 +2,13 @@ export type TipoTratamiento =
   | "clinica"
   | "especialista";
 
+export type UnidadCobro =
+  | "diente"
+  | "cuadrante"
+  | "arcada"
+  | "boca_completa"
+  | "manual";
+
 export interface TratamientoCatalogo {
   id: number;
 
@@ -12,6 +19,8 @@ export interface TratamientoCatalogo {
   categoria: string;
 
   tipo: TipoTratamiento;
+
+  unidad_cobro?: UnidadCobro;
 
   precio_mxn: number;
 

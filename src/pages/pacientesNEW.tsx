@@ -71,7 +71,7 @@ type Paciente = {
 
 export default function Pacientes() {
 
-  const { permisos, perfil } = useAuth();
+  const { permisos, perfil, user, session, loading } = useAuth();
 
   const { language } = useLanguage();
 
@@ -79,6 +79,37 @@ export default function Pacientes() {
     useSearchParams();
 
   const es = language === "es";
+
+  // Persistir solo la navegación, vinculada a la sesión autenticada.
+  const claveExpediente = "mintos.expediente.activo.v1";
+  const tabsExpediente = ["general", "expediente", "historial", "citas", "consentimientos"];
+  let alcanceExpediente: string | null = null;
+  if (!loading && user && perfil?.activo === true && perfil.id === user.id &&
+      session?.user.id === user.id &&
+      (perfil.rol === "admin" || permisos?.ver_pacientes === true)) {
+    try {
+      const payload = session.access_token.split(".")[1];
+      const claims = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+      if (typeof claims.session_id === "string" && claims.session_id) {
+        alcanceExpediente = `${user.id}:${claims.session_id}`;
+      }
+    } catch { /* Sin sesión identificable, no persistir. */ }
+  }
+  const restauracionEnCursoRef = useRef<string | null>(null);
+  const [directorioCargado, setDirectorioCargado] = useState(false);
+
+  function leerExpedienteGuardado(): { pacienteId: number; tab: string | null } | null {
+    if (!alcanceExpediente) return null;
+    try {
+      const guardado = JSON.parse(sessionStorage.getItem(claveExpediente) || "null");
+      if (!guardado || guardado.alcance !== alcanceExpediente) return null;
+      const pacienteId = Number(guardado.pacienteId);
+      if (!Number.isSafeInteger(pacienteId) || pacienteId <= 0) return null;
+      return { pacienteId, tab: typeof guardado.tab === "string" ? guardado.tab : null };
+    } catch { return null; }
+  }
+
+
 
   // FIN-01: conservar el ID en reintentos; renovarlo solo tras éxito confirmado.
   const solicitudCobroPendienteRef = useRef<{ id: string; payload: string } | null>(null);
@@ -632,6 +663,8 @@ async function cargarTipoCambio() {
       setPacientes(data);
 
     }
+
+    setDirectorioCargado(true);
 
   }
 
@@ -1207,6 +1240,11 @@ async function guardarCorreccionNotaClinica(
       catalogo_tratamiento_id: item.catalogo_tratamiento_id ?? null,
       dientes: Array.isArray(item.dientes) ? item.dientes : [],
       arcada: item.arcada || null,
+      unidad_cobro: item.unidad_cobro ?? null,
+      cuadrantes: item.cuadrantes ?? [],
+      arcadas: item.arcadas ?? [],
+      superficies: item.superficies ?? {},
+      boca_completa: item.boca_completa ?? false,
       cantidad: Number(item.cantidad || 0),
       precio_unitario: Number(item.precio_unitario || 0),
       total: Number(item.cantidad || 0) * Number(item.precio_unitario || 0),
@@ -3630,65 +3668,49 @@ comision_banco:
   }
 
   useEffect(() => {
+    if (loading || pacientes.length === 0) return;
 
-    const pacienteParametro =
-      searchParams.get("paciente");
+    const pacienteParametro = searchParams.get("paciente");
+    let pacienteId = Number(pacienteParametro);
+    let tabParametro = searchParams.get("tab");
 
-    if (
-      !pacienteParametro ||
-      pacientes.length === 0
-    ) {
-      return;
+    // Los enlaces explícitos conservan prioridad sobre el expediente recordado.
+    if (!pacienteParametro) {
+      if (!alcanceExpediente || pacienteAbierto) return;
+      const guardado = leerExpedienteGuardado();
+      if (!guardado) return;
+      pacienteId = guardado.pacienteId;
+      tabParametro = guardado.tab;
     }
 
-    const pacienteId =
-      Number(pacienteParametro);
-
-    if (!Number.isFinite(pacienteId)) {
-      return;
-    }
-
-    const paciente =
-      pacientes.find(
-        (item) =>
-          item.id === pacienteId
-      );
-
-    if (!paciente) {
-      return;
-    }
-
-    const tabParametro =
-      searchParams.get("tab");
-
-    const tabsPermitidas = [
-      "general",
-      "expediente",
-      "historial",
-      "citas",
-      "consentimientos",
-    ];
-
-    if (
-      tabParametro &&
-      tabsPermitidas.includes(tabParametro)
-    ) {
+    if (!Number.isSafeInteger(pacienteId) || pacienteId <= 0) return;
+    const paciente = pacientes.find((item) => item.id === pacienteId);
+    if (!paciente) return;
+    if (tabParametro && tabsExpediente.includes(tabParametro)) {
       setTabActiva(tabParametro);
     }
+    if (pacienteAbierto?.id === paciente.id) return;
 
-    if (
-      pacienteAbierto?.id ===
-      paciente.id
-    ) {
-      return;
-    }
+    const solicitud = `${alcanceExpediente ?? "url"}:${paciente.id}`;
+    if (restauracionEnCursoRef.current === solicitud) return;
+    restauracionEnCursoRef.current = solicitud;
+    void abrirPaciente(paciente).finally(() => {
+      if (restauracionEnCursoRef.current === solicitud) {
+        restauracionEnCursoRef.current = null;
+      }
+    });
+  }, [pacientes, searchParams, loading, alcanceExpediente]);
 
-    abrirPaciente(paciente);
-
-  }, [
-    pacientes,
-    searchParams,
-  ]);
+  useEffect(() => {
+    if (!alcanceExpediente || !pacienteAbierto) return;
+    try {
+      sessionStorage.setItem(claveExpediente, JSON.stringify({
+        alcance: alcanceExpediente,
+        pacienteId: pacienteAbierto.id,
+        tab: tabActiva,
+      }));
+    } catch { /* El expediente sigue funcionando sin almacenamiento. */ }
+  }, [alcanceExpediente, pacienteAbierto, tabActiva]);
 
   async function actualizarEstadoTratamiento(
   tratamientoId: number,
@@ -3854,13 +3876,17 @@ const pacientesFiltrados =
 
   });
 
-  const abriendoPacienteDesdeUrl =
-  Boolean(
-    searchParams.get("paciente")
-  ) &&
-  !pacienteAbierto;
+  const pacienteSolicitado = searchParams.get("paciente");
+  const expedienteGuardado = pacienteSolicitado ? null : leerExpedienteGuardado();
+  const abriendoExpediente = !pacienteAbierto && (
+    Boolean(pacienteSolicitado) ||
+    (expedienteGuardado !== null && (
+      !directorioCargado ||
+      pacientes.some((item) => item.id === expedienteGuardado.pacienteId)
+    ))
+  );
 
-if (abriendoPacienteDesdeUrl) {
+if (abriendoExpediente) {
   return (
     <div
       className="
@@ -3915,6 +3941,7 @@ if (abriendoPacienteDesdeUrl) {
       <button
         type="button"
         onClick={() => {
+          try { sessionStorage.removeItem(claveExpediente); } catch { /* Sin almacenamiento. */ }
           setPacienteAbierto(null);
           setBusqueda("");
           setBusquedaTelefono("");

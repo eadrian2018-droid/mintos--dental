@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-import { obtenerFechaLocalMintOS, validarFechaEfectivaMintOS } from "../services/cargosAdicionales.service";
+import {
+  obtenerFechaLocalMintOS,
+  validarFechaEfectivaMintOS,
+} from "../services/cargosAdicionales.service";
 
 import { finanzasService } from "../services/finanzas.service";
-import type { CargoAdicionalFinanzas } from "../services/finanzas.service";
+
+import type {
+  CargoAdicionalFinanzas,
+  LiquidacionEspecialistaFinanzas,
+} from "../services/finanzas.service";
+
 import { useAuth } from "../context/AuthContext";
 
 import { registrarBitacora } from "../lib/registrarBitacora";
@@ -36,34 +44,138 @@ import type {
 export default function useFinanzas() {
 
   const { perfil, permisos } = useAuth();
-  const puedeConsultarCargos = perfil?.rol === "admin" ||
+
+  const puedeConsultarCargos =
+    perfil?.rol === "admin" ||
     permisos?.ver_resumen_financiero === true ||
     permisos?.ver_utilidades === true;
 
   const [cargosAdicionales, setCargosAdicionales] =
     useState<CargoAdicionalFinanzas[]>([]);
+
   const [estadoCargosAdicionales, setEstadoCargosAdicionales] =
     useState<"inactivo" | "cargando" | "listo" | "error">("inactivo");
 
+  // =====================================================
+  // FIN04 - LIQUIDACIONES PROPORCIONALES DE ESPECIALISTAS
+  // =====================================================
+
+  const [
+    liquidacionesEspecialistas,
+    setLiquidacionesEspecialistas,
+  ] = useState<LiquidacionEspecialistaFinanzas[]>([]);
+
+  const [
+    estadoLiquidacionesEspecialistas,
+    setEstadoLiquidacionesEspecialistas,
+  ] = useState<
+    "inactivo" | "cargando" | "listo" | "error"
+  >("inactivo");
+
+  const solicitudLiquidacionesRef = useRef(0);
+
   useEffect(() => {
+
     let vigente = true;
+
     setCargosAdicionales([]);
+
     if (!puedeConsultarCargos) {
       setEstadoCargosAdicionales("inactivo");
       return;
     }
+
     setEstadoCargosAdicionales("cargando");
-    void finanzasService.cargarCargosAdicionales().then((data) => {
-      if (!vigente) return;
-      setCargosAdicionales(data);
-      setEstadoCargosAdicionales("listo");
-    }).catch((error) => {
-      if (!vigente) return;
-      console.error("Error consultando cargos financieros:", error);
-      setEstadoCargosAdicionales("error");
-    });
-    return () => { vigente = false; };
+
+    void finanzasService.cargarCargosAdicionales()
+      .then((data) => {
+
+        if (!vigente) return;
+
+        setCargosAdicionales(data);
+        setEstadoCargosAdicionales("listo");
+
+      })
+      .catch((error) => {
+
+        if (!vigente) return;
+
+        console.error(
+          "Error consultando cargos financieros:",
+          error
+        );
+
+        setEstadoCargosAdicionales("error");
+
+      });
+
+    return () => {
+      vigente = false;
+    };
+
   }, [puedeConsultarCargos, perfil]);
+
+  useEffect(() => {
+
+    setLiquidacionesEspecialistas([]);
+
+    void cargarLiquidacionesEspecialistas();
+
+    return () => {
+      solicitudLiquidacionesRef.current += 1;
+    };
+
+  }, [puedeConsultarCargos, perfil]);
+
+  async function cargarLiquidacionesEspecialistas() {
+
+    const solicitud =
+      ++solicitudLiquidacionesRef.current;
+
+    if (!puedeConsultarCargos) {
+
+      setLiquidacionesEspecialistas([]);
+      setEstadoLiquidacionesEspecialistas("inactivo");
+
+      return;
+
+    }
+
+    setEstadoLiquidacionesEspecialistas("cargando");
+
+    try {
+
+      const data =
+        await finanzasService.cargarLiquidacionesEspecialistas();
+
+      if (
+        solicitud !== solicitudLiquidacionesRef.current
+      ) {
+        return;
+      }
+
+      setLiquidacionesEspecialistas(data);
+      setEstadoLiquidacionesEspecialistas("listo");
+
+    } catch (error) {
+
+      if (
+        solicitud !== solicitudLiquidacionesRef.current
+      ) {
+        return;
+      }
+
+      setLiquidacionesEspecialistas([]);
+      setEstadoLiquidacionesEspecialistas("error");
+
+      console.error(
+        "Error consultando liquidaciones de especialistas:",
+        error
+      );
+
+    }
+
+  }
 
   const [
     tratamientos,
@@ -470,11 +582,17 @@ export default function useFinanzas() {
       detalle:
         `Tratamiento: ${tratamiento.nombre || "-"}`,
     }).catch((error) => {
-      console.error("Error registrando bitácora del catálogo:", error);
+      console.error(
+        "Error registrando bitácora del catálogo:",
+        error
+      );
     });
 
     void cargarCatalogoTratamientos().catch((error) => {
-      console.error("Error actualizando listado del catálogo:", error);
+      console.error(
+        "Error actualizando listado del catálogo:",
+        error
+      );
     });
 
   }
@@ -492,8 +610,11 @@ export default function useFinanzas() {
 
     await finanzasService
       .actualizarTratamientoCatalogo(
+
         id,
+
         cambios
+
       );
 
     void registrarBitacora({
@@ -502,11 +623,17 @@ export default function useFinanzas() {
       detalle:
         `Tratamiento catálogo ID: ${id}`,
     }).catch((error) => {
-      console.error("Error registrando bitácora del catálogo:", error);
+      console.error(
+        "Error registrando bitácora del catálogo:",
+        error
+      );
     });
 
     void cargarCatalogoTratamientos().catch((error) => {
-      console.error("Error actualizando listado del catálogo:", error);
+      console.error(
+        "Error actualizando listado del catálogo:",
+        error
+      );
     });
 
   }
@@ -518,8 +645,11 @@ export default function useFinanzas() {
 
     await finanzasService
       .cambiarEstadoTratamientoCatalogo(
+
         id,
+
         activo
+
       );
 
     await registrarBitacora({
@@ -548,8 +678,11 @@ export default function useFinanzas() {
 
     await finanzasService
       .actualizarConfiguracionPago(
+
         id,
+
         cambios
+
       );
 
     await registrarBitacora({
@@ -565,9 +698,29 @@ export default function useFinanzas() {
 
   return {
 
-    cargosAdicionales: puedeConsultarCargos ? cargosAdicionales : [],
+    cargosAdicionales:
+      puedeConsultarCargos
+        ? cargosAdicionales
+        : [],
 
-    estadoCargosAdicionales: puedeConsultarCargos ? estadoCargosAdicionales : "inactivo",
+    estadoCargosAdicionales:
+      puedeConsultarCargos
+        ? estadoCargosAdicionales
+        : "inactivo",
+
+    // FIN04 - LIQUIDACIONES DE ESPECIALISTAS
+
+    liquidacionesEspecialistas:
+      puedeConsultarCargos
+        ? liquidacionesEspecialistas
+        : [],
+
+    estadoLiquidacionesEspecialistas:
+      puedeConsultarCargos
+        ? estadoLiquidacionesEspecialistas
+        : "inactivo",
+
+    cargarLiquidacionesEspecialistas,
 
     tratamientos,
 

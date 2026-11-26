@@ -1,3 +1,5 @@
+import type { LiquidacionEspecialistaFinanzas } from "../services/finanzas.service";
+
 import { calcularComisionNeta } from "../lib/comisionNeta";
 
 import type {
@@ -65,6 +67,7 @@ export type IndicadoresProps = {
   pagosFiltrados?: PagoIndicador[];
   pagosComisionesDelPeriodo?: PagoIndicador[];
   pagosEspecialistasDelPeriodo?: Tratamiento[];
+  liquidacionesEspecialistasDelPeriodo?: LiquidacionEspecialistaFinanzas[];
 
 };
 
@@ -81,6 +84,7 @@ export default function useIndicadores({
   pagosFiltrados = [],
   pagosComisionesDelPeriodo = pagosFiltrados,
   pagosEspecialistasDelPeriodo = tratamientosFiltrados,
+  liquidacionesEspecialistasDelPeriodo = [],
 
 }: IndicadoresProps) {
 
@@ -495,6 +499,16 @@ export default function useIndicadores({
             0
           ),
         0
+      ) +
+    liquidacionesEspecialistasDelPeriodo
+      .filter(
+        (liquidacion) =>
+          liquidacion.metodo_pago === "Efectivo" &&
+          liquidacion.moneda === "MXN"
+      )
+      .reduce(
+        (total, liquidacion) => total + liquidacion.monto,
+        0
       );
 
   const pagosEspecialistasEfectivoUSD =
@@ -529,6 +543,16 @@ export default function useIndicadores({
             tratamiento.especialista ??
             0
           ),
+        0
+      ) +
+    liquidacionesEspecialistasDelPeriodo
+      .filter(
+        (liquidacion) =>
+          liquidacion.metodo_pago === "Efectivo" &&
+          liquidacion.moneda === "USD"
+      )
+      .reduce(
+        (total, liquidacion) => total + liquidacion.monto,
         0
       );
 
@@ -572,6 +596,16 @@ export default function useIndicadores({
             tratamiento.especialista ??
             0
           ),
+        0
+      ) +
+    liquidacionesEspecialistasDelPeriodo
+      .filter(
+        (liquidacion) =>
+          liquidacion.metodo_pago === "Transferencia" &&
+          liquidacion.moneda === "MXN"
+      )
+      .reduce(
+        (total, liquidacion) => total + liquidacion.monto,
         0
       );
 
@@ -1070,19 +1104,13 @@ export default function useIndicadores({
                 doctor?.porcentaje || 0
               );
 
-        const montoPago =
-          Number(
-            pago.monto_original || 0
-          );
-
-        return (
-          total +
-          (
-            montoPago *
-            porcentaje /
-            100
-          )
+        const comision = calcularComisionNeta(
+          pago,
+          tratamiento,
+          porcentaje
         );
+
+        return total + (comision ?? 0);
 
       },
       0
@@ -1149,19 +1177,13 @@ export default function useIndicadores({
                 doctor?.porcentaje || 0
               );
 
-        const montoPago =
-          Number(
-            pago.monto_original || 0
-          );
-
-        return (
-          total +
-          (
-            montoPago *
-            porcentaje /
-            100
-          )
+        const comision = calcularComisionNeta(
+          pago,
+          tratamiento,
+          porcentaje
         );
+
+        return total + (comision ?? 0);
 
       },
       0

@@ -1,7 +1,6 @@
-import Incisor from "../teeth/Incisor";
-import Canino from "../teeth/Canino";
-import Premolar from "../teeth/Premolar";
-import Molar from "../teeth/Molar";
+import SelectorDientesPresupuesto from "../presupuestos/SelectorDientesPresupuesto";
+import type { AgrupacionDental, MarcaDental } from "../presupuestos/SelectorDientesPresupuesto";
+import type { PresupuestoItem } from "../../types/Presupuesto";
 
 type PacienteExpedienteClinicoProps = {
   es: boolean;
@@ -62,25 +61,44 @@ export default function PacienteExpedienteClinico({
         </section>
       ) : (
         (() => {
-          const superiores = [18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28];
-          const inferiores = [48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38];
-          const dientesMarcados = new Set<number>();
-
-          (expedienteClinicoBase.items || []).forEach((item: any) => {
-            if (item.arcada === "superior") {
-              superiores.forEach((diente) => dientesMarcados.add(diente));
-            } else if (item.arcada === "inferior") {
-              inferiores.forEach((diente) => dientesMarcados.add(diente));
-            } else if (Array.isArray(item.dientes) && item.dientes.length > 0) {
-              item.dientes.forEach((diente: unknown) => dientesMarcados.add(Number(diente)));
-            } else if (item.diente) {
-              String(item.diente)
-                .split(/[,\s]+/)
-                .map((valor) => Number(valor))
-                .filter((valor) => Number.isFinite(valor))
-                .forEach((diente) => dientesMarcados.add(diente));
-            }
+          const items: PresupuestoItem[] = expedienteClinicoBase.items || [];
+          const marcas: Record<number, MarcaDental[]> = {};
+          const grupos: AgrupacionDental[] = [];
+          const dientesValidos = new Set([18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28,48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38]);
+          const obtenerGrupo = (item: PresupuestoItem): AgrupacionDental => ({
+            cuadrantes: item.cuadrantes || [],
+            arcadas: item.arcadas?.length ? item.arcadas : item.arcada ? [item.arcada] : [],
+            boca_completa: item.boca_completa === true || item.unidad_cobro === "boca_completa",
           });
+          const obtenerDientes = (item: PresupuestoItem) => [...new Set(
+            (item.dientes?.length ? item.dientes : String(item.diente || "").split(/[,\s]+/).map(Number))
+              .map(Number).filter(d => dientesValidos.has(d))
+          )].sort((a, b) => a - b);
+          const etiquetaZona = (item: PresupuestoItem) => {
+            const grupo = obtenerGrupo(item);
+            if (grupo.boca_completa) return es ? "Boca completa" : "Full mouth";
+            if (grupo.cuadrantes.length) return `${es ? "Cuadrantes" : "Quadrants"}: ${grupo.cuadrantes.join(", ")}`;
+            if (grupo.arcadas.length === 2) return es ? "Ambas arcadas" : "Both arches";
+            if (grupo.arcadas.includes("superior")) return es ? "Arcada superior" : "Upper arch";
+            if (grupo.arcadas.includes("inferior")) return es ? "Arcada inferior" : "Lower arch";
+            return obtenerDientes(item).join(", ") || item.diente || "—";
+          };
+          for (const item of items) {
+            const grupo = obtenerGrupo(item);
+            if (grupo.boca_completa || grupo.cuadrantes.length || grupo.arcadas.length) {
+              grupos.push(grupo);
+              continue;
+            }
+            const nombre = (item.tratamiento || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+            const tipo: MarcaDental["tipo"] = /endodon|root canal/.test(nombre) ? "endodoncia"
+              : /corona|crown/.test(nombre) ? "corona"
+              : /implante|implant/.test(nombre) ? "implante"
+              : /extraccion|extraction/.test(nombre) ? "extraccion"
+              : /resina|composite|filling/.test(nombre) ? "resina" : "otro";
+            for (const diente of obtenerDientes(item)) {
+              (marcas[diente] ??= []).push({ tratamiento: item.tratamiento, tipo });
+            }
+          }
 
           const fechaBase = expedienteClinicoBase.fecha || expedienteClinicoBase.created_at;
 
@@ -94,8 +112,8 @@ export default function PacienteExpedienteClinico({
                     </h3>
                     <p className="mt-1 text-[15px] font-medium mint-text-primary">
                       {es
-                        ? "Los dientes resaltados corresponden al plan de tratamiento inicial del paciente."
-                        : "Highlighted teeth correspond to the patient's initial treatment plan."}
+                        ? "Las marcas y agrupaciones corresponden al plan de tratamiento inicial del paciente."
+                        : "Marks and groups correspond to the patient's initial treatment plan."}
                     </p>
                   </div>
                   {fechaBase && (
@@ -110,122 +128,18 @@ export default function PacienteExpedienteClinico({
                 </div>
 
                 <div className="px-3 py-3 sm:px-5 sm:py-4">
-                  <div className="overflow-x-auto rounded-[18px] border border-[var(--mint-border)] bg-[var(--mint-surface-soft)] px-3 py-3 sm:px-4">
-                    <div className="mx-auto w-full min-w-[880px] max-w-[1060px]">
-                      {(() => {
-                        const renderDienteClinico = (numero: number, superior: boolean) => {
-                          const marcado = dientesMarcados.has(numero);
-                          const colorMarcado = "#63c8b2";
-                          const colorNormal = "#ffffff";
-                          const colores = {
-                            oclusal: marcado ? colorMarcado : colorNormal,
-                            vestibular: marcado ? colorMarcado : colorNormal,
-                            distal: marcado ? colorMarcado : colorNormal,
-                            mesial: marcado ? colorMarcado : colorNormal,
-                          };
-
-                          const propsDiente = {
-                            colores,
-                            invertido: superior,
-                            onZonaClick: () => {},
-                          };
-
-                          let dienteVisual;
-
-                          if ([11, 12, 21, 22, 31, 32, 41, 42].includes(numero)) {
-                            dienteVisual = <Incisor {...propsDiente} />;
-                          } else if ([13, 23, 33, 43].includes(numero)) {
-                            dienteVisual = <Canino {...propsDiente} />;
-                          } else if ([14, 15, 24, 25, 34, 35, 44, 45].includes(numero)) {
-                            dienteVisual = <Premolar {...propsDiente} />;
-                          } else {
-                            dienteVisual = <Molar {...propsDiente} />;
-                          }
-
-                          return (
-                            <div
-                              key={numero}
-                              className={`min-w-0 rounded-md px-0.5 py-1 text-center transition ${
-                                marcado
-                                  ? "bg-[var(--mint-teal-pale)] ring-1 ring-inset ring-[var(--mint-border-teal)]"
-                                  : ""
-                              }`}
-                            >
-                              <div className="pointer-events-none mx-auto flex h-[76px] w-full max-w-[49px] items-center justify-center overflow-hidden [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
-                                {dienteVisual}
-                              </div>
-                              <span
-                                className={`mt-1 block text-[13px] font-extrabold leading-none ${
-                                  marcado
-                                    ? "text-[var(--mint-teal)]"
-                                    : "mint-text-primary"
-                                }`}
-                              >
-                                {numero}
-                              </span>
-                            </div>
-                          );
-                        };
-
-                        return (
-                          <div className="space-y-2">
-                            <div>
-                              <div className="mb-1 flex items-center gap-3">
-                                <span className="text-[13px] font-extrabold uppercase tracking-[0.08em] mint-text-primary">
-                                  {es ? "Maxilar superior" : "Upper arch"}
-                                </span>
-                                <div className="h-px flex-1 bg-[var(--mint-border)]" />
-                              </div>
-                              <div
-                                className="grid items-end gap-[2px]"
-                                style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}
-                              >
-                                {superiores.map((numero) =>
-                                  renderDienteClinico(numero, true)
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 px-1">
-                              <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
-                              <span className="shrink-0 text-[12px] font-bold uppercase tracking-[0.1em] text-[var(--mint-teal)]">
-                                {es ? "Línea oclusal" : "Occlusal line"}
-                              </span>
-                              <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
-                            </div>
-
-                            <div>
-                              <div
-                                className="grid items-start gap-[2px]"
-                                style={{ gridTemplateColumns: "repeat(16, minmax(0, 1fr))" }}
-                              >
-                                {inferiores.map((numero) =>
-                                  renderDienteClinico(numero, false)
-                                )}
-                              </div>
-                              <div className="mt-1 flex items-center gap-3">
-                                <span className="text-[13px] font-extrabold uppercase tracking-[0.08em] mint-text-primary">
-                                  {es ? "Maxilar inferior" : "Lower arch"}
-                                </span>
-                                <div className="h-px flex-1 bg-[var(--mint-border)]" />
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 flex flex-wrap items-center gap-4 text-sm font-semibold mint-text-primary">
-                    <span className="inline-flex items-center gap-2">
-                      <span className="h-3 w-3 rounded border border-[var(--mint-teal)] bg-[var(--mint-teal-soft)]" />
-                      {es ? "Incluido en plan inicial" : "Included in initial plan"}
-                    </span>
-                    <span className="inline-flex items-center gap-2">
-                      <span className="h-3 w-3 rounded border border-[var(--mint-border)] bg-white" />
-                      {es ? "Sin hallazgo registrado" : "No recorded finding"}
-                    </span>
-                  </div>
+                  <SelectorDientesPresupuesto
+                    soloLectura
+                    dientesSeleccionados={[]}
+                    onChange={() => {}}
+                    arcada={null}
+                    onArcadaChange={() => {}}
+                    marcasPorDiente={marcas}
+                    agrupacionesRegistradas={grupos}
+                  />
+                  <p className="mt-3 text-sm mint-text-secondary">
+                    {es ? "Los indicadores muestran tratamientos propuestos por diente; las líneas azules indican agrupaciones." : "Badges show proposed treatments per tooth; blue lines indicate groups."}
+                  </p>
                 </div>
               </section>
 
@@ -264,13 +178,7 @@ export default function PacienteExpedienteClinico({
                     </thead>
                     <tbody className="divide-y divide-[var(--mint-border)]">
                       {(expedienteClinicoBase.items || []).map((item: any, index: number) => {
-                        const etiquetaDiente = item.arcada === "superior"
-                          ? (es ? "Arcada superior" : "Upper arch")
-                          : item.arcada === "inferior"
-                            ? (es ? "Arcada inferior" : "Lower arch")
-                            : Array.isArray(item.dientes) && item.dientes.length > 0
-                              ? item.dientes.join(", ")
-                              : item.diente || "—";
+                        const etiquetaDiente = etiquetaZona(item);
 
                         return (
                           <tr key={item.id || index} className="align-top">

@@ -54,7 +54,7 @@ type Vista = "doctores" | "especialistas";
 type FormaPagoEspecialista = "Efectivo" | "Transferencia";
 type MonedaPagoEspecialista = "MXN" | "USD";
 
-// Los honorarios se liquidan completos y se redondean a centavos.
+// Los honorarios proporcionales se redondean a centavos.
 const redondearImporte = (importe: number) =>
   Math.round((importe + Number.EPSILON) * 100) / 100;
 
@@ -79,6 +79,7 @@ export default function Comisiones({
   const liquidacionPendienteRef = useRef<{ payload: string; id: string } | null>(null);
   const liquidacionEnCursoRef = useRef(false);
   const pagoEspecialistaEnCursoRef = useRef(false);
+  const solicitudEspecialistaRef = useRef<{ payload: string; id: string } | null>(null);
 
   const { language } = useLanguage();
   const es = language === "es";
@@ -546,25 +547,65 @@ export default function Comisiones({
       0
     );
 
-  const tratamientosEspecialistas =
-    useMemo(
-      () =>
-        tratamientosAny.filter(
-          (tratamiento) =>
-            Boolean(
-              tratamiento
-                .especialista_id
-            )
-            &&
-            Number(
-              tratamiento.especialista ||
-              0
-            ) > 0
-        ),
-      [
-        tratamientosAny,
-      ]
-    );
+  const [honorarios, setHonorarios] = useState<any[]>([]);
+  const [estadoHonorarios, setEstadoHonorarios] = useState<"cargando" | "listo" | "error">("cargando");
+
+  useEffect(() => {
+    if (vista !== "especialistas") return;
+    let vigente = true;
+    setEstadoHonorarios("cargando");
+    setHonorarios([]);
+    void (async () => {
+      try {
+        const filas: any[] = [];
+        let desde = 0;
+        while (vigente) {
+          const { data, error } = await supabase
+            .rpc("mintos_consultar_honorarios_especialistas_v1")
+            .order("pago_id", { ascending: true })
+            .range(desde, desde + 499);
+          if (error) throw error;
+          if (!Array.isArray(data)) throw new Error("Respuesta inválida");
+          if (!data.length) break;
+          filas.push(...data);
+          desde += data.length;
+        }
+        if (vigente) {
+          setHonorarios(filas);
+          setEstadoHonorarios("listo");
+        }
+      } catch (error) {
+        if (vigente) {
+          console.error(error);
+          setEstadoHonorarios("error");
+        }
+      }
+    })();
+    return () => { vigente = false; };
+  }, [vista, perfil]);
+
+  const tratamientosEspecialistas = useMemo(() => {
+    const porId = new Map(tratamientosAny.map(t => [Number(t.id), t]));
+    return [
+      ...tratamientosAny.filter(t => t.especialista_pagado === true && t.especialista_id),
+      ...honorarios.map(h => ({
+        ...porId.get(Number(h.tratamiento_id)),
+        id: Number(h.tratamiento_id),
+        pago_id: Number(h.pago_id),
+        especialista_id: Number(h.especialista_id),
+        especialista_nombre: h.especialista_nombre,
+        fecha: h.fecha_cobro,
+        especialista: Number(h.honorario_proporcional),
+        moneda_especialista: h.moneda_honorario,
+        especialista_pagado: h.pagado,
+        especialista_pago_monto: Number(h.monto_pagado),
+        especialista_pago_moneda: h.moneda_pago,
+        especialista_fecha_pago: h.fecha_pago,
+        especialista_metodo_pago: h.metodo_pago,
+        especialista_pago_tipo_cambio: null,
+      })),
+    ];
+  }, [tratamientosAny, honorarios]);
 
   const resumenEspecialistas =
     useMemo(
@@ -624,15 +665,6 @@ export default function Comisiones({
                     pagadoMXN += montoPagado;
                   }
 
-                  return;
-                }
-
-                if (
-                  tratamiento.estado !== "Finalizado" ||
-                  tratamiento.resta_original == null ||
-                  Number(tratamiento.resta_original) !== 0 ||
-                  tratamiento.pendiente !== false
-                ) {
                   return;
                 }
 
@@ -791,21 +823,8 @@ export default function Comisiones({
   }
 
   async function registrarPagoEspecialista() {
-    if (!esAdmin || !tratamientoPago?.id || guardando || pagoEspecialistaEnCursoRef.current) return;
-
-    if (
-      tratamientoPago.especialista_pagado === true ||
-      tratamientoPago.estado !== "Finalizado" ||
-      tratamientoPago.resta_original == null ||
-      Number(tratamientoPago.resta_original) !== 0 ||
-      tratamientoPago.pendiente !== false
-    ) {
-      alert(tr(
-        "El tratamiento debe estar finalizado y completamente liquidado. Actualiza la vista antes de continuar.",
-        "The treatment must be completed and fully paid. Refresh the view before continuing."
-      ));
-      return;
-    }
+    if (!esAdmin || !tratamientoPago?.pago_id || tratamientoPago.especialista_pagado || guardando || pagoEspecialistaEnCursoRef.current) return;
+    if (formaPagoEspecialista === "Transferencia" && monedaPagoEspecialista !== "MXN") return;
 
     if (!validarFechaEfectivaMintOS(fechaPagoEspecialista)) {
       alert(tr("Fecha de pago inválida.", "Invalid payment date."));
@@ -847,25 +866,21 @@ export default function Comisiones({
         }
       }
 
-      const { data, error } = await supabase
-        .from("tratamientos")
-        .update({
-          especialista_pagado: true,
-          especialista_fecha_pago: fechaPagoEspecialista === obtenerFechaLocalMintOS()
-            ? new Date().toISOString()
-            : new Date(`${fechaPagoEspecialista}T12:00:00-07:00`).toISOString(),
-          especialista_metodo_pago: metodoPago,
-          especialista_pago_moneda: monedaPago,
-          especialista_pago_monto: monto,
-          especialista_pago_tipo_cambio: requiereConversionEspecialista ? tipoCambioEspecialista : null,
-        })
-        .eq("id", tratamiento.id)
-        .eq("estado", "Finalizado")
-        .eq("resta_original", 0)
-        .eq("pendiente", false)
-        .or("especialista_pagado.is.false,especialista_pagado.is.null")
-        .select("id")
-        .maybeSingle();
+      const parametros = {
+        p_pago_id: tratamiento.pago_id,
+        p_moneda: monedaPago,
+        p_monto: monto,
+        p_metodo_pago: metodoPago,
+        p_fecha_pago: fechaPagoEspecialista,
+      };
+      const payload = JSON.stringify(parametros);
+      if (solicitudEspecialistaRef.current?.payload !== payload) {
+        solicitudEspecialistaRef.current = { payload, id: crypto.randomUUID() };
+      }
+      const { data, error } = await supabase.rpc("mintos_liquidar_honorario_especialista_v1", {
+        ...parametros,
+        p_clave_idempotencia: solicitudEspecialistaRef.current.id,
+      });
 
       if (error) throw error;
 
@@ -881,7 +896,7 @@ export default function Comisiones({
           accion: "Pagar especialista",
           modulo: "Comisiones",
           detalle:
-            `Tratamiento ID: ${tratamiento.id} | Especialista ID: ${tratamiento.especialista_id || "-"} | Especialista: ${tratamiento.especialista_nombre || "-"} | Tratamiento: ${tratamiento.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago} | Tipo de cambio: ${requiereConversionEspecialista ? tipoCambioEspecialista : "No aplica"}`,
+            `Cobro ID: ${tratamiento.pago_id} | Tratamiento ID: ${tratamiento.id} | Especialista ID: ${tratamiento.especialista_id || "-"} | Especialista: ${tratamiento.especialista_nombre || "-"} | Tratamiento: ${tratamiento.tratamiento || "-"} | Monto: ${monto} ${monedaPago} | Método: ${metodoPago} | Tipo de cambio: ${requiereConversionEspecialista ? tipoCambioEspecialista : "No aplica"}`,
         });
       } catch (errorBitacora) {
         console.error("Pago confirmado; no se pudo registrar la bitácora:", errorBitacora);
@@ -1414,7 +1429,9 @@ export default function Comisiones({
               </div>
 
               {
-                resumenEspecialistas
+                estadoHonorarios !== "listo" ? (
+                  <div className="mint-card p-6" role="status">{estadoHonorarios === "error" ? tr("Error consultando honorarios. Actualiza la página.", "Could not load fees. Refresh the page.") : tr("Consultando honorarios...", "Loading fees...")}</div>
+                ) : resumenEspecialistas
                   .length === 0
 
                   ? (
@@ -1553,24 +1570,18 @@ export default function Comisiones({
                                         const finalizado =
                                           tratamiento.estado ===
                                           "Finalizado";
-                                        const liquidado =
-                                          tratamiento.resta_original != null &&
-                                          Number(tratamiento.resta_original) === 0 &&
-                                          tratamiento.pendiente === false;
-
                                         return (
 
                                           <tr
                                             key={
-                                              tratamiento.id
+                                              tratamiento.pago_id ?? `legacy-${tratamiento.id}`
                                             }
                                             className="mint-table-row"
                                           >
 
                                             <td className="p-4 mint-text-secondary whitespace-nowrap">
                                               {
-                                                tratamiento.fecha ||
-                                                "—"
+                                                tratamiento.fecha ? new Date(tratamiento.fecha).toLocaleDateString(locale, { timeZone: "America/Hermosillo" }) : "—"
                                               }
                                             </td>
 
@@ -1700,9 +1711,7 @@ export default function Comisiones({
 
                                                   )
 
-                                                  : finalizado &&
-                                                    liquidado &&
-                                                    esAdmin
+                                                  : Boolean(tratamiento.pago_id) && esAdmin && estadoHonorarios === "listo"
 
                                                     ? (
 
@@ -1732,9 +1741,7 @@ export default function Comisiones({
                                                     : (
 
                                                       <span className="text-xs mint-text-muted">
-                                                        {finalizado
-                                                          ? tr("Saldo pendiente", "Balance pending")
-                                                          : tr("Al finalizar", "When completed")}
+                                                        {tr("Pendiente", "Pending")}
                                                       </span>
 
                                                     )
@@ -2173,7 +2180,7 @@ export default function Comisiones({
               </p>
 
               <div className="mt-5 rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-4">
-                <p className="text-xs mint-text-muted">{tr("Honorarios acordados", "Agreed specialist fee")}</p>
+                <p className="text-xs mint-text-muted">{tr("Honorario proporcional", "Proportional specialist fee")}</p>
                 <p className="mt-1 text-lg font-bold mint-text-primary">
                   ${formatoMonto(Number(tratamientoPago.especialista || 0))} {monedaHonorariosEspecialista}
                 </p>
@@ -2192,7 +2199,12 @@ export default function Comisiones({
                   <label className="mint-label">{tr("Método de pago", "Payment method")}</label>
                   <select
                     value={formaPagoEspecialista}
-                    onChange={(event) => setFormaPagoEspecialista(event.target.value as FormaPagoEspecialista)}
+                    disabled={guardando}
+                    onChange={(event) => {
+                      const metodo = event.target.value as FormaPagoEspecialista;
+                      setFormaPagoEspecialista(metodo);
+                      if (metodo === "Transferencia") setMonedaPagoEspecialista("MXN");
+                    }}
                     className="mint-input"
                   >
                     <option value="Efectivo">{tr("Efectivo", "Cash")}</option>
@@ -2203,6 +2215,7 @@ export default function Comisiones({
                   <label className="mint-label">{tr("Moneda de pago", "Payment currency")}</label>
                   <select
                     value={monedaPagoEspecialista}
+                    disabled={guardando || formaPagoEspecialista === "Transferencia"}
                     onChange={(event) => setMonedaPagoEspecialista(event.target.value as MonedaPagoEspecialista)}
                     className="mint-input"
                   >
@@ -2233,8 +2246,8 @@ export default function Comisiones({
                   className="mint-input font-semibold"
                 />
                 <p className="mt-2 text-xs mint-text-muted">
-                  {tr("Los honorarios se pagan completos, sin abonos parciales.",
-                    "Specialist fees are paid in full, without partial installments.")}
+                  {tr("Se liquida el honorario correspondiente a este cobro.",
+                    "This settles the specialist fee associated with this collection.")}
                 </p>
               </div>
 

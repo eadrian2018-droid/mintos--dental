@@ -10,7 +10,26 @@ import Canino from "../teeth/Canino";
 import Premolar from "../teeth/Premolar";
 import Molar from "../teeth/Molar";
 
+import type { ArcadaPresupuesto, CuadrantePresupuesto } from "../../types/Presupuesto";
+
+export type AgrupacionDental = {
+  cuadrantes: CuadrantePresupuesto[];
+  arcadas: ArcadaPresupuesto[];
+  boca_completa: boolean;
+};
+
+export type MarcaDental = {
+  tratamiento: string;
+  tipo: "corona" | "endodoncia" | "implante" | "extraccion" | "resina" | "otro";
+  zona?: "oclusal" | "vestibular" | "distal" | "mesial";
+};
+
 type Props = {
+  soloLectura?: boolean;
+  marcasPorDiente?: Record<number, MarcaDental[]>;
+  agrupacion?: AgrupacionDental;
+  agrupacionesRegistradas?: AgrupacionDental[];
+  onAgrupacionChange?: (agrupacion: AgrupacionDental) => void;
   dientesSeleccionados: number[];
   onChange: (dientes: number[]) => void;
   arcada: "superior" | "inferior" | null;
@@ -20,28 +39,27 @@ type Props = {
 };
 
 export default function SelectorDientesPresupuesto({
+  soloLectura = false,
   dientesSeleccionados,
   onChange,
   arcada,
   onArcadaChange,
+  agrupacion,
+  agrupacionesRegistradas = [],
+  marcasPorDiente,
+  onAgrupacionChange,
 }: Props) {
   const { language } = useLanguage();
 
   const es = language === "es";
 
-  const arrastreActivoRef =
-    useRef(false);
-
-  const arrastreMovidoRef =
-    useRef(false);
-
-  const dienteInicioArrastreRef =
-    useRef<number | null>(null);
-
-  const [
-    dientePresionado,
-    setDientePresionado,
-  ] = useState<number | null>(null);
+  const gestoRef = useRef<{
+    pointerId: number;
+    seleccion: Set<number>;
+    visitados: Set<number>;
+    agregar: boolean;
+  } | null>(null);
+  const [dientePresionado, setDientePresionado] = useState<number | null>(null);
 
   const superiores = [
     18, 17, 16, 15,
@@ -57,152 +75,70 @@ export default function SelectorDientesPresupuesto({
     35, 36, 37, 38,
   ];
 
+  const grupos = agrupacion ?? { cuadrantes: [], arcadas: [], boca_completa: false };
+  const agrupando = Boolean(onAgrupacionChange && agrupacion);
+  const cuadrantes = [1, 2, 3, 4] as const;
+  const todos = [...superiores, ...inferiores];
+
+  function limpiarGrupos() {
+    onAgrupacionChange?.({ cuadrantes: [], arcadas: [], boca_completa: false });
+  }
+
+  function seleccionarGrupo(nuevo: AgrupacionDental) {
+    const dientes = todos.filter((d) => nuevo.boca_completa ||
+      nuevo.cuadrantes.some((q) => Math.floor(d / 10) === q) ||
+      nuevo.arcadas.some((a) => (a === "superior" ? superiores : inferiores).includes(d)));
+    onChange(dientes);
+    onArcadaChange(nuevo.arcadas.length === 1 ? nuevo.arcadas[0] : null);
+    onAgrupacionChange?.(nuevo);
+  }
+
+  function seleccionarCuadrante(q: CuadrantePresupuesto) {
+    seleccionarGrupo({ cuadrantes: grupos.cuadrantes.includes(q)
+      ? grupos.cuadrantes.filter((c) => c !== q) : [...grupos.cuadrantes, q],
+      arcadas: [], boca_completa: false });
+  }
+
   function limpiarSeleccion() {
+    limpiarGrupos();
     onChange([]);
     onArcadaChange(null);
     setDientePresionado(null);
   }
 
-  function iniciarSeleccionDiente(
-    numero: number,
-    event: React.PointerEvent<HTMLDivElement>
-  ) {
-    if (event.button !== 0) {
-      return;
-    }
+  function iniciarSeleccionDiente(numero: number, event: React.PointerEvent<HTMLDivElement>) {
+    if (event.button !== 0 || gestoRef.current) return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const seleccion = new Set(dientesSeleccionados);
+    const agregar = !seleccion.has(numero);
+    gestoRef.current = { pointerId: event.pointerId, seleccion, visitados: new Set(), agregar };
+    aplicarDiente(numero);
+  }
 
-    arrastreActivoRef.current = true;
-    arrastreMovidoRef.current = false;
-    dienteInicioArrastreRef.current =
-      numero;
-
-    setDientePresionado(numero);
-
-    /*
-      Al iniciar el arrastre partimos
-      únicamente del primer diente.
-
-      Si termina siendo solamente un
-      click, terminarSeleccionDiente()
-      se encargará de alternarlo.
-    */
-    onChange([numero]);
-
+  function aplicarDiente(numero: number) {
+    const gesto = gestoRef.current;
+    if (!gesto || gesto.visitados.has(numero)) return;
+    gesto.visitados.add(numero);
+    if (gesto.agregar) gesto.seleccion.add(numero);
+    else gesto.seleccion.delete(numero);
+    onChange(Array.from(gesto.seleccion));
     onArcadaChange(null);
-  }
-
-  function moverSeleccionDiente(
-    event: React.PointerEvent<HTMLDivElement>
-  ) {
-    if (!arrastreActivoRef.current) {
-      return;
-    }
-
-    const elemento =
-      document
-        .elementFromPoint(
-          event.clientX,
-          event.clientY
-        )
-        ?.closest(
-          "[data-presupuesto-diente]"
-        ) as HTMLElement | null;
-
-    if (!elemento) {
-      return;
-    }
-
-    const numero = Number(
-      elemento.dataset
-        .presupuestoDiente
-    );
-
-    if (!Number.isFinite(numero)) {
-      return;
-    }
-
-    if (
-      numero !==
-      dienteInicioArrastreRef.current
-    ) {
-      arrastreMovidoRef.current = true;
-    }
-
-    onChange(
-      Array.from(
-        new Set([
-          ...dientesSeleccionados,
-          numero,
-        ])
-      )
-    );
-
+    limpiarGrupos();
     setDientePresionado(numero);
   }
 
-  function entrarSeleccionDiente(
-    numero: number
-  ) {
-    if (!arrastreActivoRef.current) {
-      return;
-    }
-
-    if (
-      numero !==
-      dienteInicioArrastreRef.current
-    ) {
-      arrastreMovidoRef.current = true;
-    }
-
-    onChange(
-      Array.from(
-        new Set([
-          ...dientesSeleccionados,
-          numero,
-        ])
-      )
-    );
-
-    setDientePresionado(numero);
+  function moverSeleccionDiente(event: React.PointerEvent<HTMLDivElement>) {
+    if (gestoRef.current?.pointerId !== event.pointerId) return;
+    const elemento = document.elementFromPoint(event.clientX, event.clientY)
+      ?.closest<HTMLElement>("[data-presupuesto-diente]");
+    const numero = Number(elemento?.dataset.presupuestoDiente);
+    if (superiores.includes(numero) || inferiores.includes(numero)) aplicarDiente(numero);
   }
 
-  function terminarSeleccionDiente(
-    numero: number,
-    _event: React.PointerEvent<HTMLDivElement>
-  ) {
-    if (!arrastreActivoRef.current) {
-      return;
-    }
-
-    const fueArrastre =
-      arrastreMovidoRef.current;
-
-    arrastreActivoRef.current = false;
-    arrastreMovidoRef.current = false;
-    dienteInicioArrastreRef.current =
-      null;
-
-    setDientePresionado(null);
-
-    if (!fueArrastre) {
-      /*
-        iniciarSeleccionDiente ya dejó
-        seleccionado este diente.
-
-        Un click simple debe dejar una
-        selección individual.
-      */
-      onChange([numero]);
-      onArcadaChange(null);
-    }
-  }
-
-  function cancelarSeleccionDiente() {
-    arrastreActivoRef.current = false;
-    arrastreMovidoRef.current = false;
-    dienteInicioArrastreRef.current =
-      null;
-
+  function cancelarSeleccionDiente(event: React.PointerEvent<HTMLDivElement>) {
+    if (gestoRef.current?.pointerId !== event.pointerId) return;
+    gestoRef.current = null;
     setDientePresionado(null);
   }
 
@@ -211,6 +147,11 @@ export default function SelectorDientesPresupuesto({
       | "superior"
       | "inferior"
   ) {
+    if (agrupando) {
+      seleccionarGrupo({ cuadrantes: [], boca_completa: false,
+        arcadas: grupos.arcadas.includes(tipo) ? grupos.arcadas.filter((a) => a !== tipo) : [...grupos.arcadas, tipo] });
+      return;
+    }
     const dientes =
       tipo === "superior"
         ? superiores
@@ -233,18 +174,32 @@ export default function SelectorDientesPresupuesto({
         numero
       );
 
+    const marcadoPorGrupo = agrupando && (grupos.boca_completa ||
+      grupos.cuadrantes.some((q) => Math.floor(numero / 10) === q) ||
+      grupos.arcadas.some((a) => (a === "superior" ? superiores : inferiores).includes(numero)));
+    const marcadoIndividual = seleccionado && !marcadoPorGrupo;
     const presionado =
       dientePresionado === numero;
 
     const invertido =
       superiores.includes(numero);
 
+    const marcas = marcasPorDiente?.[numero] ?? [];
+    const corona = marcas.some((m) => m.tipo === "corona");
+    const endodoncia = marcas.some((m) => m.tipo === "endodoncia");
+    const implante = marcas.some((m) => m.tipo === "implante");
+    const extraccion = marcas.some((m) => m.tipo === "extraccion");
+    // Neutral highlight for proposed treatments without a recorded zone.
+    const colorBase = marcas.length > 0 ? "#d1d5db" : "white";
     const colores = {
-      oclusal: "white",
-      vestibular: "white",
-      distal: "white",
-      mesial: "white",
+      oclusal: corona ? "#60a5fa" : colorBase,
+      vestibular: corona ? "#60a5fa" : colorBase,
+      distal: colorBase,
+      mesial: colorBase,
     };
+    for (const marca of marcas) {
+      if (marca.tipo === "resina" && marca.zona) colores[marca.zona] = "#fbbf24";
+    }
 
     const propsDiente = {
       colores,
@@ -305,42 +260,43 @@ export default function SelectorDientesPresupuesto({
         data-presupuesto-diente={
           numero
         }
-        onPointerDown={(event) =>
+        onPointerDown={soloLectura ? undefined : (event) =>
           iniciarSeleccionDiente(
             numero,
             event
           )
         }
         onPointerMove={
-          moverSeleccionDiente
+          soloLectura ? undefined : moverSeleccionDiente
         }
-        onPointerEnter={() =>
-          entrarSeleccionDiente(
-            numero
-          )
-        }
-        onPointerUp={(event) =>
-          terminarSeleccionDiente(
-            numero,
-            event
-          )
-        }
-        onPointerCancel={
-          cancelarSeleccionDiente
-        }
+        onPointerUp={cancelarSeleccionDiente}
+        onPointerCancel={cancelarSeleccionDiente}
+        onLostPointerCapture={cancelarSeleccionDiente}
+        role={soloLectura ? undefined : "button"}
+        tabIndex={soloLectura ? undefined : 0}
+        aria-pressed={soloLectura ? undefined : seleccionado}
+        aria-label={`${es ? "Diente" : "Tooth"} ${numero}${marcas.length ? `: ${marcas.map((m) => m.tratamiento).join(", ")}` : ""}`}
+        title={marcas.map((m) => m.tratamiento).join(" · ") || undefined}
+        onKeyDown={soloLectura ? undefined : (event) => {
+          if (event.key !== "Enter" && event.key !== " ") return;
+          event.preventDefault();
+          onChange(seleccionado ? dientesSeleccionados.filter((d) => d !== numero) : [...dientesSeleccionados, numero]);
+          onArcadaChange(null);
+          limpiarGrupos();
+        }}
         className={`
           flex
           flex-col
           items-center
           transition-all
           duration-200
-          cursor-pointer
+          ${soloLectura ? "cursor-default" : "cursor-pointer"}
           rounded-xl
           px-1
           py-1
 
           ${
-            seleccionado
+            marcadoIndividual
               ? `
                   bg-[var(--mint-primary-soft)]
                   ring-1
@@ -358,18 +314,27 @@ export default function SelectorDientesPresupuesto({
           }
         `}
         style={{
-          minWidth: "46px",
+          minWidth: "0",
           marginLeft: "0px",
           marginRight: "0px",
-          touchAction: "none",
+          touchAction: soloLectura ? "auto" : "none",
           userSelect: "none",
         }}
       >
-        {componente}
+        <div className="pointer-events-none relative mx-auto flex h-[76px] w-full max-w-[49px] items-center justify-center overflow-hidden [&>svg]:block [&>svg]:h-full [&>svg]:w-full">
+          {componente}
+          {(endodoncia || implante || extraccion) && (
+            <svg viewBox="0 0 48 76" preserveAspectRatio="none" className="absolute inset-0" aria-hidden="true">
+              {endodoncia && <path d={invertido ? "M24 39 V9" : "M24 37 V67"} stroke="#dc2626" strokeWidth="2.5" strokeLinecap="round" strokeDasharray="3 2" />}
+              {implante && <g transform={invertido ? "translate(0 0)" : "translate(0 40)"} stroke="#7c3aed" strokeWidth="2" fill="none"><rect x="18" y="8" width="12" height="25" rx="3" />{[13, 19, 25].map((y) => <path key={y} d={`M18 ${y} H30`} />)}</g>}
+              {extraccion && <path d="M9 15 L39 61 M39 15 L9 61" stroke="#dc2626" strokeWidth="3" strokeLinecap="round" />}
+            </svg>
+          )}
+        </div>
 
         <span
           className="
-            text-[9px]
+            text-[13px]
             font-bold
             mt-1
             mint-text-primary
@@ -377,8 +342,33 @@ export default function SelectorDientesPresupuesto({
         >
           {numero}
         </span>
+        {marcas.length > 0 && (
+          <span className="rounded-full bg-[var(--mint-teal)] px-1.5 text-xs font-bold text-white"
+            aria-label={`${marcas.length} ${es ? "tratamientos" : "treatments"}`}>
+            {marcas.length}
+          </span>
+        )}
       </div>
     );
+  }
+
+  function renderGrupos(a: ArcadaPresupuesto) {
+    if (!agrupando && !soloLectura) return null;
+    const qs = a === "superior" ? [1, 2] : [4, 3];
+    const linea = "h-3 border-x-2 border-b-2 rounded-b-sm";
+    const renderLinea = (grupo: AgrupacionDental, activa: boolean, key: string) => {
+      const completa = grupo.boca_completa || grupo.arcadas.includes(a);
+      if (!completa && !qs.some(q => grupo.cuadrantes.some(c => c === q))) return null;
+      const estilo = `${linea} ${activa ? "border-[var(--mint-teal)]" : "border-blue-500"}`;
+      return <div key={key} className="grid grid-cols-2 gap-1" aria-hidden="true">
+        {completa ? <div className={`${estilo} col-span-2`} /> : qs.map(q =>
+          <div key={q} className={grupo.cuadrantes.some(c => c === q) ? estilo : "h-3"} />)}
+      </div>;
+    };
+    return <div className="space-y-1">
+      {agrupacionesRegistradas.map((grupo, i) => renderLinea(grupo, false, `registrada-${i}`))}
+      {renderLinea(grupos, true, "activa")}
+    </div>;
   }
 
   const dientesOrdenados =
@@ -394,6 +384,7 @@ export default function SelectorDientesPresupuesto({
         space-y-4
       "
     >
+      {!soloLectura && (
       <div
         className="
           rounded-2xl
@@ -434,8 +425,8 @@ export default function SelectorDientesPresupuesto({
               "
             >
               {es
-                ? "Haz clic en un diente o arrastra sobre varios."
-                : "Click a tooth or drag across several teeth."}
+                ? "Haz clic para seleccionar o quitar dientes. Arrastra para seleccionar o quitar varios."
+                : "Click to select or remove teeth. Drag to select or remove several."}
             </p>
           </div>
 
@@ -446,6 +437,16 @@ export default function SelectorDientesPresupuesto({
               gap-2
             "
           >
+            {agrupando && <>
+              {cuadrantes.map((q) => <button key={q} type="button"
+                aria-pressed={grupos.cuadrantes.includes(q)}
+                className={`mint-btn mint-btn-sm ${grupos.cuadrantes.includes(q) ? "mint-btn-primary" : "mint-btn-neutral"}`}
+                onClick={() => seleccionarCuadrante(q)}>{es ? "Cuadrante" : "Quadrant"} {q}</button>)}
+              <button type="button" aria-pressed={grupos.boca_completa}
+                className={`mint-btn mint-btn-sm ${grupos.boca_completa ? "mint-btn-primary" : "mint-btn-neutral"}`}
+                onClick={() => seleccionarGrupo({ cuadrantes: [], arcadas: [], boca_completa: !grupos.boca_completa })}>
+                {es ? "Boca completa" : "Full mouth"}</button>
+            </>}
             <button
               type="button"
               onClick={() =>
@@ -458,7 +459,7 @@ export default function SelectorDientesPresupuesto({
                 mint-btn-sm
 
                 ${
-                  arcada === "superior"
+                  (agrupando ? grupos.arcadas.includes("superior") : arcada === "superior")
                     ? "mint-btn-primary"
                     : "mint-btn-neutral"
                 }
@@ -481,7 +482,7 @@ export default function SelectorDientesPresupuesto({
                 mint-btn-sm
 
                 ${
-                  arcada === "inferior"
+                  (agrupando ? grupos.arcadas.includes("inferior") : arcada === "inferior")
                     ? "mint-btn-primary"
                     : "mint-btn-neutral"
                 }
@@ -514,112 +515,28 @@ export default function SelectorDientesPresupuesto({
         </div>
       </div>
 
-      <div
-        className="
-          mint-card
-          p-5
-        "
-      >
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            gap-3
-            mb-4
-          "
-        >
-          <h4
-            className="
-              text-xs
-              font-bold
-              uppercase
-              tracking-wide
-              mint-text-brand
-            "
-          >
-            {es
-              ? "Maxilar superior"
-              : "Upper arch"}
-          </h4>
-
-          <span
-            className="
-              text-xs
-              mint-text-muted
-            "
-          >
-            18 — 28
-          </span>
-        </div>
-
-        <div
-          className="
-            flex
-            justify-center
-            gap-[2px]
-            flex-wrap
-          "
-        >
-          {superiores.map(
-            renderDiente
-          )}
+      )}
+      <div className="mint-card overflow-x-auto p-3 sm:p-4">
+        <div className="mx-auto w-full min-w-[880px] max-w-[1060px] space-y-2">
+          <h4 className="text-xs font-bold uppercase mint-text-primary">{es ? "Maxilar superior" : "Upper arch"}</h4>
+          <div className="grid grid-cols-[repeat(16,minmax(0,1fr))] gap-[2px]">
+            {superiores.map(renderDiente)}
+          </div>
+          {renderGrupos("superior")}
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
+            <span className="text-xs font-bold uppercase text-[var(--mint-teal)]">{es ? "Línea oclusal" : "Occlusal line"}</span>
+            <div className="h-px flex-1 bg-[var(--mint-border-teal)]" />
+          </div>
+          <div className="grid grid-cols-[repeat(16,minmax(0,1fr))] gap-[2px]">
+            {inferiores.map(renderDiente)}
+          </div>
+          {renderGrupos("inferior")}
+          <h4 className="text-xs font-bold uppercase mint-text-primary">{es ? "Maxilar inferior" : "Lower arch"}</h4>
         </div>
       </div>
 
-      <div
-        className="
-          mint-card
-          p-5
-        "
-      >
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            gap-3
-            mb-4
-          "
-        >
-          <h4
-            className="
-              text-xs
-              font-bold
-              uppercase
-              tracking-wide
-              mint-text-brand
-            "
-          >
-            {es
-              ? "Maxilar inferior"
-              : "Lower arch"}
-          </h4>
-
-          <span
-            className="
-              text-xs
-              mint-text-muted
-            "
-          >
-            48 — 38
-          </span>
-        </div>
-
-        <div
-          className="
-            flex
-            justify-center
-            gap-[2px]
-            flex-wrap
-          "
-        >
-          {inferiores.map(
-            renderDiente
-          )}
-        </div>
-      </div>
-
+      {!soloLectura && (
       <div
         className="
           rounded-2xl
@@ -640,7 +557,10 @@ export default function SelectorDientesPresupuesto({
                 mint-text-primary
               "
             >
-              {arcada
+              {agrupando && grupos.boca_completa ? (es ? "Boca completa" : "Full mouth")
+                : agrupando && grupos.cuadrantes.length ? `${es ? "Cuadrantes" : "Quadrants"}: ${grupos.cuadrantes.join(", ")}`
+                : agrupando && grupos.arcadas.length === 2 ? (es ? "Ambas arcadas" : "Both arches")
+                : arcada
                 ? arcada ===
                   "superior"
                   ? es
@@ -689,6 +609,7 @@ export default function SelectorDientesPresupuesto({
           </p>
         )}
       </div>
+      )}
     </div>
   );
 }

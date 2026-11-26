@@ -50,6 +50,11 @@ type DatosNuevoPresupuesto = {
     catalogo_tratamiento_id: number | null;
     dientes: number[];
     arcada: "superior" | "inferior" | null;
+    unidad_cobro?: PresupuestoItem["unidad_cobro"];
+    cuadrantes?: PresupuestoItem["cuadrantes"];
+    arcadas?: PresupuestoItem["arcadas"];
+    superficies?: PresupuestoItem["superficies"];
+    boca_completa?: PresupuestoItem["boca_completa"];
     cantidad: number;
     precio_unitario: number;
   }[];
@@ -428,6 +433,12 @@ export default function PresupuestosPage() {
           arcada:
             item.arcada,
 
+          unidad_cobro: item.unidad_cobro ?? null,
+          cuadrantes: item.cuadrantes ?? [],
+          arcadas: item.arcadas ?? [],
+          superficies: item.superficies ?? {},
+          boca_completa: item.boca_completa ?? false,
+
           cantidad:
             Number(
               item.cantidad
@@ -580,6 +591,12 @@ export default function PresupuestosPage() {
             item.arcada === "inferior"
               ? item.arcada
               : null,
+
+          unidad_cobro: item.unidad_cobro ?? null,
+          cuadrantes: item.cuadrantes ?? [],
+          arcadas: item.arcadas ?? [],
+          superficies: item.superficies ?? {},
+          boca_completa: item.boca_completa ?? false,
 
           cantidad:
             Number(

@@ -11,6 +11,7 @@ import type {
   TratamientoCatalogo,
   TratamientoMaestro,
   TipoTratamiento,
+  UnidadCobro,
 } from "../../types/TratamientoCatalogo";
 
 type CatalogoTratamientosProps = {
@@ -136,6 +137,16 @@ export default function CatalogoTratamientos({
     "clinica"
   );
 
+  const [unidadCobro, setUnidadCobro] = useState<UnidadCobro>("manual");
+
+  const unidadesCobro: Record<UnidadCobro, string> = {
+    diente: es ? "Por diente" : "Per tooth",
+    cuadrante: es ? "Por cuadrante" : "Per quadrant",
+    arcada: es ? "Por arcada" : "Per arch",
+    boca_completa: es ? "Boca completa" : "Full mouth",
+    manual: es ? "Cantidad manual" : "Manual quantity",
+  };
+
   const [
     precioMXN,
     setPrecioMXN,
@@ -196,6 +207,8 @@ export default function CatalogoTratamientos({
     setTipo(
       "clinica"
     );
+
+    setUnidadCobro("manual");
 
     setPrecioMXN("");
 
@@ -282,6 +295,8 @@ export default function CatalogoTratamientos({
         categoria.trim() || "Other",
 
       tipo,
+
+      unidad_cobro: unidadCobro,
 
       precio_mxn:
         Number(
@@ -393,6 +408,8 @@ export default function CatalogoTratamientos({
     setTipo(
       tratamiento.tipo
     );
+
+    setUnidadCobro(tratamiento.unidad_cobro ?? "manual");
 
     setPrecioMXN(
       String(
@@ -557,6 +574,10 @@ export default function CatalogoTratamientos({
                 </th>
 
                 <th className="p-3 text-left">
+                  {es ? "Unidad de cobro" : "Billing unit"}
+                </th>
+
+                <th className="p-3 text-left">
 
                   {es ? "Precio MXN" : "Price MXN"}
 
@@ -680,6 +701,10 @@ export default function CatalogoTratamientos({
 
                         </span>
 
+                      </td>
+
+                      <td className="p-3 font-medium mint-text-primary">
+                        {unidadesCobro[tratamiento.unidad_cobro ?? "manual"]}
                       </td>
 
                       <td
@@ -1098,6 +1123,21 @@ export default function CatalogoTratamientos({
 
                         : null
                   }
+
+                  <label className="md:col-span-2 flex flex-col gap-2 text-sm font-semibold mint-text-primary">
+                    {es ? "Unidad de cobro" : "Billing unit"}
+                    <select
+                      value={unidadCobro}
+                      onChange={(e) => setUnidadCobro(e.target.value as UnidadCobro)}
+                      className="mint-input w-full p-3"
+                    >
+                      {(Object.keys(unidadesCobro) as UnidadCobro[]).map((unidad) => (
+                        <option key={unidad} value={unidad}>
+                          {unidadesCobro[unidad]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
 
                   <input
                     type="number"

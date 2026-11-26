@@ -383,6 +383,22 @@ export default function Finanzas() {
     )
   );
 
+  const liquidacionesEspecialistasDelPeriodo =
+    finanzas.liquidacionesEspecialistas.filter((liquidacion) =>
+      fechaDentroPeriodo(liquidacion.fecha_pago)
+    );
+
+  const liquidacionesListas =
+    finanzas.estadoLiquidacionesEspecialistas === "listo";
+
+  const avisoLiquidaciones = (
+    <p role="status" className="rounded-xl border border-[var(--mint-border-teal)] p-4 text-sm mint-text-primary">
+      {finanzas.estadoLiquidacionesEspecialistas === "error"
+        ? (es ? "No se pudieron consultar las liquidaciones. Los indicadores financieros no están disponibles." : "Specialist payments could not be loaded. Financial indicators are unavailable.")
+        : (es ? "Consultando liquidaciones de especialistas…" : "Loading specialist payments…")}
+    </p>
+  );
+
   const {
 
     ingresos,
@@ -438,6 +454,7 @@ export default function Finanzas() {
     pagosFiltrados,
     pagosComisionesDelPeriodo,
     pagosEspecialistasDelPeriodo,
+    liquidacionesEspecialistasDelPeriodo,
 
   });
 
@@ -1168,6 +1185,7 @@ export default function Finanzas() {
 
   &&
 
+  (liquidacionesListas ? (
   <Resumen
 
     seccionCargosAdicionales={seccionCargosAdicionales}
@@ -1257,6 +1275,7 @@ export default function Finanzas() {
     }
 
   />
+  ) : avisoLiquidaciones)
 }
 
 {
@@ -1269,6 +1288,7 @@ export default function Finanzas() {
 
   &&
 
+  (liquidacionesListas ? (
   <Reportes
 
     ingresos={
@@ -1356,6 +1376,7 @@ export default function Finanzas() {
     }
 
   />
+  ) : avisoLiquidaciones)
 }
 
 {
@@ -1368,6 +1389,7 @@ export default function Finanzas() {
 
   &&
 
+  (liquidacionesListas ? (
   <CierreMensual
 
     cobradoMXN={
@@ -1441,6 +1463,7 @@ export default function Finanzas() {
     }
 
   />
+  ) : avisoLiquidaciones)
 }
 
       </div>
