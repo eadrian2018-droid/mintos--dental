@@ -77,6 +77,7 @@ export default function DoctorDetalle({
   const locale = es ? "es-MX" : "en-US";
   const t = (espanol: string, ingles: string) => es ? espanol : ingles;
 
+  const [semanaSeleccionada, setSemanaSeleccionada] = useState("actual");
   const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
   const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
 
@@ -193,9 +194,49 @@ export default function DoctorDetalle({
 
     };
 
+  // Semanas calendario de lunes a domingo, en la zona horaria de la clínica.
+  const fechaClinica = (fecha?: string): string | null => {
+    if (!fecha) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return fecha;
+    const instante = new Date(fecha);
+    if (!Number.isFinite(instante.getTime())) return null;
+    const partes = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Hermosillo", year: "numeric", month: "2-digit", day: "2-digit",
+    }).formatToParts(instante);
+    const parte = (tipo: string) => partes.find(p => p.type === tipo)?.value;
+    return `${parte("year")}-${parte("month")}-${parte("day")}`;
+  };
+  const sumarDias = (fecha: string, dias: number) => {
+    const dia = new Date(`${fecha}T00:00:00Z`);
+    dia.setUTCDate(dia.getUTCDate() + dias);
+    return dia.toISOString().slice(0, 10);
+  };
+  const lunesDe = (fecha: string) => sumarDias(fecha, -((new Date(`${fecha}T00:00:00Z`).getUTCDay() + 6) % 7));
+  const lunesActual = lunesDe(fechaClinica(new Date().toISOString())!);
+  const lunesAnterior = sumarDias(lunesActual, -7);
+  const pagosDoctor = pagos.filter(pago => pago.doctor_id != null && Number(pago.doctor_id) === Number(doctor.id));
+  const semanas = new Set<string>([lunesActual, lunesAnterior]);
+  for (const pago of pagosDoctor) {
+    const fecha = fechaClinica(pago.fecha);
+    if (fecha) semanas.add(lunesDe(fecha));
+  }
+  const inicio = semanaSeleccionada === "actual" ? lunesActual : semanaSeleccionada === "anterior" ? lunesAnterior : semanaSeleccionada;
+  const fin = inicio === "todas" ? null : sumarDias(inicio, 7);
+  const pagosPeriodo = pagosDoctor.filter(pago => {
+    if (fin === null) return true;
+    const fecha = fechaClinica(pago.fecha);
+    return fecha !== null && fecha >= inicio && fecha < fin;
+  });
+  const idsPeriodo = new Set(pagosPeriodo.map(pago => Number(pago.tratamiento_id)));
+  const etiquetaSemana = (lunes: string) => {
+    const formato = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+    return `${formato.format(new Date(`${lunes}T00:00:00Z`))} – ${formato.format(new Date(`${sumarDias(lunes, 6)}T00:00:00Z`))}`;
+  };
+
   const tratamientosDoctor =
     tratamientos.filter(
       (tratamiento) =>
+        (fin === null || idsPeriodo.has(Number(tratamiento.id))) &&
         (Number(tratamiento.doctor_id) === Number(doctor.id) ||
          pagos.some(pago =>
            pago.doctor_id != null &&
@@ -218,7 +259,7 @@ export default function DoctorDetalle({
           "Finalizado";
 
         const pagosTratamiento =
-          pagos.filter(
+          pagosPeriodo.filter(
             (pago) =>
               Number(pago.tratamiento_id) === Number(tratamiento.id) &&
               pago.doctor_id != null &&
@@ -401,7 +442,7 @@ export default function DoctorDetalle({
   */
 
   const movimientosComision =
-    pagos
+    pagosPeriodo
       .map(
         (pago) => {
 
@@ -689,13 +730,23 @@ const comisionGenerada = pago.comision_doctor_pagada
 
           </div>
 
-          <div
-            className="
-              flex
-              items-center
-              gap-3
-            "
-          >
+          <div className="flex w-full min-w-0 flex-col items-start gap-3 sm:flex-row sm:items-center lg:w-auto lg:justify-end">
+            <div className="flex w-full min-w-0 flex-col gap-1 rounded-xl bg-[#087f78] px-4 py-3 text-white shadow-sm sm:w-auto">
+        <label htmlFor="doctor-detalle-semana" className="text-xs font-bold uppercase tracking-wide text-white">
+          {t("Período", "Period")}
+        </label>
+        <select id="doctor-detalle-semana" value={semanaSeleccionada}
+          onChange={event => setSemanaSeleccionada(event.target.value)}
+          className="min-h-11 w-full max-w-full rounded-lg border border-white/40 bg-white px-3 py-2 text-sm font-semibold text-[#164e55] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:w-auto">
+          <option value="actual">{t("Semana actual", "Current week")} · {etiquetaSemana(lunesActual)}</option>
+          <option value="anterior">{t("Semana anterior", "Last week")} · {etiquetaSemana(lunesAnterior)}</option>
+          {[...semanas].sort().reverse().filter(semana => semana !== lunesActual && semana !== lunesAnterior).map(semana => (
+            <option key={semana} value={semana}>{etiquetaSemana(semana)}</option>
+          ))}
+          <option value="todas">{t("Todas las semanas", "All weeks")}</option>
+        </select>
+        <p className="text-xs text-white/90">{t("Por fecha de cobro; estado de liquidación actual.", "By collection date; current settlement status.")}</p>
+      </div>
 
             <div
               className="
@@ -753,6 +804,7 @@ const comisionGenerada = pago.comision_doctor_pagada
         </div>
 
       </div>
+
 
       {/* =========================
           KPIS
@@ -825,7 +877,7 @@ const comisionGenerada = pago.comision_doctor_pagada
               "
             >
 
-              {t("Vinculados al doctor", "Assigned to this doctor")}
+              {fin === null ? t("Vinculados al doctor", "Assigned to this doctor") : t("Con cobros en el período", "With payments in the period")}
 
             </p>
 
@@ -1243,7 +1295,7 @@ const comisionGenerada = pago.comision_doctor_pagada
                   "
                 >
 
-                  {t("Fecha", "Date")}
+                  {t("Fecha tratamiento", "Treatment date")}
 
                 </th>
 
@@ -1327,8 +1379,7 @@ const comisionGenerada = pago.comision_doctor_pagada
                         "
                       >
 
-                        No hay tratamientos registrados
-                        para este doctor.
+                        {t("No hay tratamientos para este doctor en el período seleccionado.", "No treatments for this doctor in the selected period.")}
 
                       </td>
 
