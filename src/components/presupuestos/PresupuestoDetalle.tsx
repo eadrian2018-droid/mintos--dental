@@ -1,3 +1,6 @@
+import SelectorDientesPresupuesto from "./SelectorDientesPresupuesto";
+import type { AgrupacionDental, MarcaDental } from "./SelectorDientesPresupuesto";
+import type { PresupuestoItem } from "../../types/Presupuesto";
 import {
   ArrowLeft,
   Download,
@@ -43,6 +46,48 @@ type PresupuestoDetalleProps = {
   puedeEnviar?: boolean;
 };
 
+function obtenerOdontograma(items: PresupuestoItem[], es: boolean) {
+const marcas: Record<number, MarcaDental[]> = {};
+const grupos: AgrupacionDental[] = [];
+const dientesValidos = new Set([18,17,16,15,14,13,12,11,21,22,23,24,25,26,27,28,48,47,46,45,44,43,42,41,31,32,33,34,35,36,37,38]);
+const obtenerGrupo = (item: PresupuestoItem): AgrupacionDental => ({
+  cuadrantes: item.cuadrantes || [],
+  arcadas: item.arcadas?.length ? item.arcadas : item.arcada ? [item.arcada] : [],
+  boca_completa: item.boca_completa === true || item.unidad_cobro === "boca_completa",
+});
+const obtenerDientes = (item: PresupuestoItem) => [...new Set(
+  (item.dientes?.length ? item.dientes : String(item.diente || "").split(/[,\s]+/).map(Number))
+    .map(Number).filter(d => dientesValidos.has(d))
+)].sort((a, b) => a - b);
+const etiquetaZona = (item: PresupuestoItem) => {
+  const grupo = obtenerGrupo(item);
+  if (grupo.boca_completa) return es ? "Boca completa" : "Full mouth";
+  if (grupo.cuadrantes.length) return `${es ? "Cuadrantes" : "Quadrants"}: ${grupo.cuadrantes.join(", ")}`;
+  if (grupo.arcadas.length === 2) return es ? "Ambas arcadas" : "Both arches";
+  if (grupo.arcadas.includes("superior")) return es ? "Arcada superior" : "Upper arch";
+  if (grupo.arcadas.includes("inferior")) return es ? "Arcada inferior" : "Lower arch";
+  return obtenerDientes(item).join(", ") || item.diente || "—";
+};
+for (const item of items) {
+  const grupo = obtenerGrupo(item);
+  if (grupo.boca_completa || grupo.cuadrantes.length || grupo.arcadas.length) {
+    grupos.push(grupo);
+    continue;
+  }
+  const nombre = (item.tratamiento || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  const tipo: MarcaDental["tipo"] = /endodon|root canal/.test(nombre) ? "endodoncia"
+    : /corona|crown/.test(nombre) ? "corona"
+    : /implante|implant/.test(nombre) ? "implante"
+    : /extraccion|extraction/.test(nombre) ? "extraccion"
+    : /resina|composite|filling/.test(nombre) ? "resina" : "otro";
+  for (const diente of obtenerDientes(item)) {
+    (marcas[diente] ??= []).push({ tratamiento: item.tratamiento, tipo });
+  }
+}
+
+  return { marcas, grupos, etiquetaZona };
+}
+
 export default function PresupuestoDetalle({
   presupuesto,
   onVolver,
@@ -52,6 +97,7 @@ export default function PresupuestoDetalle({
 
   const { language } = useLanguage();
   const es = language === "es";
+  const { marcas, grupos, etiquetaZona } = obtenerOdontograma(presupuesto.items || [], es);
   const documentoEnIngles =
     presupuesto.idioma === "en";
 
@@ -307,32 +353,8 @@ export default function PresupuestoDetalle({
           }
         )} ${presupuesto.moneda}`;
 
-    const etiquetaDientePDF =
-      (
-        item: NonNullable<Presupuesto["items"]>[number]
-      ) => {
-
-        if (item.arcada === "superior") {
-          return documentoEnIngles
-            ? "Upper arch"
-            : "Arcada superior";
-        }
-
-        if (item.arcada === "inferior") {
-          return documentoEnIngles
-            ? "Lower arch"
-            : "Arcada inferior";
-        }
-
-        if (item.dientes?.length) {
-          return item.dientes
-            .slice()
-            .sort((a, b) => a - b)
-            .join(", ");
-        }
-
-        return item.diente || "—";
-      };
+    const { marcas: marcasPDF, grupos: gruposPDF, etiquetaZona: etiquetaDientePDF } =
+      obtenerOdontograma(presupuesto.items || [], !documentoEnIngles);
 
     const pacienteNombre =
       presupuesto.paciente_nombre ||
@@ -507,28 +529,8 @@ export default function PresupuestoDetalle({
     y += 29;
 
     // Odontograma visual del presupuesto
-    const dientesPresupuestados = new Set<number>();
-
-    (presupuesto.items || []).forEach((item) => {
-      if (item.arcada === "superior") {
-        [
-          18, 17, 16, 15, 14, 13, 12, 11,
-          21, 22, 23, 24, 25, 26, 27, 28,
-        ].forEach((diente) => dientesPresupuestados.add(diente));
-      } else if (item.arcada === "inferior") {
-        [
-          48, 47, 46, 45, 44, 43, 42, 41,
-          31, 32, 33, 34, 35, 36, 37, 38,
-        ].forEach((diente) => dientesPresupuestados.add(diente));
-      } else {
-        (item.dientes || []).forEach((diente) =>
-          dientesPresupuestados.add(Number(diente))
-        );
-      }
-    });
-
-    if (dientesPresupuestados.size > 0) {
-      nuevaPaginaSiHaceFalta(55);
+    if (Object.keys(marcasPDF).length || gruposPDF.length) {
+      nuevaPaginaSiHaceFalta(34);
 
       pdf.setTextColor(...slate);
       pdf.setFont("helvetica", "bold");
@@ -576,7 +578,9 @@ export default function PresupuestoDetalle({
         superior: boolean
       ) => {
         const tipo = tipoDiente(numero);
-        const seleccionado = dientesPresupuestados.has(numero);
+        const marcasDiente = marcasPDF[numero] || [];
+        const seleccionado = marcasDiente.length > 0;
+        const corona = marcasDiente.some(m => m.tipo === "corona");
 
         const dimensiones: Record<string, [number, number]> = {
           incisor: [60, 155],
@@ -623,27 +627,25 @@ export default function PresupuestoDetalle({
           ] as [number, number];
         });
 
-        pdf.setDrawColor(
-          ...(seleccionado ? tealOscuro : ([124, 135, 151] as [number, number, number]))
-        );
-        pdf.setFillColor(
-          ...(seleccionado ? tealSoft : ([255, 253, 247] as [number, number, number]))
-        );
-        pdf.setLineWidth(seleccionado ? 0.45 : 0.25);
-
         const movimientos = pts.slice(1).map(([px, py], i) => [
-          px - pts[i][0],
-          py - pts[i][1],
+          px - pts[i][0], py - pts[i][1],
         ] as [number, number]);
-
-        pdf.lines(
-          movimientos,
-          pts[0][0],
-          pts[0][1],
-          [1, 1],
-          "FD",
-          true
-        );
+        pdf.setDrawColor(124, 135, 151);
+        pdf.setLineWidth(0.25);
+        pdf.setFillColor(seleccionado ? 209 : 255, seleccionado ? 213 : 255, seleccionado ? 219 : 255);
+        pdf.lines(movimientos, pts[0][0], pts[0][1], [1, 1], "FD", true);
+        const cuello = yBase + alto * (superior ? 0.48 : 0.52);
+        if (corona) {
+          pdf.saveGraphicsState();
+          pdf.lines(movimientos, pts[0][0], pts[0][1], [1, 1], null, true);
+          pdf.clip();
+          pdf.discardPath();
+          pdf.setFillColor(96, 165, 250);
+          pdf.rect(x, superior ? cuello : yBase, ancho, superior ? yBase + alto - cuello : cuello - yBase, "F");
+          pdf.restoreGraphicsState();
+          pdf.setDrawColor(124, 135, 151);
+          pdf.lines(movimientos, pts[0][0], pts[0][1], [1, 1], "S", true);
+        }
 
         // Línea central y cuello: conserva el aspecto anatómico del sistema.
         pdf.setDrawColor(203, 213, 225);
@@ -654,6 +656,38 @@ export default function PresupuestoDetalle({
           centroX,
           yBase + alto * 0.72
         );
+
+        if (marcasDiente.some(m => m.tipo === "endodoncia")) {
+          pdf.setDrawColor(220, 38, 38);
+          pdf.setLineWidth(0.4);
+          pdf.setLineDashPattern([0.7, 0.4], 0);
+          pdf.line(centroX, cuello, centroX, yBase + alto * (superior ? 0.12 : 0.88));
+          pdf.setLineDashPattern([], 0);
+        }
+        if (marcasDiente.some(m => m.tipo === "implante")) {
+          const raiz = yBase + alto * (superior ? 0.15 : 0.58);
+          pdf.setDrawColor(124, 58, 237);
+          pdf.setLineWidth(0.35);
+          pdf.rect(centroX - 0.7, raiz, 1.4, alto * 0.27);
+          for (let i = 1; i <= 3; i++) {
+            const yy = raiz + alto * 0.27 * i / 4;
+            pdf.line(centroX - 1, yy, centroX + 1, yy);
+          }
+        }
+        if (marcasDiente.some(m => m.tipo === "extraccion")) {
+          pdf.setDrawColor(220, 38, 38);
+          pdf.setLineWidth(0.45);
+          pdf.line(x, yBase + 1, x + ancho, yBase + alto - 1);
+          pdf.line(x + ancho, yBase + 1, x, yBase + alto - 1);
+        }
+        if (seleccionado) {
+          pdf.setFillColor(...tealOscuro);
+          pdf.circle(centroX + 2.6, yBase + 1, 1.65, "F");
+          pdf.setTextColor(255, 255, 255);
+          pdf.setFont("helvetica", "bold");
+          pdf.setFontSize(5);
+          pdf.text(String(marcasDiente.length), centroX + 2.6, yBase + 1.6, { align: "center" });
+        }
 
         pdf.setTextColor(...(seleccionado ? tealOscuro : muted));
         pdf.setFont("helvetica", seleccionado ? "bold" : "normal");
@@ -666,99 +700,61 @@ export default function PresupuestoDetalle({
         );
       };
 
-      const altoOdontograma = 42;
-      const mitadOdontograma = y + altoOdontograma / 2;
-
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(...border);
-      pdf.setLineWidth(0.3);
-      pdf.roundedRect(
-        margen,
-        y,
-        anchoContenido,
-        altoOdontograma,
-        3,
-        3,
-        "FD"
-      );
-
-      pdf.setDrawColor(...border);
-      pdf.setLineWidth(0.2);
-      pdf.line(
-        margen + 5,
-        mitadOdontograma,
-        anchoPagina - margen - 5,
-        mitadOdontograma
-      );
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(6);
-      pdf.setTextColor(...tealOscuro);
-      pdf.text(
-        documentoEnIngles ? "UPPER ARCH" : "MAXILAR SUPERIOR",
-        margen + 4,
-        y + 4
-      );
-
-      pdf.setTextColor(...muted);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(
-        "18 — 28",
-        anchoPagina - margen - 4,
-        y + 4,
-        { align: "right" }
-      );
-
-      superiores.forEach((numero, index) => {
-        dibujarFormaDiente(
-          numero,
-          margen + espacio * index + espacio / 2,
-          y + 5.5,
-          true
-        );
-      });
-
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(...tealOscuro);
-      pdf.text(
-        documentoEnIngles ? "LOWER ARCH" : "MAXILAR INFERIOR",
-        margen + 4,
-        mitadOdontograma + 4
-      );
-
-      pdf.setTextColor(...muted);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(
-        "48 — 38",
-        anchoPagina - margen - 4,
-        mitadOdontograma + 4,
-        { align: "right" }
-      );
-
-      inferiores.forEach((numero, index) => {
-        dibujarFormaDiente(
-          numero,
-          margen + espacio * index + espacio / 2,
-          mitadOdontograma + 5.5,
-          false
-        );
-      });
-
+      // Cada arcada conserva sus agrupaciones en líneas independientes.
+      const dibujarArcada = (superior: boolean) => {
+        const arcada = superior ? "superior" : "inferior";
+        const qs = superior ? [1, 2] : [4, 3];
+        const gruposArcada = gruposPDF.filter(g => g.boca_completa || g.arcadas.includes(arcada) || qs.some(q => g.cuadrantes.some(c => c === q)));
+        nuevaPaginaSiHaceFalta(23);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(6);
+        pdf.setTextColor(...tealOscuro);
+        pdf.text(superior ? (documentoEnIngles ? "UPPER ARCH" : "MAXILAR SUPERIOR") : (documentoEnIngles ? "LOWER ARCH" : "MAXILAR INFERIOR"), margen + 4, y + 4);
+        (superior ? superiores : inferiores).forEach((numero, index) => {
+          dibujarFormaDiente(numero, margen + espacio * (index + 0.5), y + 5.5, superior);
+        });
+        y += 21;
+        for (const grupo of gruposArcada) {
+          if (y + 4 > altoPagina - 22) {
+            nuevaPaginaSiHaceFalta(8);
+            pdf.setFont("helvetica", "bold");
+            pdf.setFontSize(6);
+            pdf.setTextColor(...tealOscuro);
+            pdf.text(superior ? (documentoEnIngles ? "UPPER ARCH" : "MAXILAR SUPERIOR") : (documentoEnIngles ? "LOWER ARCH" : "MAXILAR INFERIOR"), margen + 4, y);
+            y += 3;
+          }
+          pdf.setDrawColor(59, 130, 246);
+          pdf.setLineWidth(0.45);
+          const bracket = (inicio: number, fin: number) => {
+            const x1 = margen + espacio * inicio + 1;
+            const x2 = margen + espacio * fin - 1;
+            pdf.line(x1, y, x1, y + 1.8);
+            pdf.line(x1, y + 1.8, x2, y + 1.8);
+            pdf.line(x2, y + 1.8, x2, y);
+          };
+          if (grupo.boca_completa || grupo.arcadas.includes(arcada)) bracket(0, 16);
+          else qs.forEach((q, i) => { if (grupo.cuadrantes.some(c => c === q)) bracket(i * 8, (i + 1) * 8); });
+          y += 3.5;
+        }
+        y += 2;
+      };
+      dibujarArcada(true);
+      dibujarArcada(false);
+      nuevaPaginaSiHaceFalta(22);
       pdf.setFont("helvetica", "normal");
       pdf.setFontSize(6.2);
       pdf.setTextColor(...muted);
-      pdf.text(
-        documentoEnIngles
-          ? "Highlighted teeth are included in the proposed treatment."
-          : "Los dientes resaltados están incluidos en el tratamiento propuesto.",
-        margen,
-        y + altoOdontograma + 5
-      );
-
-      y += altoOdontograma + 11;
+      pdf.text(documentoEnIngles
+        ? "Gray: proposed treatment | Blue crown | Red root: root canal | Purple: implant | Red X: extraction"
+        : "Gris: tratamiento propuesto | Corona azul | Raíz roja: endodoncia | Morado: implante | X roja: extracción", margen, y + 2);
+      pdf.text(documentoEnIngles
+        ? "Badges: treatment count per tooth. Blue brackets: treatment groups."
+        : "Indicadores: cantidad de tratamientos por diente. Líneas azules: agrupaciones.", margen, y + 6);
+      y += 13;
     }
 
     // Título de tratamientos
+    nuevaPaginaSiHaceFalta(25);
     pdf.setFillColor(...tealOscuro);
     pdf.rect(margen, y - 3.5, 1.2, 5, "F");
 
@@ -843,6 +839,10 @@ export default function PresupuestoDetalle({
             item
           );
 
+        pdf.setFont("helvetica", "normal");
+        pdf.setFontSize(8);
+        const lineasZona = pdf.splitTextToSize(etiquetaDientePDF(item), xTratamiento - xDiente - 2);
+        pdf.setFont("helvetica", "bold");
         const lineasTratamiento =
           pdf.splitTextToSize(
             nombreTratamiento,
@@ -852,7 +852,7 @@ export default function PresupuestoDetalle({
         const alturaFila =
           Math.max(
             10,
-            lineasTratamiento.length * 4 + 4
+            Math.max(lineasTratamiento.length, lineasZona.length) * 4 + 4
           );
 
         nuevaPaginaSiHaceFalta(
@@ -875,7 +875,7 @@ export default function PresupuestoDetalle({
         pdf.setFontSize(8);
 
         pdf.text(
-          etiquetaDientePDF(item),
+          lineasZona,
           xDiente,
           y + 4
         );
@@ -1549,6 +1549,26 @@ export default function PresupuestoDetalle({
 
           </div>
 
+          {(Object.keys(marcas).length > 0 || grupos.length > 0) && (
+            <div className="border-b border-[var(--mint-border)] px-3 py-4 sm:px-5">
+              <h3 className="mb-3 text-lg font-bold mint-text-primary">
+                {es ? "Odontograma del presupuesto" : "Estimate odontogram"}
+              </h3>
+              <SelectorDientesPresupuesto
+                soloLectura
+                dientesSeleccionados={[]}
+                onChange={() => {}}
+                arcada={null}
+                onArcadaChange={() => {}}
+                marcasPorDiente={marcas}
+                agrupacionesRegistradas={grupos}
+              />
+              <p className="mt-3 text-sm mint-text-secondary">
+                {es ? "Los indicadores muestran tratamientos propuestos por diente; las líneas azules indican agrupaciones." : "Badges show proposed treatments per tooth; blue lines indicate groups."}
+              </p>
+            </div>
+          )}
+
           {
             presupuesto.items &&
             presupuesto.items.length > 0
@@ -1671,16 +1691,7 @@ export default function PresupuestoDetalle({
                                 "
                               >
                                 {
-                                  item.arcada === "superior"
-                                    ? es ? "Arcada superior" : "Upper arch"
-                                    : item.arcada === "inferior"
-                                      ? es ? "Arcada inferior" : "Lower arch"
-                                      : item.dientes?.length
-                                        ? item.dientes
-                                            .slice()
-                                            .sort((a, b) => a - b)
-                                            .join(", ")
-                                        : item.diente || "—"
+                                  etiquetaZona(item)
                                 }
                               </td>
 

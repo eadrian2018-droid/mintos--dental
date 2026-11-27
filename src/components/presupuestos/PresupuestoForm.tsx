@@ -126,6 +126,8 @@ export default function PresupuestoForm({
     setGuardando,
   ] = useState(false);
 
+  const [tipoCambio, setTipoCambio] = useState(0);
+
   const [
     catalogoTratamientos,
     setCatalogoTratamientos,
@@ -198,6 +200,14 @@ export default function PresupuestoForm({
       return;
     }
 
+    const { data: fxData, error: errorFx } = await supabase
+      .from("configuracion_finanzas")
+      .select("valor")
+      .eq("clave", "tipo_cambio")
+      .maybeSingle();
+    const fx = Number(fxData?.valor ?? 0);
+    setTipoCambio(!errorFx && Number.isFinite(fx) && fx > 0 ? fx : 0);
+
     setCatalogoTratamientos(
       (data || []) as CatalogoTratamiento[]
     );
@@ -207,11 +217,19 @@ export default function PresupuestoForm({
     tratamiento: CatalogoTratamiento,
     monedaSeleccionada: "MXN" | "USD"
   ) {
-    return Number(
-      monedaSeleccionada === "USD"
-        ? tratamiento.precio_usd || 0
-        : tratamiento.precio_mxn || 0
-    );
+    const directo = Number(monedaSeleccionada === "USD" ? tratamiento.precio_usd : tratamiento.precio_mxn);
+    if (Number.isFinite(directo) && directo > 0) return directo;
+
+    const alternativo = Number(monedaSeleccionada === "USD" ? tratamiento.precio_mxn : tratamiento.precio_usd);
+    if (!Number.isFinite(alternativo) || alternativo <= 0) return 0;
+    if (tipoCambio <= 0) return null;
+
+    const convertido = monedaSeleccionada === "USD" ? alternativo / tipoCambio : alternativo * tipoCambio;
+    return Number.isFinite(convertido) ? Math.round(convertido * 100) / 100 : 0;
+  }
+
+  function avisarTipoCambio() {
+    alert(es ? "Configura un tipo de cambio válido para convertir el precio del tratamiento." : "Set a valid exchange rate to convert the treatment price.");
   }
 
   function seleccionarTratamiento(
@@ -230,6 +248,12 @@ export default function PresupuestoForm({
           idSeleccionado
       );
 
+    const precio = tratamientoSeleccionado ? obtenerPrecioCatalogo(tratamientoSeleccionado, moneda) : 0;
+    if (precio === null) {
+      avisarTipoCambio();
+      return;
+    }
+
     setItems((actuales) =>
       actuales.map((item) =>
         item.id === itemId
@@ -240,13 +264,7 @@ export default function PresupuestoForm({
                 tratamientoSeleccionado?.id || null,
               tratamiento:
                 tratamientoSeleccionado?.nombre || "",
-              precio_unitario:
-                tratamientoSeleccionado
-                  ? obtenerPrecioCatalogo(
-                      tratamientoSeleccionado,
-                      moneda
-                    )
-                  : 0,
+              precio_unitario: precio,
             })
           : item
       )
@@ -256,6 +274,15 @@ export default function PresupuestoForm({
   function cambiarMoneda(
     nuevaMoneda: "MXN" | "USD"
   ) {
+    if (nuevaMoneda === moneda) return;
+    const requiereTipoCambio = items.some(item => {
+      const tratamiento = catalogoTratamientos.find(t => Number(t.id) === Number(item.catalogo_tratamiento_id));
+      return tratamiento && obtenerPrecioCatalogo(tratamiento, nuevaMoneda) === null;
+    });
+    if (requiereTipoCambio) {
+      avisarTipoCambio();
+      return;
+    }
     setMoneda(nuevaMoneda);
 
     setItems((actuales) =>
@@ -279,7 +306,7 @@ export default function PresupuestoForm({
             obtenerPrecioCatalogo(
               tratamientoCatalogo,
               nuevaMoneda
-            ),
+            ) ?? 0,
         };
       })
     );
@@ -509,6 +536,11 @@ export default function PresupuestoForm({
       return;
     }
 
+    if (items.some(item => item.tratamiento.trim() && (!Number.isFinite(item.precio_unitario) || item.precio_unitario <= 0))) {
+      alert(es ? "Cada tratamiento debe tener un precio unitario mayor que cero." : "Each treatment must have a unit price greater than zero.");
+      return;
+    }
+
     if (items.some(item => item.tratamiento.trim() && (
       !Number.isSafeInteger(item.cantidad) || item.cantidad <= 0 ||
       (cantidadAutomatica(item) && item.cantidad !== ajustarCantidad(item).cantidad) ||
@@ -535,7 +567,7 @@ export default function PresupuestoForm({
           ) > 0 &&
           Number(
             item.precio_unitario
-          ) >= 0
+          ) > 0
       );
 
     if (
