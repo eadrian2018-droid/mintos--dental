@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLanguage } from "../context/LanguageContext";
 import { supabase } from "../lib/supabase";
 import { calcularComisionNeta } from "../lib/comisionNeta";
@@ -28,6 +28,9 @@ type PagoDoctorDetalle = {
 
   monto_original?: number;
   monto_mxn?: number;
+  monto_aplicado_moneda_tratamiento?: number | null;
+  es_cargo_adicional?: boolean | null;
+  cargo_adicional_id?: number | null;
   tipo_cambio?: number | null;
 
   comision_banco?: number;
@@ -57,6 +60,8 @@ type DoctorDetalleProps = {
   pagos?: PagoDoctorDetalle[];
 
   onClose: () => void;
+  puedeLiquidar?: boolean;
+  onLiquidacion?: () => Promise<void>;
 
 };
 
@@ -69,6 +74,8 @@ export default function DoctorDetalle({
   tratamientos,
 
   pagos = [],
+  puedeLiquidar = false,
+  onLiquidacion,
 
 }: DoctorDetalleProps) {
 
@@ -77,6 +84,15 @@ export default function DoctorDetalle({
   const locale = es ? "es-MX" : "en-US";
   const t = (espanol: string, ingles: string) => es ? espanol : ingles;
 
+  const bloqueo = useRef(false);
+  const [ocupado, setOcupado] = useState(false);
+  const [seleccion, setSeleccion] = useState<number | null>(null);
+  const [fechaPago, setFechaPago] = useState("");
+  const [metodo, setMetodo] = useState("Efectivo");
+  const [monedaPago, setMonedaPago] = useState<"MXN" | "USD">("MXN");
+  const [tipoCambio, setTipoCambio] = useState<number | null>(null);
+  const [aviso, setAviso] = useState("");
+  const [confirmados, setConfirmados] = useState<Record<number, PagoDoctorDetalle>>({});
   const [semanaSeleccionada, setSemanaSeleccionada] = useState("actual");
   const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
   const [monedaSecundariaActiva, setMonedaSecundariaActiva] = useState(true);
@@ -87,7 +103,7 @@ export default function DoctorDetalle({
       const { data, error } = await supabase
         .from("configuracion_finanzas")
         .select("clave, valor")
-        .in("clave", ["moneda_principal", "moneda_secundaria_activa"]);
+        .in("clave", ["moneda_principal", "moneda_secundaria_activa", "tipo_cambio"]);
       if (error) {
         console.error("Error consultando monedas financieras:", error);
         return;
@@ -96,6 +112,8 @@ export default function DoctorDetalle({
       const valores = Object.fromEntries(
         (data ?? []).map(fila => [fila.clave, String(fila.valor ?? "")])
       );
+      const tc = Number(valores.tipo_cambio);
+      setTipoCambio(Number.isFinite(tc) && tc > 0 ? tc : null);
       setMonedaPrincipal(valores.moneda_principal === "USD" ? "USD" : "MXN");
       setMonedaSecundariaActiva(valores.moneda_secundaria_activa !== "false");
     };
@@ -214,7 +232,7 @@ export default function DoctorDetalle({
   const lunesDe = (fecha: string) => sumarDias(fecha, -((new Date(`${fecha}T00:00:00Z`).getUTCDay() + 6) % 7));
   const lunesActual = lunesDe(fechaClinica(new Date().toISOString())!);
   const lunesAnterior = sumarDias(lunesActual, -7);
-  const pagosDoctor = pagos.filter(pago => pago.doctor_id != null && Number(pago.doctor_id) === Number(doctor.id));
+  const pagosDoctor = pagos.map(pago => ({ ...pago, ...(confirmados[Number(pago.id)] ?? {}) })).filter(pago => pago.doctor_id != null && Number(pago.doctor_id) === Number(doctor.id));
   const semanas = new Set<string>([lunesActual, lunesAnterior]);
   for (const pago of pagosDoctor) {
     const fecha = fechaClinica(pago.fecha);
@@ -245,6 +263,18 @@ export default function DoctorDetalle({
          ))
     );
 
+  const desglose = (pago: PagoDoctorDetalle, tratamiento: Tratamiento & { tipo_cambio?: number | null }) => {
+    if (calcularComisionNeta(pago, tratamiento, Number(doctor.porcentaje || 0)) === null) return null;
+    const tc = pago.moneda === "USD" ? Number(pago.tipo_cambio) : 1;
+    const adicional = pago.es_cargo_adicional === true;
+    const proporcion = adicional ? 0 : Math.min(Number(pago.monto_aplicado_moneda_tratamiento) / Number(tratamiento.total_original), 1);
+    const costo = (monto: number, moneda: string | null | undefined) => monto * (moneda === "USD" ? Number(tratamiento.tipo_cambio) : 1) * proporcion / tc;
+    const laboratorio = adicional ? 0 : costo(Number(tratamiento.laboratorio ?? 0), tratamiento.moneda_laboratorio);
+    const especialista = adicional ? 0 : costo(Number(tratamiento.especialista ?? 0), tratamiento.moneda_especialista);
+    const banco = Number(pago.comision_banco ?? 0) / tc;
+    return { laboratorio, especialista, banco, base: Math.max(0, Number(pago.monto_mxn) / tc - laboratorio - especialista - banco) };
+  };
+
    const detalleTratamientos =
     tratamientosDoctor.map(
       (tratamiento) => {
@@ -258,6 +288,7 @@ export default function DoctorDetalle({
           tratamiento.estado ===
           "Finalizado";
 
+        const elegible = ["Finalizado", "En proceso", "Pendiente"].includes(tratamiento.estado ?? "");
         const pagosTratamiento =
           pagosPeriodo.filter(
             (pago) =>
@@ -302,24 +333,11 @@ export default function DoctorDetalle({
               0
             );
 
-        const baseClinicaMXN =
-          tratamientoFinalizado
-            ? pagadoMXN
-            : 0;
-
-        const baseClinicaUSD =
-          tratamientoFinalizado
-            ? pagadoUSD
-            : 0;
-
-        const comisionMXN = tratamientoFinalizado
-          ? pagosTratamiento.filter(pago => pago.moneda === "MXN" && !pago.comision_doctor_pagada)
-              .reduce((total, pago) => total + (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0), 0)
-          : 0;
-        const comisionUSD = tratamientoFinalizado
-          ? pagosTratamiento.filter(pago => pago.moneda === "USD" && !pago.comision_doctor_pagada)
-              .reduce((total, pago) => total + (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0), 0)
-          : 0;
+        const base = (pago: PagoDoctorDetalle) => desglose(pago, tratamiento)?.base ?? 0;
+        const baseClinicaMXN = elegible ? pagosTratamiento.filter(p => p.moneda === "MXN").reduce((a,p) => a + base(p),0) : 0;
+        const baseClinicaUSD = elegible ? pagosTratamiento.filter(p => p.moneda === "USD").reduce((a,p) => a + base(p),0) : 0;
+        const comisionMXN = elegible ? pagosTratamiento.filter(p => p.moneda === "MXN" && !p.comision_doctor_pagada).reduce((a,p) => a + (calcularComisionNeta(p, tratamiento, porcentaje) ?? 0),0) : 0;
+        const comisionUSD = elegible ? pagosTratamiento.filter(p => p.moneda === "USD" && !p.comision_doctor_pagada).reduce((a,p) => a + (calcularComisionNeta(p, tratamiento, porcentaje) ?? 0),0) : 0;
 
         const paciente =
           pacientes.find(
@@ -459,8 +477,7 @@ export default function DoctorDetalle({
             pago.doctor_id == null ||
             Number(pago.doctor_id) !== Number(doctor.id) ||
             !tratamiento ||
-            tratamiento.estado !==
-              "Finalizado"
+            !["Finalizado", "En proceso", "Pendiente"].includes(tratamiento.estado ?? "")
           ) {
             return null;
           }
@@ -487,9 +504,10 @@ export default function DoctorDetalle({
       );
 
 const montoCobro = Number(pago.monto_original || 0);
-const comisionGenerada = pago.comision_doctor_pagada
+const calculada = calcularComisionNeta(pago, tratamiento, porcentaje);
+const comisionGenerada = pago.comision_doctor_pagada && pago.comision_doctor_pago_moneda === pago.moneda
   ? Number(pago.comision_doctor_pago_monto || 0)
-  : (calcularComisionNeta(pago, tratamiento, porcentaje) ?? 0);
+  : (calculada ?? 0);
 
           const moneda =
             pago.moneda === "USD"
@@ -517,6 +535,8 @@ const comisionGenerada = pago.comision_doctor_pagada
             comisionGenerada,
             pagada,
             montoPagado,
+            calculada,
+            desglose: desglose(pago, tratamiento),
           };
 
         }
@@ -553,7 +573,7 @@ const comisionGenerada = pago.comision_doctor_pagada
         (movimiento) =>
           movimiento.pagada
           &&
-          movimiento.moneda ===
+          (movimiento.pago.comision_doctor_pago_moneda || movimiento.moneda) ===
             "MXN"
       )
       .reduce(
@@ -572,7 +592,7 @@ const comisionGenerada = pago.comision_doctor_pagada
         (movimiento) =>
           movimiento.pagada
           &&
-          movimiento.moneda ===
+          (movimiento.pago.comision_doctor_pago_moneda || movimiento.moneda) ===
             "USD"
       )
       .reduce(
@@ -596,6 +616,52 @@ const comisionGenerada = pago.comision_doctor_pagada
       totalComisionUSD,
       0
     );
+
+  const importeLiquidacion = (monto: number | null, origen: string): number | null => {
+    if (monto == null || !Number.isFinite(monto) || monto <= 0) return null;
+    if (origen === monedaPago) return monto;
+    if (tipoCambio == null) return null;
+    const convertido = monedaPago === "MXN" ? monto * tipoCambio : monto / tipoCambio;
+    const resultado = Math.round((convertido + Number.EPSILON) * 100) / 100;
+    return Number.isFinite(resultado) && resultado > 0 ? resultado : null;
+  };
+
+  const liquidar = async () => {
+    const movimiento = movimientosComision.find(m => m.pago.id === seleccion);
+    if (bloqueo.current || !puedeLiquidar || !onLiquidacion || !movimiento || movimiento.pagada || movimiento.calculada == null || movimiento.calculada <= 0 || !fechaPago || fechaPago > fechaClinica(new Date().toISOString())! || (monedaPago === "USD" && metodo === "Transferencia")) return;
+    const importe = importeLiquidacion(movimiento.calculada, movimiento.moneda);
+    if (importe == null) return;
+    bloqueo.current = true;
+    setOcupado(true);
+    setAviso("");
+    try {
+      const { error } = await supabase.rpc("mintos_liquidar_comision_doctor_v3", {
+        p_doctor_id: doctor.id, p_moneda: monedaPago,
+        p_monto: importe, p_metodo_pago: metodo,
+        p_clave_idempotencia: crypto.randomUUID(), p_fecha_pago: fechaPago,
+        p_pago_id: movimiento.pago.id,
+      });
+      if (error) throw error;
+      setConfirmados(prev => ({ ...prev, [Number(movimiento.pago.id)]: {
+        comision_doctor_pagada: true, comision_doctor_pago_monto: importe,
+        comision_doctor_pago_moneda: monedaPago, comision_doctor_metodo_pago: metodo,
+        comision_doctor_fecha_pago: fechaPago,
+      }}));
+      setSeleccion(null);
+      setAviso(t("Comisión liquidada.", "Commission paid."));
+    } catch (error) {
+      console.error(error);
+      setAviso(t("No se confirmó la liquidación. Verifica el estado antes de reintentar.", "Settlement not confirmed. Check status before retrying."));
+      setSeleccion(null);
+    } finally {
+      try { await onLiquidacion(); } catch (error) {
+        console.error(error);
+        setAviso(t("No se pudieron actualizar los datos. Cierra y vuelve a cargar Finanzas antes de continuar.", "Could not refresh data. Close and reload Finances before continuing."));
+      }
+      bloqueo.current = false;
+      setOcupado(false);
+    }
+  };
 
   return (
 
@@ -1071,7 +1137,7 @@ const comisionGenerada = pago.comision_doctor_pagada
               "
             >
 
-              {t("Pagos de tratamientos finalizados", "Payments from completed treatments")}
+              {t("Cobros menos costos proporcionales y banco", "Collections less proportional costs and bank fees")}
 
             </p>
 
@@ -1168,7 +1234,7 @@ const comisionGenerada = pago.comision_doctor_pagada
               "
             >
 
-              {t("Comisión calculada", "Calculated commission")}
+              {t("Comisión pendiente", "Outstanding commission")}
 
             </p>
 
@@ -1703,8 +1769,7 @@ const comisionGenerada = pago.comision_doctor_pagada
                 mt-1
               "
             >
-              Cada registro corresponde a un cobro real
-              de un tratamiento finalizado.
+              {t("Cada cobro real genera su comisión proporcional.", "Each actual payment generates its proportional commission.")}
             </p>
 
           </div>
@@ -1822,6 +1887,7 @@ const comisionGenerada = pago.comision_doctor_pagada
 
         </div>
 
+        {aviso && <p role="status" className="p-4 mint-text-primary">{aviso}</p>}
         <div className="overflow-x-auto">
 
           <table className="mint-table w-full text-sm">
@@ -1962,18 +2028,27 @@ const comisionGenerada = pago.comision_doctor_pagada
                             <span className="font-bold text-[var(--mint-accent)]">
                               $
                               {
-                                formatoMonto(
-                                  movimiento.comisionGenerada
-                                )
+                                movimiento.pagada && movimiento.pago.comision_doctor_pago_moneda !== movimiento.moneda
+                                  ? "—"
+                                  : formatoMonto(movimiento.comisionGenerada)
                               }
                               {" "}
                               {
                                 movimiento.moneda
                               }
                             </span>
+                            {movimiento.calculada === null && !movimiento.pagada && <p className="text-xs text-[var(--mint-danger)]">{t("Datos incompletos", "Incomplete data")}</p>}
+                            {movimiento.desglose && !movimiento.pagada && <div className="text-xs mint-text-muted mt-1">
+                              {([[t("Banco", "Bank"), movimiento.desglose.banco], [t("Laboratorio", "Lab"), movimiento.desglose.laboratorio], [t("Especialista", "Specialist"), movimiento.desglose.especialista], [t("Base neta", "Net base"), movimiento.desglose.base]] as const).map(([label, monto]) => <p key={label}>{label}: ${formatoMonto(monto)} {movimiento.moneda}</p>)}
+                            </div>}
                           </td>
 
                           <td className="p-4 text-center">
+                            <input type="checkbox" className="h-5 w-5 accent-[#087f78]" aria-label={t("Liquidar comisión", "Pay commission")}
+                              checked={movimiento.pagada || seleccion === movimiento.pago.id}
+                              disabled={movimiento.pagada || !puedeLiquidar || !onLiquidacion || ocupado || !movimiento.pago.id || movimiento.calculada == null || movimiento.calculada <= 0}
+                              onChange={event => { setSeleccion(event.target.checked ? movimiento.pago.id! : null); setFechaPago(fechaClinica(new Date().toISOString())!); setMetodo("Efectivo"); setMonedaPago(movimiento.moneda === "USD" ? "USD" : "MXN"); }} />
+                            <div className="mt-1">
 
                             {
                               movimiento.pagada
@@ -2017,10 +2092,27 @@ const comisionGenerada = pago.comision_doctor_pagada
                                 )
                             }
 
+                          </div>
                           </td>
 
                           <td className="p-4">
-
+                            {seleccion === movimiento.pago.id && !movimiento.pagada && (
+                              <div className="grid gap-2 min-w-40 mb-2">
+                                <label>{t("Fecha de pago", "Payment date")}<input type="date" className="mint-input w-full" value={fechaPago} max={fechaClinica(new Date().toISOString())!} disabled={ocupado} onChange={e => setFechaPago(e.target.value)} /></label>
+                                <label>{t("Moneda de pago", "Payment currency")}
+                                  <select className="mint-input w-full" value={monedaPago} disabled={ocupado} onChange={e => { const moneda = e.target.value === "USD" ? "USD" : "MXN"; setMonedaPago(moneda); if (moneda === "USD") setMetodo("Efectivo"); }}>
+                                    <option value="MXN">MXN</option>
+                                    <option value="USD">USD</option>
+                                  </select>
+                                </label>
+                                <select aria-label={t("Método de pago", "Payment method")} className="mint-input" value={metodo} disabled={ocupado} onChange={e => setMetodo(e.target.value)}>
+                                  <option value="Efectivo">{t("Efectivo", "Cash")}</option>
+                                  {monedaPago === "MXN" && <option value="Transferencia">{t("Transferencia", "Transfer")}</option>}
+                                </select>
+                                {monedaPago !== movimiento.moneda && <p className="text-xs mint-text-muted">{tipoCambio == null ? t("Tipo de cambio no disponible", "Exchange rate unavailable") : `1 USD = ${tipoCambio} MXN`}</p>}
+                                <button type="button" className="rounded-lg bg-[#087f78] px-3 py-2 text-white font-semibold disabled:opacity-50" disabled={ocupado || !fechaPago || importeLiquidacion(movimiento.calculada, movimiento.moneda) == null} onClick={() => void liquidar()}>{ocupado ? t("Registrando…", "Saving…") : t("Confirmar pago", "Confirm payment")} · ${formatoMonto(importeLiquidacion(movimiento.calculada, movimiento.moneda) ?? 0)} {monedaPago}</button>
+                              </div>
+                            )}
                             {
                               movimiento.pagada
 

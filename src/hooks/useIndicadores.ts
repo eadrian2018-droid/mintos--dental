@@ -51,6 +51,8 @@ type PagoIndicador = {
   comision_doctor_pago_monto?: number;
 
   comision_doctor_porcentaje?: number | null;
+  comision_doctor_moneda_original?: string | null;
+  comision_doctor_monto_original?: number | null;
 
 };
 
@@ -614,8 +616,7 @@ export default function useIndicadores({
   | PAGOS REALES DE COMISIONES A DOCTORES
   |--------------------------------------------------------------------------
   |
-  | La comisión ya afecta la ganancia clínica cuando el tratamiento
-  | está Finalizado.
+  | La comisión devengada ya afecta la ganancia clínica por cobro.
   |
   | Aquí NO volvemos a descontarla de la ganancia.
   | Únicamente registramos de dónde salió físicamente el dinero:
@@ -1031,8 +1032,8 @@ export default function useIndicadores({
   | COMISIONES DE DOCTORES POR MONEDA
   |--------------------------------------------------------------------------
   |
-  | La comisión solamente se vuelve pagable cuando
-  | el tratamiento está Finalizado.
+  | Se reconocen cobros de tratamientos Pendiente, En proceso y Finalizado.
+  | Las comisiones liquidadas conservan su importe original histórico.
   |
   | La moneda de la comisión depende del pago real:
   |
@@ -1059,6 +1060,22 @@ export default function useIndicadores({
 
         }
 
+        if (pago.comision_doctor_pagada === true) {
+          const montoHistorico = pago.comision_doctor_monto_original;
+          if (pago.comision_doctor_moneda_original === pago.moneda &&
+              montoHistorico != null && Number.isFinite(Number(montoHistorico)) &&
+              Number(montoHistorico) >= 0) {
+            return total + Number(montoHistorico);
+          }
+          // Compatibilidad con liquidaciones anteriores sin detalle original.
+          const montoPagado = pago.comision_doctor_pago_monto;
+          if (pago.comision_doctor_pago_moneda === pago.moneda &&
+              montoPagado != null && Number.isFinite(Number(montoPagado)) &&
+              Number(montoPagado) >= 0) {
+            return total + Number(montoPagado);
+          }
+        }
+
         const tratamiento =
           buscarTratamientoPago(
             pago
@@ -1066,7 +1083,7 @@ export default function useIndicadores({
 
         // Los cargos adicionales generan comisión sin repetir costos clínicos.
         if (pago.es_cargo_adicional === true) {
-          if (!tratamiento || !["Finalizado", "En proceso"].includes(String(tratamiento.estado))) {
+          if (!tratamiento || !["Finalizado", "En proceso", "Pendiente"].includes(String(tratamiento.estado))) {
             return total;
           }
           const comision = calcularComisionNeta(pago, tratamiento, 0);
@@ -1075,8 +1092,7 @@ export default function useIndicadores({
 
         if (
           !tratamiento ||
-          tratamiento.estado !==
-            "Finalizado"
+          !["Finalizado", "En proceso", "Pendiente"].includes(String(tratamiento.estado))
         ) {
 
           return total;
@@ -1132,6 +1148,22 @@ export default function useIndicadores({
 
         }
 
+        if (pago.comision_doctor_pagada === true) {
+          const montoHistorico = pago.comision_doctor_monto_original;
+          if (pago.comision_doctor_moneda_original === pago.moneda &&
+              montoHistorico != null && Number.isFinite(Number(montoHistorico)) &&
+              Number(montoHistorico) >= 0) {
+            return total + Number(montoHistorico);
+          }
+          // Compatibilidad con liquidaciones anteriores sin detalle original.
+          const montoPagado = pago.comision_doctor_pago_monto;
+          if (pago.comision_doctor_pago_moneda === pago.moneda &&
+              montoPagado != null && Number.isFinite(Number(montoPagado)) &&
+              Number(montoPagado) >= 0) {
+            return total + Number(montoPagado);
+          }
+        }
+
         const tratamiento =
           buscarTratamientoPago(
             pago
@@ -1139,7 +1171,7 @@ export default function useIndicadores({
 
         // Los cargos adicionales generan comisión sin repetir costos clínicos.
         if (pago.es_cargo_adicional === true) {
-          if (!tratamiento || !["Finalizado", "En proceso"].includes(String(tratamiento.estado))) {
+          if (!tratamiento || !["Finalizado", "En proceso", "Pendiente"].includes(String(tratamiento.estado))) {
             return total;
           }
           const comision = calcularComisionNeta(pago, tratamiento, 0);
@@ -1148,8 +1180,7 @@ export default function useIndicadores({
 
         if (
           !tratamiento ||
-          tratamiento.estado !==
-            "Finalizado"
+          !["Finalizado", "En proceso", "Pendiente"].includes(String(tratamiento.estado))
         ) {
 
           return total;
@@ -1212,8 +1243,7 @@ export default function useIndicadores({
   | gananciaNetaMXN conserva por ahora la lógica clínica existente:
   | base clínica - comisiones de doctores - gastos MXN.
   |
-  | gananciaNetaUSD representa los dólares realmente conservados:
-  | cobros reales USD - gastos reales USD.
+  | gananciaNetaUSD = base clínica USD - comisiones USD - gastos USD.
   |
   | NO convertimos MXN a USD ni USD a MXN.
   |

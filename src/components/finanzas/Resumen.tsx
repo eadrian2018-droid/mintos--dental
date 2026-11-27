@@ -1579,7 +1579,7 @@ export default function Resumen({
                   mt-2
                 "
               >
-                {es ? "Comisiones de tratamientos finalizados" : "Commissions from completed treatments"}
+                {es ? "Comisiones generadas por cobros recibidos" : "Commissions earned from payments received"}
               </p>
 
             </div>

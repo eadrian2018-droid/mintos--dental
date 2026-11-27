@@ -7,6 +7,7 @@ export type PagoComisionNeta = {
   moneda?: string | null;
   monto_mxn?: number | null;
   monto_original?: number | null;
+  monto_aplicado_moneda_tratamiento?: number | null;
   tipo_cambio?: number | null;
   comision_banco?: number | null;
   comision_doctor_porcentaje?: number | null;
@@ -91,8 +92,7 @@ export function calcularComisionNeta(
       : comisionMxn;
   }
 
-  // TRATAMIENTOS ORIGINALES:
-  // Se conserva el cálculo proporcional existente.
+  // TRATAMIENTOS ORIGINALES
 
   if (
     !["MXN", "USD"].includes(monedaPrecio ?? "") ||
@@ -141,9 +141,25 @@ export function calcularComisionNeta(
     return null;
   }
 
-  const totalMxn =
-    precio *
-    (monedaPrecio === "USD" ? tcTratamiento : 1);
+  // FIN04: proporcionalidad contractual.
+  // Utilizar exclusivamente el importe aplicado al tratamiento,
+  // independientemente de la moneda y del tipo de cambio del cobro.
+
+  const montoAplicado =
+    n(pago.monto_aplicado_moneda_tratamiento);
+
+  if (
+    pago.monto_aplicado_moneda_tratamiento == null ||
+    !Number.isFinite(montoAplicado) ||
+    montoAplicado <= 0
+  ) {
+    return null;
+  }
+
+  const proporcion = Math.min(
+    montoAplicado / precio,
+    1
+  );
 
   const costosMxn =
     lab *
@@ -154,7 +170,7 @@ export function calcularComisionNeta(
   const netoMxn = Math.max(
     0,
     cobroMxn -
-      costosMxn * cobroMxn / totalMxn -
+      costosMxn * proporcion -
       banco
   );
 

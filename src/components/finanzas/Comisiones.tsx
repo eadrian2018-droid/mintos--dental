@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { createPortal } from "react-dom";
-
 import type { Dispatch, SetStateAction } from "react";
 
 import type { Doctor } from "../../types/Doctor";
@@ -27,6 +25,7 @@ type PagoComision = {
   moneda?: string;
   monto_original?: number;
   monto_mxn?: number;
+  monto_aplicado_moneda_tratamiento?: number | null;
   tipo_cambio?: number | null;
   comision_banco?: number;
   es_cargo_adicional?: boolean;
@@ -58,8 +57,6 @@ type MonedaPagoEspecialista = "MXN" | "USD";
 const redondearImporte = (importe: number) =>
   Math.round((importe + Number.EPSILON) * 100) / 100;
 
-type FormaPagoDoctor = "MXN" | "USD" | "Transferencia";
-
 export default function Comisiones({
   doctores,
   tratamientos,
@@ -75,9 +72,6 @@ export default function Comisiones({
   const esAdmin =
     perfil?.rol === "admin";
 
-  // Conservar la misma solicitud al reintentar una liquidación incierta.
-  const liquidacionPendienteRef = useRef<{ payload: string; id: string } | null>(null);
-  const liquidacionEnCursoRef = useRef(false);
   const pagoEspecialistaEnCursoRef = useRef(false);
   const solicitudEspecialistaRef = useRef<{ payload: string; id: string } | null>(null);
 
@@ -86,7 +80,6 @@ export default function Comisiones({
   const locale = es ? "es-MX" : "en-US";
   const tr = (espanol: string, english: string) => es ? espanol : english;
 
-  const [fechaPagoDoctor, setFechaPagoDoctor] = useState(obtenerFechaLocalMintOS);
   const [fechaPagoEspecialista, setFechaPagoEspecialista] = useState(obtenerFechaLocalMintOS);
 
   const [monedaPrincipal, setMonedaPrincipal] = useState<"MXN" | "USD">("MXN");
@@ -112,10 +105,6 @@ export default function Comisiones({
 
   const mostrarMXN = monedaPrincipal === "MXN" || monedaSecundariaActiva;
   const mostrarUSD = monedaPrincipal === "USD" || monedaSecundariaActiva;
-  const monedasActivas = (["MXN", "USD"] as const).filter(
-    (moneda) => moneda === "MXN" ? mostrarMXN : mostrarUSD
-  );
-
   const traducirMetodo = (metodo: string) =>
     es ? metodo : ({ "Efectivo": "Cash", "Transferencia": "Transfer", "Tarjeta": "Card" } as Record<string, string>)[metodo] || metodo;
 
@@ -183,25 +172,6 @@ export default function Comisiones({
   }, [tratamientoPago, requiereConversionEspecialista, tipoCambioEspecialista, monedaHonorariosEspecialista]);
 
   const [
-    doctorPago,
-    setDoctorPago,
-  ] = useState<any | null>(
-    null
-  );
-
-  const [
-    formaPagoDoctor,
-    setFormaPagoDoctor,
-  ] = useState<FormaPagoDoctor>(
-    "MXN"
-  );
-
-  const [
-    montoPagoDoctor,
-    setMontoPagoDoctor,
-  ] = useState("");
-
-  const [
     guardando,
     setGuardando,
   ] = useState(false);
@@ -230,96 +200,6 @@ export default function Comisiones({
     return () => { activo = false; };
   }, [esAdmin]);
 
-  const [tratamientosActualizados, setTratamientosActualizados] = useState<Record<number, any>>({});
-
-  const [doctorRevisionId, setDoctorRevisionId] = useState<number | null>(null);
-  const [estadosCostos, setEstadosCostos] = useState<Record<number, { laboratorio: string; especialista: string }>>({});
-
-  useEffect(() => {
-    if (doctorRevisionId === null) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !guardando) setDoctorRevisionId(null);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [doctorRevisionId, guardando]);
-
-  const estadoCosto = (tratamiento: any, tipo: "laboratorio" | "especialista") =>
-    estadosCostos[Number(tratamiento.id)]?.[tipo] ??
-    (tratamiento[`${tipo}_validacion`] === "aplica" || tratamiento[`${tipo}_validacion`] === "no_aplica"
-      ? tratamiento[`${tipo}_validacion`]
-      : Number(tratamiento[tipo] || 0) > 0 ? "aplica" : "no_aplica");
-
-  const costosValidados = (tratamiento: any) =>
-    Boolean(tratamiento.costos_validados_at) &&
-    ["aplica", "no_aplica"].includes(tratamiento.laboratorio_validacion) &&
-    ["aplica", "no_aplica"].includes(tratamiento.especialista_validacion);
-
-  const comisionAutorizada = (tratamiento: any) =>
-    costosValidados(tratamiento) && Boolean(tratamiento.comision_autorizada_at);
-
-  async function ejecutarAutorizacion(
-    accion: "validar" | "autorizar",
-    tratamiento: any
-  ) {
-    if (!esAdmin || guardando || !tratamiento?.id) return;
-    setGuardando(true);
-    try {
-      const { error } = accion === "validar"
-        ? await supabase.rpc("mintos_validar_costos_tratamiento", {
-            p_tratamiento_id: Number(tratamiento.id),
-            p_laboratorio_estado: estadoCosto(tratamiento, "laboratorio"),
-            p_especialista_estado: estadoCosto(tratamiento, "especialista"),
-          })
-        : await supabase.rpc("mintos_autorizar_comision", {
-            p_tratamiento_id: Number(tratamiento.id),
-          });
-      if (error) throw error;
-      try {
-        await registrarBitacora({
-          accion: accion === "validar" ? "Validar costos de comisión" : "Autorizar comisión",
-          modulo: "Comisiones",
-          detalle: `Tratamiento ID: ${tratamiento.id}`,
-        });
-      } catch (bitacoraError) {
-        console.error("No se pudo registrar la bitácora:", bitacoraError);
-      }
-      // Consultar el estado confirmado en Supabase sin cerrar el modal.
-      const { data: tratamientoActualizado, error: errorLectura } = await supabase
-        .from("tratamientos")
-        .select("*")
-        .eq("id", Number(tratamiento.id))
-        .single();
-
-      if (errorLectura || !tratamientoActualizado) {
-        throw new Error(tr(
-          "La operación se ejecutó, pero no se pudo actualizar la vista. Cierra y vuelve a abrir la sección para verificar el estado antes de continuar.",
-          "The operation was executed, but the view could not be refreshed. Close and reopen the section to verify the status before proceeding."
-        ));
-      }
-
-      setTratamientosActualizados(prev => ({
-        ...prev,
-        [Number(tratamiento.id)]: tratamientoActualizado,
-      }));
-    } catch (error) {
-      console.error("Error en autorización de comisión:", error);
-      alert(tr("No se pudo completar la operación. ", "Could not complete the operation. ") +
-        (error instanceof Error ? error.message : String(error)));
-    } finally {
-      setGuardando(false);
-    }
-  }
-
-
-  // Los pagos históricos conservan su moneda original; la configuración
-  // únicamente afecta las opciones y los resúmenes visibles.
-  useEffect(() => {
-    if (formaPagoDoctor === "MXN" && !mostrarMXN) setFormaPagoDoctor("USD");
-    if (formaPagoDoctor === "USD" && !mostrarUSD) setFormaPagoDoctor("MXN");
-  }, [mostrarMXN, mostrarUSD, formaPagoDoctor]);
-
-
   const formatoMonto =
     (
       monto: number
@@ -334,12 +214,7 @@ export default function Comisiones({
         }
       );
 
-  const tratamientosAny = useMemo(
-    () => (tratamientos as any[]).map(tratamiento =>
-      tratamientosActualizados[Number(tratamiento.id)] ?? tratamiento
-    ),
-    [tratamientos, tratamientosActualizados]
-  );
+  const tratamientosAny = useMemo(() => tratamientos as any[], [tratamientos]);
 
   const resumenDoctores =
     useMemo(
@@ -374,7 +249,7 @@ export default function Comisiones({
               // FIN-02F: incluir tratamientos en proceso sin alterar el conteo de finalizados.
               const tratamientosLiquidables = tratamientosDoctor.filter(
                 (tratamiento) =>
-                  tratamiento.estado === "Finalizado" || tratamiento.estado === "En proceso"
+                  ["Finalizado", "En proceso", "Pendiente"].includes(tratamiento.estado)
               );
 
               const ids =
@@ -411,19 +286,15 @@ export default function Comisiones({
                 ) ?? 0;
               };
 
-              // FIN03: la RPC omite tratamientos sin autorización;
-              // los importes pendientes deben representar solo pagos elegibles.
+              // La liquidación individual v3 no exige autorizaciones manuales.
               const pagosElegibles = pagosDoctor.filter(pago => {
                 if (pago.comision_doctor_pagada) return false;
                 const tratamiento = tratamientosLiquidables.find(
                   item => Number(item.id) === Number(pago.tratamiento_id)
                 );
-                if (!tratamiento || !comisionAutorizada(tratamiento)) return false;
-                const lab = Number(tratamiento.laboratorio ?? 0);
-                const esp = Number(tratamiento.especialista ?? 0);
-                if (tratamiento.laboratorio_validacion === "aplica" ? lab <= 0 : lab !== 0) return false;
-                if (tratamiento.especialista_validacion === "aplica" ? esp <= 0 : esp !== 0) return false;
-                return calcularComisionNeta(pago, tratamiento, Number(doctor.porcentaje || 0)) !== null;
+                return Boolean(tratamiento) && calcularComisionNeta(
+                  pago, tratamiento, Number(doctor.porcentaje || 0)
+                ) !== null;
               });
 
               const pagosMXN =
@@ -482,14 +353,6 @@ export default function Comisiones({
                     0
                   );
 
-              const pagosPendientes = pagosDoctor.filter(pago => !pago.comision_doctor_pagada);
-              const tratamientosPorRevisar = tratamientosLiquidables.filter(tratamiento =>
-                pagosPendientes.some(pago => Number(pago.tratamiento_id) === Number(tratamiento.id))
-              );
-              // No bloquear una moneda por pagos pendientes sin autorización.
-              const listoMXN = anulacionesCargadas && pagosMXN.length > 0;
-              const listoUSD = anulacionesCargadas && pagosUSD.length > 0;
-
               return {
                 doctor,
                 finalizados:
@@ -508,10 +371,6 @@ export default function Comisiones({
                     comisionUSD,
                     0
                   ),
-                pagosDoctor,
-                tratamientosPorRevisar,
-                listoMXN,
-                listoUSD,
               };
 
             }
@@ -723,104 +582,6 @@ export default function Comisiones({
         item.pendienteUSD,
       0
     );
-
-  // Fase 1D: la liquidación se ejecuta exclusivamente en una RPC transaccional.
-  // El servidor verifica permisos, costos, autorización, saldos e idempotencia.
-  async function registrarPagoDoctor() {
-    if (!doctorPago?.doctor?.id || guardando || liquidacionEnCursoRef.current) return;
-    if (!anulacionesCargadas) {
-      alert(tr("No se pudo verificar el estado de los cobros. Actualiza la página.",
-        "Payment status could not be verified. Refresh the page."));
-      return;
-    }
-
-    if (!validarFechaEfectivaMintOS(fechaPagoDoctor)) {
-      alert(tr("Fecha de pago inválida.", "Invalid payment date."));
-      return;
-    }
-
-    const monedaElegida = formaPagoDoctor === "USD" || (formaPagoDoctor === "Transferencia" && !mostrarMXN)
-      ? "USD" : "MXN";
-    if (monedaElegida === "USD" ? !doctorPago.listoUSD : !doctorPago.listoMXN) {
-      alert(tr("No hay comisiones autorizadas disponibles en esta moneda.",
-        "There are no approved commissions available in this currency."));
-      return;
-    }
-    const monto = Number(montoPagoDoctor);
-    if (!Number.isFinite(monto) || monto <= 0) {
-      alert(tr("Ingresa una cantidad válida.", "Enter a valid amount."));
-      return;
-    }
-
-    const monedaPago =
-      formaPagoDoctor === "USD" ||
-      (formaPagoDoctor === "Transferencia" && !mostrarMXN)
-        ? "USD"
-        : "MXN";
-    const metodoPago = formaPagoDoctor === "Transferencia"
-      ? "Transferencia"
-      : "Efectivo";
-
-    // No calcular ni distribuir importes desde el navegador: el servidor
-    // determina el neto real y rechaza cualquier discrepancia.
-    const payloadLiquidacion = JSON.stringify({
-      doctorId: Number(doctorPago.doctor.id),
-      moneda: monedaPago,
-      monto,
-      metodoPago,
-      fechaPago: fechaPagoDoctor,
-    });
-    if (liquidacionPendienteRef.current?.payload !== payloadLiquidacion) {
-      liquidacionPendienteRef.current = {
-        payload: payloadLiquidacion,
-        id: crypto.randomUUID(),
-      };
-    }
-    const claveIdempotencia = liquidacionPendienteRef.current.id;
-    liquidacionEnCursoRef.current = true;
-    setGuardando(true);
-    try {
-      const { data, error } = await supabase.rpc(
-        "mintos_liquidar_comision_doctor_v2",
-        {
-          p_doctor_id: Number(doctorPago.doctor.id),
-          p_moneda: monedaPago,
-          p_monto: monto,
-          p_metodo_pago: metodoPago,
-          p_clave_idempotencia: claveIdempotencia,
-          p_fecha_pago: fechaPagoDoctor,
-        }
-      );
-      if (error) throw error;
-      // La RPC confirmó la liquidación: nunca reintentar esta clave.
-      liquidacionPendienteRef.current = null;
-      // La bitácora del cliente no debe convertir una liquidación confirmada
-      // en un supuesto error financiero ni provocar un segundo pago.
-      try {
-        await registrarBitacora({
-          accion: "Pagar comisión a doctor",
-          modulo: "Comisiones",
-          detalle: `Liquidación ID: ${data} | Doctor ID: ${doctorPago.doctor.id} | ${monto} ${monedaPago} | ${metodoPago}`,
-        });
-      } catch (errorBitacora) {
-        console.error("Liquidación confirmada; falló la bitácora del cliente:", errorBitacora);
-      }
-      setDoctorPago(null);
-      setMontoPagoDoctor("");
-      window.location.reload();
-    } catch (error) {
-      console.error("Error liquidando comisión:", error);
-      alert(tr(
-        "No se pudo confirmar la liquidación. Verifica su estado antes de reintentar; se conservará el identificador de solicitud. " +
-          (error instanceof Error ? error.message : ""),
-        "Settlement could not be confirmed. Check its status before retrying; the request ID will be preserved. " +
-          (error instanceof Error ? error.message : "")
-      ));
-    } finally {
-      liquidacionEnCursoRef.current = false;
-      setGuardando(false);
-    }
-  }
 
   async function registrarPagoEspecialista() {
     if (!esAdmin || !tratamientoPago?.pago_id || tratamientoPago.especialista_pagado || guardando || pagoEspecialistaEnCursoRef.current) return;
@@ -1042,6 +803,9 @@ export default function Comisiones({
 
             <>
 
+              {esAdmin && !anulacionesCargadas && (
+                <p role="status" className="text-sm mint-text-secondary">{tr("Verificación adicional de anulaciones pendiente.", "Additional void verification pending.")}</p>
+              )}
               <div
                 className={`
                   grid
@@ -1265,63 +1029,6 @@ export default function Comisiones({
                               <td className="p-4 text-right">
 
                                 <div className="flex justify-end gap-2">
-
-                                  {
-                                    esAdmin &&
-                                    (
-                                      (mostrarMXN && item.pendienteMXN > 0 && item.listoMXN) ||
-                                      (mostrarUSD && item.pendienteUSD > 0 && item.listoUSD)
-                                    )
-                                    &&
-                                    <button
-                                      type="button"
-                                      onClick={() => {
-
-                                        const usarUSD =
-                                          mostrarUSD && item.listoUSD && item.pendienteUSD > 0 &&
-                                          (!mostrarMXN || !item.listoMXN || item.pendienteMXN <= 0);
-
-                                        setFormaPagoDoctor(
-                                          usarUSD
-                                            ? "USD"
-                                            : "MXN"
-                                        );
-
-                                        setMontoPagoDoctor(
-                                          String(
-                                            usarUSD
-                                              ? item.pendienteUSD
-                                              : item.pendienteMXN
-                                          )
-                                        );
-
-                                        if (!liquidacionPendienteRef.current) setFechaPagoDoctor(obtenerFechaLocalMintOS());
-                                        setDoctorPago(
-                                          item
-                                        );
-
-                                      }}
-                                      className="
-                                        mint-btn
-                                        mint-btn-primary
-                                        mint-btn-sm
-                                      "
-                                    >
-                                      {tr("Pagar", "Pay")}
-                                    </button>
-                                  }
-
-                                  {esAdmin && item.tratamientosPorRevisar.length > 0 && (
-                                    <button
-                                      type="button"
-                                      className="mint-btn mint-btn-secondary mint-btn-sm"
-                                      onClick={() => setDoctorRevisionId(
-                                        Number(item.doctor.id)
-                                      )}
-                                    >
-                                      {tr("Revisar autorizaciones", "Review approvals")}
-                                    </button>
-                                  )}
 
                                   <button
                                     type="button"
@@ -1772,366 +1479,6 @@ export default function Comisiones({
             </>
 
           )
-      }
-
-            {esAdmin && doctorRevisionId !== null && createPortal(
-        <div
-          className="fixed inset-0 z-[1000] flex items-center justify-center bg-[#071b2c]/75 p-3 sm:p-6"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !guardando) {
-              setDoctorRevisionId(null);
-            }
-          }}
-        >
-          <div className="mint-card flex max-h-[94vh] w-full max-w-6xl flex-col overflow-hidden border border-[var(--mint-border)] shadow-2xl">
-            <div className="shrink-0 bg-[linear-gradient(120deg,#102f4f_0%,#1b4f68_55%,#0b8f80_100%)] px-5 py-5 sm:px-7">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#63c8b2]">
-                    {tr("Control financiero", "Financial control")}
-                  </p>
-                  <h3 className="mt-1 text-xl font-bold text-white sm:text-2xl">
-                    {tr("Revisión y autorización de comisiones", "Commission review and approval")}
-                  </h3>
-                  <p className="mt-1 text-sm text-white/80">
-                    {resumenDoctores.find(item => Number(item.doctor.id) === doctorRevisionId)?.doctor.nombre || ""}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={guardando}
-                  onClick={() => setDoctorRevisionId(null)}
-                  className="rounded-lg border border-white/25 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
-                >
-                  {tr("Cerrar", "Close")} ×
-                </button>
-              </div>
-            </div>
-            <div className="h-1 shrink-0 bg-[linear-gradient(90deg,#249884_0%,#63c8b2_58%,#d8bd72_100%)]" />
-
-            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">
-              <p className="mb-4 text-sm mint-text-secondary">
-                {tr(
-                  "Valida los costos de laboratorio y especialista antes de autorizar la comisión. La autorización queda protegida por las reglas financieras del servidor.",
-                  "Validate laboratory and specialist costs before approving the commission. Approval is protected by server-side financial rules."
-                )}
-              </p>
-
-              {(() => {
-                const revision = resumenDoctores.find(item => Number(item.doctor.id) === doctorRevisionId);
-                const pendientes = revision?.tratamientosPorRevisar ?? [];
-                if (pendientes.length === 0) {
-                  return (
-                    <div className="rounded-xl border border-[var(--mint-border)] bg-[var(--mint-bg-soft)] p-8 text-center text-sm mint-text-secondary">
-                      {tr("No hay tratamientos pendientes de revisión.", "There are no treatments pending review.")}
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-4">
-                    {pendientes.map(tratamiento => {
-                      const validado = costosValidados(tratamiento);
-                      const autorizado = comisionAutorizada(tratamiento);
-                      const laboratorioEstado = estadoCosto(tratamiento, "laboratorio");
-                      const especialistaEstado = estadoCosto(tratamiento, "especialista");
-
-                      return (
-                        <div
-                          key={tratamiento.id}
-                          className="overflow-hidden rounded-2xl border border-[var(--mint-border)] bg-white shadow-[0_6px_20px_rgba(15,42,65,0.04)]"
-                        >
-                          <div className="flex flex-col justify-between gap-3 border-b border-[var(--mint-border)] bg-[var(--mint-bg-soft)] px-4 py-4 sm:flex-row sm:items-center sm:px-5">
-                            <div>
-                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
-                                {tr("Tratamiento", "Treatment")} #{tratamiento.id}
-                              </p>
-                              <p className="mt-1 font-bold mint-text-primary">
-                                {tratamiento.tratamiento || "—"}
-                              </p>
-                              <p className="mt-1 text-xs mint-text-secondary">
-                                {tr("Estado", "Status")}: {tratamiento.estado || "—"}
-                              </p>
-                            </div>
-                            <span className={`inline-flex self-start rounded-full border px-3 py-1 text-xs font-bold ${
-                              autorizado
-                                ? "border-[var(--mint-success-border)] bg-[var(--mint-success-bg)] text-[var(--mint-success)]"
-                                : validado
-                                  ? "border-[var(--mint-warning-border)] bg-[var(--mint-warning-bg)] text-[var(--mint-warning)]"
-                                  : "border-[var(--mint-border)] bg-white mint-text-secondary"
-                            }`}>
-                              {autorizado
-                                ? tr("Comisión autorizada", "Commission approved")
-                                : validado
-                                  ? tr("Costos validados", "Costs validated")
-                                  : tr("Pendiente de validación", "Pending validation")}
-                            </span>
-                          </div>
-
-                          <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5">
-                            <div className="rounded-xl border border-[var(--mint-border)] p-4">
-                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
-                                {tr("Laboratorio", "Laboratory")}
-                              </p>
-                              <p className="mt-1 text-lg font-bold mint-text-primary">
-                                ${formatoMonto(Number(tratamiento.laboratorio || 0))}
-                                <span className="ml-2 text-xs font-medium mint-text-muted">
-                                  {tratamiento.moneda_laboratorio === "USD" ? "USD" : "MXN"}
-                                </span>
-                              </p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {(["aplica", "no_aplica"] as const).map(opcion => (
-                                  <button
-                                    key={opcion}
-                                    type="button"
-                                    disabled={guardando || validado}
-                                    onClick={() => setEstadosCostos(prev => ({
-                                      ...prev,
-                                      [Number(tratamiento.id)]: {
-                                        laboratorio: opcion,
-                                        especialista: estadoCosto(tratamiento, "especialista"),
-                                      },
-                                    }))}
-                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                                      laboratorioEstado === opcion
-                                        ? "border-[#0b8f80] bg-[#e8f7f3] text-[#08796c]"
-                                        : "border-[var(--mint-border)] bg-white mint-text-secondary hover:border-[#0b8f80]"
-                                    }`}
-                                  >
-                                    {opcion === "aplica"
-                                      ? tr("Aplica", "Applies")
-                                      : tr("No aplica", "Does not apply")}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div className="rounded-xl border border-[var(--mint-border)] p-4">
-                              <p className="text-xs font-bold uppercase tracking-wide mint-text-muted">
-                                {tr("Especialista", "Specialist")}
-                              </p>
-                              <p className="mt-1 text-lg font-bold mint-text-primary">
-                                ${formatoMonto(Number(tratamiento.especialista || 0))}
-                                <span className="ml-2 text-xs font-medium mint-text-muted">
-                                  {tratamiento.moneda_especialista === "USD" ? "USD" : "MXN"}
-                                </span>
-                              </p>
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {(["aplica", "no_aplica"] as const).map(opcion => (
-                                  <button
-                                    key={opcion}
-                                    type="button"
-                                    disabled={guardando || validado}
-                                    onClick={() => setEstadosCostos(prev => ({
-                                      ...prev,
-                                      [Number(tratamiento.id)]: {
-                                        laboratorio: estadoCosto(tratamiento, "laboratorio"),
-                                        especialista: opcion,
-                                      },
-                                    }))}
-                                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                                      especialistaEstado === opcion
-                                        ? "border-[#0b8f80] bg-[#e8f7f3] text-[#08796c]"
-                                        : "border-[var(--mint-border)] bg-white mint-text-secondary hover:border-[#0b8f80]"
-                                    }`}
-                                  >
-                                    {opcion === "aplica"
-                                      ? tr("Aplica", "Applies")
-                                      : tr("No aplica", "Does not apply")}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="flex flex-wrap justify-end gap-2 border-t border-[var(--mint-border)] bg-[var(--mint-bg-soft)] px-4 py-4 sm:px-5">
-                            {!validado && (
-                              <button
-                                type="button"
-                                disabled={guardando}
-                                onClick={() => void ejecutarAutorizacion("validar", tratamiento)}
-                                className="mint-btn mint-btn-secondary mint-btn-sm disabled:opacity-50"
-                              >
-                                {tr("Validar costos", "Validate costs")}
-                              </button>
-                            )}
-                            {validado && !autorizado && (
-                              <button
-                                type="button"
-                                disabled={guardando}
-                                onClick={() => void ejecutarAutorizacion("autorizar", tratamiento)}
-                                className="mint-btn mint-btn-primary mint-btn-sm disabled:opacity-50"
-                              >
-                                {tr("Autorizar comisión", "Approve commission")}
-                              </button>
-                            )}
-                            {autorizado && (
-                              <span className="inline-flex items-center rounded-lg border border-[var(--mint-success-border)] bg-[var(--mint-success-bg)] px-3 py-2 text-xs font-bold text-[var(--mint-success)]">
-                                ✓ {tr("Autorizada", "Approved")}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })()}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
-
-      {
-        doctorPago &&
-        (
-
-          <div
-            className="
-              fixed
-              inset-0
-              z-[1000]
-              flex
-              items-center
-              justify-center
-              bg-black/60
-              p-4
-            "
-          >
-
-            <div
-              className="
-                mint-card
-                w-full
-                max-w-lg
-                p-6
-                shadow-2xl
-              "
-            >
-
-              <h3 className="text-xl font-bold mint-text-primary">
-                {tr("Pagar comisión a doctor", "Pay doctor commission")}
-              </h3>
-
-              <p className="text-sm mint-text-secondary mt-2">
-                {
-                  doctorPago.doctor.nombre
-                }
-              </p>
-
-              <div className="mt-4">
-                <label className="mint-label" htmlFor="fechaPagoDoctor">{tr("Fecha de pago", "Payment date")}</label>
-                <input id="fechaPagoDoctor" type="date" required
-                  className="mint-input" value={fechaPagoDoctor}
-                  max={obtenerFechaLocalMintOS()} disabled={guardando || !!liquidacionPendienteRef.current}
-                  onChange={event => setFechaPagoDoctor(event.target.value)} />
-              </div>
-
-              <div className="mt-6">
-
-                <label className="mint-label">
-                  {tr("Forma de pago", "Payment method")}
-                </label>
-
-                <select
-                  value={
-                    formaPagoDoctor
-                  }
-                  onChange={(
-                    e
-                  ) => {
-
-                    const forma = e.target.value as FormaPagoDoctor;
-                    setFormaPagoDoctor(forma);
-                    const moneda = forma === "USD" || (forma === "Transferencia" && !mostrarMXN)
-                      ? "USD" : "MXN";
-                    setMontoPagoDoctor(String(moneda === "USD" ? doctorPago.pendienteUSD : doctorPago.pendienteMXN));
-
-                  }}
-                  className="mint-input"
-                >
-                  {monedasActivas.map(moneda => (
-                    <option key={moneda} value={moneda}>
-                      {tr("Efectivo", "Cash")} {moneda}
-                    </option>
-                  ))}
-
-                  <option value="Transferencia">
-                    {tr("Transferencia", "Transfer")}
-                  </option>
-                </select>
-
-              </div>
-
-              <div className="mt-4">
-
-                <label className="mint-label">
-                  {tr("Monto", "Amount")}
-                </label>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={
-                    montoPagoDoctor
-                  }
-                  onChange={(
-                    e
-                  ) =>
-                    setMontoPagoDoctor(
-                      e.target.value
-                    )
-                  }
-                  className="mint-input"
-                />
-
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-
-                <button
-                  type="button"
-                  disabled={guardando}
-                  onClick={() => {
-
-                    setDoctorPago(
-                      null
-                    );
-
-                    setMontoPagoDoctor(
-                      ""
-                    );
-
-                  }}
-                  className="mint-btn mint-btn-secondary"
-                >
-                  {tr("Cancelar", "Cancel")}
-                </button>
-
-                <button
-                  type="button"
-                  disabled={guardando || !validarFechaEfectivaMintOS(fechaPagoDoctor)}
-                  onClick={
-                    registrarPagoDoctor
-                  }
-                  className="mint-btn mint-btn-primary"
-                >
-                  {
-                    guardando
-                      ? tr("Guardando...", "Saving...")
-                      : tr("Confirmar pago", "Confirm payment")
-                  }
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        )
       }
 
       {

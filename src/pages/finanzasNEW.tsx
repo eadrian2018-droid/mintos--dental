@@ -1168,6 +1168,8 @@ export default function Finanzas() {
                   tratamientos={tratamientos}
                   pagos={pagos}
                   onClose={cerrarDetalleDoctor}
+                  puedeLiquidar={esAdmin}
+                  onLiquidacion={finanzas.cargarPagos}
                 />
               </div>
             </section>
